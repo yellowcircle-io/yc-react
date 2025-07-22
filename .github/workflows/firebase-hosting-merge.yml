@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+<<<<<<< HEAD
       
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
@@ -24,6 +25,9 @@ jobs:
       - name: Build project
         run: npm run build
       
+=======
+      - run: npm install && npm run build
+>>>>>>> 2045079 (Reset Push)
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
