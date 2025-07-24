@@ -10,7 +10,8 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
       
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
@@ -18,15 +19,33 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
-      - name: Install dependencies (including dev dependencies)
+      - name: Handle package lock synchronization
+        run: |
+          if ! npm ci --include=dev --dry-run; then
+            echo "Package lock out of sync, regenerating..."
+            rm package-lock.json
+            npm install --package-lock-only
+          fi
+      
+      - name: Install dependencies with platform support
         run: npm ci --include=dev
+      
+      - name: Verify build tools availability
+        run: |
+          echo "Node.js version: $(node --version)"
+          echo "npm version: $(npm --version)"
+          npx vite --version || echo "Vite not accessible"
       
       - name: Build project
         run: npm run build
       
+      - name: Verify build output
+        run: |
+          echo "Build directory contents:"
+          ls -la dist/ || echo "Build directory not found"
+      
       - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+         '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_YELLOWCIRCLE_APP }}'
           channelId: live
           projectId: yellowcircle-app
