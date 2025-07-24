@@ -11,9 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js environment
+        uses: actions/checkout@ Node.js environment
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -45,7 +43,8 @@ jobs:
           ls -la dist/ || echo "Build directory not found"
       
       - uses: FirebaseExtended/action-hosting-deploy@v0
-         '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_YELLOWCIRCLE_APP }}'
           channelId: live
           projectId: yellowcircle-app
