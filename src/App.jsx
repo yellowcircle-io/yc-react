@@ -1,77 +1,192 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import React from 'react';
 import './App.css'
-import { Menu } from 'lucide-react';
 
-export default function HomePage() {
+function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-100 relative overflow-hidden">
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#f3f4f6', 
+      position: 'relative', 
+      overflow: 'hidden' 
+    }}>
       {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50 p-6">
-        <div className="flex justify-between items-center">
+      <nav style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 50, 
+        padding: '24px' 
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center' 
+        }}>
           {/* Left side navigation text */}
-          <div className="transform -rotate-90 origin-left translate-y-20 translate-x-4">
-            <span className="text-black font-light tracking-widest text-sm">HOME</span>
+          <div style={{ 
+            transform: 'rotate(-90deg) translateY(20px) translateX(16px)', 
+            transformOrigin: 'left' 
+          }}>
+            <span style={{ 
+              color: 'black', 
+              fontWeight: '300', 
+              letterSpacing: '0.2em', 
+              fontSize: '14px' 
+            }}>HOME</span>
           </div>
           
           {/* Logo */}
-          <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
-            <h1 className="text-black text-sm font-light tracking-[0.3em]">YELLOWCIRCLE</h1>
+          <div style={{ 
+            position: 'absolute', 
+            top: '24px', 
+            left: '50%', 
+            transform: 'translateX(-50%)' 
+          }}>
+            <h1 style={{ 
+              color: 'black', 
+              fontSize: '14px', 
+              fontWeight: '300', 
+              letterSpacing: '0.3em',
+              margin: 0 
+            }}>YELLOWCIRCLE</h1>
           </div>
           
           {/* Hamburger menu */}
-          <button className="p-2">
-            <Menu className="w-6 h-6 text-black" />
+          <button style={{ padding: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
+              <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
+              <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
+            </div>
           </button>
         </div>
       </nav>
 
       {/* Main content container */}
-      <div className="flex min-h-screen">
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
         {/* Left section with text */}
-        <div className="flex-1 flex items-center justify-center p-12">
-          <div className="max-w-md">
-            <div className="space-y-1 text-black font-light text-sm leading-relaxed tracking-wide">
-              <p>VIVAMUS SAGITTIS LACUS VEL</p>
-              <p>AUGUE LAOREET RUTRUM</p>
-              <p>FAUCIBUS DOLOR AUCTOR.</p>
-              <p>AENEAN EU LEO QUAM.</p>
-              <p>PELLENTESQUE ORNARE SEM</p>
-              <p>LACINIA QUAM VENENATIS</p>
-              <p>VESTIBULUM. DONEC</p>
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          padding: '48px' 
+        }}>
+          <div style={{ maxWidth: '400px' }}>
+            <div style={{ 
+              color: 'black', 
+              fontWeight: '300', 
+              fontSize: '14px', 
+              lineHeight: '1.6', 
+              letterSpacing: '0.05em' 
+            }}>
+              <p style={{ margin: '4px 0' }}>VIVAMUS SAGITTIS LACUS VEL</p>
+              <p style={{ margin: '4px 0' }}>AUGUE LAOREET RUTRUM</p>
+              <p style={{ margin: '4px 0' }}>FAUCIBUS DOLOR AUCTOR.</p>
+              <p style={{ margin: '4px 0' }}>AENEAN EU LEO QUAM.</p>
+              <p style={{ margin: '4px 0' }}>PELLENTESQUE ORNARE SEM</p>
+              <p style={{ margin: '4px 0' }}>LACINIA QUAM VENENATIS</p>
+              <p style={{ margin: '4px 0' }}>VESTIBULUM. DONEC</p>
             </div>
           </div>
         </div>
 
         {/* Right section with image and decorative elements */}
-        <div className="flex-1 relative">
+        <div style={{ flex: 1, position: 'relative' }}>
           {/* Main image placeholder */}
-          <div className="absolute inset-0 bg-black">
+          <div style={{ 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            backgroundColor: 'black' 
+          }}>
             {/* Model silhouette overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/80 to-black/60">
+            <div style={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.8), rgba(0,0,0,0.6))' 
+            }}>
               {/* Decorative pattern overlays */}
-              <div className="absolute top-20 right-20 w-32 h-32 opacity-30">
+              <div style={{ 
+                position: 'absolute', 
+                top: '80px', 
+                right: '80px', 
+                width: '128px', 
+                height: '128px', 
+                opacity: 0.3 
+              }}>
                 {/* Ornamental pattern 1 */}
-                <div className="w-full h-full border-2 border-white/20 rounded-full relative">
-                  <div className="absolute inset-4 border border-white/10 rounded-full"></div>
-                  <div className="absolute inset-8 border border-white/10 rounded-full"></div>
+                <div style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  border: '2px solid rgba(255,255,255,0.2)', 
+                  borderRadius: '50%', 
+                  position: 'relative' 
+                }}>
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '16px', 
+                    left: '16px', 
+                    right: '16px', 
+                    bottom: '16px', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    borderRadius: '50%' 
+                  }}></div>
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '32px', 
+                    left: '32px', 
+                    right: '32px', 
+                    bottom: '32px', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    borderRadius: '50%' 
+                  }}></div>
                 </div>
               </div>
               
               {/* Decorative dots pattern */}
-              <div className="absolute top-32 right-40 grid grid-cols-4 gap-2">
+              <div style={{ 
+                position: 'absolute', 
+                top: '128px', 
+                right: '160px', 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                gap: '8px' 
+              }}>
                 {[...Array(16)].map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-white/20 rounded-full"></div>
+                  <div key={i} style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    backgroundColor: 'rgba(255,255,255,0.2)', 
+                    borderRadius: '50%' 
+                  }}></div>
                 ))}
               </div>
               
               {/* Jewelry chain simulation */}
-              <div className="absolute bottom-40 right-32 flex flex-col space-y-1">
+              <div style={{ 
+                position: 'absolute', 
+                bottom: '160px', 
+                right: '128px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '4px' 
+              }}>
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="flex space-x-1">
+                  <div key={i} style={{ display: 'flex', gap: '4px' }}>
                     {[...Array(6)].map((_, j) => (
-                      <div key={j} className="w-3 h-3 bg-white/40 rounded-full"></div>
+                      <div key={j} style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        backgroundColor: 'rgba(255,255,255,0.4)', 
+                        borderRadius: '50%' 
+                      }}></div>
                     ))}
                   </div>
                 ))}
@@ -80,70 +195,126 @@ export default function HomePage() {
           </div>
           
           {/* Yellow circle accent */}
-          <div className="absolute top-1/3 left-1/4 w-48 h-48 bg-yellow-400 rounded-full opacity-90 z-10">
+          <div style={{ 
+            position: 'absolute', 
+            top: '33%', 
+            left: '25%', 
+            width: '192px', 
+            height: '192px', 
+            backgroundColor: '#facc15', 
+            borderRadius: '50%', 
+            opacity: 0.9, 
+            zIndex: 10 
+          }}>
             {/* Inner texture pattern */}
-            <div className="absolute inset-8 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full">
-              <div className="absolute inset-4 bg-black/20 rounded-full"></div>
+            <div style={{ 
+              position: 'absolute', 
+              top: '32px', 
+              left: '32px', 
+              right: '32px', 
+              bottom: '32px', 
+              background: 'linear-gradient(to bottom right, #fde047, #eab308)', 
+              borderRadius: '50%' 
+            }}>
+              <div style={{ 
+                position: 'absolute', 
+                top: '16px', 
+                left: '16px', 
+                right: '16px', 
+                bottom: '16px', 
+                backgroundColor: 'rgba(0,0,0,0.2)', 
+                borderRadius: '50%' 
+              }}></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bottom decorative elements */}
-      <div className="absolute bottom-8 left-8">
+      <div style={{ position: 'absolute', bottom: '32px', left: '32px' }}>
         {/* Copyright or brand mark */}
-        <div className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center">
-          <span className="text-black text-xs font-light">©</span>
+        <div style={{ 
+          width: '48px', 
+          height: '48px', 
+          border: '2px solid black', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center' 
+        }}>
+          <span style={{ color: 'black', fontSize: '12px', fontWeight: '300' }}>©</span>
         </div>
       </div>
 
-      <div className="absolute bottom-8 right-8">
+      <div style={{ position: 'absolute', bottom: '32px', right: '32px' }}>
         {/* Navigation arrow/button */}
-        <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center">
-          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div style={{ 
+          width: '64px', 
+          height: '64px', 
+          backgroundColor: '#facc15', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center' 
+        }}>
+          <svg style={{ width: '24px', height: '24px', color: 'black' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
       </div>
 
       {/* Additional decorative elements scattered across the page */}
-      <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-white/30 rounded-full"></div>
-      <div className="absolute top-2/3 left-1/4 w-6 h-6 bg-white/20 rounded-full"></div>
-      <div className="absolute top-1/2 right-1/3 w-3 h-3 bg-yellow-400/40 rounded-full"></div>
+      <div style={{ 
+        position: 'absolute', 
+        top: '25%', 
+        left: '33%', 
+        width: '16px', 
+        height: '16px', 
+        backgroundColor: 'rgba(255,255,255,0.3)', 
+        borderRadius: '50%' 
+      }}></div>
+      <div style={{ 
+        position: 'absolute', 
+        top: '66%', 
+        left: '25%', 
+        width: '24px', 
+        height: '24px', 
+        backgroundColor: 'rgba(255,255,255,0.2)', 
+        borderRadius: '50%' 
+      }}></div>
+      <div style={{ 
+        position: 'absolute', 
+        top: '50%', 
+        right: '33%', 
+        width: '12px', 
+        height: '12px', 
+        backgroundColor: 'rgba(250,204,21,0.4)', 
+        borderRadius: '50%' 
+      }}></div>
       
       {/* Ornamental border elements */}
-      <div className="absolute top-40 right-20 w-16 h-1 bg-white/20"></div>
-      <div className="absolute top-60 right-16 w-1 h-16 bg-white/20"></div>
+      <div style={{ 
+        position: 'absolute', 
+        top: '160px', 
+        right: '80px', 
+        width: '64px', 
+        height: '4px', 
+        backgroundColor: 'rgba(255,255,255,0.2)' 
+      }}></div>
+      <div style={{ 
+        position: 'absolute', 
+        top: '240px', 
+        right: '64px', 
+        width: '4px', 
+        height: '64px', 
+        backgroundColor: 'rgba(255,255,255,0.2)' 
+      }}></div>
     </div>
   );
 }
-function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h2>Vite + React</h2>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-       PLEASE Update the Vite / React logos to learn! <br/> Is this working  <strong>NOW!</strong>
-      </p>
-    </>
-  )
+function App() {
+  return <HomePage />;
 }
 
-export default App
+export default App;
