@@ -1,314 +1,418 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css'
 
 function HomePage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Track mouse movement for parallax effect on large circle
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth) * 20 - 10, // Range: -10 to 10
+        y: (e.clientY / window.innerHeight) * 20 - 10
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f3f4f6', 
+      height: '100vh', 
+      width: '100vw',
+      backgroundColor: '#f5f5f5', 
       position: 'relative', 
-      overflow: 'hidden' 
+      overflow: 'hidden',
+      margin: 0,
+      padding: 0,
+      fontFamily: 'Arial, sans-serif'
     }}>
-      {/* Navigation */}
+
+      {/* Top Navigation Bar */}
       <nav style={{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        zIndex: 50, 
-        padding: '24px' 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '80px',
+        zIndex: 90,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingLeft: '100px', // Account for sidebar width
+        paddingRight: '40px'
       }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center' 
+        {/* Centered YELLOWCIRCLE logo with black background */}
+        <div style={{
+          backgroundColor: 'black',
+          padding: '10px',
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)'
         }}>
-          {/* Left side navigation text */}
-          <div style={{ 
-            transform: 'rotate(-90deg) translateY(20px) translateX(16px)', 
-            transformOrigin: 'left' 
-          }}>
-            <span style={{ 
-              color: 'black', 
-              fontWeight: '300', 
-              letterSpacing: '0.2em', 
-              fontSize: '14px' 
-            }}>HOME</span>
-          </div>
-          
-          {/* Logo */}
-          <div style={{ 
-            position: 'absolute', 
-            top: '24px', 
-            left: '50%', 
-            transform: 'translateX(-50%)' 
-          }}>
-            <h1 style={{ 
-              color: 'black', 
-              fontSize: '14px', 
-              fontWeight: '300', 
-              letterSpacing: '0.3em',
-              margin: 0 
-            }}>YELLOWCIRCLE</h1>
-          </div>
-          
-          {/* Hamburger menu */}
-          <button style={{ padding: '8px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
-              <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
-              <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
-            </div>
-          </button>
+          <h1 style={{ 
+            color: '#fbbf24', 
+            fontSize: '12px', 
+            fontWeight: '300', 
+            letterSpacing: '0.4em',
+            margin: 0
+          }}>YELLOWCIRCLE</h1>
         </div>
+        
+        {/* Hamburger menu - right aligned with small circle */}
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={{ 
+            position: 'absolute',
+            right: '50px', // Same distance as small circle
+            top: '50%',
+            transform: 'translateY(-50%)',
+            padding: '10px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            zIndex: 100
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
+            <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
+            <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
+          </div>
+        </button>
       </nav>
 
-      {/* Main content container */}
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        {/* Left section with text */}
+      {/* Left Sidebar - max-width 100px */}
+      <div style={{
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        width: '100px',
+        height: '100vh',
+        backgroundColor: '#f5f5f5',
+        zIndex: 80,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
+        
+        {/* HOME text - top aligned with padding */}
         <div style={{ 
-          flex: 1, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          padding: '48px' 
+          paddingTop: '120px',
+          transform: 'rotate(-90deg)',
+          transformOrigin: 'center'
         }}>
-          <div style={{ maxWidth: '400px' }}>
-            <div style={{ 
-              color: 'black', 
-              fontWeight: '300', 
-              fontSize: '14px', 
-              lineHeight: '1.6', 
-              letterSpacing: '0.05em' 
-            }}>
-              <p style={{ margin: '4px 0' }}>VIVAMUS SAGITTIS LACUS VEL</p>
-              <p style={{ margin: '4px 0' }}>AUGUE LAOREET RUTRUM</p>
-              <p style={{ margin: '4px 0' }}>FAUCIBUS DOLOR AUCTOR.</p>
-              <p style={{ margin: '4px 0' }}>AENEAN EU LEO QUAM.</p>
-              <p style={{ margin: '4px 0' }}>PELLENTESQUE ORNARE SEM</p>
-              <p style={{ margin: '4px 0' }}>LACINIA QUAM VENENATIS</p>
-              <p style={{ margin: '4px 0' }}>VESTIBULUM. DONEC</p>
-            </div>
-          </div>
+          <span style={{ 
+            color: 'black', 
+            fontWeight: '300', 
+            letterSpacing: '0.3em', 
+            fontSize: '11px'
+          }}>HOME</span>
         </div>
 
-        {/* Right section with image and decorative elements */}
-        <div style={{ flex: 1, position: 'relative' }}>
-          {/* Main image placeholder */}
+        {/* Copyright logo - center aligned */}
+        <div style={{ 
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}>
           <div style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            backgroundColor: 'black' 
-          }}>
-            {/* Model silhouette overlay */}
-            <div style={{ 
-              position: 'absolute', 
-              top: 0, 
-              left: 0, 
-              right: 0, 
-              bottom: 0, 
-              background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.8), rgba(0,0,0,0.6))' 
-            }}>
-              {/* Decorative pattern overlays */}
-              <div style={{ 
-                position: 'absolute', 
-                top: '80px', 
-                right: '80px', 
-                width: '128px', 
-                height: '128px', 
-                opacity: 0.3 
-              }}>
-                {/* Ornamental pattern 1 */}
-                <div style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  border: '2px solid rgba(255,255,255,0.2)', 
-                  borderRadius: '50%', 
-                  position: 'relative' 
-                }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '16px', 
-                    left: '16px', 
-                    right: '16px', 
-                    bottom: '16px', 
-                    border: '1px solid rgba(255,255,255,0.1)', 
-                    borderRadius: '50%' 
-                  }}></div>
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '32px', 
-                    left: '32px', 
-                    right: '32px', 
-                    bottom: '32px', 
-                    border: '1px solid rgba(255,255,255,0.1)', 
-                    borderRadius: '50%' 
-                  }}></div>
-                </div>
-              </div>
-              
-              {/* Decorative dots pattern */}
-              <div style={{ 
-                position: 'absolute', 
-                top: '128px', 
-                right: '160px', 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(4, 1fr)', 
-                gap: '8px' 
-              }}>
-                {[...Array(16)].map((_, i) => (
-                  <div key={i} style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    backgroundColor: 'rgba(255,255,255,0.2)', 
-                    borderRadius: '50%' 
-                  }}></div>
-                ))}
-              </div>
-              
-              {/* Jewelry chain simulation */}
-              <div style={{ 
-                position: 'absolute', 
-                bottom: '160px', 
-                right: '128px', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '4px' 
-              }}>
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '4px' }}>
-                    {[...Array(6)].map((_, j) => (
-                      <div key={j} style={{ 
-                        width: '12px', 
-                        height: '12px', 
-                        backgroundColor: 'rgba(255,255,255,0.4)', 
-                        borderRadius: '50%' 
-                      }}></div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Yellow circle accent */}
-          <div style={{ 
-            position: 'absolute', 
-            top: '33%', 
-            left: '25%', 
-            width: '192px', 
-            height: '192px', 
-            backgroundColor: '#facc15', 
+            width: '40px', 
+            height: '40px', 
+            border: '2px solid black', 
             borderRadius: '50%', 
-            opacity: 0.9, 
-            zIndex: 10 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center'
           }}>
-            {/* Inner texture pattern */}
-            <div style={{ 
-              position: 'absolute', 
-              top: '32px', 
-              left: '32px', 
-              right: '32px', 
-              bottom: '32px', 
-              background: 'linear-gradient(to bottom right, #fde047, #eab308)', 
-              borderRadius: '50%' 
-            }}>
-              <div style={{ 
-                position: 'absolute', 
-                top: '16px', 
-                left: '16px', 
-                right: '16px', 
-                bottom: '16px', 
-                backgroundColor: 'rgba(0,0,0,0.2)', 
-                borderRadius: '50%' 
-              }}></div>
-            </div>
+            <span style={{ color: 'black', fontSize: '10px', fontWeight: '300' }}>©</span>
           </div>
         </div>
       </div>
 
-      {/* Bottom decorative elements */}
-      <div style={{ position: 'absolute', bottom: '32px', left: '32px' }}>
-        {/* Copyright or brand mark */}
-        <div style={{ 
-          width: '48px', 
-          height: '48px', 
-          border: '2px solid black', 
-          borderRadius: '50%', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
+      {/* Main Content Area - starts after sidebar */}
+      <div style={{ 
+        marginLeft: '100px',
+        height: '100vh',
+        width: 'calc(100vw - 100px)',
+        backgroundColor: 'black',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Background texture/pattern overlay */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 30% 40%, rgba(40,40,40,0.8) 0%, rgba(0,0,0,0.9) 60%), linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(0,0,0,1) 100%)'
         }}>
-          <span style={{ color: 'black', fontSize: '12px', fontWeight: '300' }}>©</span>
+          
+          {/* Ornate decorative elements */}
+          <div style={{
+            position: 'absolute',
+            top: '60px',
+            left: '40px',
+            right: '40px',
+            height: '120px'
+          }}>
+            {/* Circular ornamental patterns */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                left: `${20 + i * 80}px`,
+                top: `${10 + (i % 2) * 40}px`,
+                width: `${15 + i * 3}px`,
+                height: `${15 + i * 3}px`,
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '50%',
+                opacity: 0.7
+              }}></div>
+            ))}
+            
+            {/* Decorative dots */}
+            {[...Array(30)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                left: `${Math.random() * 500}px`,
+                top: `${Math.random() * 100}px`,
+                width: `${2 + Math.random() * 4}px`,
+                height: `${2 + Math.random() * 4}px`,
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                borderRadius: '50%'
+              }}></div>
+            ))}
+          </div>
+
+          {/* Jewelry/chain patterns */}
+          <div style={{
+            position: 'absolute',
+            right: '40px',
+            top: '25%',
+            bottom: '25%',
+            width: '150px'
+          }}>
+            {[...Array(5)].map((_, chainIndex) => (
+              <div key={chainIndex} style={{
+                position: 'absolute',
+                left: `${chainIndex * 25}px`,
+                top: 0,
+                bottom: 0
+              }}>
+                {[...Array(15)].map((_, beadIndex) => (
+                  <div key={beadIndex} style={{
+                    position: 'absolute',
+                    top: `${beadIndex * 20}px`,
+                    width: '6px',
+                    height: '6px',
+                    backgroundColor: 'rgba(255,255,255,0.5)',
+                    borderRadius: '50%',
+                    boxShadow: '0 0 4px rgba(255,255,255,0.2)'
+                  }}></div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div style={{ position: 'absolute', bottom: '32px', right: '32px' }}>
-        {/* Navigation arrow/button */}
+      {/* Large Yellow Circle - Parallax Effect, Second Highest Z-Index */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '30%', 
+        left: '20%',
+        width: '300px', 
+        height: '300px', 
+        backgroundColor: '#fbbf24', 
+        borderRadius: '50%', 
+        zIndex: 70,
+        mixBlendMode: 'multiply',
+        transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
+        transition: 'transform 0.1s ease-out',
+        background: 'radial-gradient(circle at 30% 30%, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',
+        boxShadow: '0 20px 60px rgba(251,191,36,0.2)'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: '40px',
+          left: '40px',
+          right: '40px',
+          bottom: '40px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle at 40% 40%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%)'
+        }}></div>
+      </div>
+
+      {/* Text Content - Highest Z-Index, Bottom Left */}
+      <div style={{
+        position: 'fixed',
+        bottom: '50px',
+        left: '200px',
+        zIndex: 90,
+        maxWidth: '300px'
+      }}>
         <div style={{ 
-          width: '64px', 
-          height: '64px', 
-          backgroundColor: '#facc15', 
+          color: 'black', 
+          fontWeight: '400', 
+          fontSize: '14px', 
+          lineHeight: '1.4', 
+          letterSpacing: '0.05em',
+          textAlign: 'left'
+        }}>
+          <p style={{ margin: '2px 0' }}>VIVAMUS SAGITTIS LACUS VEL</p>
+          <p style={{ margin: '2px 0' }}>AUGUE LAOREET RUTRUM</p>
+          <p style={{ margin: '2px 0' }}>FAUCIBUS DOLOR AUCTOR.</p>
+          <p style={{ margin: '2px 0' }}>AENEAN EU LEO QUAM.</p>
+          <p style={{ margin: '2px 0' }}>PELLENTESQUE ORNARE SEM</p>
+          <p style={{ margin: '2px 0' }}>LACINIA QUAM VENENATIS</p>
+          <p style={{ margin: '2px 0' }}>VESTIBULUM. DONEC</p>
+        </div>
+      </div>
+
+      {/* Small Navigation Circle - Bottom Right */}
+      <div style={{ 
+        position: 'fixed', 
+        bottom: '50px', 
+        right: '50px',
+        zIndex: 80
+      }}>
+        <div style={{ 
+          width: '60px', 
+          height: '60px', 
+          backgroundColor: '#fbbf24', 
           borderRadius: '50%', 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'center' 
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 8px 32px rgba(251,191,36,0.3)',
+          background: 'radial-gradient(circle at 30% 30%, #fcd34d 0%, #f59e0b 70%)'
         }}>
-          <svg style={{ width: '24px', height: '24px', color: 'black' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          {/* Downward Chevron */}
+          <svg style={{ width: '16px', height: '16px', color: 'black' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </div>
 
-      {/* Additional decorative elements scattered across the page */}
-      <div style={{ 
-        position: 'absolute', 
-        top: '25%', 
-        left: '33%', 
-        width: '16px', 
-        height: '16px', 
-        backgroundColor: 'rgba(255,255,255,0.3)', 
-        borderRadius: '50%' 
-      }}></div>
-      <div style={{ 
-        position: 'absolute', 
-        top: '66%', 
-        left: '25%', 
-        width: '24px', 
-        height: '24px', 
-        backgroundColor: 'rgba(255,255,255,0.2)', 
-        borderRadius: '50%' 
-      }}></div>
-      <div style={{ 
-        position: 'absolute', 
-        top: '50%', 
-        right: '33%', 
-        width: '12px', 
-        height: '12px', 
-        backgroundColor: 'rgba(250,204,21,0.4)', 
-        borderRadius: '50%' 
-      }}></div>
-      
-      {/* Ornamental border elements */}
-      <div style={{ 
-        position: 'absolute', 
-        top: '160px', 
-        right: '80px', 
-        width: '64px', 
-        height: '4px', 
-        backgroundColor: 'rgba(255,255,255,0.2)' 
-      }}></div>
-      <div style={{ 
-        position: 'absolute', 
-        top: '240px', 
-        right: '64px', 
-        width: '4px', 
-        height: '64px', 
-        backgroundColor: 'rgba(255,255,255,0.2)' 
-      }}></div>
+      {/* Full Screen Menu Overlay */}
+      {menuOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#fbbf24',
+          zIndex: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'radial-gradient(circle at center, #fcd34d 0%, #f59e0b 100%)'
+        }}>
+          {/* Close Button */}
+          <button
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'absolute',
+              top: '40px',
+              right: '40px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              fontSize: '30px',
+              color: 'black',
+              cursor: 'pointer',
+              width: '40px',
+              height: '40px'
+            }}
+          >
+            ×
+          </button>
+
+          {/* Menu Items */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '40px'
+          }}>
+            <a href="#" style={{
+              color: 'black',
+              textDecoration: 'none',
+              fontSize: '16px',
+              fontWeight: '300',
+              letterSpacing: '0.3em',
+              opacity: 0.7,
+              transition: 'opacity 0.3s'
+            }}>HOME</a>
+            
+            <a href="#" style={{
+              color: 'black',
+              textDecoration: 'none',
+              fontSize: '16px',
+              fontWeight: '300',
+              letterSpacing: '0.3em',
+              opacity: 0.7,
+              transition: 'opacity 0.3s'
+            }}>EXPERIMENTS</a>
+            
+            <a href="#" style={{
+              color: 'black',
+              textDecoration: 'none',
+              fontSize: '16px',
+              fontWeight: '300',
+              letterSpacing: '0.3em',
+              opacity: 0.7,
+              transition: 'opacity 0.3s'
+            }}>THOUGHTS</a>
+            
+            <a href="#" style={{
+              color: 'black',
+              textDecoration: 'none',
+              fontSize: '16px',
+              fontWeight: '300',
+              letterSpacing: '0.3em',
+              opacity: 0.7,
+              transition: 'opacity 0.3s'
+            }}>ABOUT</a>
+            
+            {/* Projects button with background */}
+            <div style={{
+              backgroundColor: 'rgba(0,0,0,0.1)',
+              padding: '15px 40px',
+              borderRadius: '4px'
+            }}>
+              <a href="#" style={{
+                color: 'black',
+                textDecoration: 'none',
+                fontSize: '16px',
+                fontWeight: '400',
+                letterSpacing: '0.3em'
+              }}>PROJECTS</a>
+            </div>
+            
+            {/* Subscribe button with border */}
+            <div style={{
+              border: '2px solid black',
+              padding: '15px 40px',
+              borderRadius: '4px'
+            }}>
+              <a href="#" style={{
+                color: 'black',
+                textDecoration: 'none',
+                fontSize: '16px',
+                fontWeight: '400',
+                letterSpacing: '0.3em'
+              }}>SUBSCRIBE</a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
