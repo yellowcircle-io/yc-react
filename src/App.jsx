@@ -4,31 +4,226 @@ import './App.css'
 function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
+  const [scrollOffset, setScrollOffset] = useState(0);
 
-  // Track mouse movement for parallax effect on large circle
+  // PERFORMANCE OPTIMIZATION REMINDER: Consider memoizing circle generation
+  // and using CSS animations instead of JavaScript for better performance
+
+  // Track mouse movement and device motion for parallax effect (RESTORED)
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePosition({
-        x: (e.clientX / window.innerWidth) * 20 - 10, // Range: -10 to 10
-        y: (e.clientY / window.innerHeight) * 20 - 10
+        x: (e.clientX / window.innerWidth) * 40 - 20, // Range -20 to 20
+        y: (e.clientY / window.innerHeight) * 40 - 20 // RESTORED Y movement
       });
     };
 
+    const handleDeviceMotion = (e) => {
+      if (e.accelerationIncludingGravity) {
+        setDeviceMotion({
+          x: (e.accelerationIncludingGravity.x || 0) * 2,
+          y: (e.accelerationIncludingGravity.y || 0) * 2 // RESTORED Y movement
+        });
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        setMousePosition({
+          x: (touch.clientX / window.innerWidth) * 40 - 20,
+          y: (touch.clientY / window.innerHeight) * 40 - 20 // RESTORED Y movement
+        });
+      }
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('devicemotion', handleDeviceMotion);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('devicemotion', handleDeviceMotion);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, []);
+
+  // Track scroll/arrow key events for revealing content
+  useEffect(() => {
+    const handleScroll = (e) => {
+      e.preventDefault();
+      const delta = e.deltaY || e.deltaX;
+      setScrollOffset(prev => {
+        const newOffset = Math.max(0, Math.min(100, prev + delta * 0.05));
+        console.log('Scroll offset:', newOffset); // Debug log
+        return newOffset;
+      });
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        setScrollOffset(prev => {
+          const newOffset = Math.min(100, prev + 10);
+          console.log('Key scroll offset:', newOffset); // Debug log
+          return newOffset;
+        });
+      }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setScrollOffset(prev => {
+          const newOffset = Math.max(0, prev - 10);
+          console.log('Key scroll offset:', newOffset); // Debug log
+          return newOffset;
+        });
+      }
+    };
+
+    window.addEventListener('wheel', handleScroll, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('wheel', handleScroll);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Get mouse-based color for background circles (RESTORED)
+  const getMouseColor = () => {
+    const hue = ((mousePosition.x + 20) / 40) * 360;
+    const saturation = Math.abs(mousePosition.y + 20) / 40 * 100;
+    return `hsl(${hue}, ${saturation}%, 70%)`;
+  };
+
+  const parallaxX = mousePosition.x + deviceMotion.x;
+  const parallaxY = mousePosition.y + deviceMotion.y; // RESTORED Y movement
 
   return (
     <div style={{ 
       height: '100vh', 
       width: '100vw',
-      backgroundColor: '#f5f5f5', 
       position: 'relative', 
       overflow: 'hidden',
       margin: 0,
       padding: 0,
       fontFamily: 'Arial, sans-serif'
     }}>
+
+      {/* CSS for menu animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 0.96; }
+        }
+        @keyframes slideInUp {
+          from { 
+            opacity: 0; 
+            transform: translateY(30px); 
+          }
+          to { 
+            opacity: 1; 
+            transform: translateY(0); 
+          }
+        }
+        .menu-item-1 { animation: slideInUp 0.5s ease-out 0.1s both; }
+        .menu-item-2 { animation: slideInUp 0.5s ease-out 0.2s both; }
+        .menu-item-3 { animation: slideInUp 0.5s ease-out 0.3s both; }
+        .menu-item-4 { animation: slideInUp 0.5s ease-out 0.4s both; }
+        .menu-item-5 { animation: slideInUp 0.5s ease-out 0.5s both; }
+        .menu-item-6 { animation: slideInUp 0.5s ease-out 0.6s both; }
+      `}</style>
+
+      {/* 7. Background Images - Proper layering */}
+      {/* First Background - Default visible state */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/background_f7cdue.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        zIndex: 10
+      }}></div>
+
+      {/* Second Background - Slides in on scroll (higher z-index) */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: `${100 - scrollOffset}vw`, // Starts off-screen right, slides in from right
+        width: '100vw',
+        height: '100vh',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756496373/bg2_twmvqt.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        zIndex: 12, // Above first background
+        transition: 'left 0.5s ease-out'
+      }}></div>
+
+      {/* Scroll Progress Indicator (Placeholder/Debug) */}
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        color: 'white',
+        padding: '5px 10px',
+        borderRadius: '15px',
+        fontSize: '12px',
+        zIndex: 999
+      }}>
+        Scroll: {Math.round(scrollOffset)}% (Use wheel/arrows)
+      </div>
+
+      {/* 6. Large Yellow Circle - RESTORED full parallax movement */}
+      <div style={{ 
+        position: 'fixed', 
+        top: `calc(30% + ${parallaxY}px)`, 
+        left: `calc(20% + ${parallaxX}px)`, 
+        width: '300px', 
+        height: '300px', 
+        backgroundColor: '#fbbf24', 
+        borderRadius: '50%', 
+        zIndex: 20,
+        mixBlendMode: 'multiply',
+        transition: 'all 0.1s ease-out',
+        boxShadow: '0 20px 60px rgba(251,191,36,0.2)'
+      }}></div>
+
+      {/* 5. Parallax Motion Circles - RESTORED */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: 25
+      }}>
+        {[...Array(40)].map((_, i) => {
+          const size = 10 + Math.random() * 30;
+          const baseX = Math.random() * 100;
+          const baseY = Math.random() * 100;
+          return (
+            <div key={i} style={{
+              position: 'absolute',
+              left: `calc(${baseX}% + ${parallaxX * 0.3}px)`,
+              top: `calc(${baseY}% + ${parallaxY * 0.3}px)`,
+              width: `${size}px`,
+              height: `${size}px`,
+              backgroundColor: getMouseColor(),
+              borderRadius: '50%',
+              opacity: 0.6,
+              transition: 'background-color 0.3s ease'
+            }}></div>
+          );
+        })}
+      </div>
 
       {/* Top Navigation Bar */}
       <nav style={{ 
@@ -37,14 +232,13 @@ function HomePage() {
         left: 0,
         right: 0,
         height: '80px',
-        zIndex: 90,
+        zIndex: 40,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingLeft: '100px', // Account for sidebar width
+        paddingLeft: '4.7vw',
         paddingRight: '40px'
       }}>
-        {/* Centered YELLOWCIRCLE logo with black background */}
         <div style={{
           backgroundColor: 'black',
           padding: '10px',
@@ -60,205 +254,96 @@ function HomePage() {
             margin: 0
           }}>YELLOWCIRCLE</h1>
         </div>
-        
-        {/* Hamburger menu - right aligned with small circle */}
-        <button 
-          onClick={() => setMenuOpen(!menuOpen)}
-          style={{ 
-            position: 'absolute',
-            right: '50px', // Same distance as small circle
-            top: '50%',
-            transform: 'translateY(-50%)',
-            padding: '10px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            zIndex: 100
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
-            <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
-            <div style={{ width: '24px', height: '2px', backgroundColor: 'black' }}></div>
-          </div>
-        </button>
       </nav>
 
-      {/* Left Sidebar - max-width 100px */}
+      {/* 3. Left Sidebar */}
       <div style={{
         position: 'fixed',
         left: 0,
         top: 0,
-        width: '100px',
+        width: '4.7vw',
+        maxWidth: '90px',
         height: '100vh',
-        backgroundColor: '#f5f5f5',
-        zIndex: 80,
+        backgroundColor: 'white',
+        zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '60px'
       }}>
         
-        {/* HOME text - top aligned with padding */}
+        {/* HOME text - Updated to 14px */}
         <div style={{ 
-          paddingTop: '120px',
-          transform: 'rotate(-90deg)',
+          position: 'absolute',
+          top: '100px',
+          left: '50%',
+          transform: 'translateX(-50%) rotate(-90deg)',
           transformOrigin: 'center'
         }}>
           <span style={{ 
             color: 'black', 
-            fontWeight: '300', 
+            fontWeight: '600', 
             letterSpacing: '0.3em', 
-            fontSize: '11px'
+            fontSize: '14px' // Updated from 11px
           }}>HOME</span>
         </div>
 
-        {/* Copyright logo - center aligned */}
+        {/* YC Logo */}
         <div style={{ 
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)'
+          width: '40px', 
+          height: '40px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
-          <div style={{ 
-            width: '40px', 
-            height: '40px', 
-            border: '2px solid black', 
-            borderRadius: '50%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center'
-          }}>
-            <span style={{ color: 'black', fontSize: '10px', fontWeight: '300' }}>©</span>
-          </div>
+          <img 
+            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png" 
+            alt="YC Logo"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+          />
         </div>
       </div>
 
-      {/* Main Content Area - starts after sidebar */}
-      <div style={{ 
-        marginLeft: '100px',
-        height: '100vh',
-        width: 'calc(100vw - 100px)',
-        backgroundColor: 'black',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Background texture/pattern overlay */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'radial-gradient(circle at 30% 40%, rgba(40,40,40,0.8) 0%, rgba(0,0,0,0.9) 60%), linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(0,0,0,1) 100%)'
-        }}>
-          
-          {/* Ornate decorative elements */}
-          <div style={{
-            position: 'absolute',
-            top: '60px',
-            left: '40px',
-            right: '40px',
-            height: '120px'
-          }}>
-            {/* Circular ornamental patterns */}
-            {[...Array(8)].map((_, i) => (
-              <div key={i} style={{
-                position: 'absolute',
-                left: `${20 + i * 80}px`,
-                top: `${10 + (i % 2) * 40}px`,
-                width: `${15 + i * 3}px`,
-                height: `${15 + i * 3}px`,
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: '50%',
-                opacity: 0.7
-              }}></div>
-            ))}
-            
-            {/* Decorative dots */}
-            {[...Array(30)].map((_, i) => (
-              <div key={i} style={{
-                position: 'absolute',
-                left: `${Math.random() * 500}px`,
-                top: `${Math.random() * 100}px`,
-                width: `${2 + Math.random() * 4}px`,
-                height: `${2 + Math.random() * 4}px`,
-                backgroundColor: 'rgba(255,255,255,0.3)',
-                borderRadius: '50%'
-              }}></div>
-            ))}
-          </div>
-
-          {/* Jewelry/chain patterns */}
-          <div style={{
-            position: 'absolute',
-            right: '40px',
-            top: '25%',
-            bottom: '25%',
-            width: '150px'
-          }}>
-            {[...Array(5)].map((_, chainIndex) => (
-              <div key={chainIndex} style={{
-                position: 'absolute',
-                left: `${chainIndex * 25}px`,
-                top: 0,
-                bottom: 0
-              }}>
-                {[...Array(15)].map((_, beadIndex) => (
-                  <div key={beadIndex} style={{
-                    position: 'absolute',
-                    top: `${beadIndex * 20}px`,
-                    width: '6px',
-                    height: '6px',
-                    backgroundColor: 'rgba(255,255,255,0.5)',
-                    borderRadius: '50%',
-                    boxShadow: '0 0 4px rgba(255,255,255,0.2)'
-                  }}></div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Large Yellow Circle - Parallax Effect, Second Highest Z-Index */}
+      {/* 3. Navigation Circle */}
       <div style={{ 
         position: 'fixed', 
-        top: '30%', 
-        left: '20%',
-        width: '300px', 
-        height: '300px', 
-        backgroundColor: '#fbbf24', 
-        borderRadius: '50%', 
-        zIndex: 70,
-        mixBlendMode: 'multiply',
-        transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
-        transition: 'transform 0.1s ease-out',
-        background: 'radial-gradient(circle at 30% 30%, #fcd34d 0%, #f59e0b 40%, #d97706 100%)',
-        boxShadow: '0 20px 60px rgba(251,191,36,0.2)'
+        bottom: '50px', 
+        right: '50px',
+        zIndex: 50,
+        width: '60px',
+        height: '60px'
       }}>
-        <div style={{
-          position: 'absolute',
-          top: '40px',
-          left: '40px',
-          right: '40px',
-          bottom: '40px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle at 40% 40%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%)'
-        }}></div>
+        <img 
+          src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494537/NavCircle_ioqlsr.png"
+          alt="Navigation"
+          style={{
+            width: '100%',
+            height: '100%',
+            cursor: 'pointer',
+            objectFit: 'cover'
+          }}
+        />
       </div>
 
-      {/* Text Content - Highest Z-Index, Bottom Left */}
+      {/* 4. Text Content */}
       <div style={{
         position: 'fixed',
         bottom: '50px',
         left: '200px',
-        zIndex: 90,
-        maxWidth: '300px'
+        zIndex: 30,
+        maxWidth: '480px'
       }}>
         <div style={{ 
           color: 'black', 
-          fontWeight: '400', 
-          fontSize: '14px', 
+          fontWeight: '600',
+          fontSize: 'clamp(1rem, 1.7vw, 1.2rem)',
           lineHeight: '1.4', 
           letterSpacing: '0.05em',
           textAlign: 'left'
@@ -273,33 +358,67 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Small Navigation Circle - Bottom Right */}
-      <div style={{ 
-        position: 'fixed', 
-        bottom: '50px', 
-        right: '50px',
-        zIndex: 80
-      }}>
-        <div style={{ 
-          width: '60px', 
-          height: '60px', 
-          backgroundColor: '#fbbf24', 
-          borderRadius: '50%', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
+      {/* 1. Hamburger Menu Button - HIGHEST Z-INDEX */}
+      <button 
+        onClick={() => setMenuOpen(!menuOpen)}
+        style={{ 
+          position: 'fixed',
+          right: '50px',
+          top: '40px',
+          padding: '10px',
+          backgroundColor: 'transparent',
+          border: 'none',
           cursor: 'pointer',
-          boxShadow: '0 8px 32px rgba(251,191,36,0.3)',
-          background: 'radial-gradient(circle at 30% 30%, #fcd34d 0%, #f59e0b 70%)'
+          zIndex: 100
+        }}
+      >
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '24px',
+          height: '18px',
+          position: 'relative'
         }}>
-          {/* Downward Chevron */}
-          <svg style={{ width: '16px', height: '16px', color: 'black' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <div style={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '24px', 
+            height: '2px', 
+            backgroundColor: 'black',
+            transformOrigin: 'center',
+            transform: menuOpen ? 'translate(-50%, -50%) rotate(45deg)' : 'translate(-50%, -50%) translateY(-6px)',
+            transition: 'transform 0.3s ease'
+          }}></div>
+          <div style={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '24px', 
+            height: '2px', 
+            backgroundColor: 'black',
+            transformOrigin: 'center',
+            transform: 'translate(-50%, -50%)',
+            opacity: menuOpen ? 0 : 1,
+            transition: 'opacity 0.3s ease'
+          }}></div>
+          <div style={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '24px', 
+            height: '2px', 
+            backgroundColor: 'black',
+            transformOrigin: 'center',
+            transform: menuOpen ? 'translate(-50%, -50%) rotate(-45deg)' : 'translate(-50%, -50%) translateY(6px)',
+            transition: 'transform 0.3s ease'
+          }}></div>
         </div>
-      </div>
+      </button>
 
-      {/* Full Screen Menu Overlay */}
+      {/* 2. Full Screen Menu Overlay - with blur filter */}
       {menuOpen && (
         <div style={{
           position: 'fixed',
@@ -307,41 +426,25 @@ function HomePage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: '#fbbf24',
-          zIndex: 200,
+          backgroundColor: '#EECF00',
+          opacity: 0.96,
+          mixBlendMode: 'multiply',
+          zIndex: 90,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'radial-gradient(circle at center, #fcd34d 0%, #f59e0b 100%)'
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          animation: 'fadeIn 0.3s ease-out'
         }}>
-          {/* Close Button */}
-          <button
-            onClick={() => setMenuOpen(false)}
-            style={{
-              position: 'absolute',
-              top: '40px',
-              right: '40px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              fontSize: '30px',
-              color: 'black',
-              cursor: 'pointer',
-              width: '40px',
-              height: '40px'
-            }}
-          >
-            ×
-          </button>
-
-          {/* Menu Items */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: '40px'
           }}>
-            <a href="#" style={{
+            <a href="#" className="menu-item-1" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
@@ -351,7 +454,7 @@ function HomePage() {
               transition: 'opacity 0.3s'
             }}>HOME</a>
             
-            <a href="#" style={{
+            <a href="#" className="menu-item-2" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
@@ -361,7 +464,7 @@ function HomePage() {
               transition: 'opacity 0.3s'
             }}>EXPERIMENTS</a>
             
-            <a href="#" style={{
+            <a href="#" className="menu-item-3" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
@@ -371,7 +474,7 @@ function HomePage() {
               transition: 'opacity 0.3s'
             }}>THOUGHTS</a>
             
-            <a href="#" style={{
+            <a href="#" className="menu-item-4" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
@@ -381,8 +484,7 @@ function HomePage() {
               transition: 'opacity 0.3s'
             }}>ABOUT</a>
             
-            {/* Projects button with background */}
-            <div style={{
+            <div className="menu-item-5" style={{
               backgroundColor: 'rgba(0,0,0,0.1)',
               padding: '15px 40px',
               borderRadius: '4px'
@@ -396,8 +498,7 @@ function HomePage() {
               }}>PROJECTS</a>
             </div>
             
-            {/* Subscribe button with border */}
-            <div style={{
+            <div className="menu-item-6" style={{
               border: '2px solid black',
               padding: '15px 40px',
               borderRadius: '4px'
