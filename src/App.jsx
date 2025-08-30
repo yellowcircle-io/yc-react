@@ -55,7 +55,7 @@ function HomePage() {
       e.preventDefault();
       const delta = e.deltaY || e.deltaX;
       setScrollOffset(prev => {
-        const newOffset = Math.max(0, Math.min(100, prev + delta * 0.05));
+        const newOffset = Math.max(0, Math.min(200, prev + delta * 0.045)); // 10% slower
         console.log('Scroll offset:', newOffset); // Debug log
         return newOffset;
       });
@@ -65,7 +65,7 @@ function HomePage() {
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
         e.preventDefault();
         setScrollOffset(prev => {
-          const newOffset = Math.min(100, prev + 10);
+          const newOffset = Math.min(200, prev + 9); // 10% slower
           console.log('Key scroll offset:', newOffset); // Debug log
           return newOffset;
         });
@@ -73,7 +73,7 @@ function HomePage() {
       if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
         e.preventDefault();
         setScrollOffset(prev => {
-          const newOffset = Math.max(0, prev - 10);
+          const newOffset = Math.max(0, prev - 9); // 10% slower
           console.log('Key scroll offset:', newOffset); // Debug log
           return newOffset;
         });
@@ -96,8 +96,8 @@ function HomePage() {
     return `hsl(${hue}, ${saturation}%, 70%)`;
   };
 
-  const parallaxX = mousePosition.x + deviceMotion.x;
-  const parallaxY = mousePosition.y + deviceMotion.y; // RESTORED Y movement
+  const parallaxX = (mousePosition.x + deviceMotion.x) * 0.2; // 60% reduction from 0.5
+  const parallaxY = (mousePosition.y + deviceMotion.y) * 0.2; // 60% reduction from 0.5
 
   return (
     <div style={{ 
@@ -132,35 +132,53 @@ function HomePage() {
         .menu-item-4 { animation: slideInUp 0.5s ease-out 0.4s both; }
         .menu-item-5 { animation: slideInUp 0.5s ease-out 0.5s both; }
         .menu-item-6 { animation: slideInUp 0.5s ease-out 0.6s both; }
+        .menu-link:hover { background-color: white; transition: background-color 0.3s ease; }
+        .subscribe-btn:hover { background-color: white !important; transition: background-color 0.3s ease; }
       `}</style>
 
-      {/* 7. Background Images - Proper layering */}
-      {/* First Background - Default visible state */}
+      {/* Multi-page Background System */}
+      {/* Page 1 - Reverted to original background */}
       <div style={{
         position: 'fixed',
         top: 0,
-        left: 0,
+        left: scrollOffset <= 100 ? `-${scrollOffset}vw` : '-100vw', // Scrolls past sidebar
         width: '100vw',
         height: '100vh',
         backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/background_f7cdue.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        zIndex: 10
+        zIndex: 10,
+        transition: 'left 0.5s ease-out'
       }}></div>
 
-      {/* Second Background - Slides in on scroll (higher z-index) */}
+      {/* Page 2 - Updated background */}
       <div style={{
         position: 'fixed',
         top: 0,
-        left: `${100 - scrollOffset}vw`, // Starts off-screen right, slides in from right
+        left: scrollOffset <= 100 ? `${100 - scrollOffset}vw` : '0vw', // Scrolls past sidebar
         width: '100vw',
         height: '100vh',
-        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756496373/bg2_twmvqt.png)',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756513503/Group_34_tfqn6y.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        zIndex: 12, // Above first background
+        zIndex: 11,
+        transition: 'left 0.5s ease-out'
+      }}></div>
+
+      {/* Page 3 - Third background (overlay style) */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: scrollOffset > 100 ? `${200 - scrollOffset}vw` : '100vw', // Starts when scroll > 100
+        width: '100vw',
+        height: '100vh',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756512745/bg-3_xbayq3.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        zIndex: 12, // Above other backgrounds
         transition: 'left 0.5s ease-out'
       }}></div>
 
@@ -177,14 +195,14 @@ function HomePage() {
         fontSize: '12px',
         zIndex: 999
       }}>
-        Scroll: {Math.round(scrollOffset)}% (Use wheel/arrows)
+        Scroll: {Math.round(scrollOffset)}% (Use wheel/arrows) - Page {scrollOffset < 100 ? '1-2' : '3'}
       </div>
 
-      {/* 6. Large Yellow Circle - RESTORED full parallax movement */}
+      {/* Large Yellow Circle - Moved 300px right, 100px up, reduced parallax */}
       <div style={{ 
         position: 'fixed', 
-        top: `calc(30% + ${parallaxY}px)`, 
-        left: `calc(20% + ${parallaxX}px)`, 
+        top: `calc(20% + ${parallaxY}px)`, // 100px up from 30%
+        left: `calc(38% + ${parallaxX}px)`, // 300px right from 20% 
         width: '300px', 
         height: '300px', 
         backgroundColor: '#fbbf24', 
@@ -195,7 +213,7 @@ function HomePage() {
         boxShadow: '0 20px 60px rgba(251,191,36,0.2)'
       }}></div>
 
-      {/* 5. Parallax Motion Circles - RESTORED */}
+      {/* Parallax Motion Circles - Further reduced count and opacity */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -203,9 +221,9 @@ function HomePage() {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 25
+        zIndex: 18 // Next-to-last z-level
       }}>
-        {[...Array(40)].map((_, i) => {
+        {[...Array(8)].map((_, i) => { // 50% reduction from 16 to 8
           const size = 10 + Math.random() * 30;
           const baseX = Math.random() * 100;
           const baseY = Math.random() * 100;
@@ -218,7 +236,7 @@ function HomePage() {
               height: `${size}px`,
               backgroundColor: getMouseColor(),
               borderRadius: '50%',
-              opacity: 0.6,
+              opacity: 0.1, // Reduced to 10% opacity
               transition: 'background-color 0.3s ease'
             }}></div>
           );
@@ -311,14 +329,14 @@ function HomePage() {
         </div>
       </div>
 
-      {/* 3. Navigation Circle */}
+      {/* 3. Navigation Circle - 30% bigger */}
       <div style={{ 
         position: 'fixed', 
         bottom: '50px', 
         right: '50px',
         zIndex: 50,
-        width: '60px',
-        height: '60px'
+        width: '78px', // 30% bigger than 60px
+        height: '78px'
       }}>
         <img 
           src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494537/NavCircle_ioqlsr.png"
@@ -418,7 +436,7 @@ function HomePage() {
         </div>
       </button>
 
-      {/* 2. Full Screen Menu Overlay - with blur filter */}
+      {/* 2. Full Screen Menu Overlay - Updated styling to match attached */}
       {menuOpen && (
         <div style={{
           position: 'fixed',
@@ -428,8 +446,7 @@ function HomePage() {
           bottom: 0,
           backgroundColor: '#EECF00',
           opacity: 0.96,
-          mixBlendMode: 'multiply',
-          zIndex: 90,
+          zIndex: 90, // Removed mixBlendMode
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -444,44 +461,52 @@ function HomePage() {
             alignItems: 'center',
             gap: '40px'
           }}>
-            <a href="#" className="menu-item-1" style={{
+            <a href="#" className="menu-item-1 menu-link" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
-              fontWeight: '300',
+              fontWeight: '500', // Updated to 500
               letterSpacing: '0.3em',
               opacity: 0.7,
-              transition: 'opacity 0.3s'
+              padding: '10px 20px',
+              borderRadius: '4px',
+              transition: 'background-color 0.3s ease'
             }}>HOME</a>
             
-            <a href="#" className="menu-item-2" style={{
+            <a href="#" className="menu-item-2 menu-link" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
-              fontWeight: '300',
+              fontWeight: '500', // Updated to 500
               letterSpacing: '0.3em',
               opacity: 0.7,
-              transition: 'opacity 0.3s'
+              padding: '10px 20px',
+              borderRadius: '4px',
+              transition: 'background-color 0.3s ease'
             }}>EXPERIMENTS</a>
             
-            <a href="#" className="menu-item-3" style={{
+            <a href="#" className="menu-item-3 menu-link" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
-              fontWeight: '300',
+              fontWeight: '500', // Updated to 500
               letterSpacing: '0.3em',
               opacity: 0.7,
-              transition: 'opacity 0.3s'
+              padding: '10px 20px',
+              borderRadius: '4px',
+              transition: 'background-color 0.3s ease'
             }}>THOUGHTS</a>
             
-            <a href="#" className="menu-item-4" style={{
+            <a href="#" className="menu-item-4 menu-link" style={{
               color: 'black',
               textDecoration: 'none',
               fontSize: '16px',
-              fontWeight: '300',
+              fontWeight: '500', // Updated to 500
               letterSpacing: '0.3em',
               opacity: 0.7,
-              transition: 'opacity 0.3s'
+              padding: '10px 20px',
+              borderRadius: '4px',
+              transition: 'background-color 0.3s ease'
             }}>ABOUT</a>
             
             <div className="menu-item-5" style={{
@@ -489,25 +514,29 @@ function HomePage() {
               padding: '15px 40px',
               borderRadius: '4px'
             }}>
-              <a href="#" style={{
+              <a href="#" className="menu-link" style={{
                 color: 'black',
                 textDecoration: 'none',
                 fontSize: '16px',
-                fontWeight: '400',
-                letterSpacing: '0.3em'
+                fontWeight: '500', // Updated to 500
+                letterSpacing: '0.3em',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                transition: 'background-color 0.3s ease'
               }}>PROJECTS</a>
             </div>
             
-            <div className="menu-item-6" style={{
+            <div className="menu-item-6 subscribe-btn" style={{
               border: '2px solid black',
               padding: '15px 40px',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              transition: 'background-color 0.3s ease'
             }}>
               <a href="#" style={{
                 color: 'black',
                 textDecoration: 'none',
                 fontSize: '16px',
-                fontWeight: '400',
+                fontWeight: '500', // Updated to 500
                 letterSpacing: '0.3em'
               }}>SUBSCRIBE</a>
             </div>
