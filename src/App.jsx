@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -6,127 +6,274 @@ function HomePage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [expandedSection, setExpandedSection] = useState(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
 
-  // Track mouse movement and device motion for parallax effect
+  // Optimized mouse movement handler with throttling
+  const handleMouseMove = useCallback((e) => {
+    setMousePosition({
+      x: (e.clientX / window.innerWidth) * 60 - 20,
+      y: (e.clientY / window.innerHeight) * 40 - 20
+    });
+  }, []);
+
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 40 - 20,
-        y: (e.clientY / window.innerHeight) * 40 - 20
-      });
+    let timeoutId;
+    const throttledMouseMove = (e) => {
+      if (timeoutId) return;
+      timeoutId = setTimeout(() => {
+        handleMouseMove(e);
+        timeoutId = null;
+      }, 16); // ~60fps
     };
 
-    const handleDeviceMotion = (e) => {
-      if (e.accelerationIncludingGravity) {
-        setDeviceMotion({
-          x: (e.accelerationIncludingGravity.x || 0) * 2,
-          y: (e.accelerationIncludingGravity.y || 0) * 2
-        });
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        setMousePosition({
-          x: (touch.clientX / window.innerWidth) * 40 - 20,
-          y: (touch.clientY / window.innerHeight) * 40 - 20
-        });
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('devicemotion', handleDeviceMotion);
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    
+    window.addEventListener('mousemove', throttledMouseMove);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('devicemotion', handleDeviceMotion);
-      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('mousemove', throttledMouseMove);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [handleMouseMove]);
+
+  // Device motion with better error handling
+  useEffect(() => {
+    const handleDeviceOrientation = (e) => {
+      if (e.gamma !== null && e.beta !== null) {
+        setDeviceMotion({
+          x: Math.max(-20, Math.min(20, (e.gamma / 90) * 20)),
+          y: Math.max(-20, Math.min(20, (e.beta / 180) * 20))
+        });
+      }
+    };
+
+    if ('DeviceOrientationEvent' in window) {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', handleDeviceOrientation);
+            }
+          })
+          .catch(() => {}); // Silent fail for unsupported devices
+      } else {
+        window.addEventListener('deviceorientation', handleDeviceOrientation);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleDeviceOrientation);
     };
   }, []);
 
-  // Track scroll/arrow key events and touch inputs for mobile
+  // Consolidated scroll and keyboard handling
   useEffect(() => {
-    const handleScroll = (e) => {
-      e.preventDefault();
-      let delta = 0;
-      
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        delta = e.deltaX * 0.08;
-      } else {
-        delta = e.deltaY * 0.025;
-      }
-      
-      setScrollOffset(prev => {
-        const newOffset = Math.max(0, Math.min(200, prev + delta));
-        return newOffset;
-      });
+    const updateScrollOffset = (delta) => {
+      setScrollOffset(prev => Math.max(0, Math.min(200, prev + delta)));
     };
 
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) 
+        ? e.deltaX * 0.08 
+        : e.deltaY * 0.025;
+      updateScrollOffset(delta);
+    };
+
+    const handleKeyDown = (e) => {
+      switch(e.key) {
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault();
+          updateScrollOffset(9);
+          break;
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          e.preventDefault();
+          updateScrollOffset(-9);
+          break;
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Optimized touch handling
+  useEffect(() => {
     const handleTouchStart = (e) => {
-      const touch = e.touches[0];
-      setMousePosition({
-        startX: touch.clientX,
-        startY: touch.clientY,
-        x: (touch.clientX / window.innerWidth) * 40 - 20,
-        y: (touch.clientY / window.innerHeight) * 40 - 20
-      });
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+      }
     };
 
     const handleTouchMove = (e) => {
-      if (e.touches.length === 1 || e.touches.length === 2) {
+      if (e.touches.length === 1) {
         const touch = e.touches[0];
-        const deltaX = (mousePosition.startX || touch.clientX) - touch.clientX;
+        const deltaX = touchStartRef.current.x - touch.clientX;
+        const deltaY = touchStartRef.current.y - touch.clientY;
         
-        setMousePosition(prev => ({
-          ...prev,
-          x: (touch.clientX / window.innerWidth) * 40 - 20,
-          y: (touch.clientY / window.innerHeight) * 40 - 20
-        }));
+        const scrollDelta = Math.abs(deltaX) > Math.abs(deltaY) 
+          ? deltaX * 0.5 
+          : deltaY * 0.3;
         
-        if (Math.abs(deltaX) > 5) {
-          setScrollOffset(prev => {
-            const newOffset = Math.max(0, Math.min(200, prev + deltaX * 0.1));
-            return newOffset;
-          });
+        if (Math.abs(scrollDelta) > 0.5) {
+          setScrollOffset(prev => Math.max(0, Math.min(200, prev + scrollDelta)));
+          touchStartRef.current = { x: touch.clientX, y: touch.clientY };
         }
       }
     };
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        setScrollOffset(prev => Math.min(200, prev + 9));
-      }
-      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setScrollOffset(prev => Math.max(0, prev - 9));
-      }
-    };
-
-    window.addEventListener('wheel', handleScroll, { passive: false });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
     
     return () => {
-      window.removeEventListener('wheel', handleScroll);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [mousePosition]);
+  }, []);
 
   const parallaxX = (mousePosition.x + deviceMotion.x) * 0.6;
   const parallaxY = (mousePosition.y + deviceMotion.y) * 0.6;
 
-  // Handle home navigation
   const handleHomeClick = (e) => {
     e.preventDefault();
     setScrollOffset(0);
     setMenuOpen(false);
   };
+
+  // Reusable navigation item component
+  const NavigationItem = ({ icon, label, subItems, itemKey }) => (
+    <div 
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: sidebarOpen ? 'flex-start' : 'center',
+        padding: '20px 0',
+        cursor: 'pointer',
+        position: 'relative',
+        width: '100%'
+      }}
+      onMouseEnter={() => setHoveredItem(itemKey)}
+      onMouseLeave={() => setHoveredItem(null)}
+      onClick={() => {
+        if (!sidebarOpen) {
+          setSidebarOpen(true);
+        } else {
+          setExpandedSection(expandedSection === itemKey ? null : itemKey);
+        }
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img 
+          src={icon}
+          alt={label}
+          width="24" 
+          height="24" 
+          style={{ flexShrink: 0 }}
+        />
+        {sidebarOpen && (
+          <span style={{
+            marginLeft: '15px',
+            color: 'black',
+            fontSize: '14px',
+            fontWeight: '600',
+            letterSpacing: '0.2em',
+            opacity: sidebarOpen ? 1 : 0,
+            transition: 'opacity 0.3s ease-out 0.2s'
+          }}>{label}</span>
+        )}
+      </div>
+      
+      {sidebarOpen && expandedSection === itemKey && subItems && (
+        <div style={{
+          marginLeft: '39px',
+          marginTop: '10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          {subItems.map((item, index) => (
+            <a key={index} href="#" style={{
+              color: 'rgba(0,0,0,0.7)',
+              fontSize: '12px',
+              fontWeight: '500',
+              letterSpacing: '0.1em',
+              textDecoration: 'none'
+            }}>{item}</a>
+          ))}
+        </div>
+      )}
+      
+      {!sidebarOpen && hoveredItem === itemKey && (
+        <div style={{
+          position: 'absolute',
+          left: '60px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          backgroundColor: '#EECF00',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          padding: '8px 16px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          fontWeight: '600',
+          letterSpacing: '0.2em',
+          color: 'black',
+          zIndex: 1000,
+          opacity: 0.96,
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}>
+          {label}
+          <div style={{
+            position: 'absolute',
+            left: '-6px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '0',
+            height: '0',
+            borderTop: '6px solid transparent',
+            borderBottom: '6px solid transparent',
+            borderRight: '6px solid #EECF00'
+          }}></div>
+        </div>
+      )}
+    </div>
+  );
+
+  const navigationItems = [
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
+      label: "EXPERIMENTS",
+      itemKey: "experiments",
+      subItems: ["golden unknown", "being + rhyme", "cath3dral"]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684385/write-book_gfaiu8.png",
+      label: "THOUGHTS",
+      itemKey: "thoughts",
+      subItems: ["blog"]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
+      label: "ABOUT",
+      itemKey: "about",
+      subItems: ["about me", "about yellowcircle", "contact"]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
+      label: "WORKS",
+      itemKey: "works",
+      subItems: ["consulting", "rho", "reddit", "cv"]
+    }
+  ];
 
   return (
     <div style={{ 
@@ -138,32 +285,18 @@ function HomePage() {
       padding: 0,
       fontFamily: 'Arial, sans-serif'
     }}>
-
-      {/* CSS for animations */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 0.96; }
         }
         @keyframes slideInStagger {
-          from { 
-            opacity: 0; 
-            transform: translateY(20px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0); 
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes buttonFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .menu-item-1 { animation: slideInStagger 0.4s ease-out 0.1s both; }
         .menu-item-2 { animation: slideInStagger 0.4s ease-out 0.2s both; }
@@ -172,35 +305,21 @@ function HomePage() {
         .menu-button-5 { animation: buttonFadeIn 0.4s ease-out 0.6s both; }
         .menu-button-6 { animation: buttonFadeIn 0.4s ease-out 0.7s both; }
         
-        /* Updated menu link hover with 1-second ease-in transition */
         .menu-link {
           color: black;
           transition: color 1s ease-in;
         }
-        .menu-link:hover {
-          color: white !important;
-        }
+        .menu-link:hover { color: white !important; }
         
-        .works-btn {
-          transition: background-color 1s ease-in;
-        }
-        .works-btn:hover { 
-          background-color: rgba(0,0,0,1) !important; 
-        }
-        .works-btn:hover .works-text { 
-          color: #EECF00 !important; 
-          transition: color 1s ease-in; 
-        }
-        .contact-btn {
-          transition: background-color 1s ease-in;
-        }
-        .contact-btn:hover { 
-          background-color: white !important; 
-        }
+        .works-btn { transition: background-color 1s ease-in; }
+        .works-btn:hover { background-color: rgba(0,0,0,1) !important; }
+        .works-btn:hover .works-text { color: #EECF00 !important; transition: color 1s ease-in; }
+        
+        .contact-btn { transition: background-color 1s ease-in; }
+        .contact-btn:hover { background-color: white !important; }
       `}</style>
 
-      {/* Multi-page Background System */}
-      {/* Page 1 */}
+      {/* Background System */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -215,7 +334,6 @@ function HomePage() {
         transition: 'left 0.5s ease-out'
       }}></div>
 
-      {/* Page 2 */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -230,7 +348,6 @@ function HomePage() {
         transition: 'left 0.5s ease-out'
       }}></div>
 
-      {/* Page 3 */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -248,8 +365,8 @@ function HomePage() {
       {/* Scroll Progress Indicator */}
       <div style={{
         position: 'fixed',
-        bottom: 'calc(50px - 30px)',
-        left: 'calc(200px - 80px)',
+        bottom: '20px',
+        left: '120px',
         backgroundColor: 'rgba(0,0,0,0.5)',
         color: 'white',
         padding: '5px 10px',
@@ -257,10 +374,10 @@ function HomePage() {
         fontSize: '12px',
         zIndex: 999
       }}>
-        Scroll: {Math.round(scrollOffset)}% (Use wheel/arrows) - Page {scrollOffset < 100 ? '1-2' : '3'}
+        Scroll: {Math.round(scrollOffset)}% - Page {scrollOffset < 100 ? '1-2' : '3'}
       </div>
 
-      {/* Large Yellow Circle with parallax */}
+      {/* Yellow Circle with Parallax */}
       <div style={{ 
         position: 'fixed', 
         top: `calc(20% + ${parallaxY}px)`,
@@ -275,7 +392,7 @@ function HomePage() {
         boxShadow: '0 20px 60px rgba(251,191,36,0.2)'
       }}></div>
 
-      {/* Top Navigation Bar */}
+      {/* Navigation Bar */}
       <nav style={{ 
         position: 'fixed',
         top: 0,
@@ -289,7 +406,6 @@ function HomePage() {
         paddingLeft: '4.7vw',
         paddingRight: '40px'
       }}>
-        {/* Wordmark - Now links to home */}
         <a 
           href="#" 
           onClick={handleHomeClick}
@@ -315,27 +431,30 @@ function HomePage() {
         </a>
       </nav>
 
-      {/* Left Sidebar with transition */}
+      {/* Sidebar */}
       <div style={{
         position: 'fixed',
         left: 0,
         top: 0,
-        width: sidebarOpen ? '25vw' : '4.7vw',
-        maxWidth: sidebarOpen ? '400px' : '90px',
+        width: sidebarOpen ? '30vw' : '4.7vw',
+        minWidth: '40px',
+        maxWidth: sidebarOpen ? '450px' : '90px',
         height: '100vh',
-        backgroundColor: 'white',
+        backgroundColor: 'rgba(242, 242, 242, 0.96)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         zIndex: 50,
         transition: 'width 0.5s ease-out, max-width 0.5s ease-out',
       }}>
         
-        {/* Sidebar Icon - Fixed position, no movement */}
+        {/* Sidebar Toggle */}
         <div 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           style={{
             position: 'absolute',
-            top: '30px',
-            left: 'calc(2.35vw)',  // Fixed to center of closed sidebar width
-            maxLeft: '45px',  // Max position when using vw
+            top: '12px',
+            left: 'calc(2.35vw)',
+            minLeft: '20px',
             transform: 'translateX(-50%)',
             cursor: 'pointer',
             display: 'flex',
@@ -344,18 +463,18 @@ function HomePage() {
             padding: '10px'
           }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="black" viewBox="0 0 16 16">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="black" viewBox="0 0 16 16">
             <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/>
             <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
           </svg>
         </div>
         
-        {/* HOME text - Vertical (always present, fades out when sidebar opens) */}
+        {/* HOME Labels */}
         <div style={{ 
           position: 'absolute',
           top: '100px',
-          left: 'calc(2.35vw)',  // Fixed to center of closed sidebar width
-          maxLeft: '45px',
+          left: 'calc(2.35vw)',
+          minLeft: '20px',
           transform: 'translateX(-50%) rotate(-90deg)',
           transformOrigin: 'center',
           opacity: sidebarOpen ? 0 : 1,
@@ -370,11 +489,10 @@ function HomePage() {
           }}>HOME</span>
         </div>
         
-        {/* HOME text - Horizontal (always present, fades in when sidebar opens) */}
         <div style={{ 
           position: 'absolute',
-          top: '40px',
-          left: '100px',
+          top: '26px',
+          left: '8.5vw',
           opacity: sidebarOpen ? 1 : 0,
           transition: 'opacity 0.5s ease-out',
           pointerEvents: sidebarOpen ? 'auto' : 'none'
@@ -387,29 +505,38 @@ function HomePage() {
           }}>HOME</span>
         </div>
 
-        {/* YC Logo - Fixed position at bottom */}
+        {/* Navigation Items */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0px'
+        }}>
+          {navigationItems.map((item) => (
+            <NavigationItem key={item.itemKey} {...item} />
+          ))}
+        </div>
+
+        {/* YC Logo */}
         <div style={{ 
           position: 'absolute',
           bottom: '20px',
-          left: 'calc(2.35vw)',  // Fixed to center of closed sidebar width
-          maxLeft: '45px',
+          left: 'calc(2.35vw)',
+          minLeft: '20px',
           transform: 'translateX(-50%)',
           width: '40px', 
           height: '40px',
           borderRadius: '50%',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          overflow: 'hidden'
         }}>
           <img 
             src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png" 
             alt="YC Logo"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
       </div>
@@ -447,27 +574,37 @@ function HomePage() {
           color: 'black', 
           fontWeight: '600',
           fontSize: 'clamp(1rem, 1.7vw, 1.2rem)',
-          lineHeight: '1.4', 
+          lineHeight: '1.1', 
           letterSpacing: '0.05em',
           textAlign: 'left'
         }}>
-          <p style={{ margin: '2px 0' }}>VIVAMUS SAGITTIS LACUS VEL</p>
-          <p style={{ margin: '2px 0' }}>AUGUE LAOREET RUTRUM</p>
-          <p style={{ margin: '2px 0' }}>FAUCIBUS DOLOR AUCTOR.</p>
-          <p style={{ margin: '2px 0' }}>AENEAN EU LEO QUAM.</p>
-          <p style={{ margin: '2px 0' }}>PELLENTESQUE ORNARE SEM</p>
-          <p style={{ margin: '2px 0' }}>LACINIA QUAM VENENATIS</p>
-          <p style={{ margin: '2px 0' }}>VESTIBULUM. DONEC</p>
+          {[
+            'VIVAMUS SAGITTIS LACUS VEL',
+            'AUGUE LAOREET RUTRUM',
+            'FAUCIBUS DOLOR AUCTOR.',
+            'AENEAN EU LEO QUAM.',
+            'PELLENTESQUE ORNARE SEM',
+            'LACINIA QUAM VENENATIS',
+            'VESTIBULUM. DONEC'
+          ].map((text, index) => (
+            <p key={index} style={{ 
+              margin: '2px 0',
+              backgroundColor: 'rgba(241, 239, 232, 0.38)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              display: 'inline-block'
+            }}>{text}</p>
+          ))}
         </div>
       </div>
 
-      {/* Hamburger Menu Button */}
+      {/* Hamburger Menu */}
       <button 
         onClick={() => setMenuOpen(!menuOpen)}
         style={{ 
           position: 'fixed',
           right: '50px',
-          top: '30px',
+          top: '20px',
           padding: '10px',
           backgroundColor: 'transparent',
           border: 'none',
@@ -484,44 +621,30 @@ function HomePage() {
           height: '18px',
           position: 'relative'
         }}>
-          <div style={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '40px', 
-            height: '3px', 
-            backgroundColor: 'black',
-            transformOrigin: 'center',
-            transform: menuOpen ? 'translate(-50%, -50%) rotate(45deg)' : 'translate(-50%, -50%) translateY(-6px)',
-            transition: 'transform 0.3s ease'
-          }}></div>
-          <div style={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '60%',
-            width: '40px', 
-            height: '3px', 
-            backgroundColor: 'black',
-            transformOrigin: 'center',
-            transform: 'translate(-50%, -50%)',
-            opacity: menuOpen ? 0 : 1,
-            transition: 'opacity 0.3s ease'
-          }}></div>
-          <div style={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '40px', 
-            height: '3px', 
-            backgroundColor: 'black',
-            transformOrigin: 'center',
-            transform: menuOpen ? 'translate(-50%, -50%) rotate(-45deg)' : 'translate(-50%, -50%) translateY(6px)',
-            transition: 'transform 0.3s ease'
-          }}></div>
+          {[0, 1, 2].map((index) => (
+            <div key={index} style={{ 
+              position: 'absolute',
+              top: '50%',
+              left: index === 1 ? '60%' : '50%',
+              width: '40px', 
+              height: '3px', 
+              backgroundColor: 'black',
+              transformOrigin: 'center',
+              transform: menuOpen 
+                ? index === 0 
+                  ? 'translate(-50%, -50%) rotate(45deg)'
+                  : index === 2 
+                    ? 'translate(-50%, -50%) rotate(-45deg)'
+                    : 'translate(-50%, -50%)'
+                : `translate(-50%, -50%) translateY(${(index - 1) * 6}px)`,
+              opacity: menuOpen && index === 1 ? 0 : 1,
+              transition: 'all 0.3s ease'
+            }}></div>
+          ))}
         </div>
       </button>
 
-      {/* Full Screen Menu Overlay */}
+      {/* Menu Overlay */}
       {menuOpen && (
         <div style={{
           position: 'fixed',
@@ -536,8 +659,8 @@ function HomePage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
@@ -546,44 +669,24 @@ function HomePage() {
             alignItems: 'center',
             gap: '10px'
           }}>
-            {/* First 4 menu items with 1-second ease-in transition */}
-            <a href="#" onClick={handleHomeClick} className="menu-item-1 menu-link" style={{
-              textDecoration: 'none',
-              fontSize: '20px',
-              fontWeight: '600',
-              letterSpacing: '0.3em',
-              padding: '10px 20px',
-              borderRadius: '4px'
-            }}>HOME</a>
+            {['HOME', 'EXPERIMENTS', 'THOUGHTS', 'ABOUT'].map((item, index) => (
+              <a key={item} 
+                href="#" 
+                onClick={item === 'HOME' ? handleHomeClick : undefined}
+                className={`menu-item-${index + 1} menu-link`} 
+                style={{
+                  textDecoration: 'none',
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  letterSpacing: '0.3em',
+                  padding: '10px 20px',
+                  borderRadius: '4px'
+                }}
+              >
+                {item}
+              </a>
+            ))}
             
-            <a href="#" className="menu-item-2 menu-link" style={{
-              textDecoration: 'none',
-              fontSize: '20px',
-              fontWeight: '600',
-              letterSpacing: '0.3em',
-              padding: '10px 20px',
-              borderRadius: '4px'
-            }}>EXPERIMENTS</a>
-            
-            <a href="#" className="menu-item-3 menu-link" style={{
-              textDecoration: 'none',
-              fontSize: '20px',
-              fontWeight: '600',
-              letterSpacing: '0.3em',
-              padding: '10px 20px',
-              borderRadius: '4px'
-            }}>THOUGHTS</a>
-            
-            <a href="#" className="menu-item-4 menu-link" style={{
-              textDecoration: 'none',
-              fontSize: '20px',
-              fontWeight: '600',
-              letterSpacing: '0.3em',
-              padding: '10px 20px',
-              borderRadius: '4px'
-            }}>ABOUT</a>
-            
-            {/* Works button (formerly Projects) */}
             <div className="menu-button-5 works-btn" style={{
               backgroundColor: 'rgba(0,0,0,0.1)',
               padding: '15px 40px',
@@ -599,7 +702,6 @@ function HomePage() {
               }}>WORKS</span>
             </div>
             
-            {/* Contact button (formerly Subscribe) */}
             <div className="menu-button-6 contact-btn" style={{
               border: '2px solid black',
               padding: '15px 40px',
@@ -620,8 +722,6 @@ function HomePage() {
   );
 }
 
-function App() {
+export default function App() {
   return <HomePage />;
 }
-
-export default App;
