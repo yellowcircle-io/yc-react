@@ -6,7 +6,6 @@ function HomePage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null);
   const [footerOpen, setFooterOpen] = useState(false);
   const [navCircleRotation, setNavCircleRotation] = useState(0); // Start at 0 degrees, animate to -90
@@ -76,13 +75,12 @@ function HomePage() {
     };
   }, []);
 
-  // Consolidated scroll and keyboard handling
-  useEffect(() => {
-    const updateScrollOffset = (delta) => {
-      const newOffset = Math.max(0, Math.min(200, scrollOffset + delta));
-      setScrollOffset(newOffset);
+  // Simplified smooth scrolling system
+  const updateScrollOffset = useCallback((delta) => {
+    setScrollOffset(prev => {
+      const newOffset = Math.max(0, Math.min(200, prev + delta));
       
-      // Update navigation circle rotation and state based on scroll
+      // Update navigation circle rotation and state
       if (newOffset >= 200) {
         setNavCircleRotation(0);
         setNavCircleAtEnd(true);
@@ -91,43 +89,81 @@ function HomePage() {
         setNavCircleRotation(-90 + rotationProgress);
         setNavCircleAtEnd(false);
       }
-    };
+      
+      return newOffset;
+    });
+  }, []);
 
+  // Mouse wheel handling with improved sensitivity
+  useEffect(() => {
     const handleWheel = (e) => {
       e.preventDefault();
-      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) 
-        ? e.deltaX * 0.08 
-        : e.deltaY * 0.025;
+      
+      // Improved delta normalization for better cross-device consistency
+      let delta = 0;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        // Horizontal scrolling (trackpad side-scroll, shift+wheel)
+        delta = e.deltaX * 0.05;
+      } else {
+        // Vertical scrolling (most common) - increased sensitivity
+        delta = e.deltaY * 0.05;
+      }
+      
       updateScrollOffset(delta);
     };
 
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, [updateScrollOffset]);
+
+  // Keyboard handling with consistent sensitivity
+  useEffect(() => {
     const handleKeyDown = (e) => {
       switch(e.key) {
         case 'ArrowDown':
         case 'ArrowRight':
           e.preventDefault();
-          updateScrollOffset(9);
+          updateScrollOffset(10);
           break;
         case 'ArrowUp':
         case 'ArrowLeft':
           e.preventDefault();
-          updateScrollOffset(-9);
+          updateScrollOffset(-10);
           break;
       }
     };
 
-    window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
     
     return () => {
-      window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [scrollOffset]);
+  }, [updateScrollOffset]);
 
-  // Optimized touch handling
+  // Simplified touch handling - only handle scrolling on background areas
   useEffect(() => {
     const handleTouchStart = (e) => {
+      // Only handle touch on the background images or main content areas
+      const target = e.target;
+      const isBackground = target.style.backgroundImage || 
+                          target.closest('[style*="background-image"]') ||
+                          target.tagName === 'BODY' ||
+                          target.classList.contains('scrollable-area');
+      
+      // Skip touch handling if it's on any interactive element
+      if (!isBackground || 
+          target.closest('.clickable-element') || 
+          target.closest('button') || 
+          target.closest('a') ||
+          target.closest('nav') ||
+          target.closest('[role="button"]') ||
+          target.closest('.sidebar')) {
+        return;
+      }
+      
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         touchStartRef.current = { x: touch.clientX, y: touch.clientY };
@@ -135,42 +171,60 @@ function HomePage() {
     };
 
     const handleTouchMove = (e) => {
-      if (e.touches.length === 1) {
+      const target = e.target;
+      const isBackground = target.style.backgroundImage || 
+                          target.closest('[style*="background-image"]') ||
+                          target.tagName === 'BODY' ||
+                          target.classList.contains('scrollable-area');
+      
+      // Skip touch handling if not on background
+      if (!isBackground || 
+          target.closest('.clickable-element') || 
+          target.closest('button') || 
+          target.closest('a') ||
+          target.closest('nav') ||
+          target.closest('[role="button"]') ||
+          target.closest('.sidebar')) {
+        return;
+      }
+      
+      if (e.touches.length === 1 && touchStartRef.current.x !== 0) {
         const touch = e.touches[0];
         const deltaX = touchStartRef.current.x - touch.clientX;
         const deltaY = touchStartRef.current.y - touch.clientY;
+        const totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         
-        const scrollDelta = Math.abs(deltaX) > Math.abs(deltaY) 
-          ? deltaX * 0.5 
-          : deltaY * 0.3;
-        
-        if (Math.abs(scrollDelta) > 0.5) {
-          const newOffset = Math.max(0, Math.min(200, scrollOffset + scrollDelta));
-          setScrollOffset(newOffset);
-          
-          // Update navigation circle rotation
-          if (newOffset >= 200) {
-            setNavCircleRotation(0);
-            setNavCircleAtEnd(true);
+        // Only scroll for significant movement
+        if (totalDistance > 30) {
+          let scrollDelta = 0;
+          if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            scrollDelta = deltaX * 0.15;
           } else {
-            const rotationProgress = (newOffset / 200) * 90;
-            setNavCircleRotation(-90 + rotationProgress);
-            setNavCircleAtEnd(false);
+            scrollDelta = deltaY * 0.12;
           }
           
-          touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+          if (Math.abs(scrollDelta) > 1) {
+            updateScrollOffset(scrollDelta);
+            touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+          }
         }
       }
     };
 
+    const handleTouchEnd = () => {
+      touchStartRef.current = { x: 0, y: 0 };
+    };
+
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
     
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, []);
+  }, [updateScrollOffset]);
 
   const parallaxX = (mousePosition.x + deviceMotion.x) * 0.6;
   const parallaxY = (mousePosition.y + deviceMotion.y) * 0.6;
@@ -184,24 +238,22 @@ function HomePage() {
     setFooterOpen(false);
   };
 
-  // Handle navigation circle click
+  // Handle navigation circle click - progress sequentially through pages
   const handleNavCircleClick = () => {
-    if (navCircleAtEnd) {
-      // At end - trigger footer interaction
+    if (scrollOffset >= 200) {
+      // At final page - toggle footer
       setFooterOpen(!footerOpen);
+    } else if (scrollOffset >= 100) {
+      // On page 2 - go to page 3 (final page)
+      setScrollOffset(200);
+      setNavCircleRotation(0);
+      setNavCircleAtEnd(true);
     } else {
-      // Navigate to next page (100% interval)
-      const currentPage = Math.floor(scrollOffset / 100);
-      const nextOffset = Math.min(200, (currentPage + 1) * 100);
-      setScrollOffset(nextOffset);
-      
-      if (nextOffset >= 200) {
-        setNavCircleRotation(0);
-        setNavCircleAtEnd(true);
-      } else {
-        const rotationProgress = (nextOffset / 200) * 90;
-        setNavCircleRotation(-90 + rotationProgress);
-      }
+      // On page 1 - go to page 2
+      setScrollOffset(100);
+      const rotationProgress = (100 / 200) * 90;
+      setNavCircleRotation(-90 + rotationProgress);
+      setNavCircleAtEnd(false);
     }
   };
 
@@ -211,172 +263,13 @@ function HomePage() {
     setMenuOpen(false); // Close menu overlay when footer opens
   };
 
-  // Handle sidebar toggle and accordion state management
+  // Handle sidebar toggle
   const handleSidebarToggle = () => {
     if (sidebarOpen) {
       // Closing sidebar - reset all accordion states
       setExpandedSection(null);
     }
     setSidebarOpen(!sidebarOpen);
-  };
-
-  // Handle accordion item selection
-  const handleAccordionClick = (itemKey) => {
-    if (!sidebarOpen) {
-      // If sidebar is closed, open it and expand the selected section
-      setSidebarOpen(true);
-      setExpandedSection(itemKey);
-    } else {
-      // If sidebar is open, toggle the accordion section
-      setExpandedSection(expandedSection === itemKey ? null : itemKey);
-    }
-  };
-
-  // True Accordion Navigation Item Component
-  // Items push each other down when expanded, with smooth transitions
-  const AccordionNavigationItem = ({ icon, label, subItems, itemKey, index }) => {
-    const isExpanded = expandedSection === itemKey;
-    const expandedIndex = navigationItems.findIndex(item => item.itemKey === expandedSection);
-    
-    // Calculate vertical offset based on expanded items above this one
-    let verticalOffset = 0;
-    if (expandedIndex >= 0 && expandedIndex < index && sidebarOpen) {
-      const expandedItem = navigationItems[expandedIndex];
-      verticalOffset = (expandedItem.subItems?.length || 0) * 32 + 16; // Height of expanded content
-    }
-    
-    return (
-      <div 
-        className="accordion-nav-item"
-        style={{ 
-          position: 'absolute',
-          top: `${index * 40 - 60 + verticalOffset}px`, // Base position + offset for expansions
-          left: '0',
-          width: '100%',
-          transition: 'top 0.4s ease-out'
-        }}
-      >
-        {/* Main Category Container */}
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '8px 0',
-            cursor: 'pointer',
-            position: 'relative',
-            minHeight: '32px'
-          }}
-          onClick={() => handleAccordionClick(itemKey)}
-        >
-          {/* Category Icon - Fixed Position */}
-          <div style={{ 
-            position: 'absolute',
-            left: '15px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            width: '24px',
-            height: '24px',
-            zIndex: 2
-          }}>
-            <img 
-              src={icon}
-              alt={label}
-              width="24" 
-              height="24" 
-              style={{ display: 'block' }}
-            />
-          </div>
-
-          {/* Category Label - Shows when sidebar is open */}
-          {sidebarOpen && (
-            <span style={{
-              marginLeft: '54px',
-              color: isExpanded ? '#EECF00' : 'black',
-              fontSize: '14px',
-              fontWeight: isExpanded ? '700' : '600',
-              letterSpacing: '0.2em',
-              transition: 'color 0.3s ease-out, font-weight 0.3s ease-out'
-            }}>{label}</span>
-          )}
-          
-          {/* Hover Tooltip - Only when sidebar is closed */}
-          {!sidebarOpen && (
-            <div className={`nav-tooltip tooltip-${itemKey}`} style={{
-              position: 'absolute',
-              left: '50px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              backgroundColor: '#EECF00',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '600',
-              letterSpacing: '0.2em',
-              color: 'black',
-              zIndex: 1000,
-              pointerEvents: 'none',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              opacity: 0,
-              visibility: 'hidden',
-              transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out'
-            }}>
-              {label}
-              <div style={{
-                position: 'absolute',
-                left: '-6px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '0',
-                height: '0',
-                borderTop: '6px solid transparent',
-                borderBottom: '6px solid transparent',
-                borderRight: '6px solid #EECF00'
-              }}></div>
-            </div>
-          )}
-        </div>
-        
-        {/* Accordion Sub-Items Container */}
-        {sidebarOpen && (
-          <div style={{
-            maxHeight: isExpanded ? `${(subItems?.length || 0) * 32 + 16}px` : '0px',
-            overflow: 'hidden',
-            transition: 'max-height 0.4s ease-out',
-            marginLeft: '54px',
-            marginTop: '4px'
-          }}>
-            {subItems && (
-              <div style={{ paddingBottom: '8px' }}>
-                {subItems.map((item, idx) => (
-                  <a key={idx} href="#" className="sub-nav-item" style={{
-                    display: 'block',
-                    color: 'rgba(0,0,0,0.7)',
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    letterSpacing: '0.1em',
-                    textDecoration: 'none',
-                    padding: '4px 8px',
-                    marginBottom: '2px',
-                    borderRadius: '4px',
-                    backgroundColor: 'transparent',
-                    transition: 'background-color 0.25s ease-in-out, color 0.25s ease-in-out, transform 0.4s ease-out, opacity 0.4s ease-out',
-                    transform: isExpanded ? 'translateX(0)' : 'translateX(-10px)',
-                    opacity: isExpanded ? 1 : 0,
-                    transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
-                  }}>{item}</a>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
   };
 
   const navigationItems = [
@@ -405,6 +298,151 @@ function HomePage() {
       subItems: ["consulting", "rho", "reddit", "cv"]
     }
   ];
+
+  // Navigation Item Component - Fixed positioning with accordion functionality
+  const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
+    const isExpanded = expandedSection === itemKey && sidebarOpen;
+    
+    // Calculate vertical position accounting for expanded items above
+    let topPosition = index * 50; // Base spacing
+    for (let i = 0; i < index; i++) {
+      const prevItemKey = navigationItems[i]?.itemKey;
+      if (expandedSection === prevItemKey && sidebarOpen) {
+        const prevSubItems = navigationItems[i]?.subItems || [];
+        topPosition += prevSubItems.length * 18 + 5; // Tighter spacing to match new layout
+      }
+    }
+    
+    const handleClick = () => {
+      if (!sidebarOpen) {
+        // First click: open sidebar and expand this section
+        setSidebarOpen(true);
+        setExpandedSection(itemKey);
+      } else {
+        // Subsequent clicks: toggle accordion
+        setExpandedSection(expandedSection === itemKey ? null : itemKey);
+      }
+    };
+
+    return (
+      <div style={{
+        position: 'absolute',
+        top: `${topPosition}px`,
+        left: 0,
+        width: '100%',
+        transition: 'top 0.3s ease-out' // Smooth movement for accordion
+      }}>
+        {/* Main navigation item container */}
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '8px 0',
+            position: 'relative',
+            minHeight: '40px',
+            width: '100%'
+          }}
+        >
+          {/* Clickable area - covers full width for better interaction */}
+          <div 
+            className="clickable-element"
+            onClick={handleClick}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleClick();
+            }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              cursor: 'pointer',
+              zIndex: 3,
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          />
+
+          {/* Icon - Always centered relative to closed sidebar width */}
+          <div style={{ 
+            position: 'absolute',
+            left: '40px', // Center of 80px closed sidebar width
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '24px',
+            height: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
+            pointerEvents: 'none'
+          }}>
+            <img 
+              src={icon}
+              alt={label}
+              width="24" 
+              height="24" 
+              style={{ display: 'block' }}
+            />
+          </div>
+
+          {/* Label - appears to the RIGHT of the centered icon when sidebar opens */}
+          {sidebarOpen && (
+            <span style={{
+              position: 'absolute',
+              left: '60px', // Moved closer to centered icon area
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: isExpanded ? '#EECF00' : 'black',
+              fontSize: '14px',
+              fontWeight: isExpanded ? '700' : '600',
+              letterSpacing: '0.2em',
+              transition: 'color 0.3s ease-out, font-weight 0.3s ease-out',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none'
+            }}>{label}</span>
+          )}
+        </div>
+        
+        {/* Sub-items - accordion style */}
+        {sidebarOpen && (
+          <div style={{
+            marginLeft: '75px', // Moved 15px closer to category title (was 60px, now closer to icon)
+            marginTop: '-5px', // Pull up closer to category title by 5px
+            maxHeight: isExpanded ? `${(subItems?.length || 0) * 18 + 5}px` : '0px', // Tighter spacing
+            overflow: 'hidden',
+            transition: 'max-height 0.3s ease-out'
+          }}>
+            {subItems && (
+              <div style={{ paddingTop: '0px', paddingBottom: '0px' }}> {/* No padding for tighter spacing */}
+                {subItems.map((item, idx) => (
+                  <a key={idx} href="#" className="clickable-element" style={{
+                    display: 'block',
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    letterSpacing: '0.1em',
+                    textDecoration: 'none',
+                    padding: '1px 0', // Very tight padding
+                    transition: 'color 0.25s ease-in-out',
+                    opacity: isExpanded ? 1 : 0,
+                    transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.color = '#EECF00';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.color = 'rgba(0,0,0,0.7)';
+                  }}
+                  >{item}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={{ 
@@ -463,27 +501,10 @@ function HomePage() {
           background-color: white !important; 
         }
 
-        /* Sidebar tooltip hover states - fixed for accordion items */
-        .accordion-nav-item:hover .nav-tooltip {
-          opacity: 0.96 !important;
-          visibility: visible !important;
-        }
-
-        /* Hide all tooltips first, then show only the hovered one */
-        .accordion-nav-item:not(:hover) .nav-tooltip {
-          opacity: 0 !important;
-          visibility: hidden !important;
-        }
-
-        /* Sub-item hover states without flicker */
-        .sub-nav-item:hover {
-          background-color: #EECF00 !important;
-          color: black !important;
-        }
       `}</style>
 
       {/* Background System */}
-      <div style={{
+      <div className="scrollable-area" style={{
         position: 'fixed',
         top: 0,
         left: scrollOffset <= 100 ? `-${scrollOffset}vw` : '-100vw',
@@ -494,10 +515,10 @@ function HomePage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         zIndex: 10,
-        transition: 'left 0.5s ease-out'
+        transition: 'left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
       }}></div>
 
-      <div style={{
+      <div className="scrollable-area" style={{
         position: 'fixed',
         top: 0,
         left: scrollOffset <= 100 ? `${100 - scrollOffset}vw` : '0vw',
@@ -508,10 +529,10 @@ function HomePage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         zIndex: 11,
-        transition: 'left 0.5s ease-out'
+        transition: 'left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
       }}></div>
 
-      <div style={{
+      <div className="scrollable-area" style={{
         position: 'fixed',
         top: 0,
         left: scrollOffset > 100 ? `${200 - scrollOffset}vw` : '100vw',
@@ -522,7 +543,7 @@ function HomePage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         zIndex: 12,
-        transition: 'left 0.5s ease-out'
+        transition: 'left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
       }}></div>
 
       {/* Scroll Progress Indicator */}
@@ -568,8 +589,8 @@ function HomePage() {
         justifyContent: 'center',
         paddingLeft: '4.7vw',
         paddingRight: '40px',
-        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'transform 0.5s ease-out'
+        transform: 'translateY(0)', // Keep nav fixed - don't move with footer
+        transition: 'none' // No transition to prevent movement
       }}>
         <a 
           href="#" 
@@ -597,53 +618,58 @@ function HomePage() {
       </nav>
 
       {/* ===========================================
-          SIDEBAR MODULE - Free-Floating Accordion System
+          SIDEBAR MODULE - Consistent Alignment System
           =========================================== */}
       <div style={{
         position: 'fixed',
         left: 0,
         top: 0,
-        width: sidebarOpen ? '30vw' : '4.7vw',
-        minWidth: '40px',
-        maxWidth: sidebarOpen ? '450px' : '90px',
+        width: sidebarOpen ? 'min(30vw, 450px)' : '80px',
         height: '100vh',
         backgroundColor: 'rgba(242, 242, 242, 0.96)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         zIndex: 50,
-        transition: 'width 0.5s ease-out, max-width 0.5s ease-out',
+        transition: 'width 0.5s ease-out',
       }}>
         
-        {/* Sidebar Toggle Button */}
+        {/* Sidebar Toggle Button - Fixed pixel position, never moves */}
         <div 
+          className="clickable-element"
           onClick={handleSidebarToggle}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSidebarToggle();
+          }}
           style={{
             position: 'absolute',
-            top: '12px',
-            left: 'calc(2.35vw)',
-            minLeft: '20px',
+            top: '20px',
+            left: '40px',
             transform: 'translateX(-50%)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '10px'
+            padding: '8px',
+            width: '40px',
+            height: '40px',
+            WebkitTapHighlightColor: 'transparent'
           }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="black" viewBox="0 0 16 16">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="black" viewBox="0 0 16 16">
             <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/>
             <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
           </svg>
         </div>
         
-        {/* HOME Label - Vertical Text */}
+        {/* HOME Label - Fixed pixel position, never moves */}
         <div style={{ 
           position: 'absolute',
           top: '100px',
-          left: 'calc(2.35vw)',
-          minLeft: '20px',
+          left: '40px',
           transform: 'translateX(-50%) rotate(-90deg)',
-          transformOrigin: 'center'
+          transformOrigin: 'center',
+          whiteSpace: 'nowrap'
         }}>
           <span style={{ 
             color: 'black', 
@@ -653,36 +679,42 @@ function HomePage() {
           }}>HOME</span>
         </div>
 
-        {/* True Accordion Navigation Items Container */}
+        {/* Navigation Items Container - Centered vertically in viewport */}
         <div 
-          className="accordion-nav-container"
+          className="navigation-items-container"
           style={{
             position: 'absolute',
-            top: 'calc(50% - 20px)', // Adjusted to prevent downward shift
-            left: '0',
+            top: '50%',
+            left: 0,
+            transform: 'translateY(-50%)',
             width: '100%',
-            height: '240px' // Enough space for all items and expansions
+            height: '240px' // Space for navigation items
           }}
         >
-          {/* Each navigation item with accordion behavior */}
+          {/* Each navigation item */}
           {navigationItems.map((item, index) => (
-            <AccordionNavigationItem 
+            <NavigationItem 
               key={item.itemKey} 
               {...item} 
               index={index}
+              sidebarOpen={sidebarOpen}
+              expandedSection={expandedSection}
+              setExpandedSection={setExpandedSection}
+              setSidebarOpen={setSidebarOpen}
             />
           ))}
         </div>
 
-        {/* YC Logo - Bottom Corner */}
+        {/* YC Logo - Responsive positioning for mobile */}
         <div style={{ 
           position: 'absolute',
-          bottom: '50px',
-          left: 'calc(2.35vw)',
-          minLeft: '20px',
+          bottom: '20px',
+          left: '50%',
           transform: 'translateX(-50%)',
-          width: '40px', 
-          height: '40px',
+          width: 'min(40px, 8vw)', 
+          height: 'min(40px, 8vw)',
+          minWidth: '30px',
+          minHeight: '30px',
           borderRadius: '50%',
           overflow: 'hidden'
         }}>
@@ -696,7 +728,12 @@ function HomePage() {
 
       {/* Navigation Circle with Dynamic Rotation */}
       <div 
+        className="clickable-element"
         onClick={handleNavCircleClick}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          handleNavCircleClick();
+        }}
         style={{ 
           position: 'fixed', 
           bottom: '50px', 
@@ -706,7 +743,8 @@ function HomePage() {
           height: '78px',
           cursor: 'pointer',
           transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-          transition: 'transform 0.5s ease-out'
+          transition: 'transform 0.5s ease-out',
+          WebkitTapHighlightColor: 'transparent'
         }}
       >
         <img 
@@ -730,8 +768,8 @@ function HomePage() {
         left: '200px',
         zIndex: 30,
         maxWidth: '480px',
-        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'transform 0.5s ease-out'
+        transform: 'translateY(0)', // Remove footer transform - keep yellowCircle title fixed
+        transition: 'none' // No transition to prevent movement
       }}>
         <div style={{ 
           color: 'black', 
@@ -741,14 +779,25 @@ function HomePage() {
           letterSpacing: '0.05em',
           textAlign: 'left'
         }}>
+          {/* Header with yellow "YOUR CIRCLE" */}
+          <h1 style={{ 
+            margin: '2px 0',
+            backgroundColor: 'rgba(241, 239, 232, 0.38)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'inline-block',
+            fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
+            fontWeight: '700'
+          }}>
+            <span style={{ color: '#EECF00' }}>YOUR CIRCLE</span> FOR:
+          </h1>
+
+          {/* Bullet points */}
           {[
-            'VIVAMUS SAGITTIS LACUS VEL',
-            'AUGUE LAOREET RUTRUM',
-            'FAUCIBUS DOLOR AUCTOR.',
-            'AENEAN EU LEO QUAM.',
-            'PELLENTESQUE ORNARE SEM',
-            'LACINIA QUAM VENENATIS',
-            'VESTIBULUM. DONEC'
+            '• Human Centered Digital Story-Telling',
+            '• Building Engaging Marketing',
+            '• Illumniating Your Brand',
+            '• Delighting & Delivering',
           ].map((text, index) => (
             <p key={index} style={{ 
               margin: '2px 0',
