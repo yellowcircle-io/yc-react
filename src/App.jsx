@@ -789,7 +789,7 @@ function HomePage() {
             fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
             fontWeight: '700'
           }}>
-            <span style={{ color: '#EECF00' }}>YOUR CIRCLE</span> FOR:
+            <span style={{ color: '#EECF00' }}>THE CIRCLE</span> FOR:
           </h1>
 
           {/* Bullet points */}
