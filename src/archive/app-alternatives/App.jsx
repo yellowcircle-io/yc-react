@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function HomePage() {
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
-  const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0 });
   const [scrollOffset, setScrollOffset] = useState(0);
   const [expandedSection, setExpandedSection] = useState(null);
   const [footerOpen, setFooterOpen] = useState(false);
@@ -58,21 +55,6 @@ function HomePage() {
       }
     };
 
-    // Handle device motion (accelerometer) alongside orientation
-    const handleDeviceMotion = (e) => {
-      if (e.accelerationIncludingGravity) {
-        const acc = e.accelerationIncludingGravity;
-        if (acc.x !== null && acc.y !== null) {
-          // Convert acceleration to motion range, with gravity compensation
-          // Using smaller multiplier for smoother motion and filtering out gravity
-          setAccelerometerData({
-            x: Math.max(-20, Math.min(20, (acc.x / 2) * -1)), // Invert X for natural motion
-            y: Math.max(-20, Math.min(20, (acc.y / 2) * -1))  // Invert Y for natural motion
-          });
-        }
-      }
-    };
-
     if ('DeviceOrientationEvent' in window) {
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
@@ -87,24 +69,8 @@ function HomePage() {
       }
     }
 
-    // Add DeviceMotionEvent for accelerometer support
-    if ('DeviceMotionEvent' in window) {
-      if (typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission()
-          .then(response => {
-            if (response === 'granted') {
-              window.addEventListener('devicemotion', handleDeviceMotion);
-            }
-          })
-          .catch(() => {}); // Silent fail for unsupported devices
-      } else {
-        window.addEventListener('devicemotion', handleDeviceMotion);
-      }
-    }
-
     return () => {
       window.removeEventListener('deviceorientation', handleDeviceOrientation);
-      window.removeEventListener('devicemotion', handleDeviceMotion);
     };
   }, []);
 
@@ -116,9 +82,11 @@ function HomePage() {
       // Update navigation circle rotation and state
       if (newOffset >= 200) {
         setNavCircleRotation(0);
+        (true);
       } else {
         const rotationProgress = (newOffset / 200) * 90;
         setNavCircleRotation(-90 + rotationProgress);
+        (false);
       }
       
       return newOffset;
@@ -257,19 +225,14 @@ function HomePage() {
     };
   }, [updateScrollOffset]);
 
-  // Combine orientation and accelerometer data intelligently for enhanced mobile parallax
-  const combinedDeviceMotion = {
-    x: deviceMotion.x + (accelerometerData.x * 0.3), // Blend 70% orientation + 30% accelerometer
-    y: deviceMotion.y + (accelerometerData.y * 0.3)
-  };
-  
-  const parallaxX = (mousePosition.x + combinedDeviceMotion.x) * 0.6;
-  const parallaxY = (mousePosition.y + combinedDeviceMotion.y) * 0.6;
+  const parallaxX = (mousePosition.x + deviceMotion.x) * 0.6;
+  const parallaxY = (mousePosition.y + deviceMotion.y) * 0.6;
 
   const handleHomeClick = (e) => {
     e.preventDefault();
     setScrollOffset(0);
     setNavCircleRotation(-90);
+    (false);
     setMenuOpen(false);
     setFooterOpen(false);
   };
@@ -283,11 +246,13 @@ function HomePage() {
       // On page 2 - go to page 3 (final page)
       setScrollOffset(200);
       setNavCircleRotation(0);
+      (true);
     } else {
       // On page 1 - go to page 2
       setScrollOffset(100);
       const rotationProgress = (100 / 200) * 90;
       setNavCircleRotation(-90 + rotationProgress);
+      (false);
     }
   };
 
@@ -311,7 +276,7 @@ function HomePage() {
       icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
       label: "EXPERIMENTS",
       itemKey: "experiments",
-      subItems: ["golden unknown", "being + rhyme", "cath3dral", "17-frame animatic"]
+      subItems: ["golden unknown", "being + rhyme", "cath3dral"]
     },
     {
       icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684385/write-book_gfaiu8.png",
@@ -353,16 +318,8 @@ function HomePage() {
         setSidebarOpen(true);
         setExpandedSection(itemKey);
       } else {
-        // Subsequent clicks: toggle accordion or navigate
-        if (expandedSection === itemKey) {
-          // If already expanded, navigate to the page
-          if (itemKey === 'experiments') {
-            navigate('/experiments');
-          }
-          setExpandedSection(null);
-        } else {
-          setExpandedSection(itemKey);
-        }
+        // Subsequent clicks: toggle accordion
+        setExpandedSection(expandedSection === itemKey ? null : itemKey);
       }
     };
 
@@ -458,33 +415,24 @@ function HomePage() {
             {subItems && (
               <div style={{ paddingTop: '0px', paddingBottom: '0px' }}> {/* No padding for tighter spacing */}
                 {subItems.map((item, idx) => (
-                  <a key={idx}
-                     href="#"
-                     className="clickable-element"
-                     onClick={(e) => {
-                       e.preventDefault();
-                       if (item === '17-frame animatic') {
-                         navigate('/home-17');
-                       }
-                     }}
-                     style={{
-                       display: 'block',
-                       color: 'rgba(0,0,0,0.7)',
-                       fontSize: '12px',
-                       fontWeight: '500',
-                       letterSpacing: '0.1em',
-                       textDecoration: 'none',
-                       padding: '1px 0', // Very tight padding
-                       transition: 'color 0.25s ease-in-out',
-                       opacity: isExpanded ? 1 : 0,
-                       transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
-                     }}
-                     onMouseEnter={(e) => {
-                       e.target.style.color = '#EECF00';
-                     }}
-                     onMouseLeave={(e) => {
-                       e.target.style.color = 'rgba(0,0,0,0.7)';
-                     }}
+                  <a key={idx} href="#" className="clickable-element" style={{
+                    display: 'block',
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    letterSpacing: '0.1em',
+                    textDecoration: 'none',
+                    padding: '1px 0', // Very tight padding
+                    transition: 'color 0.25s ease-in-out',
+                    opacity: isExpanded ? 1 : 0,
+                    transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.color = '#EECF00';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.color = 'rgba(0,0,0,0.7)';
+                  }}
                   >{item}</a>
                 ))}
               </div>
@@ -535,48 +483,38 @@ function HomePage() {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes slideUpFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
+        
         .menu-item-1 { animation: slideInStagger 0.4s ease-out 0.1s both; }
         .menu-item-2 { animation: slideInStagger 0.4s ease-out 0.2s both; }
         .menu-item-3 { animation: slideInStagger 0.4s ease-out 0.3s both; }
         .menu-item-4 { animation: slideInStagger 0.4s ease-out 0.4s both; }
         .menu-button-5 { animation: buttonFadeIn 0.4s ease-out 0.6s both; }
         .menu-button-6 { animation: buttonFadeIn 0.4s ease-out 0.7s both; }
-
+        
         .menu-link {
           color: black;
           transition: color 0.3s ease-in;
         }
-        .menu-link:hover {
-          color: white !important;
+        .menu-link:hover { 
+          color: white !important; 
         }
-
-        .works-btn {
-          transition: background-color 0.3s ease-in;
+        
+        .works-btn { 
+          transition: background-color 0.3s ease-in; 
         }
-        .works-btn:hover {
-          background-color: rgba(0,0,0,1) !important;
+        .works-btn:hover { 
+          background-color: rgba(0,0,0,1) !important; 
         }
-        .works-btn:hover .works-text {
-          color: #EECF00 !important;
-          transition: color 0.3s ease-in;
+        .works-btn:hover .works-text { 
+          color: #EECF00 !important; 
+          transition: color 0.3s ease-in; 
         }
-
-        .contact-btn {
-          transition: background-color 0.3s ease-in;
+        
+        .contact-btn { 
+          transition: background-color 0.3s ease-in; 
         }
-        .contact-btn:hover {
-          background-color: white !important;
+        .contact-btn:hover { 
+          background-color: white !important; 
         }
 
       `}</style>
@@ -593,8 +531,7 @@ function HomePage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         zIndex: 10,
-        transition: 'left 0.1s ease-out',
-        willChange: 'left'
+        transition: 'left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
       }}></div>
 
       <div className="scrollable-area" style={{
@@ -608,8 +545,7 @@ function HomePage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         zIndex: 11,
-        transition: 'left 0.1s ease-out',
-        willChange: 'left'
+        transition: 'left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
       }}></div>
 
       <div className="scrollable-area" style={{
@@ -623,8 +559,7 @@ function HomePage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         zIndex: 12,
-        transition: 'left 0.1s ease-out',
-        willChange: 'left'
+        transition: 'left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
       }}></div>
 
       {/* Scroll Progress Indicator */}
@@ -842,6 +777,54 @@ function HomePage() {
         />
       </div>
 
+      {/* Text Content */}
+      <div style={{
+        position: 'fixed',
+        bottom: '50px',
+        left: '200px',
+        zIndex: 30,
+        maxWidth: '480px',
+        transform: 'translateY(0)', // Remove footer transform - keep yellowCircle title fixed
+        transition: 'none' // No transition to prevent movement
+      }}>
+        <div style={{ 
+          color: 'black', 
+          fontWeight: '600',
+          fontSize: 'clamp(1rem, 1.7vw, 1.2rem)',
+          lineHeight: '1.1', 
+          letterSpacing: '0.05em',
+          textAlign: 'left'
+        }}>
+          {/* Header with yellow "Once Upon" */}
+          <h1 style={{ 
+            margin: '2px 0',
+            backgroundColor: 'rgba(241, 239, 232, 0.38)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'inline-block',
+            fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
+            fontWeight: '700'
+          }}>
+            <span style={{ color: '#EECF00' }}>THE CIRCLE</span> FOR:
+          </h1>
+
+          {/* Bullet points */}
+          {[
+            '• Human Centered Digital Story-Telling',
+            '• Building Engaging Marketing',
+            '• Illumniating Your Brand',
+            '• Delighting & Delivering',
+          ].map((text, index) => (
+            <p key={index} style={{ 
+              margin: '2px 0',
+              backgroundColor: 'rgba(241, 239, 232, 0.38)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              display: 'inline-block'
+            }}>{text}</p>
+          ))}
+        </div>
+      </div>
 
       {/* Partially Hidden Footer (State 0) */}
       <div style={{
@@ -853,73 +836,8 @@ function HomePage() {
         zIndex: 60,
         transition: 'bottom 0.5s ease-out'
       }}>
-        {/* YOUR CIRCLE FOR Copy - Fixed position in viewport */}
-        <div style={{
-          position: 'fixed',
-          bottom: '40px',
-          left: 'max(120px, 8vw)',
-          maxWidth: 'min(640px, 50vw)',
-          zIndex: 61,
-          pointerEvents: 'none'
-        }}>
-          <div style={{
-            color: 'black',
-            fontWeight: '600',
-            fontSize: 'clamp(0.855rem, 1.98vw, 1.62rem)',
-            lineHeight: '1.3',
-            letterSpacing: '0.05em',
-            textAlign: 'left'
-          }}>
-            {/* Header with yellow "YOUR CIRCLE" */}
-            <h1 style={{
-              margin: '4px 0',
-              backgroundColor: 'rgba(241, 239, 232, 0.38)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              display: 'inline-block',
-              fontSize: 'clamp(1.17rem, 2.52vw, 1.98rem)',
-              fontWeight: '700',
-              padding: '2px 6px'
-            }}>
-              <span style={{ color: '#EECF00' }}>YOUR CIRCLE</span> FOR:
-            </h1>
-
-            {/* Bullet points - 4 bullets per page, 3 pages total */}
-            <div style={{ position: 'relative', minHeight: '120px' }}>
-              {(scrollOffset < 100 ? [
-                '• Guiding Heroes Through Digital Galaxies',
-                '• Crafting Human-Centric, Hero Arcs',
-                '• Lighting Up Brand Horizons',
-                '• Sparking Loyal Fan Alliances',
-              ] : scrollOffset < 200 ? [
-                '• Rolling Momentum Into Every Campaign',
-                '• Mapping Data-Driven Rebel Paths',
-                '• Turning Wonder Into Measurable Wins',
-                '• Amplifying Voices at Lightspeed',
-              ] : [
-                '• Keeping Brands In Balance With The Force',
-                '• Designing Experiences That Radiate Hope',
-                '• Transforming Clicks Into Legacies',
-                '• Delivering Results Worth Oodles of Os',
-              ]).map((text, index) => (
-                <p
-                  key={`${scrollOffset < 100 ? 'page1' : scrollOffset < 200 ? 'page2' : 'page3'}-${index}`}
-                  style={{
-                    margin: '3px 0',
-                    backgroundColor: 'rgba(241, 239, 232, 0.38)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    display: 'inline-block',
-                    padding: '2px 6px'
-                  }}
-                >{text}</p>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Full Footer Content */}
-        <div
+        <div 
           onClick={handleFooterToggle}
           style={{
             position: 'absolute',
@@ -1145,7 +1063,7 @@ function HomePage() {
             {['HOME', 'EXPERIMENTS', 'THOUGHTS', 'ABOUT'].map((item, index) => (
               <a key={item} 
                 href="#" 
-                onClick={item === 'HOME' ? handleHomeClick : item === 'EXPERIMENTS' ? () => navigate('/experiments') : undefined}
+                onClick={item === 'HOME' ? handleHomeClick : undefined}
                 className={`menu-item-${index + 1} menu-link`} 
                 style={{
                   textDecoration: 'none',

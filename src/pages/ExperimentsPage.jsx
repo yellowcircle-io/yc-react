@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function ExperimentsPage() {
@@ -292,15 +292,32 @@ function ExperimentsPage() {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
+    <div style={{
+      minHeight: '100vh',
       width: '100vw',
-      position: 'relative', 
+      position: 'relative',
       overflow: 'auto',
       margin: 0,
       padding: 0,
       fontFamily: 'Arial, sans-serif'
     }}>
+      {/* FOUNDATION BACKGROUND LAYER - WHITE BASE */}
+      <div
+        className="foundation-background-layer"
+        data-layer="foundation"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#FFFFFF',
+          zIndex: -1000,
+          pointerEvents: 'none'
+        }}
+        aria-hidden="true"
+      />
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
