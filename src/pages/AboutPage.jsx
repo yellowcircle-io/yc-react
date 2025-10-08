@@ -120,7 +120,7 @@ const AboutPage = () => {
   };
 
   return (
-    <div 
+    <div
       className="relative h-screen w-full overflow-auto bg-white"
       onMouseMove={throttledMouseMove}
       style={{
@@ -132,6 +132,23 @@ const AboutPage = () => {
         `
       }}
     >
+      {/* FOUNDATION BACKGROUND LAYER - WHITE BASE */}
+      <div
+        className="foundation-background-layer"
+        data-layer="foundation"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#FFFFFF',
+          zIndex: -1000,
+          pointerEvents: 'none'
+        }}
+        aria-hidden="true"
+      />
+
       {/* Background Yellow Circle */}
       <div 
         className="fixed pointer-events-none z-0"

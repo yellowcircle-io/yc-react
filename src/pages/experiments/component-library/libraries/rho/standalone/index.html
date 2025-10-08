@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rho Email Component Library</title>
+
+  <!-- React and ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind CSS for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica", "Basier Circle", "Roboto", "Arial", sans-serif;
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 50%, #f0f0f0 100%);
+      min-height: 100vh;
+    }
+
+    .main-container {
+      display: flex;
+      min-height: 100vh;
+      gap: 24px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 1024px) {
+      .main-container {
+        flex-direction: column;
+        gap: 32px;
+      }
+    }
+
+    .complete-email-section {
+      flex: 1;
+      max-width: 50%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 1024px) {
+      .complete-email-section {
+        max-width: 100%;
+        order: 1;
+      }
+    }
+
+    .components-section {
+      flex: 1;
+      max-width: 50%;
+      overflow-y: auto;
+    }
+
+    @media (max-width: 1024px) {
+      .components-section {
+        max-width: 100%;
+        order: 2;
+      }
+    }
+
+    .email-preview {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      position: sticky;
+      top: 24px;
+    }
+
+    .component-showcase {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0, 236, 192, 0.2);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .component-showcase:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      border-color: #00ECC0;
+    }
+
+    .code-block {
+      background-color: #1f2937;
+      color: #f9fafb;
+      padding: 16px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .copy-button {
+      background-color: #00ECC0;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+    }
+
+    .copy-button:hover {
+      background-color: #00d4a8;
+      transform: translateY(-1px);
+    }
+
+    .copy-button.copied {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+
+    .tab-button {
+      padding: 12px 20px;
+      margin-right: 4px;
+      border: 2px solid rgba(0, 236, 192, 0.3);
+      background-color: rgba(255, 255, 255, 0.9);
+      color: rgba(0, 0, 0, 0.7);
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .tab-button.active {
+      background-color: #00ECC0;
+      color: #000;
+      border-color: #00ECC0;
+      border-bottom: 2px solid #00ECC0;
+    }
+
+    .tab-button:hover:not(.active) {
+      background-color: rgba(0, 236, 192, 0.1);
+      border-color: rgba(0, 236, 192, 0.5);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .component-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .component-description {
+      font-size: 16px;
+      color: rgba(0, 0, 0, 0.7);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .preview-container {
+      background: rgba(248, 249, 250, 0.5);
+      border: 1px solid rgba(0, 236, 192, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .main-header {
+      text-align: center;
+      padding: 60px 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      margin-bottom: 40px;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-title {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    .main-title .highlight {
+      color: #00ECC0;
+    }
+
+    .main-subtitle {
+      font-size: clamp(1.2rem, 2vw, 1.5rem);
+      color: rgba(0, 0, 0, 0.7);
+      max-width: 800px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .feature-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #00ECC0 0%, #00d4a8 100%);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin: 4px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+      padding: 20px;
+      background: rgba(0, 236, 192, 0.1);
+      border-radius: 12px;
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.7);
+      font-weight: 600;
+    }
+
+    .complete-template-section {
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(0, 236, 192, 0.3);
+      border-radius: 16px;
+      padding: 40px;
+      margin: 60px 0;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .complete-template-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 16px;
+    }
+
+    .complete-template-title .highlight {
+      color: #00ECC0;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef } = React;
+
+    // Utility function for copying to clipboard
+    const copyToClipboard = async (text, buttonRef) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (buttonRef) {
+          const originalText = buttonRef.textContent;
+          buttonRef.textContent = 'Copied!';
+          buttonRef.classList.add('copied');
+
+          setTimeout(() => {
+            buttonRef.textContent = originalText;
+            buttonRef.classList.remove('copied');
+          }, 2000);
+        }
+        return true;
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        return false;
+      }
+    };
+
+    // Rho Email Components
+    const Header = ({
+      date = "10.02.2025",
+      kicker = "Event Recap",
+      logoUrl = "https://39998325.fs1.hubspotusercontent-na1.net/hubfs/39998325/Rho-logo-25.png"
+    }) => (
+      <table role="presentation" width="100%" cellSpacing="0" style={{
+        background: "#FFFFFF",
+        border: 0,
+        borderBottom: "0.5px solid #d9dfdf"
+      }}>
+        <tbody>
+          <tr>
+            <td style={{ padding: "20px 0" }}>
+              <table role="presentation" width="100%" cellSpacing="0" style={{ border: 0 }}>
+                <tbody>
+                  <tr>
+                    <td style={{ paddingLeft: "20px" }} valign="middle">
+                      <img
+                        src={logoUrl}
+                        width="110"
+                        height="50"
+                        alt="Rho Logo"
+                        style={{
+                          display: "block",
+                          height: "auto",
+                          maxWidth: "110px",
+                          width: "110px"
+                        }}
+                      />
+                    </td>
+                    <td style={{ paddingRight: "20px" }} align="right" valign="middle">
+                      <div style={{
+                        fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                        fontSize: "14px",
+                        lineHeight: "20px",
+                        fontWeight: "bold",
+                        color: "#000"
+                      }}>
+                        {date}
+                      </div>
+                      <div style={{
+                        fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                        fontSize: "14px",
+                        lineHeight: "20px",
+                        fontWeight: "bold",
+                        color: "#000"
+                      }}>
+                        {kicker}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+    const BodyWithCTA = ({
+      greeting = "Hello there,",
+      content = [
+        "Thank you for your interest in our services. We're excited to share some updates with you.",
+        "Our team has been working hard to bring you the best possible experience."
+      ],
+      ctaText = "Keep me updated",
+      ctaUrl = "#"
+    }) => (
+      <table role="presentation" width="100%" cellSpacing="0" style={{
+        background: "#FFFFFF",
+        border: 0,
+        borderBottom: "0.5px solid #d9dfdf"
+      }}>
+        <tbody>
+          <tr>
+            <td style={{ padding: "24px 24px 8px 24px" }}>
+              <p style={{
+                padding: "24px 0",
+                margin: 0,
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "#000",
+                fontWeight: 400
+              }}>
+                <span style={{ fontSize: "16px" }}>{greeting}</span>
+              </p>
+              {content.map((paragraph, index) => (
+                <p key={index} style={{
+                  margin: "16px 0 0 0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000",
+                  fontWeight: 400
+                }}>
+                  <span style={{ fontSize: "16px" }}>{paragraph}</span>
+                </p>
+              ))}
+              <div style={{ padding: "24px 0" }}>
+                <a
+                  href={ctaUrl}
+                  style={{
+                    display: "inline-block",
+                    background: "#00ECC0",
+                    borderRadius: "2px",
+                    padding: "12px 20px",
+                    fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                    fontSize: "16px",
+                    lineHeight: "20px",
+                    fontWeight: "bold",
+                    color: "#000",
+                    textDecoration: "none"
+                  }}
+                >
+                  {ctaText}
+                </a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+    const Footer = ({
+      companyName = "Rho Technologies",
+      address = "100 Crosby Street",
+      city = "New York",
+      state = "NY",
+      zip = "10012"
+    }) => (
+      <table role="presentation" width="100%" cellSpacing="0" style={{
+        background: "#FFFFFF",
+        border: 0
+      }}>
+        <tbody>
+          <tr>
+            <td style={{ padding: "24px", textAlign: "center" }}>
+              <div style={{
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "14px",
+                color: "#000",
+                fontWeight: "bold",
+                marginBottom: "8px"
+              }}>
+                {companyName}
+              </div>
+              <div style={{
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "14px",
+                color: "#000",
+                marginBottom: "4px"
+              }}>
+                {address}
+              </div>
+              <div style={{
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "14px",
+                color: "#000"
+              }}>
+                {city}, {state} {zip}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+    // Component Card for displaying individual components
+    const ComponentCard = ({ title, description, component, code }) => {
+      const [activeTab, setActiveTab] = useState('preview');
+      const copyButtonRef = useRef(null);
+
+      const handleCopy = () => {
+        copyToClipboard(code, copyButtonRef.current);
+      };
+
+      return (
+        <div className="component-showcase">
+          <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: '#111827' }}>
+            {title}
+          </h3>
+          <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '24px' }}>
+            {description}
+          </p>
+
+          <div style={{ marginBottom: '16px' }}>
+            <button
+              className={`tab-button ${activeTab === 'preview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('preview')}
+            >
+              Preview
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'code' ? 'active' : ''}`}
+              onClick={() => setActiveTab('code')}
+            >
+              HTML Code
+            </button>
+          </div>
+
+          <div className={activeTab === 'preview' ? '' : 'hidden'}>
+            <div className="email-preview">
+              {component}
+            </div>
+          </div>
+
+          <div className={activeTab === 'code' ? '' : 'hidden'}>
+            <div style={{ position: 'relative' }}>
+              <button
+                ref={copyButtonRef}
+                className="copy-button"
+                onClick={handleCopy}
+                style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}
+              >
+                Copy
+              </button>
+              <pre className="code-block">
+                <code>{code}</code>
+              </pre>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Additional missing components
+    const Highlight = ({
+      headline = "Big News Ahead",
+      description = "We're excited to share some important updates that will help you get the most out of your experience with us. Stay tuned for more information coming soon."
+    }) => (
+      <table role="presentation" width="100%" cellSpacing="0" style={{
+        background: "#ffffff",
+        border: "0px 0px 0.5px",
+        borderColor: "#d9dfdf",
+        borderStyle: "solid",
+        height: "156px"
+      }}>
+        <tbody>
+          <tr style={{ height: "96px" }}>
+            <td style={{ padding: "24px 24px 8px 24px", height: "96px" }}>
+              <div style={{
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "42px",
+                lineHeight: "48px",
+                fontWeight: "lighter",
+                color: "#000"
+              }}>
+                {headline}
+              </div>
+            </td>
+          </tr>
+          <tr style={{ height: "60px" }}>
+            <td style={{ padding: "0px 24px 24px 24px", height: "60px" }}>
+              <div style={{
+                maxWidth: "560px",
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "#000",
+                fontWeight: 400
+              }}>
+                {description}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+    const TwoColumnCards = ({
+      cards = [
+        {
+          image: "https://via.placeholder.com/300x120/00ECC0/000?text=Card+1",
+          alt: "Sample Card 1",
+          title: "Feature Highlight",
+          description: "Discover the latest features that make your workflow more efficient.",
+          linkText: "Learn more →",
+          url: "#"
+        },
+        {
+          image: "https://via.placeholder.com/300x120/00ECC0/000?text=Card+2",
+          alt: "Sample Card 2",
+          title: "Success Story",
+          description: "See how our customers are achieving amazing results.",
+          linkText: "Read case study →",
+          url: "#"
+        }
+      ]
+    }) => (
+      <table role="presentation" width="100%" cellSpacing="0" style={{
+        background: "#FFFFFF",
+        border: 0,
+        borderBottom: "0.5px solid #d9dfdf"
+      }}>
+        <tbody>
+          <tr>
+            <td style={{ padding: "24px 24px 0px 24px" }}>
+              <table role="presentation" width="100%" cellSpacing="0" style={{ border: 0 }}>
+                <tbody>
+                  <tr>
+                    {cards.slice(0, 2).map((card, index) => (
+                      <td key={index} style={{
+                        padding: index === 0 ? "0 5px 0 0" : "0 0 0 5px",
+                        width: "50%"
+                      }} valign="top">
+                        <table role="presentation" width="100%" style={{
+                          border: "1px solid #CCCCCC",
+                          borderRadius: "6px",
+                          overflow: "hidden"
+                        }}>
+                          <tbody>
+                            <tr>
+                              <td>
+                                <img
+                                  src={card.image}
+                                  width="100%"
+                                  height="120"
+                                  alt={card.alt}
+                                  style={{
+                                    display: "block",
+                                    height: "120px",
+                                    objectFit: "cover",
+                                    width: "100%"
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style={{ padding: "16px" }}>
+                                <div style={{
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "18px",
+                                  fontWeight: "bold",
+                                  color: "#000",
+                                  marginBottom: "8px"
+                                }}>
+                                  {card.title}
+                                </div>
+                                <div style={{
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "14px",
+                                  color: "#000",
+                                  marginBottom: "16px",
+                                  lineHeight: "20px"
+                                }}>
+                                  {card.description}
+                                </div>
+                                <a href={card.url} style={{
+                                  display: "inline-block",
+                                  color: "#000",
+                                  textDecoration: "underline",
+                                  fontSize: "14px",
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif"
+                                }}>
+                                  {card.linkText}
+                                </a>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style={{ padding: "0 24px 24px 24px" }}>
+              {/* Bottom spacing */}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+    const PreFooter = ({
+      headline = "What our customers say",
+      description = "Hear from the people who use our platform every day to transform their business.",
+      testimonials = [
+        {
+          quote: "This platform has completely transformed how we manage our business operations.",
+          name: "Sarah Johnson",
+          title: "CEO, TechStart",
+          avatar: "https://via.placeholder.com/40x40/00ECC0/000?text=SJ"
+        },
+        {
+          quote: "The customer support is outstanding, and the features keep getting better.",
+          name: "Michael Chen",
+          title: "Operations Director",
+          avatar: "https://via.placeholder.com/40x40/00ECC0/000?text=MC"
+        }
+      ]
+    }) => (
+      <table role="presentation" width="100%" cellSpacing="0" style={{
+        background: "#FFFFFF",
+        border: 0
+      }}>
+        <tbody>
+          <tr>
+            <td style={{ padding: "24px 24px 8px 24px" }}>
+              <div style={{
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "42px",
+                lineHeight: "48px",
+                fontWeight: "lighter",
+                color: "#000"
+              }}>
+                {headline}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style={{ padding: "0 24px 12px 24px" }}>
+              <div style={{
+                maxWidth: "560px",
+                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                fontSize: "16px",
+                lineHeight: "20px",
+                color: "#000",
+                fontWeight: 400
+              }}>
+                {description}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style={{ padding: "24px 24px 20px 24px" }}>
+              <table role="presentation" width="100%" cellSpacing="0" style={{ border: 0 }}>
+                <tbody>
+                  <tr>
+                    {testimonials.slice(0, 2).map((testimonial, index) => (
+                      <td key={index} style={{
+                        padding: index === 0 ? "0 5px 0 0" : "0 0 0 5px",
+                        width: "50%"
+                      }} valign="top">
+                        <div style={{
+                          background: "#d9dfdf",
+                          borderRadius: "10px",
+                          padding: "20px"
+                        }}>
+                          <div style={{
+                            fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                            fontSize: "14px",
+                            color: "#000",
+                            marginBottom: "16px",
+                            lineHeight: "20px"
+                          }}>
+                            "{testimonial.quote}"
+                          </div>
+                          <div style={{
+                            display: "flex",
+                            alignItems: "center"
+                          }}>
+                            <img
+                              src={testimonial.avatar}
+                              width="40"
+                              height="40"
+                              alt={testimonial.name}
+                              style={{
+                                borderRadius: "50%",
+                                marginRight: "12px",
+                                display: "block"
+                              }}
+                            />
+                            <div>
+                              <div style={{
+                                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                color: "#000"
+                              }}>
+                                {testimonial.name}
+                              </div>
+                              <div style={{
+                                fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                fontSize: "12px",
+                                color: "#555"
+                              }}>
+                                {testimonial.title}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
+
+    // Complete Rho Email Component with HubSpot styling
+    const CompleteRhoEmail = () => (
+      <div style={{ maxWidth: '600px', margin: '0 auto', backgroundColor: '#ffffff' }}>
+        {/* Header */}
+        <table role="presentation" width="100%" cellSpacing="0" style={{
+          background: "#FFFFFF",
+          border: 0,
+          borderBottom: "0.5px solid #d9dfdf"
+        }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: "20px 24px" }}>
+                <table role="presentation" width="100%" cellSpacing="0" style={{ border: 0 }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: "0px" }} align="left" valign="middle">
+                        <img
+                          src="https://39998325.hs-sites.com/hubfs/Rho-Logo.png"
+                          alt="Rho"
+                          style={{
+                            display: "block",
+                            height: "auto",
+                            maxWidth: "90px"
+                          }}
+                        />
+                      </td>
+                      <td style={{ padding: "0px" }} align="right" valign="middle">
+                        <div style={{
+                          fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                          fontSize: "14px",
+                          lineHeight: "20px",
+                          fontWeight: "bold",
+                          color: "#000"
+                        }}>
+                          10.02.2025
+                        </div>
+                        <div style={{
+                          fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                          fontSize: "14px",
+                          lineHeight: "20px",
+                          fontWeight: "bold",
+                          color: "#000"
+                        }}>
+                          Event Recap
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Body with CTA */}
+        <table role="presentation" width="100%" cellSpacing="0" style={{
+          background: "#FFFFFF",
+          border: 0,
+          borderBottom: "0.5px solid #d9dfdf"
+        }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: "24px 24px 8px 24px" }}>
+                <p style={{
+                  margin: "0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  Hi there,
+                </p>
+                <p style={{
+                  margin: "16px 0 0 0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  What an event! Thank you for taking the time out of your busy schedule to join us.
+                </p>
+                <p style={{
+                  margin: "16px 0 0 0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  At Rho, we've hosted hundreds of events to date, and now we're organizing 10–15 gatherings per week across New York, San Francisco, and now Boston.
+                </p>
+                <p style={{
+                  margin: "16px 0 0 0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  Whether a dinner, poker night, or afternoon tennis, we'd love to see you again. Subscribe below and we'll keep you up-to-date on everything exciting that's coming soon.
+                </p>
+                <p style={{
+                  margin: "16px 0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  fontWeight: "bold",
+                  color: "#000"
+                }}>
+                  Want to be the first to hear about our next event?
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: "0 24px 16px 24px" }}>
+                <a href="https://lu.ma/rho" style={{
+                  display: "inline-block",
+                  background: "#00ECC0",
+                  borderRadius: "2px",
+                  padding: "12px 20px",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "16px",
+                  lineHeight: "20px",
+                  fontWeight: "bold",
+                  color: "#000",
+                  textDecoration: "none"
+                }}>
+                  Keep me updated
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: "8px 24px 24px 24px" }}>
+                <p style={{
+                  margin: "0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  Thanks again for a wonderful time, and see you again soon!
+                </p>
+                <p style={{
+                  margin: "16px 0 0 0",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  All the best,<br /><strong>The Rho Team</strong>
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Highlight Section */}
+        <table role="presentation" width="100%" cellSpacing="0" style={{
+          background: "#FFFFFF",
+          border: 0,
+          borderBottom: "0.5px solid #d9dfdf"
+        }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: "24px 24px 8px 24px" }}>
+                <div style={{
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "42px",
+                  lineHeight: "48px",
+                  fontWeight: "bold",
+                  color: "#000"
+                }}>
+                  Have something coming up worth celebrating?
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: "0 24px 24px 24px" }}>
+                <div style={{
+                  maxWidth: "560px",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  At Rho, we love making a startup's moment special, just like we did for Glimpse and Nexxa.ai. Don't hesitate to reach out by contacting your account representative or replying to this email.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Two Column Cards */}
+        <table role="presentation" width="100%" cellSpacing="0" style={{
+          background: "#FFFFFF",
+          border: 0,
+          borderBottom: "0.5px solid #d9dfdf"
+        }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: "24px 24px" }}>
+                <table role="presentation" width="100%" cellSpacing="0" style={{ border: 0 }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: "0 5px 0 0" }} valign="top" width="50%">
+                        <table role="presentation" width="100%" style={{
+                          border: "1px solid #CCCCCC",
+                          borderRadius: "6px",
+                          overflow: "hidden"
+                        }}>
+                          <tbody>
+                            <tr>
+                              <td>
+                                <img
+                                  src="https://39998325.hs-sites.com/hubfs/1745365055277-1.jpeg"
+                                  alt="Glimpse event"
+                                  style={{
+                                    width: "100%",
+                                    height: "auto",
+                                    display: "block"
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style={{ padding: "15px" }}>
+                                <div style={{
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "24px",
+                                  lineHeight: "30px",
+                                  fontWeight: "bold",
+                                  color: "#000"
+                                }}>
+                                  Glimpse
+                                </div>
+                                <div style={{
+                                  marginTop: "8px",
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "14px",
+                                  lineHeight: "20px",
+                                  color: "#000"
+                                }}>
+                                  For Glimpse's Series A raise and 1-year anniversary, we marked the moment with a special gathering of their team, investors, and brand partners.
+                                </div>
+                                <div style={{ marginTop: "10px" }}>
+                                  <a href="#" style={{
+                                    fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                    fontSize: "14px",
+                                    lineHeight: "20px",
+                                    fontWeight: "bold",
+                                    color: "#000",
+                                    textDecoration: "none"
+                                  }}>
+                                    Learn More →
+                                  </a>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                      <td style={{ padding: "0 0 0 5px" }} valign="top" width="50%">
+                        <table role="presentation" width="100%" style={{
+                          border: "1px solid #CCCCCC",
+                          borderRadius: "6px",
+                          overflow: "hidden"
+                        }}>
+                          <tbody>
+                            <tr>
+                              <td>
+                                <img
+                                  src="https://39998325.hs-sites.com/hubfs/Events-Email-ImageRight.png"
+                                  alt="Nexxa.ai"
+                                  style={{
+                                    width: "100%",
+                                    height: "auto",
+                                    display: "block"
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style={{ padding: "15px" }}>
+                                <div style={{
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "24px",
+                                  lineHeight: "30px",
+                                  fontWeight: "bold",
+                                  color: "#000"
+                                }}>
+                                  Nexxa.ai
+                                </div>
+                                <div style={{
+                                  marginTop: "8px",
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "14px",
+                                  lineHeight: "20px",
+                                  color: "#000"
+                                }}>
+                                  After raising $4.4M, we featured Nexxa up in the bright lights of Times Square! All Rho customers get a billboard on us, design support included.
+                                </div>
+                                <div style={{ marginTop: "10px" }}>
+                                  <a href="#" style={{
+                                    fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                    fontSize: "14px",
+                                    lineHeight: "20px",
+                                    fontWeight: "bold",
+                                    color: "#000",
+                                    textDecoration: "none"
+                                  }}>
+                                    Learn More →
+                                  </a>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Pre-Footer with Testimonials */}
+        <table role="presentation" width="100%" cellSpacing="0" style={{
+          background: "#FFFFFF",
+          border: 0
+        }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: "24px 24px 8px 24px" }}>
+                <div style={{
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "42px",
+                  lineHeight: "48px",
+                  fontWeight: "bold",
+                  color: "#000"
+                }}>
+                  Why thousands of founders love Rho
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: "0 24px 12px 24px" }}>
+                <div style={{
+                  maxWidth: "560px",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#000"
+                }}>
+                  Our fee-free banking platform, >$1M in startup perks, and team that will go to the end of the earth to see your company win. Learn more about why Rho will be the perfect fit for your business, too.
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: "0 24px 20px 24px" }}>
+                <table role="presentation" width="100%" cellSpacing="0" style={{ border: 0 }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: "0 5px 0 0" }} valign="top" width="50%">
+                        <table role="presentation" width="100%" style={{
+                          border: "1px solid #E6E6E6",
+                          borderRadius: "10px",
+                          background: "#d9dfdf"
+                        }}>
+                          <tbody>
+                            <tr>
+                              <td style={{ padding: "16px" }}>
+                                <table role="presentation" width="100%">
+                                  <tbody>
+                                    <tr>
+                                      <td valign="top" width="44">
+                                        <div style={{
+                                          width: "44px",
+                                          height: "44px",
+                                          borderRadius: "22px",
+                                          background: "#EDEDED"
+                                        }}></div>
+                                      </td>
+                                      <td style={{ paddingLeft: "10px" }}>
+                                        <div style={{
+                                          fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                          fontSize: "14px",
+                                          lineHeight: "20px",
+                                          fontWeight: "bold",
+                                          color: "#000"
+                                        }}>
+                                          Dylan Babbs
+                                        </div>
+                                        <div style={{
+                                          fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                          fontSize: "12px",
+                                          lineHeight: "18px",
+                                          color: "#555"
+                                        }}>
+                                          Co-founder @ Profound
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                <div style={{
+                                  marginTop: "10px",
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "14px",
+                                  lineHeight: "20px",
+                                  color: "#000"
+                                }}>
+                                  "We love Rho. Their cash management capabilities and founder-friendly support have been amazing while we build our business."
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                      <td style={{ padding: "0 0 0 5px" }} valign="top" width="50%">
+                        <table role="presentation" width="100%" style={{
+                          border: "1px solid #E6E6E6",
+                          borderRadius: "10px",
+                          background: "#d9dfdf"
+                        }}>
+                          <tbody>
+                            <tr>
+                              <td style={{ padding: "16px" }}>
+                                <table role="presentation" width="100%">
+                                  <tbody>
+                                    <tr>
+                                      <td valign="top" width="44">
+                                        <div style={{
+                                          width: "44px",
+                                          height: "44px",
+                                          borderRadius: "22px",
+                                          background: "#EDEDED"
+                                        }}></div>
+                                      </td>
+                                      <td style={{ paddingLeft: "10px" }}>
+                                        <div style={{
+                                          fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                          fontSize: "14px",
+                                          lineHeight: "20px",
+                                          fontWeight: "bold",
+                                          color: "#000"
+                                        }}>
+                                          Caitlin Leksana
+                                        </div>
+                                        <div style={{
+                                          fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                          fontSize: "12px",
+                                          lineHeight: "18px",
+                                          color: "#555"
+                                        }}>
+                                          CEO @ FeaZenith
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                <div style={{
+                                  marginTop: "10px",
+                                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                                  fontSize: "14px",
+                                  lineHeight: "20px",
+                                  color: "#000"
+                                }}>
+                                  "I chose Rho because their team is hands-down one of the most responsive and supportive I've worked with. As a lean startup, that level of service matters."
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ padding: "0 24px 24px 24px" }}>
+                <a href="#" style={{
+                  display: "inline-block",
+                  background: "#00ECC0",
+                  borderRadius: "2px",
+                  padding: "12px 20px",
+                  fontFamily: "Helvetica,'Basier Circle',Roboto,Arial,sans-serif",
+                  fontSize: "16px",
+                  lineHeight: "20px",
+                  fontWeight: "bold",
+                  color: "#000",
+                  textDecoration: "none"
+                }}>
+                  Explore Now
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Footer */}
+        <table role="presentation" width="100%" style={{
+          background: "#0D0F10",
+          border: 0
+        }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: "24px", textAlign: "left" }}>
+                <table width="100%" role="presentation">
+                  <tbody>
+                    <tr>
+                      <td width="70%" valign="top">
+                        <img
+                          src="https://39998325.hs-sites.com/hubfs/Rho-Logo.png"
+                          alt="Rho"
+                          style={{
+                            maxWidth: "60px",
+                            marginBottom: "12px"
+                          }}
+                        />
+                        <p style={{
+                          margin: "0",
+                          fontSize: "13px",
+                          lineHeight: "18px",
+                          color: "#fff"
+                        }}>
+                          Rho Technologies
+                        </p>
+                        <p style={{
+                          margin: "2px 0 0",
+                          color: "#b6b6b6",
+                          fontSize: "12px",
+                          lineHeight: "18px"
+                        }}>
+                          100 Crosby Street<br />
+                          New York, NY 10012
+                        </p>
+                      </td>
+                      <td width="30%" valign="top" align="right">
+                        <a href="https://linkedin.com/company/rhobusiness/" style={{
+                          margin: "0 4px",
+                          display: "inline-block"
+                        }}>
+                          <img src="https://39998325.hs-sites.com/hs-fs/hubfs/linkedin-footer_logo.png?width=48&upscale=true&name=linkedin-footer_logo.png" width="24" alt="" />
+                        </a>
+                        <a href="https://x.com/rhobusiness" style={{
+                          margin: "0 4px",
+                          display: "inline-block"
+                        }}>
+                          <img src="https://39998325.hs-sites.com/hs-fs/hubfs/Twitter-footer_logo.png?width=48&upscale=true&name=Twitter-footer_logo.png" width="24" alt="" />
+                        </a>
+                        <a href="https://lu.ma/calendar/manage/cal-vSo9sRaAQOgoflu" style={{
+                          margin: "0 4px",
+                          display: "inline-block"
+                        }}>
+                          <img src="https://39998325.hs-sites.com/hs-fs/hubfs/luma-footer_logo.png?width=48&upscale=true&name=luma-footer_logo.png" width="24" alt="" />
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div style={{ height: "16px", lineHeight: "16px", fontSize: "0" }}></div>
+
+                <table width="100%" role="presentation">
+                  <tbody>
+                    <tr>
+                      <td style={{
+                        color: "#c9c9c9",
+                        fontSize: "12px",
+                        lineHeight: "18px"
+                      }}>
+                        Rho is a fintech company, not a bank or an FDIC-insured depository institution. Checking account and card services are provided by Webster Bank N.A., member FDIC. Savings account services are provided by American Deposit Management Co. and its partner banks. International and foreign currency payments services are provided by Wise US Inc. FDIC deposit insurance coverage is available only to protect you against the failure of an FDIC-insured bank that holds your deposits and is subject to FDIC limitations and requirements. It does not protect you against the failure of Rho or other third party. Products and services offered through the Rho platform are subject to approval.
+                        <br /><br />
+                        Rho Technologies, 100 Crosby Street, New York, NY 10012<br />
+                        <a href="#" style={{ color: "#c9c9c9" }}>Unsubscribe</a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+
+    // Main Application
+    const RhoLibraryApp = () => {
+      const components = [
+        {
+          title: "Email Header",
+          description: "Professional email header with logo and date/kicker information",
+          component: <Header />,
+          category: "Email",
+          tags: ["email", "header", "branding"],
+          code: `<table role="presentation" width="100%" cellspacing="0" style="background: #FFFFFF; border: 0; border-bottom: 0.5px solid #d9dfdf;">
+  <tbody>
+    <tr>
+      <td style="padding: 20px 0;">
+        <table role="presentation" width="100%" cellspacing="0" style="border: 0;">
+          <tbody>
+            <tr>
+              <td style="padding-left: 20px;" valign="middle">
+                <img src="https://39998325.fs1.hubspotusercontent-na1.net/hubfs/39998325/Rho-logo-25.png"
+                     width="110" height="50" alt="Rho Logo"
+                     style="display: block; height: auto; max-width: 110px; width: 110px;" />
+              </td>
+              <td style="padding-right: 20px;" align="right" valign="middle">
+                <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; line-height: 20px; font-weight: bold; color: #000;">
+                  10.02.2025
+                </div>
+                <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; line-height: 20px; font-weight: bold; color: #000;">
+                  Event Recap
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+        },
+        {
+          title: "Body with CTA",
+          description: "Email body content with customizable call-to-action button",
+          component: <BodyWithCTA />,
+          category: "Email",
+          tags: ["email", "body", "cta", "button"],
+          code: `<table role="presentation" width="100%" cellspacing="0" style="background: #FFFFFF; border: 0; border-bottom: 0.5px solid #d9dfdf;">
+  <tbody>
+    <tr>
+      <td style="padding: 24px 24px 8px 24px;">
+        <p style="padding: 24px 0; margin: 0; font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; line-height: 20px; color: #000; font-weight: 400;">
+          <span style="font-size: 16px;">Hello there,</span>
+        </p>
+        <p style="margin: 16px 0 0 0; font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; line-height: 20px; color: #000; font-weight: 400;">
+          <span style="font-size: 16px;">Thank you for your interest in our services. We're excited to share some updates with you.</span>
+        </p>
+        <div style="padding: 24px 0;">
+          <a href="#" style="display: inline-block; background: #00ECC0; border-radius: 2px; padding: 12px 20px; font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 16px; line-height: 20px; font-weight: bold; color: #000; text-decoration: none;">
+            Keep me updated
+          </a>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+        },
+        {
+          title: "Highlight Section",
+          description: "Large headline with supporting description text",
+          component: <Highlight />,
+          category: "Email",
+          tags: ["email", "highlight", "headline"],
+          code: `<table role="presentation" width="100%" cellspacing="0" style="background: #ffffff; border: 0px 0px 0.5px; border-color: #d9dfdf; border-style: solid; height: 156px;">
+  <tbody>
+    <tr style="height: 96px;">
+      <td style="padding: 24px 24px 8px 24px; height: 96px;">
+        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 42px; line-height: 48px; font-weight: lighter; color: #000;">
+          Big News Ahead
+        </div>
+      </td>
+    </tr>
+    <tr style="height: 60px;">
+      <td style="padding: 0px 24px 24px 24px; height: 60px;">
+        <div style="max-width: 560px; font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; line-height: 20px; color: #000; font-weight: 400;">
+          We're excited to share some important updates that will help you get the most out of your experience with us.
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+        },
+        {
+          title: "Two Column Cards",
+          description: "Side-by-side card layout for showcasing items",
+          component: <TwoColumnCards />,
+          category: "Email",
+          tags: ["email", "cards", "layout", "two-column"],
+          code: `<table role="presentation" width="100%" cellspacing="0" style="background: #FFFFFF; border: 0; border-bottom: 0.5px solid #d9dfdf;">
+  <tbody>
+    <tr>
+      <td style="padding: 24px 24px 0px 24px;">
+        <table role="presentation" width="100%" cellspacing="0" style="border: 0;">
+          <tbody>
+            <tr>
+              <td style="padding: 0 5px 0 0; width: 50%;" valign="top">
+                <table role="presentation" width="100%" style="border: 1px solid #CCCCCC; border-radius: 6px; overflow: hidden;">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <img src="https://via.placeholder.com/300x120" width="100%" height="120" alt="Card" style="display: block; height: 120px; object-fit: cover;" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 16px;">
+                        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 18px; font-weight: bold; color: #000; margin-bottom: 8px;">Feature Highlight</div>
+                        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; color: #000; margin-bottom: 16px;">Discover the latest features.</div>
+                        <a href="#" style="display: inline-block; color: #000; text-decoration: underline; font-size: 14px;">Learn more →</a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+        },
+        {
+          title: "Pre-Footer Testimonials",
+          description: "Testimonial section with customer quotes",
+          component: <PreFooter />,
+          category: "Email",
+          tags: ["email", "testimonials", "pre-footer"],
+          code: `<table role="presentation" width="100%" cellspacing="0" style="background: #FFFFFF; border: 0;">
+  <tbody>
+    <tr>
+      <td style="padding: 24px 24px 8px 24px;">
+        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 42px; line-height: 48px; font-weight: lighter; color: #000;">
+          What our customers say
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px 24px 20px 24px;">
+        <table role="presentation" width="100%" cellspacing="0" style="border: 0;">
+          <tbody>
+            <tr>
+              <td style="padding: 0 5px 0 0; width: 50%;" valign="top">
+                <div style="background: #d9dfdf; border-radius: 10px; padding: 20px;">
+                  <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; color: #000; margin-bottom: 16px;">
+                    "This platform has transformed our business."
+                  </div>
+                  <div style="display: flex; align-items: center;">
+                    <img src="https://via.placeholder.com/40x40" width="40" height="40" style="border-radius: 50%; margin-right: 12px;" />
+                    <div>
+                      <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; font-weight: bold; color: #000;">Sarah Johnson</div>
+                      <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 12px; color: #555;">CEO, TechStart</div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+        },
+        {
+          title: "Email Footer",
+          description: "Clean email footer with company contact information",
+          component: <Footer />,
+          category: "Email",
+          tags: ["email", "footer", "contact"],
+          code: `<table role="presentation" width="100%" cellspacing="0" style="background: #FFFFFF; border: 0;">
+  <tbody>
+    <tr>
+      <td style="padding: 24px; text-align: center;">
+        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; color: #000; font-weight: bold; margin-bottom: 8px;">
+          Rho Technologies
+        </div>
+        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; color: #000; margin-bottom: 4px;">
+          100 Crosby Street
+        </div>
+        <div style="font-family: Helvetica,'Basier Circle',Roboto,Arial,sans-serif; font-size: 14px; color: #000;">
+          New York, NY 10012
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+        }
+      ];
+
+      return (
+        <div className="main-container">
+          {/* Complete Email Template Section - Left 50% */}
+          <div className="complete-email-section">
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '16px',
+              padding: '32px',
+              marginBottom: '24px',
+              backdropFilter: 'blur(8px)',
+              border: '2px solid rgba(0, 236, 192, 0.3)'
+            }}>
+              <h2 style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                color: '#000',
+                marginBottom: '12px',
+                textAlign: 'center'
+              }}>
+                <span style={{ color: '#00ECC0' }}>Complete</span> Rho Email Template
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                color: 'rgba(0, 0, 0, 0.7)',
+                textAlign: 'center',
+                marginBottom: '24px',
+                lineHeight: '1.6'
+              }}>
+                Professional email template combining all Rho components, styled exactly like HubSpot emails.
+              </p>
+            </div>
+
+            <div className="email-preview">
+              <CompleteRhoEmail />
+            </div>
+          </div>
+
+          {/* Components Section - Right 50% */}
+          <div className="components-section">
+            <header style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '16px',
+              padding: '32px',
+              marginBottom: '32px',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(0, 236, 192, 0.2)'
+            }}>
+              <h1 style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                color: '#000',
+                marginBottom: '12px'
+              }}>
+                <span style={{ color: '#00ECC0' }}>Rho</span> Component Library
+              </h1>
+              <p style={{
+                fontSize: '16px',
+                color: 'rgba(0, 0, 0, 0.7)',
+                marginBottom: '20px',
+                lineHeight: '1.6'
+              }}>
+                Professional email components with consistent Rho branding and email-safe HTML.
+              </p>
+              <div style={{ marginBottom: '16px' }}>
+                <span className="feature-badge">Email Safe HTML</span>
+                <span className="feature-badge">Copy & Paste Ready</span>
+                <span className="feature-badge">Rho Branded</span>
+                <span className="feature-badge">Mobile Responsive</span>
+              </div>
+              <div className="stats-bar">
+                <span>Total Components: {components.length}</span>
+                <span>Email Templates: 6</span>
+                <span>Brand Colors: Rho (#00ECC0)</span>
+              </div>
+            </header>
+
+            <main>
+              {components.map((comp, index) => (
+                <div key={index} className="component-showcase">
+                  <div className="component-title">{comp.title}</div>
+                  <div className="component-description">{comp.description}</div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                      {comp.tags.map((tag, tagIndex) => (
+                        <span key={tagIndex} style={{
+                          background: 'rgba(0, 236, 192, 0.1)',
+                          color: 'rgba(0, 0, 0, 0.7)',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase'
+                        }}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <ComponentCard
+                    title=""
+                    description=""
+                    component={comp.component}
+                    code={comp.code}
+                  />
+                </div>
+              ))}
+            </main>
+          </div>
+        </div>
+      );
+    };
+
+    // Render the app
+    ReactDOM.render(<RhoLibraryApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
