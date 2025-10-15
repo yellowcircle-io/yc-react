@@ -525,6 +525,25 @@ function HomePage() {
       />
 
       <style>{`
+        /* Global viewport constraints */
+        body, html {
+          max-height: 100vh !important;
+          overflow: hidden !important;
+        }
+
+        /* YC Logo visibility boost */
+        .yc-logo {
+          z-index: 100 !important;
+        }
+
+        /* Firefox-specific fixes */
+        @-moz-document url-prefix() {
+          button, .clickable-element {
+            z-index: auto !important;
+            isolation: isolate;
+          }
+        }
+
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 0.96; }
@@ -579,6 +598,104 @@ function HomePage() {
         }
         .contact-btn:hover {
           background-color: white !important;
+        }
+
+        /* Responsive sidebar fixes */
+        @media (max-width: 768px) {
+          .sidebar-label, .navigation-items-container span {
+            font-size: 12px !important;
+            letter-spacing: 0.15em !important;
+            max-width: calc(100% - 70px) !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            line-height: 1.2 !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .sidebar-label, .navigation-items-container span {
+            font-size: 10px !important;
+            letter-spacing: 0.1em !important;
+          }
+        }
+
+        /* Footer responsive fixes - keep 50/50 layout on all viewports */
+        @media (max-width: 768px) {
+          /* Reduce padding in footer sections but keep side-by-side */
+          [style*="padding: 40px"][style*="backgroundColor: rgba(0,0,0,0.9)"],
+          [style*="padding: 40px"][style*="backgroundColor: #EECF00"] {
+            padding: 20px 12px !important;
+          }
+
+          /* Reduce footer heading sizes */
+          [style*="fontSize: 24px"][style*="letterSpacing: 0.3em"] {
+            font-size: 16px !important;
+            margin-bottom: 10px !important;
+          }
+
+          /* Reduce footer link sizes */
+          [style*="fontSize: 14px"][style*="letterSpacing: 0.1em"] {
+            font-size: 11px !important;
+          }
+
+          /* Reduce gap between links */
+          [style*="gap: 15px"] {
+            gap: 10px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          /* More compact padding on small mobile */
+          [style*="padding: 40px"][style*="backgroundColor: rgba(0,0,0,0.9)"],
+          [style*="padding: 40px"][style*="backgroundColor: #EECF00"] {
+            padding: 16px 8px !important;
+          }
+
+          /* Smaller headings on small screens */
+          [style*="fontSize: 24px"][style*="letterSpacing: 0.3em"] {
+            font-size: 14px !important;
+            margin-bottom: 8px !important;
+          }
+
+          /* Smaller links */
+          [style*="fontSize: 14px"][style*="letterSpacing: 0.1em"] {
+            font-size: 10px !important;
+          }
+
+          /* Tighter gap on small screens */
+          [style*="gap: 15px"] {
+            gap: 8px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          /* Ultra-compact for very small viewports (360px) */
+          [style*="padding: 40px"][style*="backgroundColor: rgba(0,0,0,0.9)"],
+          [style*="padding: 40px"][style*="backgroundColor: #EECF00"] {
+            padding: 12px 6px !important;
+          }
+
+          /* Very small headings */
+          [style*="fontSize: 24px"][style*="letterSpacing: 0.3em"] {
+            font-size: 11px !important;
+            margin-bottom: 6px !important;
+            letter-spacing: 0.2em !important;
+          }
+
+          /* Tiny links */
+          [style*="fontSize: 14px"][style*="letterSpacing: 0.1em"] {
+            font-size: 9px !important;
+            letter-spacing: 0.05em !important;
+          }
+
+          /* Minimal gap */
+          [style*="gap: 15px"] {
+            gap: 6px !important;
+          }
+
+          /* Reduce border padding */
+          [style*="borderBottom: 2px solid"] {
+            padding-bottom: 6px !important;
+          }
         }
 
       `}</style>
@@ -707,13 +824,15 @@ function HomePage() {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: sidebarOpen ? 'min(30vw, 450px)' : '80px',
+        width: sidebarOpen ? 'min(35vw, 472px)' : '80px',
         height: '100vh',
+        maxHeight: '100vh',
         backgroundColor: 'rgba(242, 242, 242, 0.96)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         zIndex: 50,
         transition: 'width 0.5s ease-out',
+        overflowY: 'auto'
       }}>
         
         {/* Sidebar Toggle Button - Fixed pixel position, never moves */}
@@ -789,22 +908,26 @@ function HomePage() {
         </div>
 
         {/* YC Logo - Responsive positioning for mobile */}
-        <div style={{ 
+        <div className="yc-logo" style={{
           position: 'absolute',
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: 'min(40px, 8vw)', 
-          height: 'min(40px, 8vw)',
-          minWidth: '30px',
-          minHeight: '30px',
+          width: '45px',
+          height: '45px',
+          minWidth: '40px',
+          minHeight: '40px',
           borderRadius: '50%',
-          overflow: 'hidden'
-        }}>
-          <img 
-            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png" 
+          overflow: 'visible',
+          zIndex: 100,
+          cursor: 'pointer'
+        }}
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <img
+            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
             alt="YC Logo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
           />
         </div>
       </div>
@@ -855,16 +978,16 @@ function HomePage() {
         zIndex: 60,
         transition: 'bottom 0.5s ease-out'
       }}>
-        {/* YOUR CIRCLE FOR Copy - Fixed position in viewport */}
+        {/* YOUR CIRCLE FOR Copy - Adjusts for sidebar */}
         <div style={{
           position: 'fixed',
           bottom: '40px',
-          left: 'max(120px, 8vw)',
-          maxWidth: 'min(640px, 50vw)',
+          left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
+          maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(640px, 50vw)',
           zIndex: 61,
           pointerEvents: 'none',
           transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-          transition: 'transform 0.5s ease-out'
+          transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
         }}>
           <div style={{
             color: 'black',
@@ -1163,19 +1286,34 @@ function HomePage() {
             alignItems: 'center',
             gap: '10px'
           }}>
-            {['HOME', 'EXPERIMENTS', 'THOUGHTS', 'ABOUT'].map((item, index) => (
-              <a key={item} 
-                href="#" 
-                onClick={item === 'HOME' ? handleHomeClick : item === 'EXPERIMENTS' ? () => navigate('/experiments') : undefined}
-                className={`menu-item-${index + 1} menu-link`} 
+            {['HOME', 'EXPERIMENTS', 'UK MEMORIES', 'THOUGHTS', 'ABOUT'].map((item, index) => (
+              <a key={item}
+                href="#"
+                onClick={
+                  item === 'HOME' ? handleHomeClick :
+                  item === 'EXPERIMENTS' ? () => navigate('/experiments') :
+                  item === 'UK MEMORIES' ? () => navigate('/uk-memories') :
+                  undefined
+                }
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (item === 'HOME') handleHomeClick(e);
+                  else if (item === 'EXPERIMENTS') navigate('/experiments');
+                  else if (item === 'UK MEMORIES') navigate('/uk-memories');
+                }}
+                className={`menu-item-${index + 1} menu-link`}
                 style={{
                   textDecoration: 'none',
                   fontSize: '20px',
                   fontWeight: '600',
                   letterSpacing: '0.3em',
                   padding: '10px 20px',
-                  borderRadius: '4px'
+                  borderRadius: '4px',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none'
                 }}
+                onMouseEnter={(e) => e.target.style.color = 'white'}
+                onMouseLeave={(e) => e.target.style.color = 'black'}
               >
                 {item}
               </a>
