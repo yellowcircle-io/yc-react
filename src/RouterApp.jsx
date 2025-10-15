@@ -7,6 +7,7 @@ import ThoughtsPage from './pages/ThoughtsPage';
 import AboutPage from './pages/AboutPage';
 import WorksPage from './pages/WorksPage';
 import TimeCapsulePage from './pages/TimeCapsulePage';
+import CapsuleViewPage from './pages/CapsuleViewPage';
 
 // Experiment sub-routes
 import GoldenUnknownPage from './pages/experiments/GoldenUnknownPage';
@@ -41,6 +42,7 @@ function RouterApp() {
 
         {/* Travel Time Capsule */}
         <Route path="/uk-memories" element={<TimeCapsulePage />} />
+        <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
 
         {/* Placeholder routes for future sub-pages */}
         <Route path="/about/timeline" element={<AboutPage />} />
