@@ -15,6 +15,8 @@ import '@xyflow/react/dist/style.css';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
 import ShareModal from '../components/travel/ShareModal';
+import LightboxModal from '../components/travel/LightboxModal';
+import EditMemoryModal from '../components/travel/EditMemoryModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
@@ -33,11 +35,22 @@ const TimeCapsuleFlow = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Firebase hook for shareable URLs
+  // Firebase hook for shareable URLs and auto-sync
   const { saveCapsule, isSaving } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState(null);
+  const [autoSyncEnabled] = useState(true); // setAutoSyncEnabled intentionally unused for now
+
+  // Lightbox state
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [showLightbox, setShowLightbox] = useState(false);
+
+  // Edit memory state
+  const [editingMemory, setEditingMemory] = useState(null);
+  const [editingNodeId, setEditingNodeId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Navigation state
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,7 +102,46 @@ const TimeCapsuleFlow = () => {
     );
   }, [setNodes]);
 
-  // Ensure all nodes have resize callback (for nodes loaded from storage/import)
+  // Handle lightbox - defined early so it can be used in useEffect
+  const handleLightbox = useCallback((photoData) => {
+    console.log('🖼️ Opening lightbox for photo:', photoData);
+    setLightboxPhoto(photoData);
+    setShowLightbox(true);
+  }, []);
+
+  // Handle edit - defined early so it can be used in useEffect
+  const handleEdit = useCallback((nodeId, photoData) => {
+    console.log('✏️ Editing memory:', nodeId, photoData);
+    setEditingNodeId(nodeId);
+    setEditingMemory(photoData);
+    setShowEditModal(true);
+  }, []);
+
+  // Handle edit save - update node data
+  const handleEditSave = useCallback((updatedData) => {
+    console.log('💾 Saving edited memory:', editingNodeId, updatedData);
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === editingNodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              location: updatedData.location,
+              date: updatedData.date,
+              description: updatedData.description
+            }
+          };
+        }
+        return node;
+      })
+    );
+
+    console.log('✅ Memory updated successfully');
+  }, [editingNodeId, setNodes]);
+
+  // Ensure all nodes have callbacks (for nodes loaded from storage/import)
   useEffect(() => {
     if (!isInitialized) return;
 
@@ -98,22 +150,74 @@ const TimeCapsuleFlow = () => {
         ...node,
         data: {
           ...node.data,
-          onResize: handlePhotoResize
+          onResize: handlePhotoResize,
+          onLightbox: handleLightbox,
+          onEdit: handleEdit
         }
       }))
     );
-  }, [isInitialized, handlePhotoResize, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, setNodes]);
 
   // Save to localStorage
   useEffect(() => {
     if (!isInitialized) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
-      console.log('💾 Saved:', nodes.length, 'memories');
+      console.log('💾 Saved to localStorage:', nodes.length, 'memories');
     } catch (error) {
-      console.error('❌ Save error:', error);
+      console.error('❌ localStorage save error:', error);
     }
   }, [nodes, edges, isInitialized]);
+
+  // Auto-sync to Firebase (debounced to avoid excessive writes)
+  useEffect(() => {
+    if (!isInitialized || !autoSyncEnabled || nodes.length === 0) return;
+
+    // Debounce: wait 3 seconds after last change before syncing
+    const timeoutId = setTimeout(async () => {
+      try {
+        // Strip out ALL React Flow internal properties for Safari compatibility
+        const serializableNodes = nodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: {
+            imageUrl: node.data?.imageUrl || '',
+            location: node.data?.location || '',
+            date: node.data?.date || '',
+            description: node.data?.description || '',
+            size: node.data?.size || 350
+          }
+        }));
+
+        // Also clean edges
+        const serializableEdges = edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type || 'default'
+        }));
+
+        // Use existing capsuleId if available, otherwise create new one
+        const capsuleId = currentCapsuleId || `autosave-${Date.now()}`;
+        await saveCapsule(serializableNodes, serializableEdges, {
+          title: 'UK Travel Memories (Auto-saved)'
+        });
+
+        if (!currentCapsuleId) {
+          setCurrentCapsuleId(capsuleId);
+        }
+
+        setLastSyncTime(new Date());
+        console.log('☁️ Auto-synced to Firebase:', nodes.length, 'memories');
+      } catch (error) {
+        console.error('❌ Firebase auto-sync error:', error);
+        // Don't show alert for auto-sync failures, just log
+      }
+    }, 3000); // 3 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, isInitialized, autoSyncEnabled, currentCapsuleId, saveCapsule]);
 
   // Don't auto-fit view - let users manually zoom/pan
   // This prevents cards from being scaled down to thumbnails
@@ -129,7 +233,7 @@ const TimeCapsuleFlow = () => {
       const panAmount = 200; // pixels to pan per keypress
 
       switch (event.key) {
-        case 'ArrowUp':
+        case 'ArrowUp': {
           event.preventDefault();
           const currentViewportUp = document.querySelector('.react-flow__viewport');
           if (currentViewportUp) {
@@ -142,7 +246,8 @@ const TimeCapsuleFlow = () => {
             }
           }
           break;
-        case 'ArrowDown':
+        }
+        case 'ArrowDown': {
           event.preventDefault();
           const currentViewportDown = document.querySelector('.react-flow__viewport');
           if (currentViewportDown) {
@@ -155,7 +260,8 @@ const TimeCapsuleFlow = () => {
             }
           }
           break;
-        case 'ArrowLeft':
+        }
+        case 'ArrowLeft': {
           event.preventDefault();
           const currentViewportLeft = document.querySelector('.react-flow__viewport');
           if (currentViewportLeft) {
@@ -168,7 +274,8 @@ const TimeCapsuleFlow = () => {
             }
           }
           break;
-        case 'ArrowRight':
+        }
+        case 'ArrowRight': {
           event.preventDefault();
           const currentViewportRight = document.querySelector('.react-flow__viewport');
           if (currentViewportRight) {
@@ -181,6 +288,7 @@ const TimeCapsuleFlow = () => {
             }
           }
           break;
+        }
         case '+':
         case '=':
           event.preventDefault();
@@ -356,7 +464,29 @@ const TimeCapsuleFlow = () => {
     }
 
     try {
-      const capsuleId = await saveCapsule(nodes, edges, {
+      // Strip out ALL React Flow internal properties and callbacks for Safari compatibility
+      const serializableNodes = nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: {
+          imageUrl: node.data?.imageUrl || '',
+          location: node.data?.location || '',
+          date: node.data?.date || '',
+          description: node.data?.description || '',
+          size: node.data?.size || 350
+        }
+      }));
+
+      // Also clean edges for Safari
+      const serializableEdges = edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        type: edge.type || 'default'
+      }));
+
+      const capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
         title: 'UK Travel Memories'
       });
 
@@ -364,8 +494,30 @@ const TimeCapsuleFlow = () => {
       setShareUrl(url);
       setCurrentCapsuleId(capsuleId);
 
-      // Copy to clipboard automatically
-      await navigator.clipboard.writeText(url);
+      // Copy to clipboard with fallback for mobile Safari
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+        } else {
+          // Fallback for older browsers or mobile Safari
+          const textArea = document.createElement('textarea');
+          textArea.value = url;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try {
+            document.execCommand('copy');
+          } catch (err) {
+            console.warn('Copy fallback failed:', err);
+          }
+          document.body.removeChild(textArea);
+        }
+      } catch (clipboardErr) {
+        console.warn('Clipboard copy failed:', clipboardErr);
+        // Continue anyway - the URL is still shown in the modal
+      }
 
       // Show beautiful branded modal instead of alert
       setShowShareModal(true);
@@ -431,7 +583,7 @@ const TimeCapsuleFlow = () => {
           id: `photo-${Date.now()}-${index}`,
           type: 'photoNode',
           position: {
-            x: 100 + gridX * 600,  // Wide horizontal spacing: 600px
+            x: 300 + gridX * 600,  // Much larger clearance to prevent sidebar clipping (especially on mobile)
             y: 100 + gridY * 600   // Wide vertical spacing: 600px
           },
           data: {
@@ -440,7 +592,9 @@ const TimeCapsuleFlow = () => {
             date: metadata.date,
             description: metadata.description,
             size, // Pass size to component
-            onResize: handlePhotoResize // Pass resize callback
+            onResize: handlePhotoResize, // Pass resize callback
+            onLightbox: handleLightbox, // Pass lightbox callback
+            onEdit: handleEdit // Pass edit callback
           }
         };
       });
@@ -457,6 +611,12 @@ const TimeCapsuleFlow = () => {
 
       setIsUploadModalOpen(false);
       console.log('🎉 Upload complete! Modal closed.');
+
+      // Auto-focus on newly uploaded photos after a brief delay for rendering
+      setTimeout(() => {
+        fitView({ duration: 600, padding: 0.2 });
+        console.log('📷 Camera focused on new memories');
+      }, 100);
     } catch (error) {
       console.error('❌ Upload failed:', error);
       console.error('❌ Error stack:', error.stack);
@@ -604,7 +764,7 @@ const TimeCapsuleFlow = () => {
             />
           </div>
           {sidebarOpen && (
-            <span style={{
+            <span className="sidebar-label" style={{
               position: 'absolute',
               left: '60px',
               top: '50%',
@@ -642,6 +802,14 @@ const TimeCapsuleFlow = () => {
                          navigate('/uk-memories');
                        }
                      }}
+                     onTouchEnd={(e) => {
+                       e.preventDefault();
+                       if (item === '17-frame animatic') {
+                         navigate('/home-17');
+                       } else if (item === 'travel memories') {
+                         navigate('/uk-memories');
+                       }
+                     }}
                      style={{
                        display: 'block',
                        color: 'rgba(0,0,0,0.7)',
@@ -652,7 +820,9 @@ const TimeCapsuleFlow = () => {
                        padding: '1px 0',
                        transition: 'color 0.25s ease-in-out',
                        opacity: isExpanded ? 1 : 0,
-                       transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
+                       transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s',
+                       WebkitTapHighlightColor: 'transparent',
+                       userSelect: 'none'
                      }}
                      onMouseEnter={(e) => {
                        e.target.style.color = '#EECF00';
@@ -731,13 +901,15 @@ const TimeCapsuleFlow = () => {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: sidebarOpen ? 'min(30vw, 450px)' : '80px',
+        width: sidebarOpen ? 'min(35vw, 472px)' : '80px',
         height: '100vh',
+        maxHeight: '100vh',
         backgroundColor: 'rgba(242, 242, 242, 0.96)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         zIndex: 50,
-        transition: 'width 0.5s ease-out'
+        transition: 'width 0.5s ease-out',
+        overflowY: 'auto'
       }}>
         {/* Sidebar Toggle Button */}
         <div
@@ -810,23 +982,44 @@ const TimeCapsuleFlow = () => {
           ))}
         </div>
 
-        {/* YC Logo */}
-        <div style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'min(40px, 8vw)',
-          height: 'min(40px, 8vw)',
-          minWidth: '30px',
-          minHeight: '30px',
-          borderRadius: '50%',
-          overflow: 'hidden'
-        }}>
+        {/* YC Logo - Navigate to Homepage */}
+        <div
+          className="clickable-element yc-logo"
+          onClick={handleHomeClick}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleHomeClick(e);
+          }}
+          style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '45px',
+            height: '45px',
+            minWidth: '40px',
+            minHeight: '40px',
+            borderRadius: '50%',
+            overflow: 'visible',
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+            transition: 'transform 0.2s ease, opacity 0.2s ease',
+            zIndex: 100
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateX(-50%) scale(1.1)';
+            e.currentTarget.style.opacity = '0.8';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+            e.currentTarget.style.opacity = '1';
+          }}
+          title="Return to Homepage"
+        >
           <img
             src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
             alt="YC Logo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', borderRadius: '50%' }}
           />
         </div>
       </div>
@@ -834,44 +1027,68 @@ const TimeCapsuleFlow = () => {
       {/* Secondary Sidebar - Travel Memories Controls */}
       <div style={{
         position: 'fixed',
-        left: sidebarOpen ? 'min(30vw, 450px)' : '80px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
         top: 0,
         width: secondarySidebarOpen ? 'min(160px, 25vw)' : '50px',
         height: '100vh',
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        maxHeight: '100vh',
+        backgroundColor: secondarySidebarOpen ? 'rgba(255, 255, 255, 0.98)' : 'transparent',
+        backdropFilter: secondarySidebarOpen ? 'blur(8px)' : 'none',
+        WebkitBackdropFilter: secondarySidebarOpen ? 'blur(8px)' : 'none',
         zIndex: 45,
-        transition: 'left 0.5s ease-out, width 0.3s ease-out',
-        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.08)',
+        transition: 'left 0.5s ease-out, width 0.3s ease-out, background-color 0.3s ease-out, backdrop-filter 0.3s ease-out',
+        boxShadow: secondarySidebarOpen ? '2px 0 8px rgba(0, 0, 0, 0.08)' : 'none',
         overflowY: 'auto',
         overflowX: 'hidden'
       }}
       className="travel-sidebar">
-        {/* Toggle Button */}
+        {/* Toggle Button - Chevron indicates open/closed state */}
         <div
           className="clickable-element"
           onClick={() => setSecondarySidebarOpen(!secondarySidebarOpen)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setSecondarySidebarOpen(!secondarySidebarOpen);
+          }}
           style={{
             position: 'absolute',
             top: '20px',
-            right: '18px',
+            right: secondarySidebarOpen ? '18px' : '9px',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '8px',
-            width: '24px',
-            height: '24px',
+            width: '32px',
+            height: '32px',
             WebkitTapHighlightColor: 'transparent',
-            zIndex: 10
+            zIndex: 10,
+            backgroundColor: secondarySidebarOpen ? 'rgba(238, 207, 0, 0.1)' : 'transparent',
+            borderRadius: secondarySidebarOpen ? '4px' : '0',
+            transition: 'all 0.3s ease'
           }}
+          onMouseEnter={(e) => {
+            if (secondarySidebarOpen) {
+              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+            }
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = secondarySidebarOpen ? 'rgba(238, 207, 0, 0.1)' : 'transparent';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={secondarySidebarOpen ? 'Hide Memories Sidebar' : 'Show Memories Sidebar'}
         >
           <div style={{
-            fontSize: '18px',
-            transform: secondarySidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)',
-            transition: 'transform 0.3s ease'
-          }}>☰</div>
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: '#000000',
+            transition: 'all 0.3s ease',
+            lineHeight: 1
+          }}>
+            {secondarySidebarOpen ? '◀' : '▶'}
+          </div>
         </div>
 
         {secondarySidebarOpen && (
@@ -899,11 +1116,33 @@ const TimeCapsuleFlow = () => {
               }}>
                 {nodes.length} {nodes.length === 1 ? 'item' : 'items'}
               </p>
+              {lastSyncTime && (
+                <p style={{
+                  fontSize: '8px',
+                  fontWeight: '500',
+                  letterSpacing: '0.03em',
+                  color: '#10b981',
+                  margin: '4px 0 0 0',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px'
+                }}>
+                  <span>☁️</span>
+                  <span>Synced {new Date().getTime() - lastSyncTime.getTime() < 10000 ? 'just now' : 'recently'}</span>
+                </p>
+              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} className="travel-actions">
           <button
             onClick={() => {
+              console.log('Nodes:', nodes);
+              console.log('Edges:', edges);
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
               console.log('Nodes:', nodes);
               console.log('Edges:', edges);
             }}
@@ -919,7 +1158,9 @@ const TimeCapsuleFlow = () => {
               fontWeight: '600',
               letterSpacing: '0.05em',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
@@ -933,7 +1174,17 @@ const TimeCapsuleFlow = () => {
             DEBUG
           </button>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              if (confirm('⚠️ Clear all memories and reset layout?\n\nThis will remove all photos and cannot be undone.\n\nClick OK to proceed.')) {
+                setNodes([]);
+                setEdges([]);
+                localStorage.removeItem(STORAGE_KEY);
+                console.log('🗑️ All memories cleared');
+              }
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
               if (confirm('⚠️ Clear all memories and reset layout?\n\nThis will remove all photos and cannot be undone.\n\nClick OK to proceed.')) {
                 setNodes([]);
                 setEdges([]);
@@ -953,7 +1204,9 @@ const TimeCapsuleFlow = () => {
               fontWeight: '700',
               letterSpacing: '0.05em',
               boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#b91c1c';
@@ -970,6 +1223,12 @@ const TimeCapsuleFlow = () => {
           </button>
           <button
             onClick={handleExportJSON}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              if (nodes.length > 0) {
+                handleExportJSON();
+              }
+            }}
             disabled={nodes.length === 0}
             style={{
               width: '100%',
@@ -984,7 +1243,9 @@ const TimeCapsuleFlow = () => {
               letterSpacing: '0.05em',
               boxShadow: nodes.length === 0 ? 'none' : '0 2px 4px rgba(59, 130, 246, 0.3)',
               transition: 'all 0.3s ease',
-              opacity: nodes.length === 0 ? 0.5 : 1
+              opacity: nodes.length === 0 ? 0.5 : 1,
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               if (nodes.length > 0) {
@@ -1006,6 +1267,10 @@ const TimeCapsuleFlow = () => {
           </button>
           <button
             onClick={handleImportJSON}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleImportJSON();
+            }}
             style={{
               width: '100%',
               padding: '8px 6px',
@@ -1018,7 +1283,9 @@ const TimeCapsuleFlow = () => {
               fontWeight: '700',
               letterSpacing: '0.05em',
               boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#7c3aed';
@@ -1036,6 +1303,12 @@ const TimeCapsuleFlow = () => {
           </button>
           <button
             onClick={handleSaveAndShare}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              if (!isSaving && nodes.length > 0) {
+                handleSaveAndShare();
+              }
+            }}
             disabled={isSaving || nodes.length === 0}
             style={{
               width: '100%',
@@ -1050,7 +1323,9 @@ const TimeCapsuleFlow = () => {
               letterSpacing: '0.05em',
               boxShadow: nodes.length === 0 ? 'none' : '0 4px 8px rgba(16, 185, 129, 0.3)',
               transition: 'all 0.3s ease',
-              opacity: nodes.length === 0 ? 0.5 : 1
+              opacity: nodes.length === 0 ? 0.5 : 1,
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               if (nodes.length > 0 && !isSaving) {
@@ -1075,6 +1350,12 @@ const TimeCapsuleFlow = () => {
               setIsUploadModalOpen(true);
               console.log('📂 Modal state set to true');
             }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              console.log('🔘 Add Memory button clicked (touch)');
+              setIsUploadModalOpen(true);
+              console.log('📂 Modal state set to true (touch)');
+            }}
             style={{
               width: '100%',
               padding: '10px 6px',
@@ -1087,7 +1368,9 @@ const TimeCapsuleFlow = () => {
               fontWeight: '700',
               letterSpacing: '0.05em',
               boxShadow: '0 4px 8px rgba(238, 207, 0, 0.3)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#fbbf24';
@@ -1110,6 +1393,10 @@ const TimeCapsuleFlow = () => {
       {/* Hamburger Menu */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          setMenuOpen(!menuOpen);
+        }}
         style={{
           position: 'fixed',
           right: '50px',
@@ -1118,7 +1405,8 @@ const TimeCapsuleFlow = () => {
           backgroundColor: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          zIndex: 100
+          zIndex: 100,
+          WebkitTapHighlightColor: 'transparent'
         }}
       >
         <div style={{
@@ -1177,10 +1465,21 @@ const TimeCapsuleFlow = () => {
             alignItems: 'center',
             gap: '10px'
           }}>
-            {['HOME', 'EXPERIMENTS', 'THOUGHTS', 'ABOUT'].map((item, index) => (
+            {['HOME', 'EXPERIMENTS', 'UK MEMORIES', 'THOUGHTS', 'ABOUT'].map((item, index) => (
               <a key={item}
                 href="#"
-                onClick={item === 'HOME' ? handleHomeClick : item === 'EXPERIMENTS' ? () => navigate('/experiments') : undefined}
+                onClick={
+                  item === 'HOME' ? handleHomeClick :
+                  item === 'EXPERIMENTS' ? () => navigate('/experiments') :
+                  item === 'UK MEMORIES' ? () => navigate('/uk-memories') :
+                  undefined
+                }
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (item === 'HOME') handleHomeClick(e);
+                  else if (item === 'EXPERIMENTS') navigate('/experiments');
+                  else if (item === 'UK MEMORIES') navigate('/uk-memories');
+                }}
                 className={`menu-item-${index + 1} menu-link`}
                 style={{
                   textDecoration: 'none',
@@ -1190,7 +1489,9 @@ const TimeCapsuleFlow = () => {
                   padding: '10px 20px',
                   borderRadius: '4px',
                   color: 'black',
-                  transition: 'color 0.3s ease-in'
+                  transition: 'color 0.3s ease-in',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none'
                 }}
                 onMouseEnter={(e) => e.target.style.color = 'white'}
                 onMouseLeave={(e) => e.target.style.color = 'black'}
@@ -1219,7 +1520,7 @@ const TimeCapsuleFlow = () => {
       )}
 
       {/* Footer */}
-      <div style={{
+      <div className="footer-container" style={{
         position: 'fixed',
         bottom: footerOpen ? '0' : '-290px',
         left: '0',
@@ -1230,6 +1531,7 @@ const TimeCapsuleFlow = () => {
       }}>
         <div
           onClick={handleFooterToggle}
+          className="footer-content"
           style={{
             position: 'absolute',
             top: '0',
@@ -1241,7 +1543,7 @@ const TimeCapsuleFlow = () => {
           }}
         >
           {/* Contact Section */}
-          <div style={{
+          <div className="footer-section footer-contact" style={{
             flex: '1',
             backgroundColor: 'rgba(0,0,0,0.9)',
             backdropFilter: 'blur(12px)',
@@ -1305,7 +1607,7 @@ const TimeCapsuleFlow = () => {
           </div>
 
           {/* Projects Section */}
-          <div style={{
+          <div className="footer-section footer-projects" style={{
             flex: '1',
             backgroundColor: '#EECF00',
             padding: '40px',
@@ -1398,7 +1700,18 @@ const TimeCapsuleFlow = () => {
       </div>
 
       {/* React Flow Container */}
-      <div style={{ width: '100%', height: '100%', paddingLeft: secondarySidebarOpen ? '240px' : '130px', transition: 'padding-left 0.5s ease-out' }}>
+      <div style={{
+        width: '100%',
+        height: '100%',
+        paddingLeft: sidebarOpen
+          ? (secondarySidebarOpen
+              ? 'calc(min(35vw, 472px) + min(160px, 25vw))'
+              : 'calc(min(35vw, 472px) + 50px)')
+          : (secondarySidebarOpen
+              ? '240px'  // 80px main + 160px secondary
+              : '130px'), // 80px main + 50px secondary
+        transition: 'padding-left 0.5s ease-out'
+      }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -1411,7 +1724,7 @@ const TimeCapsuleFlow = () => {
           selectionOnDrag={false}
           panOnScroll={true}
           zoomOnScroll={false}
-          zoomOnPinch={false}
+          zoomOnPinch={true}
           zoomOnDoubleClick={false}
           preventScrolling={false}
           minZoom={0.5}
@@ -1465,6 +1778,29 @@ const TimeCapsuleFlow = () => {
         capsuleId={currentCapsuleId}
       />
 
+      {/* Lightbox Modal */}
+      {showLightbox && (
+        <LightboxModal
+          photo={lightboxPhoto}
+          onClose={() => {
+            setShowLightbox(false);
+            setLightboxPhoto(null);
+          }}
+        />
+      )}
+
+      {/* Edit Memory Modal */}
+      <EditMemoryModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingMemory(null);
+          setEditingNodeId(null);
+        }}
+        memory={editingMemory}
+        onSave={handleEditSave}
+      />
+
       {/* Zoom Controls & Navigation Circle - Lower Right Corner */}
       {nodes.length > 0 && (
         <div style={{
@@ -1482,6 +1818,10 @@ const TimeCapsuleFlow = () => {
           {/* Zoom In Button */}
           <button
             onClick={() => zoomIn({ duration: 300 })}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              zoomIn({ duration: 300 });
+            }}
             style={{
               padding: '12px 16px',
               backgroundColor: '#EECF00',
@@ -1492,7 +1832,9 @@ const TimeCapsuleFlow = () => {
               fontSize: '18px',
               fontWeight: '700',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#fbbf24';
@@ -1512,6 +1854,10 @@ const TimeCapsuleFlow = () => {
           {/* Zoom Out Button */}
           <button
             onClick={() => zoomOut({ duration: 300 })}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              zoomOut({ duration: 300 });
+            }}
             style={{
               padding: '12px 16px',
               backgroundColor: '#EECF00',
@@ -1522,7 +1868,11 @@ const TimeCapsuleFlow = () => {
               fontSize: '18px',
               fontWeight: '700',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none',
+              zIndex: 150,
+              position: 'relative'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = '#fbbf24';
@@ -1542,6 +1892,10 @@ const TimeCapsuleFlow = () => {
           {/* Center View Button */}
           <button
             onClick={() => fitView({ duration: 400, padding: 0.2 })}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              fitView({ duration: 400, padding: 0.2 });
+            }}
             style={{
               padding: '10px 16px',
               backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -1553,7 +1907,11 @@ const TimeCapsuleFlow = () => {
               fontWeight: '600',
               letterSpacing: '0.05em',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none',
+              zIndex: 150,
+              position: 'relative'
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
@@ -1584,7 +1942,9 @@ const TimeCapsuleFlow = () => {
               width: '78px',
               height: '78px',
               cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent'
+              WebkitTapHighlightColor: 'transparent',
+              zIndex: 150,
+              position: 'relative'
             }}
           >
             <img
@@ -1596,7 +1956,9 @@ const TimeCapsuleFlow = () => {
                 objectFit: 'cover',
                 transform: 'rotate(0deg)',
                 transition: 'transform 0.3s ease-out',
-                transformOrigin: 'center'
+                transformOrigin: 'center',
+                position: 'relative',
+                zIndex: 150
               }}
             />
           </div>
@@ -1612,9 +1974,12 @@ const TimeCapsulePage = () => {
       <div style={{
         width: '100vw',
         height: '100vh',
+        maxWidth: '100vw',
+        maxHeight: '100vh',
         position: 'fixed',
         top: 0,
-        left: 0
+        left: 0,
+        overflow: 'hidden'
       }}>
         {/* Foundation white background */}
         <div style={{
@@ -1654,6 +2019,38 @@ const TimeCapsulePage = () => {
 
         {/* Responsive CSS */}
         <style>{`
+          /* Global viewport constraints */
+          body, html {
+            max-height: 100vh !important;
+            overflow: hidden !important;
+          }
+
+          /* YC Logo visibility boost for all browsers */
+          .yc-logo {
+            z-index: 100 !important;
+            position: relative !important;
+          }
+
+          /* Firefox-specific fixes for controls visibility */
+          @-moz-document url-prefix() {
+            button, .clickable-element {
+              z-index: auto !important;
+              isolation: isolate;
+            }
+
+            /* Boost zoom controls z-index for Firefox */
+            button[title*="Zoom"], button[title*="Center"] {
+              z-index: 150 !important;
+              position: relative;
+            }
+
+            /* Fix navigation circle for Firefox */
+            .clickable-element img[alt="Navigation"] {
+              z-index: 150 !important;
+              position: relative;
+            }
+          }
+
           @media (max-width: 768px) {
             .travel-header {
               padding: 16px 20px !important;
@@ -1673,6 +2070,33 @@ const TimeCapsulePage = () => {
               font-size: 12px !important;
               padding: 8px 14px !important;
             }
+
+            /* Footer responsive fixes - keep 50/50 side-by-side on mobile */
+            .footer-section {
+              padding: 20px 10px !important;
+            }
+            .footer-section h2 {
+              font-size: 14px !important;
+              margin-bottom: 8px !important;
+              letter-spacing: 0.15em !important;
+            }
+            .footer-section a {
+              font-size: 10px !important;
+              letter-spacing: 0.05em !important;
+            }
+            [style*="gap: 15px"] {
+              gap: 8px !important;
+            }
+
+            /* Sidebar text overflow fix */
+            .sidebar-label {
+              font-size: 12px !important;
+              letter-spacing: 0.15em !important;
+              max-width: calc(100% - 70px) !important;
+              white-space: normal !important;
+              word-break: break-word !important;
+              line-height: 1.2 !important;
+            }
           }
           @media (max-width: 480px) {
             .travel-header {
@@ -1687,6 +2111,52 @@ const TimeCapsulePage = () => {
             .travel-actions button {
               width: 100%;
               text-align: center;
+            }
+
+            /* Footer even more compact on small mobile */
+            .footer-section {
+              padding: 16px !important;
+              min-height: 120px !important;
+            }
+            .footer-section h2 {
+              font-size: 16px !important;
+              margin-bottom: 8px !important;
+            }
+            .footer-section a {
+              font-size: 11px !important;
+            }
+
+            /* Sidebar text even smaller on mobile */
+            .sidebar-label {
+              font-size: 10px !important;
+              letter-spacing: 0.1em !important;
+            }
+          }
+
+          @media (max-width: 360px) {
+            /* Ultra-compact for very small viewports (360px width) */
+            .footer-section {
+              padding: 12px 6px !important;
+              min-height: 100px !important;
+            }
+            .footer-section h2 {
+              font-size: 11px !important;
+              margin-bottom: 6px !important;
+              letter-spacing: 0.2em !important;
+              padding-bottom: 6px !important;
+            }
+            .footer-section a {
+              font-size: 9px !important;
+              letter-spacing: 0.05em !important;
+            }
+            [style*="gap: 15px"] {
+              gap: 6px !important;
+            }
+
+            /* Sidebar text tiny on very small mobile */
+            .sidebar-label {
+              font-size: 9px !important;
+              letter-spacing: 0.08em !important;
             }
           }
         `}</style>

@@ -46,22 +46,35 @@ export const useFirebaseCapsule = () => {
         viewCount: 0
       });
 
-      // Save nodes (strip out non-serializable functions)
+      // Save nodes (strip ALL React Flow internal properties for Safari compatibility)
       nodes.forEach(node => {
         const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
-        // Remove onResize callback and other functions before saving
-        const { onResize, ...cleanData } = node.data; // Destructure to exclude onResize
+        // Explicitly construct serializable node with only essential data
         const cleanNode = {
-          ...node,
-          data: cleanData
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: {
+            imageUrl: node.data?.imageUrl || '',
+            location: node.data?.location || '',
+            date: node.data?.date || '',
+            description: node.data?.description || '',
+            size: node.data?.size || 350
+          }
         };
         batch.set(nodeRef, cleanNode);
       });
 
-      // Save edges
+      // Save edges (clean for Safari compatibility)
       edges.forEach(edge => {
         const edgeRef = doc(db, `capsules/${capsuleId}/edges`, edge.id);
-        batch.set(edgeRef, edge);
+        const cleanEdge = {
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type || 'default'
+        };
+        batch.set(edgeRef, cleanEdge);
       });
 
       await batch.commit();
@@ -152,22 +165,34 @@ export const useFirebaseCapsule = () => {
         updatedAt: serverTimestamp()
       });
 
-      // Update nodes (simplified: delete all, re-add)
-      // Note: In production, implement smart diffing
+      // Update nodes (explicitly serialize for Safari compatibility)
       nodes.forEach(node => {
         const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
-        // Remove onResize callback and other functions before saving
-        const { onResize, ...cleanData } = node.data; // Destructure to exclude onResize
+        // Explicitly construct serializable node with only essential data
         const cleanNode = {
-          ...node,
-          data: cleanData
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: {
+            imageUrl: node.data?.imageUrl || '',
+            location: node.data?.location || '',
+            date: node.data?.date || '',
+            description: node.data?.description || '',
+            size: node.data?.size || 350
+          }
         };
         batch.set(nodeRef, cleanNode);
       });
 
       edges.forEach(edge => {
         const edgeRef = doc(db, `capsules/${capsuleId}/edges`, edge.id);
-        batch.set(edgeRef, edge);
+        const cleanEdge = {
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type || 'default'
+        };
+        batch.set(edgeRef, cleanEdge);
       });
 
       await batch.commit();

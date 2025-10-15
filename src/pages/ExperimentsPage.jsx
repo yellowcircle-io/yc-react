@@ -361,11 +361,95 @@ function ExperimentsPage() {
         .contact-btn { 
           transition: background-color 0.3s ease-in; 
         }
-        .contact-btn:hover { 
-          background-color: white !important; 
+        .contact-btn:hover {
+          background-color: white !important;
+        }
+
+        /* Responsive sidebar fixes */
+        @media (max-width: 768px) {
+          .sidebar-label, .navigation-items-container span {
+            font-size: 12px !important;
+            letter-spacing: 0.15em !important;
+            max-width: calc(100% - 70px) !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            line-height: 1.2 !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .sidebar-label, .navigation-items-container span {
+            font-size: 10px !important;
+            letter-spacing: 0.1em !important;
+          }
+        }
+
+        /* Footer responsive fixes - keep 50/50 layout on all viewports */
+        @media (max-width: 768px) {
+          [style*="padding: 40px"][style*="backgroundColor: rgba(0,0,0,0.9)"],
+          [style*="padding: 40px"][style*="backgroundColor: #EECF00"] {
+            padding: 20px 12px !important;
+          }
+
+          [style*="fontSize: 24px"][style*="letterSpacing: 0.3em"] {
+            font-size: 16px !important;
+            margin-bottom: 10px !important;
+          }
+
+          [style*="fontSize: 14px"][style*="letterSpacing: 0.1em"] {
+            font-size: 11px !important;
+          }
+
+          [style*="gap: 15px"] {
+            gap: 10px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          [style*="padding: 40px"][style*="backgroundColor: rgba(0,0,0,0.9)"],
+          [style*="padding: 40px"][style*="backgroundColor: #EECF00"] {
+            padding: 16px 8px !important;
+          }
+
+          [style*="fontSize: 24px"][style*="letterSpacing: 0.3em"] {
+            font-size: 14px !important;
+            margin-bottom: 8px !important;
+          }
+
+          [style*="fontSize: 14px"][style*="letterSpacing: 0.1em"] {
+            font-size: 10px !important;
+          }
+
+          [style*="gap: 15px"] {
+            gap: 8px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          [style*="padding: 40px"][style*="backgroundColor: rgba(0,0,0,0.9)"],
+          [style*="padding: 40px"][style*="backgroundColor: #EECF00"] {
+            padding: 12px 6px !important;
+          }
+
+          [style*="fontSize: 24px"][style*="letterSpacing: 0.3em"] {
+            font-size: 11px !important;
+            margin-bottom: 6px !important;
+            letter-spacing: 0.2em !important;
+          }
+
+          [style*="fontSize: 14px"][style*="letterSpacing: 0.1em"] {
+            font-size: 9px !important;
+            letter-spacing: 0.05em !important;
+          }
+
+          [style*="gap: 15px"] {
+            gap: 6px !important;
+          }
+
+          [style*="borderBottom: 2px solid"] {
+            padding-bottom: 6px !important;
+          }
         }
       `}</style>
-
       {/* Enhanced gradient background for experiments page */}
       <div style={{
         position: 'fixed',
@@ -912,19 +996,32 @@ function ExperimentsPage() {
             alignItems: 'center',
             gap: '10px'
           }}>
-            {['HOME', 'EXPERIMENTS', 'THOUGHTS', 'ABOUT'].map((item, index) => (
-              <a key={item} 
-                href="#" 
-                onClick={item === 'HOME' ? handleHomeClick : undefined}
-                className={`menu-item-${index + 1} menu-link`} 
+            {['HOME', 'EXPERIMENTS', 'UK MEMORIES', 'THOUGHTS', 'ABOUT'].map((item, index) => (
+              <a key={item}
+                href="#"
+                onClick={
+                  item === 'HOME' ? handleHomeClick :
+                  item === 'UK MEMORIES' ? () => navigate('/uk-memories') :
+                  undefined
+                }
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (item === 'HOME') handleHomeClick(e);
+                  else if (item === 'UK MEMORIES') navigate('/uk-memories');
+                }}
+                className={`menu-item-${index + 1} menu-link`}
                 style={{
                   textDecoration: 'none',
                   fontSize: '20px',
                   fontWeight: '600',
                   letterSpacing: '0.3em',
                   padding: '10px 20px',
-                  borderRadius: '4px'
+                  borderRadius: '4px',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none'
                 }}
+                onMouseEnter={(e) => e.target.style.color = 'white'}
+                onMouseLeave={(e) => e.target.style.color = 'black'}
               >
                 {item}
               </a>
