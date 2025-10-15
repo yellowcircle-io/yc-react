@@ -484,18 +484,18 @@ function ExperimentsPage() {
           </svg>
         </div>
         
-        <div style={{ 
+        <div style={{
           position: 'absolute',
-          top: '100px',
+          top: '140px',
           left: '40px',
           transform: 'translateX(-50%) rotate(-90deg)',
           transformOrigin: 'center',
           whiteSpace: 'nowrap'
         }}>
-          <span style={{ 
-            color: '#EECF00', 
-            fontWeight: '600', 
-            letterSpacing: '0.3em', 
+          <span style={{
+            color: '#EECF00',
+            fontWeight: '600',
+            letterSpacing: '0.3em',
             fontSize: '14px'
           }}>EXPERIMENTS</span>
         </div>
@@ -546,8 +546,9 @@ function ExperimentsPage() {
       {/* Content */}
       <div style={{
         position: 'fixed',
-        bottom: '50px',
+        top: '50%',
         left: '200px',
+        transform: 'translateY(-58%)',
         zIndex: 30,
         maxWidth: '480px'
       }}>

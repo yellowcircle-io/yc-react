@@ -860,7 +860,9 @@ function HomePage() {
           left: 'max(120px, 8vw)',
           maxWidth: 'min(640px, 50vw)',
           zIndex: 61,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
+          transition: 'transform 0.5s ease-out'
         }}>
           <div style={{
             color: 'black',
