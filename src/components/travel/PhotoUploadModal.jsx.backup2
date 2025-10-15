@@ -1,0 +1,349 @@
+import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Upload, MapPin, Calendar, FileText, Loader2, Link as LinkIcon, ArrowLeft, Cloud } from 'lucide-react';
+import { isCloudinaryConfigured } from '../../utils/cloudinaryUpload';
+
+const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
+  const [step, setStep] = useState('method'); // 'method' or 'details'
+  const [uploadMethod, setUploadMethod] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [metadata, setMetadata] = useState({
+    location: '',
+    date: new Date().toISOString().split('T')[0],
+    description: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+  };
+
+  const handleMethodSelect = (method) => {
+    setUploadMethod(method);
+    setStep('details');
+  };
+
+  const handleBack = () => {
+    setStep('method');
+    setSelectedFiles([]);
+    setImageUrl('');
+  };
+
+  const handleClose = () => {
+    setStep('method');
+    setUploadMethod(null);
+    setSelectedFiles([]);
+    setImageUrl('');
+    setMetadata({
+      location: '',
+      date: new Date().toISOString().split('T')[0],
+      description: ''
+    });
+    onClose();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (uploadMethod === 'url' && !imageUrl) {
+      alert('Please enter an image URL');
+      return;
+    }
+
+    if (uploadMethod === 'file' && selectedFiles.length === 0) {
+      alert('Please select at least one photo');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (uploadMethod === 'url') {
+        await onUpload([imageUrl], metadata, 'url');
+      } else {
+        await onUpload(selectedFiles, metadata, 'file');
+      }
+
+      // Reset form
+      handleClose();
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleMetadataChange = (field) => (e) => {
+    setMetadata(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleClose();
+          }}
+        >
+          <motion.div
+            className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col"
+            style={{ maxHeight: '80vh' }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-white flex-shrink-0">
+              <div className="flex items-center gap-2">
+                {step === 'details' && (
+                  <button
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                    className="p-1 hover:bg-gray-100 rounded"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <h3 className="text-lg font-semibold">
+                  {step === 'method' ? 'Choose Upload Method' : 'Add Memory Details'}
+                </h3>
+              </div>
+              <button
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="overflow-y-auto flex-1">
+              {/* Method Selection Step */}
+              {step === 'method' && (
+                <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  How would you like to add your travel photos?
+                </p>
+
+                {/* Cloudinary Upload (if configured) */}
+                {isCloudinaryConfigured() && (
+                  <button
+                    onClick={() => handleMethodSelect('cloudinary')}
+                    className="w-full p-4 border-2 border-yellow-300 bg-yellow-50/50 rounded-lg hover:border-yellow-400 hover:bg-yellow-50 transition-all group"
+                  >
+                    <Cloud className="w-10 h-10 mx-auto mb-2 text-yellow-600 group-hover:text-yellow-700" />
+                    <h4 className="font-semibold text-base mb-1">Upload to Cloud</h4>
+                    <p className="text-sm text-gray-600">
+                      Store photos permanently on Cloudinary (Recommended)
+                    </p>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => handleMethodSelect('file')}
+                  className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-yellow-400 hover:bg-yellow-50 transition-all group"
+                >
+                  <Upload className="w-10 h-10 mx-auto mb-2 text-gray-400 group-hover:text-yellow-600" />
+                  <h4 className="font-semibold text-base mb-1">Local Upload</h4>
+                  <p className="text-sm text-gray-600">
+                    Store photos locally in browser (temporary)
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => handleMethodSelect('url')}
+                  className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-yellow-400 hover:bg-yellow-50 transition-all group"
+                >
+                  <LinkIcon className="w-10 h-10 mx-auto mb-2 text-gray-400 group-hover:text-yellow-600" />
+                  <h4 className="font-semibold text-base mb-1">Add from URL</h4>
+                  <p className="text-sm text-gray-600">
+                    Paste a direct link to an image from the web
+                  </p>
+                </button>
+
+                {!isCloudinaryConfigured() && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md text-sm">
+                    <p className="text-blue-800">
+                      💡 <strong>Tip:</strong> Configure Cloudinary for permanent cloud storage.
+                      See <code>.env.example</code> for setup instructions.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Details Form Step */}
+            {step === 'details' && (
+              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                {/* File Upload (Local or Cloudinary) */}
+                {(uploadMethod === 'file' || uploadMethod === 'cloudinary') && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Select Photos</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-400 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <label htmlFor="file-upload" className="cursor-pointer">
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm text-gray-600">
+                          {selectedFiles.length > 0
+                            ? `${selectedFiles.length} file(s) selected`
+                            : 'Click to select photos'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          JPEG, PNG, GIF, WebP
+                        </p>
+                      </label>
+                    </div>
+
+                    {selectedFiles.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium mb-1">Selected files:</p>
+                        <ul className="text-sm text-gray-600 max-h-24 overflow-y-auto">
+                          {selectedFiles.map((file, index) => (
+                            <li key={index} className="truncate">
+                              • {file.name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* URL Input */}
+                {uploadMethod === 'url' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      <LinkIcon className="w-4 h-4 inline mr-1" />
+                      Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value.trim())}
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      required={uploadMethod === 'url'}
+                    />
+                    {imageUrl && (
+                      <div className="mt-2 relative w-full h-32 overflow-hidden rounded-md bg-gray-100">
+                        <img
+                          src={imageUrl}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div className="hidden text-sm text-red-600 mt-2">
+                          Unable to load image. Please check the URL.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Location */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    Location *
+                  </label>
+                  <input
+                    type="text"
+                    value={metadata.location}
+                    onChange={handleMetadataChange('location')}
+                    placeholder="e.g., Lake District, UK"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    required
+                  />
+                </div>
+
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={metadata.date}
+                    onChange={handleMetadataChange('date')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    required
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    <FileText className="w-4 h-4 inline mr-1" />
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    value={metadata.description}
+                    onChange={handleMetadataChange('description')}
+                    placeholder="Tell the story behind this memory..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 resize-none"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      isSubmitting ||
+                      (uploadMethod === 'file' && selectedFiles.length === 0) ||
+                      (uploadMethod === 'url' && !imageUrl)
+                    }
+                    className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md hover:bg-yellow-500 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      'Add Memory'
+                    )}
+                  </button>
+                </div>
+              </form>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default PhotoUploadModal;

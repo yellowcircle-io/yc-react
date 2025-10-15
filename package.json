@@ -13,6 +13,8 @@
   "dependencies": {
     "@builder.io/dev-tools": "^1.7.9",
     "@tailwindcss/vite": "^4.1.11",
+    "@xyflow/react": "^12.8.6",
+    "framer-motion": "^11.18.2",
     "lucide-react": "^0.539.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
