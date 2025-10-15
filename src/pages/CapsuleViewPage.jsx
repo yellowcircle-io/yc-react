@@ -34,7 +34,8 @@ const CapsuleView = () => {
     if (capsuleId) {
       fetchCapsule();
     }
-  }, [capsuleId, loadCapsule]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capsuleId]); // Only trigger when capsuleId changes
 
   if (isLoading) {
     return (
