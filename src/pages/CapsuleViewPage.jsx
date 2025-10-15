@@ -44,17 +44,67 @@ const CapsuleView = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f5f5f5'
+        background: 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 50%, #f0f0f0 100%)'
       }}>
-        <div style={{ textAlign: 'center' }}>
+        <div style={{
+          textAlign: 'center',
+          padding: '48px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: '0',
+          border: '3px solid #EECF00',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)'
+        }}>
           <div style={{
-            fontSize: '48px',
-            marginBottom: '16px'
+            fontSize: '64px',
+            marginBottom: '24px',
+            animation: 'pulse 2s ease-in-out infinite'
           }}>⏳</div>
-          <p style={{ fontSize: '18px', color: '#666', fontWeight: '500' }}>
-            Loading time capsule...
+          <h2 style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#000',
+            margin: '0 0 12px 0',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase'
+          }}>
+            Loading Time Capsule
+          </h2>
+          <p style={{
+            fontSize: '14px',
+            color: '#666',
+            fontWeight: '500',
+            margin: 0,
+            letterSpacing: '0.05em'
+          }}>
+            Fetching your memories...
           </p>
+          {/* Animated progress bar */}
+          <div style={{
+            marginTop: '24px',
+            width: '200px',
+            height: '4px',
+            backgroundColor: 'rgba(238, 207, 0, 0.2)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              height: '100%',
+              width: '50%',
+              backgroundColor: '#EECF00',
+              animation: 'loading 1.5s ease-in-out infinite'
+            }} />
+          </div>
         </div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+          }
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(300%); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -66,30 +116,100 @@ const CapsuleView = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#fee'
+        background: 'linear-gradient(135deg, #fee 0%, #fef2f2 50%, #fee 100%)'
       }}>
-        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '32px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px', color: '#000' }}>
+        <div style={{
+          textAlign: 'center',
+          maxWidth: '500px',
+          padding: '48px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: '0',
+          border: '3px solid #dc2626',
+          boxShadow: '0 20px 60px rgba(220, 38, 38, 0.2)'
+        }}>
+          <div style={{
+            fontSize: '64px',
+            marginBottom: '24px'
+          }}>🔒</div>
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            marginBottom: '12px',
+            color: '#000',
+            letterSpacing: '0.05em'
+          }}>
             Capsule Not Found
           </h2>
-          <p style={{ color: '#666', marginBottom: '24px' }}>
-            This time capsule doesn't exist or has been removed.
+          <p style={{
+            color: '#666',
+            marginBottom: '32px',
+            fontSize: '15px',
+            lineHeight: '1.6',
+            letterSpacing: '0.02em'
+          }}>
+            This time capsule doesn't exist, has been removed, or the link is incorrect.
           </p>
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#EECF00',
-              border: 'none',
-              borderRadius: '4px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Go Home
-          </button>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                padding: '14px 28px',
+                backgroundColor: '#000',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '0',
+                fontWeight: '700',
+                cursor: 'pointer',
+                fontSize: '13px',
+                letterSpacing: '0.05em',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = '#EECF00';
+                e.target.style.color = '#000';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 16px rgba(238, 207, 0, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = '#000';
+                e.target.style.color = '#fff';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+              }}
+            >
+              GO HOME
+            </button>
+            <button
+              onClick={() => navigate('/uk-memories')}
+              style={{
+                padding: '14px 28px',
+                backgroundColor: '#EECF00',
+                color: '#000',
+                border: 'none',
+                borderRadius: '0',
+                fontWeight: '700',
+                cursor: 'pointer',
+                fontSize: '13px',
+                letterSpacing: '0.05em',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 12px rgba(238, 207, 0, 0.3)'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = '#fbbf24';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 16px rgba(238, 207, 0, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = '#EECF00';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 12px rgba(238, 207, 0, 0.3)';
+              }}
+            >
+              CREATE YOUR OWN
+            </button>
+          </div>
         </div>
       </div>
     );
