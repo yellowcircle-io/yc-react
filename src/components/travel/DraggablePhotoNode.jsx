@@ -1,12 +1,61 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 
-const DraggablePhotoNode = memo(({ data, selected }) => {
+const DraggablePhotoNode = memo(({ id, data, selected }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartRef = useRef({ size: 0, x: 0, y: 0 });
 
   // Use size from data, or default to 300px
   const size = data.size || 300;
+
+  // Handle resize start
+  const handleResizeStart = (e, corner) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('🎯 Resize started from corner:', corner, 'current size:', size);
+    setIsResizing(true);
+    resizeStartRef.current = {
+      size,
+      x: e.clientX,
+      y: e.clientY,
+      corner
+    };
+
+    const handleMouseMove = (moveEvent) => {
+      moveEvent.stopPropagation();
+      moveEvent.preventDefault();
+
+      const deltaX = moveEvent.clientX - resizeStartRef.current.x;
+      const deltaY = moveEvent.clientY - resizeStartRef.current.y;
+
+      // Use the larger delta for uniform scaling
+      const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+
+      // Calculate new size (0.5x to 2x range: 154px to 880px for base 308-440px)
+      let newSize = resizeStartRef.current.size + delta;
+      newSize = Math.max(154, Math.min(880, newSize)); // Clamp to range
+
+      // Update node size via callback
+      if (data.onResize) {
+        console.log('📏 Resizing to:', newSize);
+        data.onResize(id, newSize);
+      } else {
+        console.warn('⚠️ No onResize callback found!');
+      }
+    };
+
+    const handleMouseUp = () => {
+      console.log('✋ Resize ended');
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   console.log('🖼️ Rendering node with data:', {
     imageUrl: data.imageUrl?.substring(0, 50),
@@ -87,6 +136,7 @@ const DraggablePhotoNode = memo(({ data, selected }) => {
         <img
           src={data.imageUrl}
           alt={data.description || 'Travel memory'}
+          crossOrigin="anonymous"
           style={{
             width: `${size}px`,
             height: `${size}px`,
@@ -169,6 +219,100 @@ const DraggablePhotoNode = memo(({ data, selected }) => {
               </p>
             )}
           </div>
+        )}
+
+        {/* Resize Handles - Only show when selected */}
+        {selected && (
+          <>
+            {/* Bottom-right corner handle */}
+            <div
+              className="nodrag nopan"
+              onMouseDown={(e) => handleResizeStart(e, 'br')}
+              style={{
+                position: 'absolute',
+                bottom: '-6px',
+                right: '-6px',
+                width: '16px',
+                height: '16px',
+                backgroundColor: '#EECF00',
+                border: '2px solid white',
+                borderRadius: '50%',
+                cursor: 'nwse-resize',
+                zIndex: 20,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                transition: 'transform 0.2s ease',
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            />
+            {/* Top-left corner handle */}
+            <div
+              className="nodrag nopan"
+              onMouseDown={(e) => handleResizeStart(e, 'tl')}
+              style={{
+                position: 'absolute',
+                top: '-6px',
+                left: '-6px',
+                width: '16px',
+                height: '16px',
+                backgroundColor: '#EECF00',
+                border: '2px solid white',
+                borderRadius: '50%',
+                cursor: 'nwse-resize',
+                zIndex: 20,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                transition: 'transform 0.2s ease',
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            />
+            {/* Bottom-left corner handle */}
+            <div
+              className="nodrag nopan"
+              onMouseDown={(e) => handleResizeStart(e, 'bl')}
+              style={{
+                position: 'absolute',
+                bottom: '-6px',
+                left: '-6px',
+                width: '16px',
+                height: '16px',
+                backgroundColor: '#EECF00',
+                border: '2px solid white',
+                borderRadius: '50%',
+                cursor: 'nesw-resize',
+                zIndex: 20,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                transition: 'transform 0.2s ease',
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            />
+            {/* Top-right corner handle */}
+            <div
+              className="nodrag nopan"
+              onMouseDown={(e) => handleResizeStart(e, 'tr')}
+              style={{
+                position: 'absolute',
+                top: '-6px',
+                right: '-6px',
+                width: '16px',
+                height: '16px',
+                backgroundColor: '#EECF00',
+                border: '2px solid white',
+                borderRadius: '50%',
+                cursor: 'nesw-resize',
+                zIndex: 20,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                transition: 'transform 0.2s ease',
+                pointerEvents: 'auto'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+              onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            />
+          </>
         )}
       </div>
 

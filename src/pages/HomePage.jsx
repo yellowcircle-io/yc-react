@@ -311,7 +311,7 @@ function HomePage() {
       icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
       label: "EXPERIMENTS",
       itemKey: "experiments",
-      subItems: ["golden unknown", "being + rhyme", "cath3dral", "17-frame animatic"]
+      subItems: ["golden unknown", "being + rhyme", "cath3dral", "17-frame animatic", "travel memories"]
     },
     {
       icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684385/write-book_gfaiu8.png",
@@ -465,6 +465,8 @@ function HomePage() {
                        e.preventDefault();
                        if (item === '17-frame animatic') {
                          navigate('/home-17');
+                       } else if (item === 'travel memories') {
+                         navigate('/uk-memories');
                        }
                      }}
                      style={{
@@ -1068,6 +1070,23 @@ function HomePage() {
               onMouseEnter={(e) => e.target.style.color = 'black'}
               onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
               >RHO CONSULTING</a>
+
+              <a href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/uk-memories');
+                }}
+                style={{
+                color: 'rgba(0,0,0,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'black'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
+              >TRAVEL MEMORIES</a>
             </div>
           </div>
         </div>
