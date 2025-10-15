@@ -15,6 +15,7 @@ import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
+import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -28,6 +29,10 @@ const TimeCapsuleFlow = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Firebase hook for shareable URLs
+  const { saveCapsule, isSaving } = useFirebaseCapsule();
+  const [shareUrl, setShareUrl] = useState('');
 
   // Load from localStorage
   useEffect(() => {
@@ -68,6 +73,31 @@ const TimeCapsuleFlow = () => {
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  // Save capsule to Firebase and get shareable URL
+  const handleSaveAndShare = async () => {
+    if (nodes.length === 0) {
+      alert('⚠️ Please add at least one photo before saving');
+      return;
+    }
+
+    try {
+      const capsuleId = await saveCapsule(nodes, edges, {
+        title: 'UK Travel Memories'
+      });
+
+      const url = `${window.location.origin}/uk-memories/view/${capsuleId}`;
+      setShareUrl(url);
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(url);
+
+      alert(`✅ Saved! URL copied to clipboard:\n\n${url}\n\nShare this link with anyone to let them view your travel memories!`);
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert(`❌ Failed to save: ${error.message}`);
+    }
+  };
 
   const handlePhotoUpload = async (filesOrUrls, metadata, uploadType) => {
     console.log('Upload:', uploadType, filesOrUrls);
@@ -232,6 +262,40 @@ const TimeCapsuleFlow = () => {
             }}
           >
             CLEAR ALL
+          </button>
+          <button
+            onClick={handleSaveAndShare}
+            disabled={isSaving || nodes.length === 0}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: nodes.length === 0 ? 'rgba(16, 185, 129, 0.3)' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0',
+              cursor: isSaving ? 'wait' : (nodes.length === 0 ? 'not-allowed' : 'pointer'),
+              fontSize: '14px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              boxShadow: nodes.length === 0 ? 'none' : '0 4px 8px rgba(16, 185, 129, 0.3)',
+              transition: 'all 0.3s ease',
+              opacity: nodes.length === 0 ? 0.5 : 1
+            }}
+            onMouseOver={(e) => {
+              if (nodes.length > 0 && !isSaving) {
+                e.target.style.backgroundColor = '#059669';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 12px rgba(16, 185, 129, 0.4)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (nodes.length > 0) {
+                e.target.style.backgroundColor = '#10b981';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 8px rgba(16, 185, 129, 0.3)';
+              }
+            }}
+          >
+            {isSaving ? '💾 SAVING...' : '🔗 SAVE & SHARE'}
           </button>
           <button
             onClick={() => {
