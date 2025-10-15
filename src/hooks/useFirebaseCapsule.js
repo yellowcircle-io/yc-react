@@ -5,7 +5,9 @@ import {
   writeBatch,
   getDoc,
   getDocs,
-  serverTimestamp
+  serverTimestamp,
+  increment,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -97,6 +99,16 @@ export const useFirebaseCapsule = () => {
       const edgesRef = collection(db, `capsules/${capsuleId}/edges`);
       const edgesSnap = await getDocs(edgesRef);
       const edges = edgesSnap.docs.map(doc => doc.data());
+
+      // Increment view count
+      try {
+        await updateDoc(capsuleRef, {
+          viewCount: increment(1)
+        });
+      } catch (viewCountError) {
+        console.warn('Failed to increment view count:', viewCountError);
+        // Don't fail the entire load if view count update fails
+      }
 
       console.log('✅ Capsule loaded successfully:', capsuleId);
 

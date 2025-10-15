@@ -13,6 +13,7 @@ import '@xyflow/react/dist/style.css';
 
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
+import ShareModal from '../components/travel/ShareModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
@@ -33,6 +34,8 @@ const TimeCapsuleFlow = () => {
   // Firebase hook for shareable URLs
   const { saveCapsule, isSaving } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
+  const [currentCapsuleId, setCurrentCapsuleId] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
@@ -88,14 +91,16 @@ const TimeCapsuleFlow = () => {
 
       const url = `${window.location.origin}/uk-memories/view/${capsuleId}`;
       setShareUrl(url);
+      setCurrentCapsuleId(capsuleId);
 
-      // Copy to clipboard
+      // Copy to clipboard automatically
       await navigator.clipboard.writeText(url);
 
-      alert(`✅ Saved! URL copied to clipboard:\n\n${url}\n\nShare this link with anyone to let them view your travel memories!`);
+      // Show beautiful branded modal instead of alert
+      setShowShareModal(true);
     } catch (error) {
       console.error('Save failed:', error);
-      alert(`❌ Failed to save: ${error.message}`);
+      alert(`❌ Failed to save: ${error.message}\n\nPlease check the console for details.`);
     }
   };
 
@@ -387,6 +392,14 @@ const TimeCapsuleFlow = () => {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handlePhotoUpload}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareUrl={shareUrl}
+        capsuleId={currentCapsuleId}
       />
 
       {/* Zoom Controls - Lower Right Corner */}
