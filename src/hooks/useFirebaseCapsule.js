@@ -46,10 +46,16 @@ export const useFirebaseCapsule = () => {
         viewCount: 0
       });
 
-      // Save nodes
+      // Save nodes (strip out non-serializable functions)
       nodes.forEach(node => {
         const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
-        batch.set(nodeRef, node);
+        // Remove onResize callback and other functions before saving
+        const { onResize, ...cleanData } = node.data; // Destructure to exclude onResize
+        const cleanNode = {
+          ...node,
+          data: cleanData
+        };
+        batch.set(nodeRef, cleanNode);
       });
 
       // Save edges
@@ -150,7 +156,13 @@ export const useFirebaseCapsule = () => {
       // Note: In production, implement smart diffing
       nodes.forEach(node => {
         const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
-        batch.set(nodeRef, node);
+        // Remove onResize callback and other functions before saving
+        const { onResize, ...cleanData } = node.data; // Destructure to exclude onResize
+        const cleanNode = {
+          ...node,
+          data: cleanData
+        };
+        batch.set(nodeRef, cleanNode);
       });
 
       edges.forEach(edge => {

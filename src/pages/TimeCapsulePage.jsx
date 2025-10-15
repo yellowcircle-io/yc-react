@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ReactFlow,
   Controls,
@@ -25,6 +26,7 @@ const nodeTypes = {
 const STORAGE_KEY = 'uk-memories-data';
 
 const TimeCapsuleFlow = () => {
+  const navigate = useNavigate();
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -36,6 +38,18 @@ const TimeCapsuleFlow = () => {
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Navigation state
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState(null);
+  const [footerOpen, setFooterOpen] = useState(false);
+  const [secondarySidebarOpen, setSecondarySidebarOpen] = useState(true);
+
+  // Parallax circle state
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
+  const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0 });
 
   // Load from localStorage
   useEffect(() => {
@@ -58,6 +72,38 @@ const TimeCapsuleFlow = () => {
     }
   }, [setNodes, setEdges]);
 
+  // Handle photo resize - defined early so it can be used in useEffect
+  const handlePhotoResize = useCallback((nodeId, newSize) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                size: newSize
+              }
+            }
+          : node
+      )
+    );
+  }, [setNodes]);
+
+  // Ensure all nodes have resize callback (for nodes loaded from storage/import)
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onResize: handlePhotoResize
+        }
+      }))
+    );
+  }, [isInitialized, handlePhotoResize, setNodes]);
+
   // Save to localStorage
   useEffect(() => {
     if (!isInitialized) return;
@@ -72,10 +118,235 @@ const TimeCapsuleFlow = () => {
   // Don't auto-fit view - let users manually zoom/pan
   // This prevents cards from being scaled down to thumbnails
 
+  // Keyboard shortcuts for navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Don't trigger if user is typing in an input field
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const panAmount = 200; // pixels to pan per keypress
+
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          const currentViewportUp = document.querySelector('.react-flow__viewport');
+          if (currentViewportUp) {
+            const transform = currentViewportUp.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]);
+              const y = parseFloat(match[2]) + panAmount;
+              currentViewportUp.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          const currentViewportDown = document.querySelector('.react-flow__viewport');
+          if (currentViewportDown) {
+            const transform = currentViewportDown.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]);
+              const y = parseFloat(match[2]) - panAmount;
+              currentViewportDown.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
+          break;
+        case 'ArrowLeft':
+          event.preventDefault();
+          const currentViewportLeft = document.querySelector('.react-flow__viewport');
+          if (currentViewportLeft) {
+            const transform = currentViewportLeft.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]) + panAmount;
+              const y = parseFloat(match[2]);
+              currentViewportLeft.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          const currentViewportRight = document.querySelector('.react-flow__viewport');
+          if (currentViewportRight) {
+            const transform = currentViewportRight.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]) - panAmount;
+              const y = parseFloat(match[2]);
+              currentViewportRight.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
+          break;
+        case '+':
+        case '=':
+          event.preventDefault();
+          zoomIn({ duration: 200 });
+          break;
+        case '-':
+        case '_':
+          event.preventDefault();
+          zoomOut({ duration: 200 });
+          break;
+        case '0':
+          event.preventDefault();
+          fitView({ duration: 400, padding: 0.2 });
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [zoomIn, zoomOut, fitView]);
+
+  // Parallax: Mouse movement handler with throttling
+  const handleMouseMove = useCallback((e) => {
+    setMousePosition({
+      x: (e.clientX / window.innerWidth) * 60 - 20,
+      y: (e.clientY / window.innerHeight) * 40 - 20
+    });
+  }, []);
+
+  useEffect(() => {
+    let timeoutId;
+    const throttledMouseMove = (e) => {
+      if (timeoutId) return;
+      timeoutId = setTimeout(() => {
+        handleMouseMove(e);
+        timeoutId = null;
+      }, 16); // ~60fps
+    };
+
+    window.addEventListener('mousemove', throttledMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', throttledMouseMove);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [handleMouseMove]);
+
+  // Parallax: Device motion for mobile
+  useEffect(() => {
+    const handleDeviceOrientation = (e) => {
+      if (e.gamma !== null && e.beta !== null) {
+        setDeviceMotion({
+          x: (e.gamma / 90) * 30,
+          y: (e.beta / 180) * 20
+        });
+      }
+    };
+
+    const handleDeviceMotion = (e) => {
+      if (e.accelerationIncludingGravity) {
+        const acc = e.accelerationIncludingGravity;
+        if (acc.x !== null && acc.y !== null) {
+          setAccelerometerData({
+            x: Math.max(-5, Math.min(5, (acc.x || 0) * 0.5)),
+            y: Math.max(-5, Math.min(5, (acc.y || 0) * 0.5))
+          });
+        }
+      }
+    };
+
+    window.addEventListener('deviceorientation', handleDeviceOrientation);
+
+    if ('DeviceMotionEvent' in window) {
+      if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener('devicemotion', handleDeviceMotion);
+            }
+          })
+          .catch(() => {}); // Silent fail
+      } else {
+        window.addEventListener('devicemotion', handleDeviceMotion);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleDeviceOrientation);
+      window.removeEventListener('devicemotion', handleDeviceMotion);
+    };
+  }, []);
+
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  // Export layout as JSON file
+  const handleExportJSON = () => {
+    if (nodes.length === 0) {
+      alert('⚠️ No memories to export. Add some photos first!');
+      return;
+    }
+
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      title: 'UK Travel Memories',
+      nodes,
+      edges
+    };
+
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `travel-memories-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log('📤 Exported', nodes.length, 'memories');
+  };
+
+  // Import layout from JSON file
+  const handleImportJSON = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const importData = JSON.parse(text);
+
+        // Validate structure
+        if (!importData.nodes || !Array.isArray(importData.nodes)) {
+          throw new Error('Invalid file format: missing nodes array');
+        }
+
+        // Confirm before overwriting
+        if (nodes.length > 0) {
+          const confirmed = confirm(
+            `⚠️ Import will replace your current ${nodes.length} ${nodes.length === 1 ? 'memory' : 'memories'}.\n\n` +
+            `The file contains ${importData.nodes.length} ${importData.nodes.length === 1 ? 'memory' : 'memories'}.\n\n` +
+            'Click OK to proceed, or Cancel to keep your current layout.'
+          );
+          if (!confirmed) return;
+        }
+
+        setNodes(importData.nodes);
+        setEdges(importData.edges || []);
+        console.log('📥 Imported', importData.nodes.length, 'memories');
+        alert(`✅ Successfully imported ${importData.nodes.length} ${importData.nodes.length === 1 ? 'memory' : 'memories'}!`);
+      } catch (error) {
+        console.error('Import failed:', error);
+        alert(`❌ Import failed: ${error.message}\n\nPlease check that the file is a valid travel memories export.`);
+      }
+    };
+    input.click();
+  };
 
   // Save capsule to Firebase and get shareable URL
   const handleSaveAndShare = async () => {
@@ -105,27 +376,44 @@ const TimeCapsuleFlow = () => {
   };
 
   const handlePhotoUpload = async (filesOrUrls, metadata, uploadType) => {
-    console.log('Upload:', uploadType, filesOrUrls);
+    console.log('🔄 Upload started:', { uploadType, files: filesOrUrls, metadata });
 
     try {
       let imageUrls = [];
 
       if (uploadType === 'url') {
         imageUrls = filesOrUrls;
+        console.log('📎 URL upload:', imageUrls);
       } else if (uploadType === 'cloudinary') {
+        console.log('☁️ Uploading to Cloudinary...');
         const results = await uploadMultipleToCloudinary(filesOrUrls);
         imageUrls = results.filter(r => !r.error).map(r => r.url);
+        console.log('☁️ Cloudinary results:', imageUrls);
       } else {
         // Local file upload
+        console.log('📁 Reading local files...');
         const filePromises = filesOrUrls.map(file => {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = reject;
+            reader.onload = (e) => {
+              console.log('✅ File read:', file.name, e.target.result.substring(0, 50) + '...');
+              resolve(e.target.result);
+            };
+            reader.onerror = (err) => {
+              console.error('❌ File read error:', file.name, err);
+              reject(err);
+            };
             reader.readAsDataURL(file);
           });
         });
         imageUrls = await Promise.all(filePromises);
+        console.log('📁 Local files processed:', imageUrls.length);
+      }
+
+      if (imageUrls.length === 0) {
+        console.error('❌ No image URLs generated!');
+        alert('No images were processed. Please try again.');
+        return;
       }
 
       // Create nodes with size variance and horizontal layout (matching homepage)
@@ -151,72 +439,483 @@ const TimeCapsuleFlow = () => {
             location: metadata.location,
             date: metadata.date,
             description: metadata.description,
-            size // Pass size to component
+            size, // Pass size to component
+            onResize: handlePhotoResize // Pass resize callback
           }
         };
       });
 
       console.log('✅ Adding', newNodes.length, 'nodes');
-      setNodes(prev => [...prev, ...newNodes]);
+      console.log('📊 New nodes:', newNodes);
+      console.log('📊 Current nodes count:', nodes.length);
+
+      setNodes(prev => {
+        const updated = [...prev, ...newNodes];
+        console.log('📊 Updated nodes count:', updated.length);
+        return updated;
+      });
+
       setIsUploadModalOpen(false);
+      console.log('🎉 Upload complete! Modal closed.');
     } catch (error) {
-      console.error('Upload failed:', error);
-      alert(`Upload failed: ${error.message}`);
+      console.error('❌ Upload failed:', error);
+      console.error('❌ Error stack:', error.stack);
+      alert(`Upload failed: ${error.message}\n\nCheck console for details.`);
     }
+  };
+
+  // Calculate combined parallax position
+  const combinedDeviceMotion = {
+    x: deviceMotion.x + (accelerometerData.x * 0.3),
+    y: deviceMotion.y + (accelerometerData.y * 0.3)
+  };
+
+  const parallaxX = (mousePosition.x + combinedDeviceMotion.x) * 0.6;
+  const parallaxY = (mousePosition.y + combinedDeviceMotion.y) * 0.6;
+
+  // Navigation handlers
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    navigate('/');
+  };
+
+  const handleFooterToggle = () => {
+    setFooterOpen(!footerOpen);
+    setMenuOpen(false);
+  };
+
+  const handleSidebarToggle = () => {
+    if (sidebarOpen) {
+      setExpandedSection(null);
+    }
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Navigation items data
+  const navigationItems = [
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
+      label: "EXPERIMENTS",
+      itemKey: "experiments",
+      subItems: ["golden unknown", "being + rhyme", "cath3dral", "17-frame animatic", "travel memories"]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684385/write-book_gfaiu8.png",
+      label: "THOUGHTS",
+      itemKey: "thoughts",
+      subItems: ["blog"]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
+      label: "ABOUT",
+      itemKey: "about",
+      subItems: ["about me", "about yellowcircle", "contact"]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
+      label: "WORKS",
+      itemKey: "works",
+      subItems: ["consulting", "rho", "reddit", "cv"]
+    }
+  ];
+
+  // Navigation Item Component
+  const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
+    const isExpanded = expandedSection === itemKey && sidebarOpen;
+
+    let topPosition = index * 50;
+    for (let i = 0; i < index; i++) {
+      const prevItemKey = navigationItems[i]?.itemKey;
+      if (expandedSection === prevItemKey && sidebarOpen) {
+        const prevSubItems = navigationItems[i]?.subItems || [];
+        topPosition += prevSubItems.length * 18 + 5;
+      }
+    }
+
+    const handleClick = () => {
+      if (!sidebarOpen) {
+        setSidebarOpen(true);
+        setExpandedSection(itemKey);
+      } else {
+        if (expandedSection === itemKey) {
+          if (itemKey === 'experiments') {
+            navigate('/experiments');
+          }
+          setExpandedSection(null);
+        } else {
+          setExpandedSection(itemKey);
+        }
+      }
+    };
+
+    return (
+      <div style={{
+        position: 'absolute',
+        top: `${topPosition}px`,
+        left: 0,
+        width: '100%',
+        transition: 'top 0.3s ease-out'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '8px 0',
+          position: 'relative',
+          minHeight: '40px',
+          width: '100%'
+        }}>
+          <div
+            className="clickable-element"
+            onClick={handleClick}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleClick();
+            }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              cursor: 'pointer',
+              zIndex: 3,
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            left: '40px',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '24px',
+            height: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
+            pointerEvents: 'none'
+          }}>
+            <img
+              src={icon}
+              alt={label}
+              width="24"
+              height="24"
+              style={{ display: 'block' }}
+            />
+          </div>
+          {sidebarOpen && (
+            <span style={{
+              position: 'absolute',
+              left: '60px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: isExpanded ? '#EECF00' : 'black',
+              fontSize: '14px',
+              fontWeight: isExpanded ? '700' : '600',
+              letterSpacing: '0.2em',
+              transition: 'color 0.3s ease-out, font-weight 0.3s ease-out',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none'
+            }}>{label}</span>
+          )}
+        </div>
+
+        {sidebarOpen && (
+          <div style={{
+            marginLeft: '75px',
+            marginTop: '-5px',
+            maxHeight: isExpanded ? `${(subItems?.length || 0) * 18 + 5}px` : '0px',
+            overflow: 'hidden',
+            transition: 'max-height 0.3s ease-out'
+          }}>
+            {subItems && (
+              <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
+                {subItems.map((item, idx) => (
+                  <a key={idx}
+                     href="#"
+                     className="clickable-element"
+                     onClick={(e) => {
+                       e.preventDefault();
+                       if (item === '17-frame animatic') {
+                         navigate('/home-17');
+                       } else if (item === 'travel memories') {
+                         navigate('/uk-memories');
+                       }
+                     }}
+                     style={{
+                       display: 'block',
+                       color: 'rgba(0,0,0,0.7)',
+                       fontSize: '12px',
+                       fontWeight: '500',
+                       letterSpacing: '0.1em',
+                       textDecoration: 'none',
+                       padding: '1px 0',
+                       transition: 'color 0.25s ease-in-out',
+                       opacity: isExpanded ? 1 : 0,
+                       transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
+                     }}
+                     onMouseEnter={(e) => {
+                       e.target.style.color = '#EECF00';
+                     }}
+                     onMouseLeave={(e) => {
+                       e.target.style.color = 'rgba(0,0,0,0.7)';
+                     }}
+                  >{item}</a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
-      {/* Header - matching sidebar nav frosted glass style */}
+      {/* Parallax Yellow Circle */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
+        top: `calc(20% + ${parallaxY}px)`,
+        left: `calc(38% + ${parallaxX}px)`,
+        width: '300px',
+        height: '300px',
+        backgroundColor: '#fbbf24',
+        borderRadius: '50%',
+        zIndex: 15,
+        mixBlendMode: 'multiply',
+        pointerEvents: 'none',
+        transition: 'top 0.1s ease-out, left 0.1s ease-out'
+      }} />
+
+      {/* Navigation Bar */}
+      <nav style={{
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 50,
+        height: '80px',
+        zIndex: 40,
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '20px 40px',
+        justifyContent: 'center',
+        paddingLeft: '4.7vw',
+        paddingRight: '40px'
+      }}>
+        <a
+          href="#"
+          onClick={handleHomeClick}
+          style={{
+            backgroundColor: 'black',
+            padding: '10px 20px',
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            textDecoration: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <h1 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            letterSpacing: '0.2em',
+            margin: 0
+          }}>
+            <span style={{ color: '#fbbf24', fontStyle: 'italic' }}>yellow</span>
+            <span style={{ color: 'white' }}>CIRCLE</span>
+          </h1>
+        </a>
+      </nav>
+
+      {/* Main Sidebar */}
+      <div style={{
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        width: sidebarOpen ? 'min(30vw, 450px)' : '80px',
+        height: '100vh',
         backgroundColor: 'rgba(242, 242, 242, 0.96)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+        zIndex: 50,
+        transition: 'width 0.5s ease-out'
       }}>
-        <div>
-          <h1 style={{
-            fontSize: '20px',
-            fontWeight: '600',
-            letterSpacing: '0.2em',
-            color: '#000000',
-            margin: 0
-          }}>
-            TRAVEL MEMORIES
-          </h1>
-          <p style={{
-            fontSize: '12px',
-            fontWeight: '500',
-            letterSpacing: '0.05em',
-            color: 'rgba(0, 0, 0, 0.6)',
-            margin: '6px 0 0 0'
-          }}>
-            {nodes.length} {nodes.length === 1 ? 'memory' : 'memories'}
-          </p>
+        {/* Sidebar Toggle Button */}
+        <div
+          className="clickable-element"
+          onClick={handleSidebarToggle}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleSidebarToggle();
+          }}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '40px',
+            transform: 'translateX(-50%)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px',
+            width: '40px',
+            height: '40px',
+            WebkitTapHighlightColor: 'transparent'
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="black" viewBox="0 0 16 16">
+            <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/>
+            <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
+          </svg>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+
+        {/* HOME Label */}
+        <div style={{
+          position: 'absolute',
+          top: '100px',
+          left: '40px',
+          transform: 'translateX(-50%) rotate(-90deg)',
+          transformOrigin: 'center',
+          whiteSpace: 'nowrap'
+        }}>
+          <span style={{
+            color: 'black',
+            fontWeight: '600',
+            letterSpacing: '0.3em',
+            fontSize: '14px'
+          }}>HOME</span>
+        </div>
+
+        {/* Navigation Items Container */}
+        <div
+          className="navigation-items-container"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: 0,
+            transform: 'translateY(-50%)',
+            width: '100%',
+            height: '240px'
+          }}
+        >
+          {navigationItems.map((item, index) => (
+            <NavigationItem
+              key={item.itemKey}
+              {...item}
+              index={index}
+              sidebarOpen={sidebarOpen}
+              expandedSection={expandedSection}
+              setExpandedSection={setExpandedSection}
+              setSidebarOpen={setSidebarOpen}
+            />
+          ))}
+        </div>
+
+        {/* YC Logo */}
+        <div style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'min(40px, 8vw)',
+          height: 'min(40px, 8vw)',
+          minWidth: '30px',
+          minHeight: '30px',
+          borderRadius: '50%',
+          overflow: 'hidden'
+        }}>
+          <img
+            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
+            alt="YC Logo"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+      </div>
+
+      {/* Secondary Sidebar - Travel Memories Controls */}
+      <div style={{
+        position: 'fixed',
+        left: sidebarOpen ? 'min(30vw, 450px)' : '80px',
+        top: 0,
+        width: secondarySidebarOpen ? 'min(160px, 25vw)' : '50px',
+        height: '100vh',
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        zIndex: 45,
+        transition: 'left 0.5s ease-out, width 0.3s ease-out',
+        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.08)',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
+      className="travel-sidebar">
+        {/* Toggle Button */}
+        <div
+          className="clickable-element"
+          onClick={() => setSecondarySidebarOpen(!secondarySidebarOpen)}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '18px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px',
+            width: '24px',
+            height: '24px',
+            WebkitTapHighlightColor: 'transparent',
+            zIndex: 10
+          }}
+        >
+          <div style={{
+            fontSize: '18px',
+            transform: secondarySidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)',
+            transition: 'transform 0.3s ease'
+          }}>☰</div>
+        </div>
+
+        {secondarySidebarOpen && (
+          <div style={{ padding: '12px 8px', paddingTop: '50px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <h1 style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                color: '#000000',
+                margin: '0 0 6px 0',
+                borderBottom: '2px solid #EECF00',
+                paddingBottom: '4px',
+                textAlign: 'center'
+              }}>
+                MEMORIES
+              </h1>
+              <p style={{
+                fontSize: '10px',
+                fontWeight: '600',
+                letterSpacing: '0.05em',
+                color: 'rgba(0, 0, 0, 0.6)',
+                margin: '6px 0 0 0',
+                textAlign: 'center'
+              }}>
+                {nodes.length} {nodes.length === 1 ? 'item' : 'items'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} className="travel-actions">
           <button
             onClick={() => {
               console.log('Nodes:', nodes);
               console.log('Edges:', edges);
             }}
             style={{
-              padding: '8px 16px',
+              width: '100%',
+              padding: '8px 6px',
               backgroundColor: 'rgba(0, 0, 0, 0.7)',
               color: 'white',
               border: 'none',
               borderRadius: '0',
               cursor: 'pointer',
-              fontSize: '12px',
+              fontSize: '9px',
               fontWeight: '600',
               letterSpacing: '0.05em',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -243,13 +942,14 @@ const TimeCapsuleFlow = () => {
               }
             }}
             style={{
-              padding: '8px 16px',
+              width: '100%',
+              padding: '8px 6px',
               backgroundColor: '#dc2626',
               color: 'white',
               border: 'none',
               borderRadius: '0',
               cursor: 'pointer',
-              fontSize: '12px',
+              fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
               boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)',
@@ -266,19 +966,86 @@ const TimeCapsuleFlow = () => {
               e.target.style.boxShadow = '0 2px 4px rgba(220, 38, 38, 0.3)';
             }}
           >
-            CLEAR ALL
+            CLEAR
+          </button>
+          <button
+            onClick={handleExportJSON}
+            disabled={nodes.length === 0}
+            style={{
+              width: '100%',
+              padding: '8px 6px',
+              backgroundColor: nodes.length === 0 ? 'rgba(59, 130, 246, 0.3)' : '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0',
+              cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '9px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              boxShadow: nodes.length === 0 ? 'none' : '0 2px 4px rgba(59, 130, 246, 0.3)',
+              transition: 'all 0.3s ease',
+              opacity: nodes.length === 0 ? 0.5 : 1
+            }}
+            onMouseOver={(e) => {
+              if (nodes.length > 0) {
+                e.target.style.backgroundColor = '#2563eb';
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.4)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (nodes.length > 0) {
+                e.target.style.backgroundColor = '#3b82f6';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.3)';
+              }
+            }}
+            title="Download layout as JSON file"
+          >
+            EXPORT
+          </button>
+          <button
+            onClick={handleImportJSON}
+            style={{
+              width: '100%',
+              padding: '8px 6px',
+              backgroundColor: '#8b5cf6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0',
+              cursor: 'pointer',
+              fontSize: '9px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#7c3aed';
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.boxShadow = '0 4px 8px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#8b5cf6';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 2px 4px rgba(139, 92, 246, 0.3)';
+            }}
+            title="Load layout from JSON file"
+          >
+            IMPORT
           </button>
           <button
             onClick={handleSaveAndShare}
             disabled={isSaving || nodes.length === 0}
             style={{
-              padding: '10px 20px',
+              width: '100%',
+              padding: '10px 6px',
               backgroundColor: nodes.length === 0 ? 'rgba(16, 185, 129, 0.3)' : '#10b981',
               color: 'white',
               border: 'none',
               borderRadius: '0',
               cursor: isSaving ? 'wait' : (nodes.length === 0 ? 'not-allowed' : 'pointer'),
-              fontSize: '14px',
+              fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
               boxShadow: nodes.length === 0 ? 'none' : '0 4px 8px rgba(16, 185, 129, 0.3)',
@@ -300,7 +1067,7 @@ const TimeCapsuleFlow = () => {
               }
             }}
           >
-            {isSaving ? '💾 SAVING...' : '🔗 SAVE & SHARE'}
+            {isSaving ? 'SAVING...' : 'SHARE'}
           </button>
           <button
             onClick={() => {
@@ -309,13 +1076,14 @@ const TimeCapsuleFlow = () => {
               console.log('📂 Modal state set to true');
             }}
             style={{
-              padding: '10px 20px',
+              width: '100%',
+              padding: '10px 6px',
               backgroundColor: '#EECF00',
               color: 'black',
               border: 'none',
               borderRadius: '0',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '10px',
               fontWeight: '700',
               letterSpacing: '0.05em',
               boxShadow: '0 4px 8px rgba(238, 207, 0, 0.3)',
@@ -332,13 +1100,305 @@ const TimeCapsuleFlow = () => {
               e.target.style.boxShadow = '0 4px 8px rgba(238, 207, 0, 0.3)';
             }}
           >
-            + ADD MEMORY
+            + ADD
           </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hamburger Menu */}
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        style={{
+          position: 'fixed',
+          right: '50px',
+          top: '20px',
+          padding: '10px',
+          backgroundColor: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          zIndex: 100
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '24px',
+          height: '18px',
+          position: 'relative'
+        }}>
+          {[0, 1, 2].map((index) => (
+            <div key={index} style={{
+              position: 'absolute',
+              top: '50%',
+              left: index === 1 ? '60%' : '50%',
+              width: '40px',
+              height: '3px',
+              backgroundColor: 'black',
+              transformOrigin: 'center',
+              transform: menuOpen
+                ? index === 0
+                  ? 'translate(-50%, -50%) rotate(45deg)'
+                  : index === 2
+                    ? 'translate(-50%, -50%) rotate(-45deg)'
+                    : 'translate(-50%, -50%)'
+                : `translate(-50%, -50%) translateY(${(index - 1) * 6}px)`,
+              opacity: menuOpen && index === 1 ? 0 : 1,
+              transition: 'all 0.3s ease'
+            }}></div>
+          ))}
+        </div>
+      </button>
+
+      {/* Menu Overlay */}
+      {menuOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#EECF00',
+          opacity: 0.96,
+          zIndex: 90,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            {['HOME', 'EXPERIMENTS', 'THOUGHTS', 'ABOUT'].map((item, index) => (
+              <a key={item}
+                href="#"
+                onClick={item === 'HOME' ? handleHomeClick : item === 'EXPERIMENTS' ? () => navigate('/experiments') : undefined}
+                className={`menu-item-${index + 1} menu-link`}
+                style={{
+                  textDecoration: 'none',
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  letterSpacing: '0.3em',
+                  padding: '10px 20px',
+                  borderRadius: '4px',
+                  color: 'black',
+                  transition: 'color 0.3s ease-in'
+                }}
+                onMouseEnter={(e) => e.target.style.color = 'white'}
+                onMouseLeave={(e) => e.target.style.color = 'black'}
+              >
+                {item}
+              </a>
+            ))}
+            <div
+              onClick={handleFooterToggle}
+              style={{
+                border: '2px solid black',
+                padding: '15px 40px',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{
+                color: 'black',
+                fontSize: '20px',
+                fontWeight: '600',
+                letterSpacing: '0.3em'
+              }}>CONTACT</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        position: 'fixed',
+        bottom: footerOpen ? '0' : '-290px',
+        left: '0',
+        right: '0',
+        height: '300px',
+        zIndex: 60,
+        transition: 'bottom 0.5s ease-out'
+      }}>
+        <div
+          onClick={handleFooterToggle}
+          style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            display: 'flex',
+            cursor: footerOpen ? 'default' : 'pointer'
+          }}
+        >
+          {/* Contact Section */}
+          <div style={{
+            flex: '1',
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            padding: '40px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start'
+          }}>
+            <h2 style={{
+              color: 'white',
+              fontSize: '24px',
+              fontWeight: '600',
+              letterSpacing: '0.3em',
+              margin: '0 0 20px 0',
+              borderBottom: '2px solid white',
+              paddingBottom: '10px'
+            }}>CONTACT</h2>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px'
+            }}>
+              <a href="#" style={{
+                color: 'rgba(255,255,255,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'white'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
+              >EMAIL@YELLOWCIRCLE.IO</a>
+
+              <a href="#" style={{
+                color: 'rgba(255,255,255,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'white'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
+              >LINKEDIN</a>
+
+              <a href="#" style={{
+                color: 'rgba(255,255,255,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'white'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
+              >TWITTER</a>
+            </div>
+          </div>
+
+          {/* Projects Section */}
+          <div style={{
+            flex: '1',
+            backgroundColor: '#EECF00',
+            padding: '40px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start'
+          }}>
+            <h2 style={{
+              color: 'black',
+              fontSize: '24px',
+              fontWeight: '600',
+              letterSpacing: '0.3em',
+              margin: '0 0 20px 0',
+              borderBottom: '2px solid black',
+              paddingBottom: '10px'
+            }}>PROJECTS</h2>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px'
+            }}>
+              <a href="#" style={{
+                color: 'rgba(0,0,0,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'black'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
+              >GOLDEN UNKNOWN</a>
+
+              <a href="#" style={{
+                color: 'rgba(0,0,0,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'black'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
+              >BEING + RHYME</a>
+
+              <a href="#" style={{
+                color: 'rgba(0,0,0,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'black'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
+              >CATH3DRAL</a>
+
+              <a href="#" style={{
+                color: 'rgba(0,0,0,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'black'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
+              >RHO CONSULTING</a>
+
+              <a href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/uk-memories');
+                }}
+                style={{
+                color: 'rgba(0,0,0,0.8)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.1em',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = 'black'}
+              onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
+              >TRAVEL MEMORIES</a>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* React Flow Container */}
-      <div style={{ width: '100%', height: '100%', paddingTop: '80px' }}>
+      <div style={{ width: '100%', height: '100%', paddingLeft: secondarySidebarOpen ? '240px' : '130px', transition: 'padding-left 0.5s ease-out' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -347,8 +1407,8 @@ const TimeCapsuleFlow = () => {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-          panOnDrag={true}
-          selectionOnDrag={true}
+          panOnDrag={[1, 2]}
+          selectionOnDrag={false}
           panOnScroll={true}
           zoomOnScroll={false}
           zoomOnPinch={false}
@@ -356,6 +1416,9 @@ const TimeCapsuleFlow = () => {
           preventScrolling={false}
           minZoom={0.5}
           maxZoom={2.5}
+          nodesDraggable={true}
+          nodesConnectable={true}
+          elementsSelectable={true}
         >
           <Background
             variant="dots"
@@ -402,17 +1465,21 @@ const TimeCapsuleFlow = () => {
         capsuleId={currentCapsuleId}
       />
 
-      {/* Zoom Controls - Lower Right Corner */}
+      {/* Zoom Controls & Navigation Circle - Lower Right Corner */}
       {nodes.length > 0 && (
         <div style={{
           position: 'fixed',
           bottom: '40px',
           right: '40px',
-          zIndex: 40,
+          zIndex: 50,
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px'
+          alignItems: 'center',
+          gap: '16px',
+          transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
+          transition: 'transform 0.5s ease-out'
         }}>
+          {/* Zoom In Button */}
           <button
             onClick={() => zoomIn({ duration: 300 })}
             style={{
@@ -441,6 +1508,8 @@ const TimeCapsuleFlow = () => {
           >
             🔍+
           </button>
+
+          {/* Zoom Out Button */}
           <button
             onClick={() => zoomOut({ duration: 300 })}
             style={{
@@ -469,6 +1538,8 @@ const TimeCapsuleFlow = () => {
           >
             🔍−
           </button>
+
+          {/* Center View Button */}
           <button
             onClick={() => fitView({ duration: 400, padding: 0.2 })}
             style={{
@@ -500,6 +1571,35 @@ const TimeCapsuleFlow = () => {
           >
             CENTER
           </button>
+
+          {/* Navigation Circle */}
+          <div
+            className="clickable-element"
+            onClick={handleFooterToggle}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleFooterToggle();
+            }}
+            style={{
+              width: '78px',
+              height: '78px',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          >
+            <img
+              src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494537/NavCircle_ioqlsr.png"
+              alt="Navigation"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: 'rotate(0deg)',
+                transition: 'transform 0.3s ease-out',
+                transformOrigin: 'center'
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -551,6 +1651,45 @@ const TimeCapsulePage = () => {
         <ReactFlowProvider>
           <TimeCapsuleFlow />
         </ReactFlowProvider>
+
+        {/* Responsive CSS */}
+        <style>{`
+          @media (max-width: 768px) {
+            .travel-header {
+              padding: 16px 20px !important;
+              gap: 12px !important;
+            }
+            .travel-header h1 {
+              font-size: 16px !important;
+            }
+            .travel-header p {
+              font-size: 11px !important;
+            }
+            .travel-actions {
+              width: 100%;
+              justify-content: flex-end;
+            }
+            .travel-actions button {
+              font-size: 12px !important;
+              padding: 8px 14px !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .travel-header {
+              padding: 12px 16px !important;
+              flex-direction: column;
+              align-items: flex-start !important;
+            }
+            .travel-actions {
+              width: 100%;
+              flex-direction: column;
+            }
+            .travel-actions button {
+              width: 100%;
+              text-align: center;
+            }
+          }
+        `}</style>
       </div>
     </ErrorBoundary>
   );
