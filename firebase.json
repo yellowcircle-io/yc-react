@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "yellowcircle-app",
     "public": "dist",
     "ignore": [
       "firebase.json",
