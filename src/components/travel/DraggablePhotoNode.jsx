@@ -5,30 +5,53 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [lastTap, setLastTap] = useState(0);
   const resizeStartRef = useRef({ size: 0, x: 0, y: 0 });
 
   // Use size from data, or default to 300px
   const size = data.size || 300;
 
-  // Handle resize start
+  // Handle double tap for lightbox
+  const handleDoubleTap = (e) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (now - lastTap < DOUBLE_TAP_DELAY) {
+      e.preventDefault();
+      if (data.onLightbox) {
+        data.onLightbox(data);
+      }
+    }
+    setLastTap(now);
+  };
+
+  // Handle resize start - supports both mouse and touch
   const handleResizeStart = (e, corner) => {
     e.stopPropagation();
     e.preventDefault();
     console.log('🎯 Resize started from corner:', corner, 'current size:', size);
     setIsResizing(true);
+
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
     resizeStartRef.current = {
       size,
-      x: e.clientX,
-      y: e.clientY,
+      x: clientX,
+      y: clientY,
       corner
     };
 
-    const handleMouseMove = (moveEvent) => {
+    const handleMove = (moveEvent) => {
       moveEvent.stopPropagation();
       moveEvent.preventDefault();
 
-      const deltaX = moveEvent.clientX - resizeStartRef.current.x;
-      const deltaY = moveEvent.clientY - resizeStartRef.current.y;
+      const moveX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const moveY = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+      const deltaX = moveX - resizeStartRef.current.x;
+      const deltaY = moveY - resizeStartRef.current.y;
 
       // Use the larger delta for uniform scaling
       const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
@@ -46,15 +69,20 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       console.log('✋ Resize ended');
       setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // Add both mouse and touch listeners
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
   };
 
   console.log('🖼️ Rendering node with data:', {
@@ -137,13 +165,16 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           src={data.imageUrl}
           alt={data.description || 'Travel memory'}
           crossOrigin="anonymous"
+          onClick={handleDoubleTap}
+          onTouchEnd={handleDoubleTap}
           style={{
             width: `${size}px`,
             height: `${size}px`,
             objectFit: 'cover',
             display: 'block',
             opacity: imageLoaded ? 1 : 0,
-            transition: 'opacity 0.3s ease'
+            transition: 'opacity 0.3s ease',
+            cursor: 'pointer'
           }}
           loading="lazy"
           onLoad={() => {
@@ -221,6 +252,58 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           </div>
         )}
 
+        {/* Edit Button - Only show when selected */}
+        {selected && (
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (data.onEdit) {
+                data.onEdit(id, data);
+              }
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (data.onEdit) {
+                data.onEdit(id, data);
+              }
+            }}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              padding: '6px 12px',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              border: '2px solid #EECF00',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              zIndex: 25,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.2s ease',
+              pointerEvents: 'auto',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.95)';
+              e.target.style.color = '#000000';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+              e.target.style.color = 'white';
+              e.target.style.transform = 'scale(1)';
+            }}
+          >
+            ✏️ EDIT
+          </button>
+        )}
+
         {/* Resize Handles - Only show when selected */}
         {selected && (
           <>
@@ -228,6 +311,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
             <div
               className="nodrag nopan"
               onMouseDown={(e) => handleResizeStart(e, 'br')}
+              onTouchStart={(e) => handleResizeStart(e, 'br')}
               style={{
                 position: 'absolute',
                 bottom: '-6px',
@@ -250,6 +334,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
             <div
               className="nodrag nopan"
               onMouseDown={(e) => handleResizeStart(e, 'tl')}
+              onTouchStart={(e) => handleResizeStart(e, 'tl')}
               style={{
                 position: 'absolute',
                 top: '-6px',
@@ -272,6 +357,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
             <div
               className="nodrag nopan"
               onMouseDown={(e) => handleResizeStart(e, 'bl')}
+              onTouchStart={(e) => handleResizeStart(e, 'bl')}
               style={{
                 position: 'absolute',
                 bottom: '-6px',
@@ -294,6 +380,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
             <div
               className="nodrag nopan"
               onMouseDown={(e) => handleResizeStart(e, 'tr')}
+              onTouchStart={(e) => handleResizeStart(e, 'tr')}
               style={{
                 position: 'absolute',
                 top: '-6px',
