@@ -84,8 +84,24 @@ export const useFirebaseCapsule = () => {
 
     } catch (err) {
       console.error('❌ Save failed:', err);
-      setError(err.message);
-      throw err;
+      console.error('❌ Error code:', err.code);
+      console.error('❌ Error details:', err);
+
+      // Enhanced error message for quota exceeded
+      let errorMessage = err.message;
+      if (err.code === 'resource-exhausted' || err.message.includes('quota')) {
+        errorMessage = 'QUOTA_EXCEEDED: Firebase free tier limit (20,000 writes/month) has been reached. Please upgrade to Blaze plan or wait until next month.';
+      } else if (err.code === 'permission-denied') {
+        errorMessage = 'PERMISSION_DENIED: Check Firebase security rules.';
+      }
+
+      setError(errorMessage);
+
+      // Create enhanced error object
+      const enhancedError = new Error(errorMessage);
+      enhancedError.code = err.code;
+      enhancedError.originalError = err;
+      throw enhancedError;
     } finally {
       setIsSaving(false);
     }

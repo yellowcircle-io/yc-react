@@ -35,13 +35,11 @@ const TimeCapsuleFlow = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Firebase hook for shareable URLs and auto-sync
+  // Firebase hook for shareable URLs
   const { saveCapsule, isSaving } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState(null);
-  const [autoSyncEnabled] = useState(true); // setAutoSyncEnabled intentionally unused for now
 
   // Lightbox state
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
@@ -168,56 +166,6 @@ const TimeCapsuleFlow = () => {
       console.error('❌ localStorage save error:', error);
     }
   }, [nodes, edges, isInitialized]);
-
-  // Auto-sync to Firebase (debounced to avoid excessive writes)
-  useEffect(() => {
-    if (!isInitialized || !autoSyncEnabled || nodes.length === 0) return;
-
-    // Debounce: wait 3 seconds after last change before syncing
-    const timeoutId = setTimeout(async () => {
-      try {
-        // Strip out ALL React Flow internal properties for Safari compatibility
-        const serializableNodes = nodes.map(node => ({
-          id: node.id,
-          type: node.type,
-          position: node.position,
-          data: {
-            imageUrl: node.data?.imageUrl || '',
-            location: node.data?.location || '',
-            date: node.data?.date || '',
-            description: node.data?.description || '',
-            size: node.data?.size || 350
-          }
-        }));
-
-        // Also clean edges
-        const serializableEdges = edges.map(edge => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: edge.type || 'default'
-        }));
-
-        // Use existing capsuleId if available, otherwise create new one
-        const capsuleId = currentCapsuleId || `autosave-${Date.now()}`;
-        await saveCapsule(serializableNodes, serializableEdges, {
-          title: 'UK Travel Memories (Auto-saved)'
-        });
-
-        if (!currentCapsuleId) {
-          setCurrentCapsuleId(capsuleId);
-        }
-
-        setLastSyncTime(new Date());
-        console.log('☁️ Auto-synced to Firebase:', nodes.length, 'memories');
-      } catch (error) {
-        console.error('❌ Firebase auto-sync error:', error);
-        // Don't show alert for auto-sync failures, just log
-      }
-    }, 3000); // 3 second debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [nodes, edges, isInitialized, autoSyncEnabled, currentCapsuleId, saveCapsule]);
 
   // Don't auto-fit view - let users manually zoom/pan
   // This prevents cards from being scaled down to thumbnails
@@ -463,6 +411,10 @@ const TimeCapsuleFlow = () => {
       return;
     }
 
+    console.log('🔄 Starting save process...');
+    console.log('📊 Nodes to save:', nodes.length);
+    console.log('🔧 isSaving status:', isSaving);
+
     try {
       // Strip out ALL React Flow internal properties and callbacks for Safari compatibility
       const serializableNodes = nodes.map(node => ({
@@ -486,9 +438,14 @@ const TimeCapsuleFlow = () => {
         type: edge.type || 'default'
       }));
 
+      console.log('📦 Serialized data ready');
+      console.log('🔥 Calling saveCapsule...');
+
       const capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
         title: 'UK Travel Memories'
       });
+
+      console.log('✅ Save complete, capsuleId:', capsuleId);
 
       const url = `${window.location.origin}/uk-memories/view/${capsuleId}`;
       setShareUrl(url);
@@ -498,6 +455,7 @@ const TimeCapsuleFlow = () => {
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(url);
+          console.log('📋 URL copied to clipboard');
         } else {
           // Fallback for older browsers or mobile Safari
           const textArea = document.createElement('textarea');
@@ -509,6 +467,7 @@ const TimeCapsuleFlow = () => {
           textArea.select();
           try {
             document.execCommand('copy');
+            console.log('📋 URL copied (fallback)');
           } catch (err) {
             console.warn('Copy fallback failed:', err);
           }
@@ -521,9 +480,64 @@ const TimeCapsuleFlow = () => {
 
       // Show beautiful branded modal instead of alert
       setShowShareModal(true);
+      console.log('✅ Share modal opened');
     } catch (error) {
-      console.error('Save failed:', error);
-      alert(`❌ Failed to save: ${error.message}\n\nPlease check the console for details.`);
+      console.error('❌ Save failed:', error);
+      console.error('❌ Error details:', {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+
+      // More specific error messages
+      if (error.message.includes('QUOTA_EXCEEDED') || error.code === 'resource-exhausted' || error.message.includes('quota')) {
+        alert(
+          '🔴 FIREBASE QUOTA EXCEEDED\n\n' +
+          'The free tier limit (20,000 writes/month) has been reached.\n\n' +
+          '✅ Your work is still saved locally in your browser\n\n' +
+          'To share your memories:\n\n' +
+          '1. UPGRADE to Blaze plan (~$0.10/month)\n' +
+          '   → Firebase Console → Upgrade Project\n\n' +
+          '2. WAIT until next month (quota resets)\n\n' +
+          '3. EXPORT as JSON to save locally\n' +
+          '   → Click EXPORT button above\n\n' +
+          'See console for technical details.'
+        );
+      } else if (error.message.includes('PERMISSION_DENIED') || error.code === 'permission-denied') {
+        alert(
+          '❌ PERMISSION DENIED\n\n' +
+          'Firebase security rules are blocking this save.\n\n' +
+          'Please check Firebase Console → Firestore → Rules\n\n' +
+          'See console for technical details.'
+        );
+      } else if (error.message.includes('Firebase') || error.message.includes('firestore')) {
+        alert(
+          '❌ FIREBASE CONNECTION FAILED\n\n' +
+          'Please check:\n' +
+          '• Internet connection\n' +
+          '• Firebase configuration\n' +
+          '• Browser console for details\n\n' +
+          'Your work is still saved locally.'
+        );
+      } else if (error.message.includes('undefined') || error.message.includes('null')) {
+        alert(
+          '❌ FIREBASE NOT CONFIGURED\n\n' +
+          'Missing Firebase environment variables.\n\n' +
+          'Please check .env file contains:\n' +
+          '• VITE_FIREBASE_API_KEY\n' +
+          '• VITE_FIREBASE_PROJECT_ID\n' +
+          '• And other required variables\n\n' +
+          'See console for details.'
+        );
+      } else {
+        alert(
+          `❌ SAVE FAILED\n\n` +
+          `Error: ${error.message}\n\n` +
+          `Your work is still saved locally in your browser.\n\n` +
+          `Please check the browser console for technical details.`
+        );
+      }
     }
   };
 
@@ -1116,23 +1130,6 @@ const TimeCapsuleFlow = () => {
               }}>
                 {nodes.length} {nodes.length === 1 ? 'item' : 'items'}
               </p>
-              {lastSyncTime && (
-                <p style={{
-                  fontSize: '8px',
-                  fontWeight: '500',
-                  letterSpacing: '0.03em',
-                  color: '#10b981',
-                  margin: '4px 0 0 0',
-                  textAlign: 'center',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px'
-                }}>
-                  <span>☁️</span>
-                  <span>Synced {new Date().getTime() - lastSyncTime.getTime() < 10000 ? 'just now' : 'recently'}</span>
-                </p>
-              )}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} className="travel-actions">
@@ -1392,6 +1389,7 @@ const TimeCapsuleFlow = () => {
 
       {/* Hamburger Menu */}
       <button
+        className="hamburger-menu-button"
         onClick={() => setMenuOpen(!menuOpen)}
         onTouchEnd={(e) => {
           e.preventDefault();
@@ -1405,8 +1403,9 @@ const TimeCapsuleFlow = () => {
           backgroundColor: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          zIndex: 100,
-          WebkitTapHighlightColor: 'transparent'
+          zIndex: 200,
+          WebkitTapHighlightColor: 'transparent',
+          isolation: 'isolate'
         }}
       >
         <div style={{
@@ -2048,6 +2047,13 @@ const TimeCapsulePage = () => {
             .clickable-element img[alt="Navigation"] {
               z-index: 150 !important;
               position: relative;
+            }
+
+            /* Fix hamburger menu visibility for Firefox */
+            .hamburger-menu-button {
+              z-index: 200 !important;
+              position: fixed !important;
+              isolation: isolate !important;
             }
           }
 
