@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const EditMemoryModal = ({ isOpen, onClose, memory, onSave }) => {
+const EditMemoryModal = ({ isOpen, onClose, memory, onSave, onDelete }) => {
   const [location, setLocation] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
@@ -32,6 +32,15 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave }) => {
 
   const handleCancel = () => {
     onClose();
+  };
+
+  const handleDelete = () => {
+    const confirmed = confirm('⚠️ Delete this memory?\n\nThis cannot be undone.\n\nClick OK to delete.');
+    if (confirmed && onDelete) {
+      console.log('🗑️ Deleting memory');
+      onDelete();
+      onClose();
+    }
   };
 
   return (
@@ -255,77 +264,121 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave }) => {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px', paddingTop: '16px' }}>
-              <button
-                type="button"
-                onClick={handleCancel}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleCancel();
-                }}
-                style={{
-                  flex: 1,
-                  padding: '14px 24px',
-                  color: 'white',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '0',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  letterSpacing: '0.1em',
-                  transition: 'all 0.3s ease',
-                  WebkitTapHighlightColor: 'transparent',
-                  userSelect: 'none'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  e.target.style.borderColor = 'white';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
-                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                }}
-              >
-                CANCEL
-              </button>
-              <button
-                type="submit"
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSubmit(e);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '14px 24px',
-                  backgroundColor: '#EECF00',
-                  color: 'black',
-                  border: 'none',
-                  borderRadius: '0',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  letterSpacing: '0.1em',
-                  boxShadow: '0 4px 12px rgba(238, 207, 0, 0.3)',
-                  transition: 'all 0.3s ease',
-                  WebkitTapHighlightColor: 'transparent',
-                  userSelect: 'none'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = '#fbbf24';
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 16px rgba(238, 207, 0, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = '#EECF00';
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(238, 207, 0, 0.3)';
-                }}
-              >
-                SAVE CHANGES
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '16px' }}>
+              {/* Primary Actions Row */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCancel();
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '14px 24px',
+                    color: 'white',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '0',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    letterSpacing: '0.1em',
+                    transition: 'all 0.3s ease',
+                    WebkitTapHighlightColor: 'transparent',
+                    userSelect: 'none'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.borderColor = 'white';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                  }}
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSubmit(e);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '14px 24px',
+                    backgroundColor: '#EECF00',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '0',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    boxShadow: '0 4px 12px rgba(238, 207, 0, 0.3)',
+                    transition: 'all 0.3s ease',
+                    WebkitTapHighlightColor: 'transparent',
+                    userSelect: 'none'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#fbbf24';
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 16px rgba(238, 207, 0, 0.4)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = '#EECF00';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(238, 207, 0, 0.3)';
+                  }}
+                >
+                  SAVE CHANGES
+                </button>
+              </div>
+
+              {/* Delete Button Row */}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDelete();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 24px',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)',
+                    transition: 'all 0.3s ease',
+                    WebkitTapHighlightColor: 'transparent',
+                    userSelect: 'none'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#b91c1c';
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.4)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = '#dc2626';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 2px 8px rgba(220, 38, 38, 0.3)';
+                  }}
+                >
+                  DELETE MEMORY
+                </button>
+              )}
             </div>
           </form>
         </div>

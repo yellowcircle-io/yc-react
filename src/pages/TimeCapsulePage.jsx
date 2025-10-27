@@ -139,6 +139,21 @@ const TimeCapsuleFlow = () => {
     console.log('✅ Memory updated successfully');
   }, [editingNodeId, setNodes]);
 
+  // Handle delete memory - remove node and connected edges
+  const handleDeleteMemory = useCallback(() => {
+    console.log('🗑️ Deleting memory:', editingNodeId);
+
+    // Remove the node
+    setNodes((nds) => nds.filter((node) => node.id !== editingNodeId));
+
+    // Remove connected edges
+    setEdges((eds) => eds.filter((edge) =>
+      edge.source !== editingNodeId && edge.target !== editingNodeId
+    ));
+
+    console.log('✅ Memory deleted successfully');
+  }, [editingNodeId, setNodes, setEdges]);
+
   // Ensure all nodes have callbacks (for nodes loaded from storage/import)
   useEffect(() => {
     if (!isInitialized) return;
@@ -156,14 +171,19 @@ const TimeCapsuleFlow = () => {
     );
   }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, setNodes]);
 
-  // Save to localStorage
+  // Save to localStorage (auto-uploaded to Cloudinary, so no quota issues)
   useEffect(() => {
     if (!isInitialized) return;
     try {
+      // All images are now Cloudinary URLs or external URLs (no base64)
+      // Safe to save directly to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
       console.log('💾 Saved to localStorage:', nodes.length, 'memories');
     } catch (error) {
       console.error('❌ localStorage save error:', error);
+
+      // This should rarely happen now, but provide fallback
+      alert('⚠️ Unable to save locally. Your memories will be preserved in the current session.\n\nUse EXPORT to save as JSON file, or SHARE to save to cloud.');
     }
   }, [nodes, edges, isInitialized]);
 
@@ -416,11 +436,15 @@ const TimeCapsuleFlow = () => {
     console.log('🔧 isSaving status:', isSaving);
 
     try {
-      // Strip out ALL React Flow internal properties and callbacks for Safari compatibility
+      // Strip out ALL React Flow internal properties and callbacks for Firebase compatibility
       const serializableNodes = nodes.map(node => ({
         id: node.id,
         type: node.type,
-        position: node.position,
+        // ONLY save x and y coordinates, not positionAbsolute or other React Flow internals
+        position: {
+          x: node.position.x,
+          y: node.position.y
+        },
         data: {
           imageUrl: node.data?.imageUrl || '',
           location: node.data?.location || '',
@@ -430,7 +454,7 @@ const TimeCapsuleFlow = () => {
         }
       }));
 
-      // Also clean edges for Safari
+      // Also clean edges for Firebase - ONLY essential properties
       const serializableEdges = edges.map(edge => ({
         id: edge.id,
         source: edge.source,
@@ -550,35 +574,57 @@ const TimeCapsuleFlow = () => {
       if (uploadType === 'url') {
         imageUrls = filesOrUrls;
         console.log('📎 URL upload:', imageUrls);
-      } else if (uploadType === 'cloudinary') {
-        console.log('☁️ Uploading to Cloudinary...');
-        const results = await uploadMultipleToCloudinary(filesOrUrls);
-        imageUrls = results.filter(r => !r.error).map(r => r.url);
-        console.log('☁️ Cloudinary results:', imageUrls);
-      } else {
-        // Local file upload
-        console.log('📁 Reading local files...');
-        const filePromises = filesOrUrls.map(file => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              console.log('✅ File read:', file.name, e.target.result.substring(0, 50) + '...');
-              resolve(e.target.result);
-            };
-            reader.onerror = (err) => {
-              console.error('❌ File read error:', file.name, err);
-              reject(err);
-            };
-            reader.readAsDataURL(file);
+      } else if (uploadType === 'cloudinary' || uploadType === 'file') {
+        // Try to upload to Cloudinary first (avoids localStorage quota issues)
+        console.log('☁️ Attempting Cloudinary upload...');
+
+        try {
+          const results = await uploadMultipleToCloudinary(filesOrUrls);
+          imageUrls = results.filter(r => !r.error).map(r => r.url);
+
+          // Log any errors
+          const errors = results.filter(r => r.error);
+          if (errors.length > 0) {
+            console.error('❌ Some uploads failed:', errors);
+          }
+
+          console.log('☁️ Cloudinary results:', imageUrls.length, 'successful uploads');
+
+          // If all uploads failed, fall back to base64
+          if (imageUrls.length === 0 && filesOrUrls.length > 0) {
+            console.warn('⚠️ Cloudinary upload failed for all files, falling back to base64');
+            throw new Error('Cloudinary upload failed');
+          }
+        } catch (cloudinaryError) {
+          console.error('❌ Cloudinary upload error:', cloudinaryError);
+          console.log('📁 Falling back to local base64 encoding...');
+
+          // Fallback: Use base64 encoding (may cause localStorage quota issues)
+          const filePromises = filesOrUrls.map(file => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                console.log('✅ File read:', file.name);
+                resolve(e.target.result);
+              };
+              reader.onerror = (err) => {
+                console.error('❌ File read error:', file.name, err);
+                reject(err);
+              };
+              reader.readAsDataURL(file);
+            });
           });
-        });
-        imageUrls = await Promise.all(filePromises);
-        console.log('📁 Local files processed:', imageUrls.length);
+          imageUrls = await Promise.all(filePromises);
+          console.log('📁 Local files processed:', imageUrls.length);
+
+          // Warn user about localStorage quota
+          console.warn('⚠️ Using base64 encoding - may hit localStorage quota after 2-3 photos');
+        }
       }
 
       if (imageUrls.length === 0) {
         console.error('❌ No image URLs generated!');
-        alert('No images were processed. Please try again.');
+        alert('No images were processed. Please try again.\n\nCheck browser console for details.');
         return;
       }
 
@@ -996,46 +1042,47 @@ const TimeCapsuleFlow = () => {
           ))}
         </div>
 
-        {/* YC Logo - Navigate to Homepage */}
-        <div
-          className="clickable-element yc-logo"
-          onClick={handleHomeClick}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            handleHomeClick(e);
-          }}
-          style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '45px',
-            height: '45px',
-            minWidth: '40px',
-            minHeight: '40px',
-            borderRadius: '50%',
-            overflow: 'visible',
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent',
-            transition: 'transform 0.2s ease, opacity 0.2s ease',
-            zIndex: 100
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateX(-50%) scale(1.1)';
-            e.currentTarget.style.opacity = '0.8';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
-            e.currentTarget.style.opacity = '1';
-          }}
-          title="Return to Homepage"
-        >
-          <img
-            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
-            alt="YC Logo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', borderRadius: '50%' }}
-          />
-        </div>
+      </div>
+
+      {/* YC Logo - Fixed to viewport, centered in sidebar */}
+      <div
+        className="clickable-element yc-logo"
+        onClick={handleHomeClick}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          handleHomeClick(e);
+        }}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: sidebarOpen ? 'min(17.5vw, 236px)' : '40px',
+          transform: 'translateX(-50%)',
+          width: '45px',
+          height: '45px',
+          minWidth: '40px',
+          minHeight: '40px',
+          borderRadius: '50%',
+          overflow: 'visible',
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
+          transition: 'left 0.5s ease-out, transform 0.2s ease, opacity 0.2s ease',
+          zIndex: 100
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateX(-50%) scale(1.1)';
+          e.currentTarget.style.opacity = '0.8';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+          e.currentTarget.style.opacity = '1';
+        }}
+        title="Return to Homepage"
+      >
+        <img
+          src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
+          alt="YC Logo"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', borderRadius: '50%' }}
+        />
       </div>
 
       {/* Secondary Sidebar - Travel Memories Controls */}
@@ -1737,7 +1784,13 @@ const TimeCapsuleFlow = () => {
             gap={24}
             size={2}
             color="#fbbf24"
-            style={{ opacity: 0.4 }}
+            style={{
+              opacity: 0.4,
+              backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1760825531/hand-drawn-london2_kebpj2.png)',
+              backgroundRepeat: 'repeat-x',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top'
+            }}
           />
         </ReactFlow>
       </div>
@@ -1798,6 +1851,7 @@ const TimeCapsuleFlow = () => {
         }}
         memory={editingMemory}
         onSave={handleEditSave}
+        onDelete={handleDeleteMemory}
       />
 
       {/* Zoom Controls & Navigation Circle - Lower Right Corner */}
@@ -2027,7 +2081,7 @@ const TimeCapsulePage = () => {
           /* YC Logo visibility boost for all browsers */
           .yc-logo {
             z-index: 100 !important;
-            position: relative !important;
+            position: fixed !important;
           }
 
           /* Firefox-specific fixes for controls visibility */
