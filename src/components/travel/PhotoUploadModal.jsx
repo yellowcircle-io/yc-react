@@ -19,7 +19,18 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
+    console.log('📁 Files selected:', files.length, files);
     setSelectedFiles(files);
+  };
+
+  const triggerFileInput = () => {
+    console.log('🔘 Triggering file input click');
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) {
+      fileInput.click();
+    } else {
+      console.error('❌ File input not found');
+    }
   };
 
   const handleMethodSelect = (method) => {
@@ -280,7 +291,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
                   color: 'white',
                   margin: '0 0 8px 0'
                 }}>
-                  📁 LOCAL UPLOAD
+                  📱 FROM DEVICE
                 </h4>
                 <p style={{
                   fontSize: '13px',
@@ -289,7 +300,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
                   color: 'rgba(255, 255, 255, 0.7)',
                   margin: 0
                 }}>
-                  Store photos locally in browser (temporary)
+                  Select photos from your phone or computer
                 </p>
               </button>
 
@@ -377,55 +388,109 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
                   }}>
                     SELECT PHOTOS
                   </label>
-                  <div style={{
-                    border: '2px dashed rgba(255, 255, 255, 0.3)',
-                    borderRadius: '0',
-                    padding: '24px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#EECF00';
-                    e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                  }}
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    style={{
+                      display: 'block',
+                      border: '2px dashed rgba(255, 255, 255, 0.3)',
+                      borderRadius: '0',
+                      padding: '24px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      transition: 'all 0.3s ease',
+                      WebkitTapHighlightColor: 'transparent',
+                      userSelect: 'none'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.borderColor = '#EECF00';
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    }}
+                    onTouchStart={(e) => {
+                      e.currentTarget.style.borderColor = '#EECF00';
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
+                    }}
+                    onTouchEnd={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    }}
                   >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileSelect}
-                      style={{ display: 'none' }}
-                      id="file-upload"
-                    />
-                    <label htmlFor="file-upload" style={{ cursor: 'pointer', display: 'block' }}>
-                      <p style={{
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        letterSpacing: '0.05em',
-                        color: 'white',
-                        margin: '0 0 4px 0'
-                      }}>
-                        {selectedFiles.length > 0
-                          ? `${selectedFiles.length} file(s) selected`
-                          : 'Click to select photos'}
-                      </p>
-                      <p style={{
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        letterSpacing: '0.05em',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        margin: 0
-                      }}>
-                        JPEG, PNG, GIF, WebP
-                      </p>
-                    </label>
-                  </div>
+                    <p style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      letterSpacing: '0.05em',
+                      color: 'white',
+                      margin: '0 0 4px 0',
+                      pointerEvents: 'none'
+                    }}>
+                      {selectedFiles.length > 0
+                        ? `${selectedFiles.length} file(s) selected`
+                        : 'Tap to browse for photos'}
+                    </p>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      letterSpacing: '0.05em',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      margin: '0 0 4px 0',
+                      pointerEvents: 'none'
+                    }}>
+                      JPEG, PNG, GIF, WebP, HEIC
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      fontWeight: '400',
+                      letterSpacing: '0.02em',
+                      color: 'rgba(238, 207, 0, 0.8)',
+                      margin: 0,
+                      pointerEvents: 'none',
+                      fontStyle: 'italic'
+                    }}>
+                      Navigate to Pictures, Desktop, or Downloads folder
+                    </p>
+                  </label>
+
+                  {/* Fallback button for devices where label click doesn't work */}
+                  {selectedFiles.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={triggerFileInput}
+                      style={{
+                        marginTop: '12px',
+                        width: '100%',
+                        padding: '12px 24px',
+                        backgroundColor: '#EECF00',
+                        color: 'black',
+                        border: 'none',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        letterSpacing: '0.1em',
+                        transition: 'all 0.3s ease',
+                        WebkitTapHighlightColor: 'transparent'
+                      }}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#fbbf24';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = '#EECF00';
+                      }}
+                    >
+                      📸 CHOOSE PHOTOS
+                    </button>
+                  )}
                 </div>
               )}
 

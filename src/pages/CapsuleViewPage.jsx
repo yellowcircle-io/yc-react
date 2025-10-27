@@ -215,6 +215,11 @@ const CapsuleView = () => {
     );
   }
 
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    navigate('/');
+  };
+
   return (
     <div style={{ height: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0 }}>
       {/* Header */}
@@ -268,6 +273,46 @@ const CapsuleView = () => {
         >
           CREATE YOUR OWN
         </button>
+      </div>
+
+      {/* YC Logo - Fixed to viewport, bottom left */}
+      <div
+        className="clickable-element yc-logo"
+        onClick={handleHomeClick}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          handleHomeClick(e);
+        }}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '40px',
+          width: '45px',
+          height: '45px',
+          minWidth: '40px',
+          minHeight: '40px',
+          borderRadius: '50%',
+          overflow: 'visible',
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
+          transition: 'transform 0.2s ease, opacity 0.2s ease',
+          zIndex: 100
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.opacity = '0.8';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.opacity = '1';
+        }}
+        title="Return to Homepage"
+      >
+        <img
+          src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
+          alt="YC Logo"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', borderRadius: '50%' }}
+        />
       </div>
 
       {/* Background */}
