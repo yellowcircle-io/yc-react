@@ -7,7 +7,9 @@ import {
   getDocs,
   serverTimestamp,
   increment,
-  updateDoc
+  updateDoc,
+  query,
+  limit
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -125,24 +127,40 @@ export const useFirebaseCapsule = () => {
         throw new Error('Capsule not found');
       }
 
-      // Get nodes
+      // Get nodes (with safety limit to prevent excessive reads)
       const nodesRef = collection(db, `capsules/${capsuleId}/nodes`);
-      const nodesSnap = await getDocs(nodesRef);
+      const nodesQuery = query(nodesRef, limit(500)); // Max 500 photos per capsule
+      const nodesSnap = await getDocs(nodesQuery);
       const nodes = nodesSnap.docs.map(doc => doc.data());
 
-      // Get edges
+      // Get edges (with safety limit)
       const edgesRef = collection(db, `capsules/${capsuleId}/edges`);
-      const edgesSnap = await getDocs(edgesRef);
+      const edgesQuery = query(edgesRef, limit(1000)); // Max 1000 connections
+      const edgesSnap = await getDocs(edgesQuery);
       const edges = edgesSnap.docs.map(doc => doc.data());
 
-      // Increment view count
-      try {
-        await updateDoc(capsuleRef, {
-          viewCount: increment(1)
-        });
-      } catch (viewCountError) {
-        console.warn('Failed to increment view count:', viewCountError);
-        // Don't fail the entire load if view count update fails
+      // Increment view count (only in production to avoid excessive writes during development)
+      const isProduction = import.meta.env.PROD;
+
+      // Check if already viewed this session (prevent duplicate counts on refresh)
+      const viewedKey = `capsule_viewed_${capsuleId}`;
+      const alreadyViewed = sessionStorage.getItem(viewedKey);
+
+      if (isProduction && !alreadyViewed) {
+        try {
+          await updateDoc(capsuleRef, {
+            viewCount: increment(1)
+          });
+          sessionStorage.setItem(viewedKey, 'true');
+          console.log('✅ View count incremented');
+        } catch (viewCountError) {
+          console.warn('Failed to increment view count:', viewCountError);
+          // Don't fail the entire load if view count update fails
+        }
+      } else if (!isProduction) {
+        console.log('⚠️ DEV MODE: Skipping view count increment (prevents excessive Firebase writes)');
+      } else {
+        console.log('ℹ️ Already viewed this capsule in this session');
       }
 
       console.log('✅ Capsule loaded successfully:', capsuleId);
