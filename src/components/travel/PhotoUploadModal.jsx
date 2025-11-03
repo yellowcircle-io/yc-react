@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import { isCloudinaryConfigured } from '../../utils/cloudinaryUpload';
 
 const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
-  console.log('📸 PhotoUploadModal rendered, isOpen:', isOpen); // Debug log
-  console.log('🎯 React Root Element:', document.getElementById('root'));
-  console.log('🎯 Body Children Count:', document.body.children.length);
-
   const [step, setStep] = useState('method');
   const [uploadMethod, setUploadMethod] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -95,11 +91,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
   };
 
   if (!isOpen) {
-    console.log('🚫 Modal is closed, returning null');
     return null;
   }
-
-  console.log('✅ Modal IS OPEN - About to return JSX');
 
   return (
     <div
