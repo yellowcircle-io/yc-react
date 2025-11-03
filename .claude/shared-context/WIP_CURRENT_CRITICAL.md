@@ -101,7 +101,7 @@ Creating context sharing system:
       - Step-by-step sync verification (~5 min)
       - Ensures both sync methods working together
 
-   b. **Second:** `.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md`
+   b. **Second:** `.claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md`
       - Detailed 8-step verification checklist (~15 min)
       - Creates MacBook Air instance log
       - Tests Claude Code integration
