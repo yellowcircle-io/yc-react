@@ -92,12 +92,26 @@ Creating context sharing system:
 
 **Recommended Next Actions (User):**
 
-1. **MacBook Air First Run Verification** 🔴 **START HERE FOR MACBOOK AIR**:
-   - On MacBook Air: Open Terminal
-   - Navigate to: `~/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/`
-   - Read and follow: `.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md`
-   - This provides step-by-step sync verification checklist (~15 min)
-   - Delete file after successful verification
+1. **MacBook Air Sync & Setup** 🔴 **START HERE FOR MACBOOK AIR**:
+
+   **Read these files in order on MacBook Air:**
+
+   a. **First:** `.claude/MACBOOK_AIR_SYNC_INSTRUCTIONS.md` ⭐
+      - Complete sync coordination guide (Dropbox + GitHub)
+      - Step-by-step sync verification (~5 min)
+      - Ensures both sync methods working together
+
+   b. **Second:** `.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md`
+      - Detailed 8-step verification checklist (~15 min)
+      - Creates MacBook Air instance log
+      - Tests Claude Code integration
+      - Delete after successful verification
+
+2. **GitHub Status:** ✅ UP TO DATE
+   - Latest commits:
+     - `2919183` - Context updates with GitHub sync status
+     - `d22207d` - Initial multi-machine system
+   - MacBook Air needs to run: `git pull`
 
 3. **Optional: Test Codespace access** from iPad/iPhone
    - Follow: `.claude/CODESPACES_MOBILE_ACCESS_CRITICAL.md`
