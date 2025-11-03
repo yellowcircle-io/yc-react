@@ -64,12 +64,12 @@ pwd
 ```bash
 # Check .claude directory exists
 ls -lh .claude/
-# Expected: Multiple files including MACBOOK_AIR_FIRST_RUN_CRITICAL.md
+# Expected: Multiple files including MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md
 
 # Check CRITICAL files exist
 ls -lh .claude/*CRITICAL*.md
 # Expected:
-# - MACBOOK_AIR_FIRST_RUN_CRITICAL.md
+# - MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md
 # - MULTI_MACHINE_SETUP_CRITICAL.md
 # - CODESPACES_MOBILE_ACCESS_CRITICAL.md
 
@@ -134,7 +134,7 @@ Now that files are synced, run the complete verification checklist:
 
 ```bash
 # Read the verification file
-cat .claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md
+cat .claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md
 # Or open in your preferred editor
 
 # Follow all 8 steps in the verification checklist
@@ -146,7 +146,7 @@ cat .claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md
 # - Test bidirectional sync
 ```
 
-**✅ Checkpoint:** Complete all steps in MACBOOK_AIR_FIRST_RUN_CRITICAL.md.
+**✅ Checkpoint:** Complete all steps in MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md.
 
 ### Step 7: Launch Claude Code (2 minutes)
 
@@ -342,7 +342,7 @@ git pull
 cat .claude/shared-context/WIP_CURRENT_CRITICAL.md
 
 # Run verification
-cat .claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md
+cat .claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md
 
 # Launch Claude Code
 claude-code

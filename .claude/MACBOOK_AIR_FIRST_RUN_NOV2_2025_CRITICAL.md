@@ -2,7 +2,8 @@
 
 **⚠️ ONE-TIME USE FILE:** This file helps you verify Dropbox sync and integrate your MacBook Air into the multi-machine Claude Code system.
 
-**Created:** November 2, 2025 on Mac Mini
+**Created:** November 2, 2025 at 10:15 PM PST on Mac Mini
+**Updated:** November 2, 2025 at 10:15 PM PST (includes Google Drive integration)
 **For:** MacBook Air first-time setup
 **Delete After:** Successful verification and setup complete
 
@@ -89,10 +90,10 @@ cat .claude/shared-context/WIP_CURRENT_CRITICAL.md
 ```
 
 **What to look for:**
-- **Updated:** Should show recent timestamp from Mac Mini (November 2, 2025 7:30 PM PST)
+- **Updated:** Should show recent timestamp from Mac Mini (November 2, 2025 10:15 PM PST)
 - **Machine:** Should show "Mac Mini (Primary)"
-- **Status:** Should show "✅ COMPLETE - Multi-machine system fully operational"
-- **Current Task:** Should show completed multi-machine setup
+- **Status:** Should show "✅ COMPLETE - Multi-machine system + Google Drive integration complete"
+- **Current Task:** Should show completed multi-machine setup + Google Drive integration
 
 **✅ Checkpoint:** If you can read this file with recent updates, sync is working perfectly.
 
@@ -181,6 +182,23 @@ All files created by Mac Mini are now available on MacBook Air via Dropbox sync:
 - dev-context/01_Visual_Notes_Technical_Roadmap_CRITICAL.md (42K)
 - dev-context/02_yellowCircle_Strategy_CRITICAL.md (39K)
 - dev-context/03_Rho_Position_CRITICAL.md (42K)
+
+### Google Drive Integration (Session 4)
+**NEW:** Mac Mini integrated Google Drive "Rho Assessments 2026" folder
+
+Files copied from Google Drive (via Dropbox sync only):
+- 4 strategic markdown files (root level)
+- 2 assessment files (dev-context/03-professional_details/assessment/)
+- 9 recruiting files (dev-context/03-professional_details/recruiting/)
+  - Org charts (PDF + CSV)
+  - Candidate resumes
+  - Job descriptions
+
+Total: 15 new files copied from Google Drive to dev-context
+Script: `GOOGLE_DRIVE_RECONCILIATION.sh` (automated reconciliation)
+Report: `dev-context/GOOGLE_DRIVE_RECONCILIATION_REPORT.md`
+
+**Note:** These files sync via Dropbox only (excluded from GitHub via .gitignore for privacy)
 
 ### Multi-Machine System Files
 - .claude/README.md - System overview
@@ -412,6 +430,7 @@ _____________________________________________________________________________
 
 ---
 
-**File created on Mac Mini:** November 2, 2025 at 7:30 PM PST
+**File created on Mac Mini:** November 2, 2025 at 10:15 PM PST
+**Last Updated:** November 2, 2025 at 10:15 PM PST (added Google Drive integration info)
 **Verification performed on MacBook Air:** _______________
 **Status:** One-time use file - delete after successful setup

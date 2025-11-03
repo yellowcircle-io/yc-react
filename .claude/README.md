@@ -25,7 +25,7 @@ This directory contains a **dual-sync multi-machine context sharing system** tha
 
 These files are marked CRITICAL and require user action or regular attention:
 
-1. **`.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md`** 🔴 ⭐ **START HERE FOR MACBOOK AIR**
+1. **`.claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md`** 🔴 ⭐ **START HERE FOR MACBOOK AIR**
    - **Action Required:** ONE-TIME verification and setup for MacBook Air
    - **Contains:** Step-by-step Dropbox sync verification checklist
    - **Read this:** First time using MacBook Air with this system
@@ -55,7 +55,7 @@ These files are marked CRITICAL and require user action or regular attention:
 ```
 .claude/
 ├── README.md                                    (this file - system overview)
-├── MACBOOK_AIR_FIRST_RUN_CRITICAL.md           🔴⭐ (MacBook Air verification - one-time use)
+├── MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md 🔴⭐ (MacBook Air verification - one-time use)
 ├── MULTI_MACHINE_SETUP_CRITICAL.md             🔴 (setup guide for new machines)
 ├── CODESPACES_MOBILE_ACCESS_CRITICAL.md        🔴 (mobile & Codespace access guide)
 ├── INSTANCE_LOG_MacMini.md                     (Mac Mini activity log)
@@ -86,11 +86,11 @@ These files are marked CRITICAL and require user action or regular attention:
 - Commit and push to GitHub for mobile access
 
 ### For MacBook Air (Secondary Machine)
-🔴 **FIRST RUN:** `.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md` ⭐ **START HERE**
+🔴 **FIRST RUN:** `.claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md` ⭐ **START HERE**
 
 **One-time verification (15 minutes):**
 1. Navigate to: `~/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/`
-2. Read and follow: `.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md`
+2. Read and follow: `.claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md`
 3. Complete verification checklist
 4. Create `INSTANCE_LOG_MacBookAir.md` (guided in file)
 5. Delete verification file after successful setup

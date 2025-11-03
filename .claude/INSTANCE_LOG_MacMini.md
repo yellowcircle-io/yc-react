@@ -291,7 +291,7 @@ Add multi-machine Claude Code context sharing system
 - `.claude/INSTANCE_LOG_MacMini.md` (this file)
 - `.claude/MULTI_MACHINE_SETUP_CRITICAL.md` 🔴 - Setup instructions for all machines
 - `.claude/CODESPACES_MOBILE_ACCESS_CRITICAL.md` 🔴 - Mobile and Codespace access guide
-- `.claude/MACBOOK_AIR_FIRST_RUN_CRITICAL.md` 🔴 - One-time MacBook Air verification checklist
+- `.claude/MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md` 🔴 - One-time MacBook Air verification checklist
 - `.claude/shared-context/README.md` - Shared context usage guide
 - `.claude/shared-context/WIP_CURRENT_CRITICAL.md` 🔴 - Current work-in-progress
 - `.claude/shared-context/DECISIONS.md` - Cross-machine decision log
