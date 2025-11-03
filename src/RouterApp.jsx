@@ -8,6 +8,7 @@ import AboutPage from './pages/AboutPage';
 import WorksPage from './pages/WorksPage';
 import TimeCapsulePage from './pages/TimeCapsulePage';
 import CapsuleViewPage from './pages/CapsuleViewPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Experiment sub-routes
 import GoldenUnknownPage from './pages/experiments/GoldenUnknownPage';
@@ -48,10 +49,13 @@ function RouterApp() {
         <Route path="/about/timeline" element={<AboutPage />} />
         <Route path="/about/services" element={<AboutPage />} />
         <Route path="/about/contact" element={<AboutPage />} />
-        
+
         <Route path="/works/websites" element={<WorksPage />} />
         <Route path="/works/graphics" element={<WorksPage />} />
         <Route path="/works/music" element={<WorksPage />} />
+
+        {/* 404 - Catch all unmatched routes */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );
