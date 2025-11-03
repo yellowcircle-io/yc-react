@@ -17,6 +17,7 @@ This directory contains a **dual-sync multi-machine context sharing system** tha
 **Sync Methods:**
 1. **Dropbox** - Fast file sync for seamless machine switching (10-30 seconds)
 2. **GitHub** - Version control and Codespaces access for mobile devices
+3. **Google Drive** - Additional data source for Rho assessments (one-time import, not active sync)
 
 ---
 
@@ -216,10 +217,19 @@ These files are marked CRITICAL and require user action or regular attention:
 - **Repository:** https://github.com/yellowcircle-io/yc-react.git
 - **Access:** All machines + Codespaces + mobile
 
-### Dual-Sync Pattern
+### Google Drive Integration
+- **Purpose:** Additional data source for Rho assessments and professional materials
+- **Path:** `/Users/christophercooper_1/Library/CloudStorage/GoogleDrive-christopher@yellowcircle.io/My Drive/Rho Assessments 2026`
+- **Integration:** One-time reconciliation and copy to dev-context (not active sync)
+- **Script:** `GOOGLE_DRIVE_RECONCILIATION.sh` (automated file comparison and copying)
+- **Report:** `dev-context/GOOGLE_DRIVE_RECONCILIATION_REPORT.md` (documents what was copied)
+
+### Multi-Source Pattern
 1. **Dropbox** handles file-level sync between Mac Mini and MacBook Air
 2. **GitHub** handles version control and provides Codespace access
-3. **Both work together** for comprehensive multi-device coverage
+3. **Google Drive** serves as additional data source (Rho Assessments 2026 folder)
+4. **Data Flow:** Google Drive → dev-context (one-time copy) → Dropbox sync → GitHub commit
+5. **All work together** for comprehensive multi-device coverage and data integration
 
 ---
 
