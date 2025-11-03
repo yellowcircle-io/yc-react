@@ -7,6 +7,45 @@
 
 ## November 2, 2025
 
+### Google Drive Integration for Rho Assessments
+**Machine:** Mac Mini
+**Context:** User requested to add Google Drive path to multi-machine repository and reconcile with existing dev-context files
+
+**Decision:** Integrate Google Drive "Rho Assessments 2026" folder as one-time data import (not active sync)
+
+**Rationale:**
+- Google Drive contains Rho assessment materials not yet in dev-context
+- User requested reconciliation to identify and copy missing files
+- One-time import makes more sense than continuous sync (prevents conflicts)
+- dev-context becomes single source of truth (synced via Dropbox + GitHub)
+- Allows keeping professional materials organized in existing Google Drive structure
+
+**Implementation:**
+- Created `GOOGLE_DRIVE_RECONCILIATION.sh` script for automated file comparison
+- Script scans both directories, compares basenames, generates report
+- Identified 16 missing files from 146 Google Drive files vs 762 dev-context files
+- Copied 15 files to dev-context:
+  - 4 strategic markdown files (root level)
+  - 2 critical assessment files (03-professional_details/assessment/)
+  - 9 recruiting files (03-professional_details/recruiting/)
+  - Includes org charts, resumes, job descriptions
+- 1 file unavailable (likely different name or location)
+
+**Result:**
+- ✅ Google Drive path documented in .claude/README.md
+- ✅ Reconciliation report generated
+- ✅ Missing files copied to organized dev-context structure
+- ✅ All files will sync via Dropbox and commit to GitHub
+- ✅ Future Google Drive changes won't auto-sync (prevents conflicts)
+- ✅ Can re-run reconciliation script if needed
+
+**Alternatives Considered:**
+- Active sync from Google Drive: Rejected - would create conflicts with Dropbox/GitHub
+- Manual copy: Rejected - error-prone, not repeatable
+- Google Drive as primary: Rejected - less flexible than dev-context structure
+
+---
+
 ### GitHub Sync for Claude.ai and Codespaces Access
 **Machine:** Mac Mini
 **Context:** User asked if files are uploaded to GitHub for Claude.ai and Codespaces access
