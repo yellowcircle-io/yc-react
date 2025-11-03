@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Capsules collection - allow public read and create
+    match /capsules/{capsuleId} {
+      // Allow anyone to read capsules
+      allow read: if true;
+      
+      // Allow anyone to create new capsules
+      allow create: if true;
+      
+      // Allow view count updates (increment only)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'updatedAt'])
+                    && request.resource.data.viewCount == resource.data.viewCount + 1;
+      
+      // Subcollections: nodes and edges
+      match /nodes/{nodeId} {
+        allow read: if true;
+        allow write: if true;
+      }
+      
+      match /edges/{edgeId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+  }
+}
