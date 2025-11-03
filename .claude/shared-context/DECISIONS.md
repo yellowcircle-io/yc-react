@@ -81,7 +81,7 @@
 **Machine:** Mac Mini
 **Context:** User requested one-time context file to ensure MacBook Air can reconcile updates and verify sync
 
-**Decision:** Create `MACBOOK_AIR_FIRST_RUN_CRITICAL.md` as a one-time verification checklist
+**Decision:** Create `MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md` as a one-time verification checklist
 
 **Rationale:**
 - Provides step-by-step verification that Dropbox sync is working
