@@ -36,13 +36,15 @@
 4. Drag TeamViewer to Applications
 5. Launch TeamViewer from Applications
 
-**Initial Setup:**
-1. TeamViewer will ask for accessibility permissions
-2. Go to: System Settings → Privacy & Security → Accessibility
-3. Add TeamViewer to allowed apps
-4. Go to: System Settings → Privacy & Security → Screen Recording
-5. Add TeamViewer to allowed apps
-6. Restart TeamViewer
+**Initial Setup (macOS Ventura/Sonoma):**
+1. TeamViewer will ask for permissions when first launched
+2. Click "Open System Settings" when prompted, or:
+   - Open System Settings
+   - Go to: Privacy & Security
+   - Scroll to "Accessibility" → Toggle ON for TeamViewer
+   - Scroll to "Screen Recording" → Toggle ON for TeamViewer
+3. You may need to quit and restart TeamViewer after granting permissions
+4. TeamViewer icon should appear in menu bar (top right)
 
 ### On iPhone/iPad (Client)
 
@@ -61,30 +63,34 @@
 **This allows you to connect without accepting each time:**
 
 1. **Open TeamViewer on Mac Mini**
+   - Should already be running (check menu bar)
+   - Or open from Applications folder
 
-2. **Go to Settings** (gear icon or TeamViewer menu → Preferences)
-
-3. **Security Tab:**
-   - Find "Personal Password" section
-   - Click "Set" or "Change"
-   - Enter a strong password (write this down!)
-   - Save
-
-4. **Note Your TeamViewer ID:**
-   - You'll see it in the main window
+2. **Find Your TeamViewer ID:**
+   - In the main TeamViewer window
+   - Look for "Your ID" at the top
    - Format: `123 456 789` (9-10 digits)
-   - Write this down with your password
+   - **Write this down!**
 
-5. **Enable "Start TeamViewer with system":**
-   - In Settings → General
-   - Check "Start TeamViewer with system"
+3. **Set Personal Password:**
+   - Click the arrow next to "Password" in TeamViewer window
+   - Select "Set personal password..."
+   - Enter a strong password (write this down!)
+   - Check "Grant easy access"
+   - Click "OK"
+
+4. **Enable Start on Boot:**
+   - Click TeamViewer in menu bar → "Preferences..."
+   - Go to "General" section
+   - Check ✓ "Start TeamViewer with system"
    - This ensures it's always available
 
-6. **Set Up Unattended Access:**
-   - Go to Settings → Security
-   - Set "Unattended access" password
-   - This is different from personal password
-   - More secure for permanent access
+5. **Verify Settings:**
+   - Go to "Security" section in Preferences
+   - Under "Personal password" you should see dots (password is set)
+   - Under "Incoming LAN connections": Set to "accept" (optional, for local network)
+
+**Note:** The personal password you set is what you'll use to connect from your iPhone/iPad.
 
 ### Password Types in TeamViewer
 
