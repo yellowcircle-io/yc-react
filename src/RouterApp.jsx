@@ -6,6 +6,7 @@ import ExperimentsPage from './pages/ExperimentsPage';
 import ThoughtsPage from './pages/ThoughtsPage';
 import AboutPage from './pages/AboutPage';
 import WorksPage from './pages/WorksPage';
+import HandsPage from './pages/HandsPage';
 import TimeCapsulePage from './pages/TimeCapsulePage';
 import CapsuleViewPage from './pages/CapsuleViewPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -31,6 +32,7 @@ function RouterApp() {
         <Route path="/thoughts" element={<ThoughtsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/works" element={<WorksPage />} />
+        <Route path="/hands" element={<HandsPage />} />
         
         {/* Experiment Sub-routes */}
         <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />
