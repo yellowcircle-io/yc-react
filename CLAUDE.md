@@ -36,6 +36,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Dropbox:** Syncs files between Mac Mini and MacBook Air (10-30 seconds)
 - **GitHub:** Version control and Codespaces access (commit `.claude/` for mobile access)
 
+### Custom Commands:
+
+This repository includes custom slash commands for project management:
+
+- **`/roadmap`** - Main command for managing Trimurti project roadmap
+  - Check current priorities and status
+  - Add new action items
+  - Continue working on existing tasks
+  - Update task completion status
+  - Adjust priorities
+
+- **Aliases:** `/trimurti`, `/trimurti-roadmap`, `/yc-roadmap` (all redirect to `/roadmap`)
+
+**Usage:**
+```
+/roadmap              # Show status and options
+/roadmap continue     # Continue current work
+/roadmap add          # Add new task
+```
+
+**For Web/SSH/Codespaces:** Commands are synced via GitHub. Run `git pull` before use and commit changes after updates.
+
+See `.claude/commands/README.md` for full documentation.
+
 ---
 
 ## Development Commands

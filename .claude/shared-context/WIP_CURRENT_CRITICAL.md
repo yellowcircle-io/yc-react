@@ -203,6 +203,43 @@ If Mac Mini can see this message, bidirectional sync is confirmed working! 🎉
 
 ---
 
-**Last Activity:** MacBook Air first run verification complete
-**Machine:** MacBook Air (Secondary)
-**Status:** ✅ MacBook Air now operational and synchronized with Mac Mini
+**Last Activity:** Perplexity Export Complete + Project Roadmap Created
+**Machine:** Mac Mini (Primary)
+**Status:** ✅ Transitioning to yellowCircle homepage redesign
+
+---
+
+## 🎯 NOVEMBER 8, 2025 UPDATE
+
+### ✅ COMPLETED TODAY:
+1. **Perplexity Export:**
+   - 12 new conversations manually exported
+   - CSV updated (376 total, 357 completed = 95%)
+   - Researched Cloudflare blocking (deployed late October 2025 - ~2 weeks ago)
+   - Documented automation alternatives
+
+2. **Key Documents Created:**
+   - `PERPLEXITY_EXPORT_RESEARCH_NOV2025.md` - Full solutions analysis
+   - `CLOUDFLARE_BLOCKING_TIMELINE_NOV2025.md` - Technical timeline
+   - `PROJECT_ROADMAP_NOV2025.md` - Comprehensive project roadmap
+
+3. **Timeline Clarification:**
+   - Original export: October 25-27, **2025** (last month - SUCCESSFUL)
+   - Cloudflare changes: Late October **2025** (~2 weeks ago)
+   - Current attempts: November 8, **2025** (today - BLOCKED)
+   - **Gap: Only ~2 weeks** between working automation and blocking
+
+### 🔴 NEXT PRIORITY:
+**yellowCircle Homepage Redesign** (Start Immediately)
+- Improve sidebar UX
+- Simplify language
+- Update iconography
+- New H1 typography: "Your Circle" (see PROJECT_ROADMAP_NOV2025.md for specs)
+
+### 📋 Full Roadmap:
+See `/dev-context/PROJECT_ROADMAP_NOV2025.md` for complete priority order:
+1. yellowCircle / Rho (EOY 2025)
+2. Golden Unknown Brand (Q1 2026)
+3. Cath3dral Creation (Q3 2026)
+4. 2nd Brain App (scoping with Visual Note context)
+5. Multi-machine context enhancement (Notion integration)
