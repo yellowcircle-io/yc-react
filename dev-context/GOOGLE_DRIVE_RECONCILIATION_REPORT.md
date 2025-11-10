@@ -1,0 +1,193 @@
+# Google Drive Reconciliation Report
+
+**Date:** $(date)
+**Source:** Google Drive - Rho Assessments 2026
+**Destination:** Dropbox - dev-context
+**Purpose:** Identify and copy missing files from Google Drive to dev-context
+
+---
+
+## Summary
+
+- **Google Drive Total:** 146 files
+- **dev-context Total:** 762 files
+
+---
+
+## Files in Google Drive (by type)
+
+### Markdown Files
+01_Visual_Notes_Critical_Analysis.md
+01_Visual_Notes_Technical_Roadmap_CRITICAL.md
+02_yellowCircle_Strategy_CRITICAL.md
+02_yellowCircle_Strategy_Reassessment.md
+03_Rho_Objective_Evaluation 2.md
+03_Rho_Objective_Evaluation.md
+03_Rho_Position_CRITICAL.md
+are-there-any-browser-extensio-YfSu9asCRMuvXl5Gakgd4A_are_there_any_browser_extensions_that_are_able_to.md
+are-there-any-continuous-itera-cRNOYEwoSlmLrchQ_hGLGQ_are_there_any_continuous_iterative_processes_for_d.md
+are-there-any-tools-bots-or-to-O_50MkvETa.vdGRdi57AnQ_are_there_any_tools_bots_or_tokens_that_can_track.md
+are-there-any-ways-to-automati-vAOo2LfORIOptYddxcmMPA_are_there_any_ways_to_automatically_assign_picklis.md
+can-a-successful-startup-subsi-3iZPCkAoSHq.cxL9JZxUXg_can_a_successful_startup_subsist_without_an_accoun.md
+can-data-pushed-into-hubspot-s-ApD0HLdnRLKi1pCsatJ_6A_can_data_pushed_into_hubspots_hubdb_tables_be_acce.md
+can-hubspot-be-used-for-event-LcSIGMr.QySdZ9kY2MJIpg_can_hubspot_be_used_for_event_management_akin_to_t.md
+can-hubspot-create-a-unique-id-8E6rHZEpSSGBg0_SY5zUIg_can_hubspot_create_a_unique_id_per_record_besides.md
+can-hubspot-forms-feed-into-ea-bbPLDzwmQLm2XEbYt6wscA_can_hubspot_forms_feed_into_each_otherhubspot_form.md
+can-hubspot-s-drag-and-drop-mo-7.Vl2VAcSPymvo63UxRsEg_can_hubspots_drag_and_drop_modules_be_customized_w.md
+can-hubspot-tasks-be-used-in-a-lTK61fzaT7u_Zy8DIlom5g_can_hubspot_tasks_be_used_in_any_other_part_of_the.md
+can-hubspot-tokens-work-with-f-5NR7rJugShG8o7jmIMcoNw_can_hubspot_tokens_work_with_forms_from_other_crmt.md
+can-hubspots-record-id-be-more-P5cqOJKDSDetZp.__KFDWg_can_hubspots_record_id_be_more_than_12_digitsrecen.md
+can-i-run-a-report-in-hubspot-RfBfxlK_Srepwkxw_uZD0A_can_i_run_a_report_in_hubspot_that_looks_at_specif.md
+can-jira-support-marketing-cal-HASl52phQ3y7Su1IBmE79g_can_jira_support_marketing_calendar_functionality.md
+can-updates-in-salesforce-trig-cEA.VfQhRA2YvYT.GE9e0A_can_updates_in_salesforce_trigge_hubspot_db_and_su.md
+check-the-following-code-why-i-4E0Q2PFDTQGQaLtGFXQxFg_check_the_following_code_why_isnt_this_string_2025.md
+compass_artifact_wf-81fbdb5a-91c6-464c-b5f0-bd70371a25c0_text_markdown.md
+Comprehensive_Reassessment_Oct2025.md
+create-a-csv-from-the-attached-SkXtLPz7RyWiDeXp1TtPFw_create_a_csv_from_the_attached_headers_which_shoul.md
+Dev-Context_Deep_Analysis.md
+do-hubspot-custom-properties-s-M8t9lcB1RxyY0BWw05ng7g_do_hubspot_custom_properties_support_populating_va.md
+does-google-docs-have-a-limit-X51o0hRSQ3O2uTCX.bOkbg_does_google_docs_have_a_limit_on_tabs_in_single_do.md
+does-growth-marketing-typicall-hfWM2NVQTTOct58HUzIJgA_does_growth_marketing_typically_encapsulate_lifecy.md
+does-hubspot-custom-module-pre-8iNcR30UTWGIbdGGGq7dYg_does_hubspot_custom_module_prevent_block_elements.md
+does-hubspot-have-functionalit-hbWVd6YXSSmSRG5i0CwL8g_does_hubspot_have_functionality_akin_to_google_ana.md
+does-hubspot-track-and-tag-utm-ca0z8V4mSlugEAiokfPDhg_does_hubspot_track_and_tag_utm_parameter_values_ou.md
+does-it-make-sense-to-bid-on-o-UmCdkH2ATHegayQ1f1vMuw_does_it_make_sense_to_bid_on_ones_on_brand_name_if.md
+does-the-function-exist-in-hub-w6Y6Y6iERfygqE008t0nJw_does_the_function_exist_in_hubspot_to_see_if_a_con.md
+evaluate-the-attached-file-rev-YJaFVfuhQKmL_eiUIBGu0Q_evaluate_the_attached_file_review_evaluate_and_rea.md
+examine-the-javascript-below-i-c8U2GU83RYGHR4RR5Uchkw_examine_the_javascript_below_i_need_it_to_be_updat.md
+fintech-marketing-tech-stack-analysis.md
+for-a-fintech-company-regulate-mylY0hefQRqvTqMMNUsWyQ_for_a_fintech_company_regulated_by_the_sec_and_con.md
+Founders from Underprivileged Communities in VC_An.md
+generate-a-bulletproof-email-b-LMb.l_2.Q.WQlCRxUgLYwA_generate_a_bulletproof_email_button_with_the_follo.md
+give-me-a-list-of-domains-or-a-uyGykRFWRpmuWWce5X474w_give_me_a_list_of_domains_or_a_way_programmatic_wa.md
+give-me-javascript-to-a-extrac-cJiiyxeYQpaEKAh56bw.Ig_give_me_javascript_to_a_extract_referral_code_from.md
+give-me-the-hubspot-process-or-mkwWyZKVS4CQwXaxYnaAIA_give_me_the_hubspot_process_or_processes_for_split.md
+harmonic-vs-clay-zoominfo-crun-Yx28rlQQS9q1mBzS4W0Mtg_harmonic_vs_clay_zoominfo_crunchbase_for_lead_enri.md
+have-there-been-any-changes-wi-lQCzdpTsQri_zywTItgh7Q_have_there_been_any_changes_with_how_hubspots_oper.md
+help-me-correct-the-following-0QZPUFEySfK0dpsRJm7P8Q_help_me_correct_the_following_hubspot_calculated_f.md
+help-me-evaluate-the-following-zYABE1h9TZOzcSO6_QzY0A_help_me_evaluate_the_following_background_i_am_a_m.md
+help-me-test-the-salesforce-re-cBC_fj7DTdKBQAplqdIasA_help_me_test_the_salesforce_reports_api_pushing_in.md
+help-write-javascript-node-js-hBETXKOoS4y3KCzcahq3wQ_help_write_javascript_nodejs_20_code_for_use_in_hu.md
+help-write-javascript-node-js-hIfp9Ew7Q1Ci0lPrHDzxUw_help_write_javascript_nodejs_20_code_for_use_in_hu.md
+how-are-forms-generated-on-lin-toKjrlrASiadk0k47omHOw_how_are_forms_generated_on_linkedin_and_connected.md
+how-did-the-skimm-actually-gro-lsh_K_CtRruTs10ab8Yt7A_how_did_the_skimm_actually_grow_its_email_distribu.md
+how-does-hubspot-attribute-ori-pv7LL_kMQn6VkmScWRfW9w_how_does_hubspot_attribute_original_traffic_source.md
+how-many-founders-from-vc-ange-dcWfmgY0SN6rozcvlQqapw_how_many_founders_from_vcangel_and_y_combinator_an.md
+how-what-were-net-new-business-rvdrF2_mQra54XoFNsOwtw_howwhat_were_net_new_businesses_referred_to_prior.md
+how-would-i-go-about-setting-a-c6FivqcKQxuVP0elpUBj_w_how_would_i_go_about_setting_a_large_number_of_con.md
+how-would-i-implement-zapier-s-bsh4SrMvSJWn4EFLlfsNjw_how_would_i_implement_zapier_sub_zaps_into_a_proce.md
+i-am-aiming-to-create-a-segmen-zWdspMVJQQSOWWWlUtQp4w_i_am_aiming_to_create_a_segmentation_workflow_in_h.md
+i-am-helping-to-build-a-set-of-iV0cIly1QD6X51llPDGdBQ_i_am_helping_to_build_a_set_of_marketing_attribute.md
+i-am-incorporating-data-from-h-p5C17GAZS0qGACn3KOflaA_i_am_incorporating_data_from_hubdb_into_an_email_t.md
+i-am-looking-for-an-email-deve-s.rmOcKzQImVqNATJ9S90g_i_am_looking_for_an_email_developer_who_specialize.md
+i-am-trying-to-resolve-issues-kTMAyWmWRSCLPqzvMwBqnA_i_am_trying_to_resolve_issues_with_using_viral_loo.md
+i-am-working-to-set-up-the-ope-V9b_qkj7SjG.bFUm8v3d2A_i_am_working_to_set_up_the_operations_for_a_referr.md
+i-d-like-to-push-form-data-fro-ecr867xORQyZcUvoDXycFw_id_like_to_push_form_data_from_an_external_tool_in.md
+i-have-assisted-in-deploying-a-aVdfFsrATEu059EXBdm9YA_i_have_assisted_in_deploying_an_emaillifecycle_dri.md
+i-need-to-develop-a-process-to-G5lZ7l9XTfK5TKsgDtw4eA_i_need_to_develop_a_process_to_sync_records_that_o.md
+i-ve-run-into-issues-deploying-IANd5sUMQOui5HM4I8ZUlA_ive_run_into_issues_deploying_hubspot_custom_code.md
+i-want-to-create-an-end-to-end-XAFHiwtFSou4A3PIjXoOFw_i_want_to_create_an_end_to_end_email_development_a.md
+i-want-to-validate-an-assumpti-sKCqmNveRPOAVx4UcNSv6w_i_want_to_validate_an_assumption_about_the_perform.md
+in-general-is-it-advisable-for-yQSuALt4RL227Y8Okie89A_in_general_is_it_advisable_for_marketing_operation.md
+in-general-it-is-understood-th-rzGRIUcmSTurU.L29EPjTw_in_general_it_is_understood_that_survey_informatio.md
+in-hubspot-is-there-a-way-to-s-4WWnujvMRuCxUxFh7b3nTQ_in_hubspot_is_there_a_way_to_set_a_field_as_a_stri.md
+in-terms-of-marketing-tracking-J5DJu9I2T3yzu7UzMajBgA_in_terms_of_marketing_tracking_if_one_is_driving_t.md
+is-email-image-slicing-still-s-h1CCzLYmQsioBHo6vsef_w_is_email_image_slicing_still_standard_practice.md
+is-hubspot-generally-capable-o-MbBcQPxrQ26xtKSwis47tA_is_hubspot_generally_capable_of_expressing_or_illu.md
+is-hubspot-s-drag-and-drop-edi-s0rW7kheTJ6Hez6BRZPwbw_is_hubspots_drag_and_drop_editor_proprietary_i_kno.md
+is-it-possible-for-a-drafted-o-awoYWbs_TLCpXbW2wB2Blw_is_it_possible_for_a_drafted_or_scheduled_message.md
+is-it-possible-to-associate-th-tndQf2k8QESoo0HxVvv9fg_is_it_possible_to_associate_the_last_session_acros.md
+is-it-possible-to-update-a-hub-3gmWL9lEQXWYAbTxPEu.XA_is_it_possible_to_update_a_hubspot_dropdownpicklis.md
+is-it-possible-to-use-hubspot-bBgG82MgSrqyHx4mk1ojbw_is_it_possible_to_use_hubspot_reporting_to_find_re.md
+is-the-salesforce-inclusion-li-6UXotFDMQ0qTUJeAa0JbaQ_is_the_salesforce_inclusion_list_in_hubspot_depend.md
+is-the-term-lead-stage-an-appr-6ipn_V6hSeOrxA9eocUAeg_is_the_term_lead_stage_an_appropriate_and_recogniz.md
+is-there-a-chrome-extension-to-8iz4.ROiSyKOY9LavZGiSg_is_there_a_chrome_extension_to_automated_form_entr.md
+is-there-a-way-to-block-hubspo-E00OzB5.RjK7qGET8OG_7g_is_there_a_way_to_block_hubspot_from_creating_a_co.md
+is-there-a-way-to-create-a-fun-xDmRT7gmRSSKTWcFTcXZ9Q_is_there_a_way_to_create_a_funnel_in_google_doc_by.md
+is-there-a-way-to-create-true-cv4fgX_eRrWN3SVHymRLvg_is_there_a_way_to_create_true_holdout_and_experime.md
+is-there-a-way-to-ping-email-a-wHxcDxGJRYOFT5US7yq_dw_is_there_a_way_to_ping_email_addresses_before_send.md
+is-there-a-way-to-quarantine-c-f4b7qbRbQsOn5tsk1WQGvA_is_there_a_way_to_quarantine_contacts_in_hubspot_c.md
+is-there-a-way-to-see-which-em-t5aJSNoDQA.SRNO32KKvXA_is_there_a_way_to_see_which_email_clients_user_are.md
+is-there-a-ways-to-create-a-tr-8.RhKu0VRZqqFUpWG1tRbA_is_there_a_ways_to_create_a_trigger_or_alert_in_hu.md
+is-there-something-akin-to-rev-oLKZQLslTm68zNP_ypxxjw_is_there_something_akin_to_reverse_enrichment_or_e.md
+is-there-still-a-way-in-hubspo-1k4E2HcKT_epinM0ua8qQw_is_there_still_a_way_in_hubspot_to_find_all_contac.md
+is-this-the-proper-usage-of-no-bPPP0IJpQZ26bSE2TQnWRw_is_this_the_proper_usage_of_nor_there_is_a_placeho.md
+Lifecycle Marketing Manager 269db9eba4f080099735dae6bb896c17.md
+Marketing Ops [Living Document].md
+please-evaluate-the-content-be-FaUT6aJ4TxOo6XMtbXL5Ow_please_evaluate_the_content_below_for_its_strength.md
+please-the-javascript-below-to-FQdI.a5dTNCkj2GI1gJm4g_please_the_javascript_below_to_my_knowledge_the_co.md
+remind-me-was-the-basic-founda-JvIrE5GeS52iSj176yojiA_remind_me_was_the_basic_foundation_for_casl_built.md
+review-the-file-reassess-the-e-YGURtcZ7R_GEPaR27pO4HA_review_the_file_reassess_the_email_build_aspects_e.md
+review-the-following-any-issue-5KDXriHWS3ywDySDLv9MiA_review_the_following_any_issues_with_the_proposed.md
+review-the-message-below-is-th-VQBQDcGZSg2AZ1DziyyhPA_review_the_message_below_is_this_a_standard_utm_re.md
+Rho _ Marketing Org_ Strategic Audit.md
+taxonomy-request-i-am-looking-yQpbOFjvRG2N0dCZlnaqhg_taxonomy_request_i_am_looking_to_deploy_a_field_th.md
+using-hubspot-create-a-formula-Czr2IPcCR5mHFN9jgCh2vw_using_hubspot_create_a_formula_field_in_the_report.md
+using-terminal-on-mac-to-merge-Riq5V3iRQNKOAXGJP_hHnA_using_terminal_on_mac_to_merge_multiple_csv_files.md
+utilizing-hubspot-what-current-9EQbwdeURnelLEiGkayY9g_utilizing_hubspot_what_current_functionality_would.md
+web-crawler-to-produce-sitemap-2Veveec7R4i1s_Fc1skU2w_web_crawler_to_produce_sitemapa_web_crawler_is_an.md
+what-are-current-best-practice-YoW_WQhjRjeTUyrY8jqyzQ_what_are_current_best_practices_for_gif_use_in_ema.md
+what-are-other-terms-associate-h7yW4KYBTv.c.FYRABp8dA_what_are_other_terms_associated_with_closed_lost_a.md
+what-are-resources-to-check-se-TJN5ygIlSsmsg4ft_IJ1Fg_what_are_resources_to_check_sender_reputationsever.md
+what-are-some-well-known-lead-hghtW1eNR_KGuicXQY1xHg_what_are_some_well_known_lead_enrichment_platforms.md
+what-is-a-general-taxonomy-for-ULrsWfsgTC2peI799ztyeA_what_is_a_general_taxonomy_for_a_b2bs_ideal_custom.md
+what-is-a-good-average-monthly-qZwZn26uTjq1XtRXhWN7MQ_what_is_a_good_average_monthly_email_send_rate_for.md
+what-is-the-likely-actual-work-gAky0aMvTmO6ujyU7p3ojA_what_is_the_likely_actual_work_that_a_growth_marke.md
+what-is-the-most-efficient-way-eMtlHTMLTuaDOCEUdBe2OQ_what_is_the_most_efficient_way_to_set_up_a_random.md
+what-is-the-risk-of-the-attach-fbLzatiIT3yJ8mDe2UMnlQ_what_is_the_risk_of_the_attached_screenshot_suffer.md
+what-is-the-terminal-command-o-5W.PKvgUS.eW_DGql97hsw_what_is_the_terminal_command_on_mac_to_merge_a_fol.md
+what-studies-research-has-been-IGfabL3aTd.086tu.BaIcw_what_studiesresearch_has_been_done_on_cta_placemen.md
+what-would-be-the-most-efficie-dHgcKEstQ.6Mhk4ffNZAtQ_what_would_be_the_most_efficient_and_scalable_way.md
+what-would-be-the-most-proper-vd77ZYhUS96fnSknd2BiUQ_what_would_be_the_most_proper_classification_of_th.md
+what-would-be-the-term-for-sym-uFEZpDw3RDiV8jhidGP2ow_what_would_be_the_term_for_symbols_that_are_added.md
+when-using-zapier-s-integratio-6j.M6pCvQa6CXAG91U3o.w_when_using_zapiers_integration_with_hubspot_does_t.md
+when-will-organization-stop-ta-pzFheivfTFS.CrJn9jyQDQ_when_will_organization_stop_talking_about_email_ro.md
+why-would-hubspot-mark-a-conta-HXq0n6y4RxiGdQ5gxiNfAg_why_would_hubspot_mark_a_contact_as_non_marketable.md
+within-hubspot-is-it-possible-SSNIYMPCQE2Ftll49VG6bQ_within_hubspot_is_it_possible_to_set_linkedin_ad_i.md
+Yes, the Data Shows a Clear Regression in Diversit.md
+you-are-a-marketing-operations-7_oXvqOMS.m7dGhXJSvglQ_you_are_a_marketing_operations_professional_you_wo.md
+you-re-down-to-2-labs-queries-3NqJ5MAXQlaHqSQ1vAz4rw_youre_down_to_2_labs_queries_get_unlimited_access.md
+
+### PDF Files
+_Christopher-Cooper _Resume2023.pdf
+_ChristopherCooper.pdf
+Christopher_Cooper-Resume-2021.pdf
+ChristopherCooper-Linkedin.pdf
+ChristopherCooper-Work_Sample.pdf
+Growth Marketer.MA.pdf
+JD - Lifecycle Marketing Manager.pdf
+JD - Lifecycle Marketing Manager.pdf
+Josh Giamboi Resume 2025.pdf
+Lily Tam-Resume-2025.docx (1).pdf
+org_chart.pdf
+Resume - Lily Tam-Resume-2025.docx (1).pdf
+Resume - Maria Amorosso.pdf
+Resume -Josh Giamboi Resume 2025.pdf
+
+### Word Documents
+
+### CSV Files
+general_bamboohr_org_chart.csv
+thread_inventory_account2.csv
+
+## Missing Files (in Google Drive but not in dev-context)
+
+- 03_Rho_Objective_Evaluation 2.md
+- Rho _ Marketing Org_ Strategic Audit.md
+- Marketing Ops [Living Document].md
+- Founders from Underprivileged Communities in VC_An.md
+- org_chart.pdf
+- general_bamboohr_org_chart.csv
+- Resume -Josh Giamboi Resume 2025.pdf
+- Growth Marketer.MA.pdf
+- Resume - Lily Tam-Resume-2025.docx (1).pdf
+- Resume - Maria Amorosso.pdf
+- Lifecycle Marketing Manager 269db9eba4f080099735dae6bb896c17.md
+- Lily Tam-Resume-2025.docx (1).pdf
+- Josh Giamboi Resume 2025.pdf
+- JD - Lifecycle Marketing Manager.pdf
+- Yes, the Data Shows a Clear Regression in Diversit.md
+- JD - Lifecycle Marketing Manager.pdf
+
+**Total Missing:** 16 files
+

@@ -1,0 +1,75 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" />
+    <mj-style>
+      a {font-size: 16px;
+          color: blue;}			
+      .container {
+        border-radius: 8px;
+        background-color: #ffffff;
+      }
+      * {
+        font-family: 'Inter', sans-serif, Arial;
+      	font-size: 16px;
+        font-weight: 400;
+        line-height: 24px;
+        text-align: left;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#ebeef3">
+    <!-- Initial spacer offset by 40px within a section -->
+    <mj-section>
+    <mj-column>
+      <mj-spacer height="10px" />
+    </mj-column>
+</mj-section>
+    <!-- First container section with provided content -->
+    <mj-wrapper css-class="container">
+      <mj-section>
+        <mj-column>
+             <mj-section>
+    </mj-section>
+           <mj-image width="200%" src="https://go.auditboard.com/rs/961-ZQV-184/images/AuditBoard-Logo%402x.png?version=0" alt="Company Logo" />
+          <mj-text>
+            Hey there,<br/><br/>
+            It was so great to see you at AuditBoard Live last week. We hope you found it valuable as you build your IT risk, compliance, and third-party management plan.<br/><br/>
+            Want to learn more? We’re here to help. Get in contact with our team of experts to get started.
+          </mj-text>
+          <mj-button href="https://yourlink.com" background-color="#5076E5;
+" font-size="16px" color="#ffffff" padding="24px" border-radius="4px">
+            Get in Touch
+          </mj-button>
+          <mj-text>
+            We also have blogs, ebooks, infographics, and more – right at your fingertips. Here’s one of our latest resources: <strong>IT Risk & Compliance Platforms: A Buyer’s Guide.</strong> Check it out to learn how purpose-built IT risk and compliance management software can make your organization more secure and better equipped to respond to new threats and regulatory changes today.
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+
+    <!-- Spacer between sections within a section -->
+    <mj-section>
+      <mj-spacer height="24px" />
+    </mj-section>
+
+    <!-- Second container section -->
+    <mj-wrapper css-class="container">
+      <mj-section>
+        <mj-column>
+          <mj-text>
+            Second section content
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+
+    <!-- Additional spacers and sections as needed -->
+  </mj-body>
+</mjml>
+
+
+
+
+
+         
+         
