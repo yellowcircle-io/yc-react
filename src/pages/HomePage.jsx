@@ -359,9 +359,19 @@ function HomePage() {
     return height;
   };
 
-  // Navigation Item Component - Relative positioning with accordion functionality
+  // Navigation Item Component - Absolute positioning with accordion functionality
   const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
     const isExpanded = expandedSection === itemKey && sidebarOpen;
+
+    // Calculate vertical position accounting for expanded items above
+    let topPosition = index * 50; // Base spacing between items
+    for (let i = 0; i < index; i++) {
+      const prevItemKey = navigationItems[i]?.itemKey;
+      if (expandedSection === prevItemKey && sidebarOpen) {
+        const prevSubItems = navigationItems[i]?.subItems || [];
+        topPosition += calculateExpandedHeight(prevSubItems) + 10; // Add expanded height plus spacing
+      }
+    }
 
     const handleClick = () => {
       if (!sidebarOpen) {
@@ -384,10 +394,11 @@ function HomePage() {
 
     return (
       <div style={{
-        position: 'relative',
-        marginBottom: '50px', // Space between navigation items
+        position: 'absolute',
+        top: `${topPosition}px`,
+        left: 0,
         width: '100%',
-        transition: 'all 0.3s ease-out'
+        transition: 'top 0.3s ease-out' // Smooth movement for accordion
       }}>
         {/* Main navigation item container */}
         <div 
@@ -964,6 +975,7 @@ function HomePage() {
             left: 0,
             transform: 'translateY(-50%)',
             width: '100%',
+            height: '400px', // Enough space for all items when expanded
             maxHeight: 'calc(100vh - 200px)',
             overflowY: 'auto',
             paddingBottom: '20px'
