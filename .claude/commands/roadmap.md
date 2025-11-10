@@ -41,15 +41,15 @@ Then re-run verification to confirm sync is working.
 After verifying sync status, read the following files to understand current state:
 
 ```
-PRIMARY FILES (ALWAYS READ):
-- /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/dev-context/ROADMAP_CHECKLIST_NOV8_2025.md
-- /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/.claude/shared-context/WIP_CURRENT_CRITICAL.md
-- /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/dev-context/PROJECT_ROADMAP_NOV2025.md
+PRIMARY FILES (ALWAYS READ - use relative paths from repo root):
+- dev-context/ROADMAP_CHECKLIST_NOV8_2025.md
+- .claude/shared-context/WIP_CURRENT_CRITICAL.md
+- dev-context/PROJECT_ROADMAP_NOV2025.md
 
 REFERENCE FILES (READ AS NEEDED):
-- /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/DECISIONS.md
-- /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/.claude/INSTANCE_LOG_MacMini.md (if on Mac Mini)
-- /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/.claude/INSTANCE_LOG_MacBookAir.md (if on MacBook Air)
+- DECISIONS.md
+- .claude/INSTANCE_LOG_MacMini.md (if on Mac Mini)
+- .claude/INSTANCE_LOG_MacBookAir.md (if on MacBook Air)
 ```
 
 ### 2. **Present Sync Status First**
