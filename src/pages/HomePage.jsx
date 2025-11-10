@@ -536,14 +536,6 @@ function HomePage() {
           z-index: 100 !important;
         }
 
-        /* Firefox-specific fixes */
-        @-moz-document url-prefix() {
-          button, .clickable-element {
-            z-index: auto !important;
-            isolation: isolate;
-          }
-        }
-
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 0.96; }
@@ -711,9 +703,11 @@ function HomePage() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        zIndex: 10,
+        zIndex: 1,
         transition: 'left 0.1s ease-out',
-        willChange: 'left'
+        willChange: 'left',
+        filter: 'grayscale(100%) contrast(1.3)',
+        WebkitFilter: 'grayscale(100%) contrast(1.3)'
       }}></div>
 
       <div className="scrollable-area" style={{
@@ -726,9 +720,11 @@ function HomePage() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        zIndex: 11,
+        zIndex: 2,
         transition: 'left 0.1s ease-out',
-        willChange: 'left'
+        willChange: 'left',
+        filter: 'grayscale(100%) contrast(1.3)',
+        WebkitFilter: 'grayscale(100%) contrast(1.3)'
       }}></div>
 
       <div className="scrollable-area" style={{
@@ -741,9 +737,11 @@ function HomePage() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        zIndex: 12,
+        zIndex: 3,
         transition: 'left 0.1s ease-out',
-        willChange: 'left'
+        willChange: 'left',
+        filter: 'grayscale(100%) contrast(1.3)',
+        WebkitFilter: 'grayscale(100%) contrast(1.3)'
       }}></div>
 
       {/* Scroll Progress Indicator */}
@@ -756,20 +754,20 @@ function HomePage() {
         padding: '5px 10px',
         borderRadius: '15px',
         fontSize: '12px',
-        zIndex: 999
+        zIndex: 30
       }}>
         Scroll: {Math.round(scrollOffset)}% - Page {scrollOffset < 100 ? '1-2' : '3'}
       </div>
 
       {/* Yellow Circle with Parallax */}
-      <div style={{ 
-        position: 'fixed', 
+      <div style={{
+        position: 'fixed',
         top: `calc(20% + ${parallaxY}px)`,
         left: `calc(38% + ${parallaxX}px)`,
-        width: '300px', 
-        height: '300px', 
-        backgroundColor: '#fbbf24', 
-        borderRadius: '50%', 
+        width: '300px',
+        height: '300px',
+        backgroundColor: '#fbbf24',
+        borderRadius: '50%',
         zIndex: 20,
         mixBlendMode: 'multiply',
         transition: 'all 0.1s ease-out',
@@ -777,7 +775,7 @@ function HomePage() {
       }}></div>
 
       {/* Navigation Bar */}
-      <nav style={{ 
+      <nav style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -933,16 +931,16 @@ function HomePage() {
       </div>
 
       {/* Navigation Circle with Dynamic Rotation */}
-      <div 
+      <div
         className="clickable-element"
         onClick={handleNavCircleClick}
         onTouchEnd={(e) => {
           e.preventDefault();
           handleNavCircleClick();
         }}
-        style={{ 
-          position: 'fixed', 
-          bottom: '50px', 
+        style={{
+          position: 'fixed',
+          bottom: '50px',
           right: '50px',
           zIndex: 50,
           width: '78px',
@@ -997,50 +995,46 @@ function HomePage() {
             letterSpacing: '0.05em',
             textAlign: 'left'
           }}>
-            {/* Header with yellow "YOUR CIRCLE" */}
+            {/* Header with new "Your Story" typography */}
             <h1 style={{
-              margin: '4px 0',
-              backgroundColor: 'rgba(241, 239, 232, 0.38)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
+              margin: '-1rem 0px',
+              backdropFilter: 'blur(1px)',
+              WebkitBackdropFilter: 'blur(1px)',
               display: 'inline-block',
-              fontSize: 'clamp(1.17rem, 2.52vw, 1.98rem)',
-              fontWeight: '700',
-              padding: '2px 6px'
+              fontSize: 'clamp(1.17rem, 18vw, 15rem)',
+              fontWeight: '900',
+              padding: '-40px 0px',
+              lineHeight: '0.82',
+              fontFamily: 'Helvetica, Arial, sans-serif',
+              letterSpacing: '-5px',
+              color: 'rgba(238, 207, 2, 0.7)'
             }}>
-              <span style={{ color: '#EECF00' }}>YOUR CIRCLE</span> FOR:
+              YOUR STORY
             </h1>
 
-            {/* Bullet points - 4 bullets per page, 3 pages total */}
+            {/* Paragraphs - one per page, 3 pages total */}
             <div style={{ position: 'relative', minHeight: '120px' }}>
-              {(scrollOffset < 100 ? [
-                '• Guiding Heroes Through Digital Galaxies',
-                '• Crafting Human-Centric, Hero Arcs',
-                '• Lighting Up Brand Horizons',
-                '• Sparking Loyal Fan Alliances',
-              ] : scrollOffset < 200 ? [
-                '• Rolling Momentum Into Every Campaign',
-                '• Mapping Data-Driven Rebel Paths',
-                '• Turning Wonder Into Measurable Wins',
-                '• Amplifying Voices at Lightspeed',
-              ] : [
-                '• Keeping Brands In Balance With The Force',
-                '• Designing Experiences That Radiate Hope',
-                '• Transforming Clicks Into Legacies',
-                '• Delivering Results Worth Oodles of Os',
-              ]).map((text, index) => (
-                <p
-                  key={`${scrollOffset < 100 ? 'page1' : scrollOffset < 200 ? 'page2' : 'page3'}-${index}`}
-                  style={{
-                    margin: '3px 0',
-                    backgroundColor: 'rgba(241, 239, 232, 0.38)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    display: 'inline-block',
-                    padding: '2px 6px'
-                  }}
-                >{text}</p>
-              ))}
+              <p
+                key={`page-${scrollOffset < 100 ? '1' : scrollOffset < 200 ? '2' : '3'}`}
+                style={{
+                  margin: '3px 0',
+                  backgroundColor: 'rgba(241, 239, 232, 0.38)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  display: 'inline-block',
+                  padding: '2px 6px',
+                  fontSize: 'clamp(1.17rem, 6.2vw, 3rem)',
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  fontWeight: '400',
+                  letterSpacing: '-2px'
+                }}
+              >
+                {scrollOffset < 100
+                  ? 'Deserves to be Told'
+                  : scrollOffset < 200
+                    ? 'Built Better and Faster'
+                    : 'From Beginning to End'}
+              </p>
             </div>
           </div>
         </div>
@@ -1216,9 +1210,9 @@ function HomePage() {
       </div>
 
       {/* Hamburger Menu */}
-      <button 
+      <button
         onClick={() => setMenuOpen(!menuOpen)}
-        style={{ 
+        style={{
           position: 'fixed',
           right: '50px',
           top: '20px',
@@ -1226,7 +1220,8 @@ function HomePage() {
           backgroundColor: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          zIndex: 100
+          zIndex: 100,
+          pointerEvents: 'auto'
         }}
       >
         <div style={{ 
