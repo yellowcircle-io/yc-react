@@ -236,6 +236,13 @@ If Mac Mini can see this message, bidirectional sync is confirmed working! 🎉
    - ✅ Google Drive (Manual backup)
    - ✅ Future machines (Just `git pull`)
 
+5. **Automatic Sync Verification Integration:**
+   - Updated `CLAUDE.md` to run `./.claude/verify-sync.sh` FIRST on every session
+   - Updated `/roadmap` command to verify sync before loading context
+   - Roadmap now displays sync status in output
+   - Enforced git push after roadmap updates
+   - ALL Claude Code instances now check sync status automatically
+
 ### 🔄 HOW TO USE:
 
 **On ANY machine/device:**
