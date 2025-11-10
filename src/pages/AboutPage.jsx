@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useParallax } from '../hooks';
 
 const AboutPage = () => {
   const navigate = useNavigate();
@@ -7,92 +8,18 @@ const AboutPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [footerOpen, setFooterOpen] = useState(false);
   const [navCircleAtEnd] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
-  const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0 });
-  const [motionPermission, setMotionPermission] = useState('granted');
   const [expandedAccordionItems, setExpandedAccordionItems] = useState(new Set());
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const throttledMouseMove = useCallback((e) => {
-    const now = Date.now();
-    if (now - throttledMouseMove.lastCall < 16) return;
-    throttledMouseMove.lastCall = now;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const x = (e.clientX - rect.left - centerX) / centerX;
-    const y = (e.clientY - rect.top - centerY) / centerY;
-    
-    setMousePosition({ x: x * 50, y: y * 50 });
-  }, []);
-
-  useEffect(() => {
-    const requestMotionPermission = async () => {
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        try {
-          const permission = await DeviceOrientationEvent.requestPermission();
-          setMotionPermission(permission);
-        } catch (error) {
-          console.error('Error requesting device motion permission:', error);
-          setMotionPermission('denied');
-        }
-      }
-    };
-
-    const handleDeviceOrientation = (event) => {
-      if (motionPermission === 'granted') {
-        const { beta, gamma } = event;
-        setDeviceMotion({
-          x: Math.max(-30, Math.min(30, gamma || 0)),
-          y: Math.max(-30, Math.min(30, beta ? beta - 90 : 0))
-        });
-      }
-    };
-
-    const handleDeviceMotion = (event) => {
-      if (motionPermission === 'granted' && event.accelerationIncludingGravity) {
-        const { x, y } = event.accelerationIncludingGravity;
-        setAccelerometerData({
-          x: Math.max(-10, Math.min(10, (x || 0) * 3)),
-          y: Math.max(-10, Math.min(10, (y || 0) * 3))
-        });
-      }
-    };
-
-    if (isMobile) {
-      requestMotionPermission();
-      window.addEventListener('deviceorientation', handleDeviceOrientation);
-      window.addEventListener('devicemotion', handleDeviceMotion);
-    }
-
-    return () => {
-      if (isMobile) {
-        window.removeEventListener('deviceorientation', handleDeviceOrientation);
-        window.removeEventListener('devicemotion', handleDeviceMotion);
-      }
-    };
-  }, [isMobile, motionPermission]);
-
-  const combinedDeviceMotion = {
-    x: deviceMotion.x + (accelerometerData.x * 0.3),
-    y: deviceMotion.y + (accelerometerData.y * 0.3)
-  };
+  // Use shared parallax hook
+  const { x, y } = useParallax({
+    enableMouse: true,
+    enableDeviceMotion: true,
+    mouseIntensity: 0.6,
+    motionIntensity: 0.6
+  });
 
   const circleTransform = {
-    transform: `translate(${(mousePosition.x + combinedDeviceMotion.x) * 0.6}px, ${(mousePosition.y + combinedDeviceMotion.y) * 0.6}px)`
+    transform: `translate(${x}px, ${y}px)`
   };
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -122,7 +49,6 @@ const AboutPage = () => {
   return (
     <div
       className="relative h-screen w-full overflow-auto bg-white"
-      onMouseMove={throttledMouseMove}
       style={{
         backgroundColor: '#f8fafc',
         backgroundImage: `
