@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParallax } from '../hooks';
+import TailwindSidebar from '../components/shared/TailwindSidebar';
 
 const HandsPage = () => {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ const HandsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [footerOpen, setFooterOpen] = useState(false);
   const [navCircleAtEnd] = useState(false);
-  const [expandedAccordionItems] = useState(new Set());
+  const [expandedAccordionItems, setExpandedAccordionItems] = useState(new Set());
 
   // Use shared parallax hook
   const { x, y } = useParallax({
@@ -115,87 +116,14 @@ const HandsPage = () => {
         </button>
       </header>
 
-      {/* Sidebar */}
-      <div
-        className={`fixed top-0 right-0 h-full bg-white/95 backdrop-blur-md border-l border-gray-200 transform transition-transform duration-300 ease-in-out z-40 ${
-          sidebarOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        style={{ width: '320px' }}
-      >
-        <div className="p-6 h-full flex flex-col">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-semibold">Navigation</h2>
-            <button
-              onClick={toggleSidebar}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-
-          <nav className="flex-1 space-y-2">
-            <button
-              onClick={() => handleSidebarNavigation('/')}
-              className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center space-x-3"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              </svg>
-              <span>Home</span>
-            </button>
-
-            <div className="space-y-1">
-              <button
-                onClick={() => toggleAccordionItem('experiments')}
-                className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4M9 11V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M9 11h6"></path>
-                  </svg>
-                  <span>Experiments</span>
-                </div>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className={`transform transition-transform duration-200 ${expandedAccordionItems.has('experiments') ? 'rotate-180' : ''}`}
-                >
-                  <polyline points="6,9 12,15 18,9"></polyline>
-                </svg>
-              </button>
-
-              {expandedAccordionItems.has('experiments') && (
-                <div className="ml-8 space-y-1 overflow-hidden">
-                  <button
-                    onClick={() => handleSidebarNavigation('/experiments')}
-                    className="block w-full text-left p-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors duration-200"
-                  >
-                    All Experiments
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => handleSidebarNavigation('/hands')}
-              className="w-full text-left p-3 hover:bg-yellow-100 rounded-lg transition-colors duration-200 flex items-center space-x-3 bg-yellow-50 border border-yellow-200"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#f59e0b' }}>
-                <path d="M9 11l3-3m0 0l3 3m-3-3v8"></path>
-                <path d="M3 12c0 1.657 1.343 3 3 3h12c1.657 0 3-1.343 3-3s-1.343-3-3-3-3-1.343-3-3-1.343-3-3-3-3 1.343-3 3-1.343 3-3 3-3 1.343-3 3z"></path>
-              </svg>
-              <span style={{ color: '#f59e0b', fontWeight: '600' }}>Hands</span>
-            </button>
-          </nav>
-        </div>
-      </div>
+      {/* Shared Tailwind Sidebar */}
+      <TailwindSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        expandedItems={expandedAccordionItems}
+        onToggleItem={toggleAccordionItem}
+        currentPage="hands"
+      />
 
       {/* Main Content */}
       <main className="relative z-10 pt-24 pb-32">
