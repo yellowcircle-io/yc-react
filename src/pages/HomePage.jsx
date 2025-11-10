@@ -519,7 +519,7 @@ function HomePage() {
                           color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
                           fontSize: '12px',
                           fontWeight: '500',
-                          letterSpacing: '0.1em',
+                          letterSpacing: '0.05em',
                           textDecoration: 'none',
                           padding: '6px 10px',
                           borderRadius: '6px',
@@ -528,7 +528,9 @@ function HomePage() {
                           opacity: isExpanded ? 1 : 0,
                           transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
                           transitionDelay: isExpanded ? `${idx * 0.06}s` : '0s',
-                          backgroundColor: 'transparent'
+                          backgroundColor: 'transparent',
+                          whiteSpace: 'nowrap',
+                          overflow: 'visible'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.color = '#EECF00';
@@ -579,7 +581,7 @@ function HomePage() {
                                 color: 'rgba(0,0,0,0.6)',
                                 fontSize: '11px',
                                 fontWeight: '400',
-                                letterSpacing: '0.08em',
+                                letterSpacing: '0.03em',
                                 textDecoration: 'none',
                                 padding: '5px 10px',
                                 marginBottom: '2px',
@@ -589,7 +591,9 @@ function HomePage() {
                                 opacity: isSubExpanded ? 1 : 0,
                                 transform: isSubExpanded ? 'translateX(0)' : 'translateX(-6px)',
                                 transitionDelay: isSubExpanded ? `${nestedIdx * 0.05}s` : '0s',
-                                backgroundColor: 'transparent'
+                                backgroundColor: 'transparent',
+                                whiteSpace: 'nowrap',
+                                overflow: 'visible'
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.color = '#EECF00';
