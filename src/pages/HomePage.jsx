@@ -469,7 +469,7 @@ function HomePage() {
         
         {/* Sub-items - accordion style with nested support */}
         <div style={{
-          marginLeft: '75px',
+          marginLeft: '60px',
           marginTop: '-5px',
           maxHeight: sidebarOpen && isExpanded ? '600px' : '0px',
           overflow: 'hidden',
@@ -517,12 +517,12 @@ function HomePage() {
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
-                          fontSize: '12px',
+                          fontSize: '11px',
                           fontWeight: '500',
-                          letterSpacing: '0.05em',
+                          letterSpacing: '0.03em',
                           textDecoration: 'none',
-                          padding: '6px 10px',
-                          borderRadius: '6px',
+                          padding: '5px 6px',
+                          borderRadius: '4px',
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                           opacity: isExpanded ? 1 : 0,
@@ -536,13 +536,13 @@ function HomePage() {
                           e.currentTarget.style.color = '#EECF00';
                           e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
                           e.currentTarget.style.transform = 'translateX(2px)';
-                          e.currentTarget.style.paddingLeft = '12px';
+                          e.currentTarget.style.paddingLeft = '8px';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.color = hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)';
                           e.currentTarget.style.backgroundColor = 'transparent';
                           e.currentTarget.style.transform = 'translateX(0)';
-                          e.currentTarget.style.paddingLeft = '10px';
+                          e.currentTarget.style.paddingLeft = '6px';
                         }}
                       >
                         <span>{itemLabel}</span>
@@ -560,8 +560,8 @@ function HomePage() {
                       {/* Render nested sub-items with accordion */}
                       {hasNestedItems && (
                         <div style={{
-                          marginLeft: '15px',
-                          marginTop: '4px',
+                          marginLeft: '12px',
+                          marginTop: '2px',
                           maxHeight: isSubExpanded ? '300px' : '0px',
                           overflow: 'hidden',
                           opacity: isSubExpanded ? 1 : 0,
@@ -579,13 +579,13 @@ function HomePage() {
                               style={{
                                 display: 'block',
                                 color: 'rgba(0,0,0,0.6)',
-                                fontSize: '11px',
+                                fontSize: '10px',
                                 fontWeight: '400',
-                                letterSpacing: '0.03em',
+                                letterSpacing: '0.02em',
                                 textDecoration: 'none',
-                                padding: '5px 10px',
-                                marginBottom: '2px',
-                                borderRadius: '5px',
+                                padding: '4px 6px',
+                                marginBottom: '1px',
+                                borderRadius: '3px',
                                 cursor: 'pointer',
                                 transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                                 opacity: isSubExpanded ? 1 : 0,
@@ -599,13 +599,13 @@ function HomePage() {
                                 e.currentTarget.style.color = '#EECF00';
                                 e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
                                 e.currentTarget.style.transform = 'translateX(2px)';
-                                e.currentTarget.style.paddingLeft = '12px';
+                                e.currentTarget.style.paddingLeft = '8px';
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
                                 e.currentTarget.style.backgroundColor = 'transparent';
                                 e.currentTarget.style.transform = 'translateX(0)';
-                                e.currentTarget.style.paddingLeft = '10px';
+                                e.currentTarget.style.paddingLeft = '6px';
                               }}
                             >{nestedItem}</div>
                           ))}
