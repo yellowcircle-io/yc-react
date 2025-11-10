@@ -331,6 +331,7 @@ function HomePage() {
       label: "LABS",
       itemKey: "labs",
       subItems: [
+        { label: "Home-17", key: "home-17" },
         { label: "Visual Noteboard", key: "visual-noteboard" },
         { label: "UK-Memories", key: "uk-memories" },
         { label: "Component Library", key: "component-library" }
@@ -496,7 +497,9 @@ function HomePage() {
                         onClick={(e) => {
                           e.preventDefault();
                           // Navigation logic
-                          if (itemKey === 'uk-memories') {
+                          if (itemKey === 'home-17') {
+                            navigate('/home-17');
+                          } else if (itemKey === 'uk-memories') {
                             navigate('/uk-memories');
                           } else if (itemKey === 'component-library') {
                             navigate('/experiments/component-library');
@@ -510,7 +513,7 @@ function HomePage() {
                           display: 'block',
                           color: 'rgba(0,0,0,0.7)',
                           fontSize: '12px',
-                          fontWeight: hasNestedItems ? '600' : '500',
+                          fontWeight: '500',
                           letterSpacing: '0.1em',
                           textDecoration: 'none',
                           padding: '1px 0',
@@ -964,7 +967,7 @@ function HomePage() {
         </div>
 
         {/* Navigation Items Container - Centered vertically in viewport */}
-        <div 
+        <div
           className="navigation-items-container"
           style={{
             position: 'absolute',
@@ -972,7 +975,9 @@ function HomePage() {
             left: 0,
             transform: 'translateY(-50%)',
             width: '100%',
-            height: '240px' // Space for navigation items
+            minHeight: '240px', // Minimum space, but can expand
+            maxHeight: 'calc(100vh - 200px)', // Allow expansion but leave room for HOME and logo
+            overflowY: 'visible' // Let content expand naturally
           }}
         >
           {/* Each navigation item */}
@@ -1366,70 +1371,71 @@ function HomePage() {
             alignItems: 'center',
             gap: '10px'
           }}>
-            {['HOME', 'EXPERIMENTS', 'UK MEMORIES', 'THOUGHTS', 'ABOUT'].map((item, index) => (
-              <a key={item}
-                href="#"
-                onClick={
-                  item === 'HOME' ? handleHomeClick :
-                  item === 'EXPERIMENTS' ? () => navigate('/experiments') :
-                  item === 'UK MEMORIES' ? () => navigate('/uk-memories') :
-                  undefined
-                }
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  if (item === 'HOME') handleHomeClick(e);
-                  else if (item === 'EXPERIMENTS') navigate('/experiments');
-                  else if (item === 'UK MEMORIES') navigate('/uk-memories');
-                }}
-                className={`menu-item-${index + 1} menu-link`}
-                style={{
-                  textDecoration: 'none',
-                  fontSize: '20px',
-                  fontWeight: '600',
-                  letterSpacing: '0.3em',
-                  padding: '10px 20px',
-                  borderRadius: '4px',
-                  WebkitTapHighlightColor: 'transparent',
-                  userSelect: 'none'
-                }}
-                onMouseEnter={(e) => e.target.style.color = 'white'}
-                onMouseLeave={(e) => e.target.style.color = 'black'}
-              >
-                {item}
-              </a>
-            ))}
-            
-            <div className="menu-button-5 works-btn" style={{
-              backgroundColor: 'rgba(0,0,0,0.1)',
-              padding: '15px 40px',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}>
-              <span className="works-text" style={{
-                color: 'black',
-                fontSize: '20px',
-                fontWeight: '600',
-                letterSpacing: '0.3em',
-                transition: 'color 0.3s ease-in'
-              }}>WORKS</span>
-            </div>
-            
-            <div className="menu-button-6 contact-btn" 
-              onClick={handleFooterToggle}
-              style={{
-                border: '2px solid black',
-                padding: '15px 40px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              <span style={{
-                color: 'black',
-                fontSize: '20px',
-                fontWeight: '600',
-                letterSpacing: '0.3em'
-              }}>CONTACT</span>
-            </div>
+            {['HOME', 'STORIES', 'LABS', '>UK MEMORIES', 'WORKS', 'CONTACT'].map((item, index) => {
+              const isIndented = item.startsWith('>');
+              const displayText = isIndented ? item.substring(1) : item;
+              const isButton = item === 'WORKS' || item === 'CONTACT';
+
+              if (isButton) {
+                return (
+                  <div
+                    key={item}
+                    className={item === 'WORKS' ? 'menu-button-5 works-btn' : 'menu-button-6 contact-btn'}
+                    onClick={item === 'CONTACT' ? handleFooterToggle : undefined}
+                    style={{
+                      backgroundColor: item === 'WORKS' ? 'rgba(0,0,0,0.1)' : 'transparent',
+                      border: item === 'CONTACT' ? '2px solid black' : 'none',
+                      padding: '15px 40px',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span style={{
+                      color: 'black',
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      letterSpacing: '0.3em',
+                      transition: 'color 0.3s ease-in'
+                    }}>{displayText}</span>
+                  </div>
+                );
+              }
+
+              return (
+                <a key={item}
+                  href="#"
+                  onClick={
+                    item === 'HOME' ? handleHomeClick :
+                    item === 'STORIES' ? undefined :
+                    item === 'LABS' ? () => navigate('/experiments') :
+                    item === '>UK MEMORIES' ? () => navigate('/uk-memories') :
+                    undefined
+                  }
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    if (item === 'HOME') handleHomeClick(e);
+                    else if (item === 'LABS') navigate('/experiments');
+                    else if (item === '>UK MEMORIES') navigate('/uk-memories');
+                  }}
+                  className={`menu-item-${index + 1} menu-link`}
+                  style={{
+                    textDecoration: 'none',
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    letterSpacing: '0.3em',
+                    padding: '10px 20px',
+                    paddingLeft: isIndented ? '40px' : '20px',
+                    borderRadius: '4px',
+                    WebkitTapHighlightColor: 'transparent',
+                    userSelect: 'none'
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = 'white'}
+                  onMouseLeave={(e) => e.target.style.color = 'black'}
+                >
+                  {displayText}
+                </a>
+              );
+            })}
           </div>
         </div>
       )}
