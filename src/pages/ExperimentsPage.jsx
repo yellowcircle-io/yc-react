@@ -1,110 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useParallax } from '../hooks';
 
 function ExperimentsPage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [deviceMotion, setDeviceMotion] = useState({ x: 0, y: 0 });
-  const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0 });
   const [expandedSection, setExpandedSection] = useState(null);
   const [footerOpen, setFooterOpen] = useState(false);
 
-  // Optimized mouse movement handler with throttling
-  const handleMouseMove = useCallback((e) => {
-    setMousePosition({
-      x: (e.clientX / window.innerWidth) * 60 - 20,
-      y: (e.clientY / window.innerHeight) * 40 - 20
-    });
-  }, []);
-
-  useEffect(() => {
-    let timeoutId;
-    const throttledMouseMove = (e) => {
-      if (timeoutId) return;
-      timeoutId = setTimeout(() => {
-        handleMouseMove(e);
-        timeoutId = null;
-      }, 16); // ~60fps
-    };
-
-    window.addEventListener('mousemove', throttledMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', throttledMouseMove);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [handleMouseMove]);
-
-  // Device motion with better error handling
-  useEffect(() => {
-    const handleDeviceOrientation = (e) => {
-      if (e.gamma !== null && e.beta !== null) {
-        setDeviceMotion({
-          x: Math.max(-20, Math.min(20, (e.gamma / 90) * 20)),
-          y: Math.max(-20, Math.min(20, (e.beta / 180) * 20))
-        });
-      }
-    };
-
-    // Handle device motion (accelerometer) alongside orientation
-    const handleDeviceMotion = (e) => {
-      if (e.accelerationIncludingGravity) {
-        const acc = e.accelerationIncludingGravity;
-        if (acc.x !== null && acc.y !== null) {
-          // Convert acceleration to motion range, with gravity compensation
-          // Using smaller multiplier for smoother motion and filtering out gravity
-          setAccelerometerData({
-            x: Math.max(-20, Math.min(20, (acc.x / 2) * -1)), // Invert X for natural motion
-            y: Math.max(-20, Math.min(20, (acc.y / 2) * -1))  // Invert Y for natural motion
-          });
-        }
-      }
-    };
-
-    if ('DeviceOrientationEvent' in window) {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission()
-          .then(response => {
-            if (response === 'granted') {
-              window.addEventListener('deviceorientation', handleDeviceOrientation);
-            }
-          })
-          .catch(() => {}); // Silent fail for unsupported devices
-      } else {
-        window.addEventListener('deviceorientation', handleDeviceOrientation);
-      }
-    }
-
-    // Add DeviceMotionEvent for accelerometer support
-    if ('DeviceMotionEvent' in window) {
-      if (typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission()
-          .then(response => {
-            if (response === 'granted') {
-              window.addEventListener('devicemotion', handleDeviceMotion);
-            }
-          })
-          .catch(() => {}); // Silent fail for unsupported devices
-      } else {
-        window.addEventListener('devicemotion', handleDeviceMotion);
-      }
-    }
-
-    return () => {
-      window.removeEventListener('deviceorientation', handleDeviceOrientation);
-      window.removeEventListener('devicemotion', handleDeviceMotion);
-    };
-  }, []);
-
-  // Combine orientation and accelerometer data intelligently for enhanced mobile parallax
-  const combinedDeviceMotion = {
-    x: deviceMotion.x + (accelerometerData.x * 0.3), // Blend 70% orientation + 30% accelerometer
-    y: deviceMotion.y + (accelerometerData.y * 0.3)
-  };
-  
-  const parallaxX = (mousePosition.x + combinedDeviceMotion.x) * 0.6;
-  const parallaxY = (mousePosition.y + combinedDeviceMotion.y) * 0.6;
+  // Use shared parallax hook
+  const { x: parallaxX, y: parallaxY } = useParallax({
+    enableMouse: true,
+    enableDeviceMotion: true,
+    mouseIntensity: 0.6,
+    motionIntensity: 0.6
+  });
 
   const handleHomeClick = (e) => {
     e.preventDefault();

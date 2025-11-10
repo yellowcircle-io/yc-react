@@ -9,6 +9,8 @@ import WorksPage from './pages/WorksPage';
 import HandsPage from './pages/HandsPage';
 import TimeCapsulePage from './pages/TimeCapsulePage';
 import CapsuleViewPage from './pages/CapsuleViewPage';
+import FeedbackPage from './pages/FeedbackPage';
+import SitemapPage from './pages/SitemapPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Experiment sub-routes
@@ -22,7 +24,7 @@ import BlogPage from './pages/thoughts/BlogPage';
 
 function RouterApp() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/home-17" element={<Home17Page />} />
@@ -46,6 +48,12 @@ function RouterApp() {
         {/* Travel Time Capsule */}
         <Route path="/uk-memories" element={<TimeCapsulePage />} />
         <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
+
+        {/* Feedback */}
+        <Route path="/feedback" element={<FeedbackPage />} />
+
+        {/* Sitemap */}
+        <Route path="/sitemap" element={<SitemapPage />} />
 
         {/* Placeholder routes for future sub-pages */}
         <Route path="/about/timeline" element={<AboutPage />} />
