@@ -10,6 +10,7 @@ function HomePage() {
   const [accelerometerData, setAccelerometerData] = useState({ x: 0, y: 0 });
   const [scrollOffset, setScrollOffset] = useState(0);
   const [expandedSection, setExpandedSection] = useState(null);
+  const [expandedSubSection, setExpandedSubSection] = useState(null); // For third-level accordion
   const [footerOpen, setFooterOpen] = useState(false);
   const [navCircleRotation, setNavCircleRotation] = useState(0); // Start at 0 degrees, animate to -90
   const touchStartRef = useRef({ x: 0, y: 0 });
@@ -362,6 +363,7 @@ function HomePage() {
   // Navigation Item Component - Natural flex flow with accordion functionality
   const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
     const isExpanded = expandedSection === itemKey && sidebarOpen;
+    const [isHovered, setIsHovered] = useState(false);
 
     const handleClick = () => {
       if (!sidebarOpen) {
@@ -376,8 +378,10 @@ function HomePage() {
             navigate('/experiments');
           }
           setExpandedSection(null);
+          setExpandedSubSection(null); // Close all sub-sections
         } else {
           setExpandedSection(itemKey);
+          setExpandedSubSection(null); // Reset sub-section when changing sections
         }
       }
     };
@@ -390,44 +394,28 @@ function HomePage() {
       }}>
         {/* Main navigation item container */}
         <div
+          className="clickable-element"
+          onClick={handleClick}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleClick();
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           style={{
             display: 'flex',
             alignItems: 'center',
-            padding: '8px 0',
+            padding: '8px 8px 8px 0',
             position: 'relative',
-            minHeight: '40px',
+            minHeight: '44px',
             width: '100%',
-            borderRadius: '4px',
-            transition: 'background-color 0.2s ease-out'
-          }}
-          onMouseEnter={(e) => {
-            if (sidebarOpen) {
-              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
+            borderRadius: '6px',
+            backgroundColor: isHovered && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease-out',
+            WebkitTapHighlightColor: 'transparent'
           }}
         >
-          {/* Clickable area - covers full width for better interaction */}
-          <div
-            className="clickable-element"
-            onClick={handleClick}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              handleClick();
-            }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              cursor: 'pointer',
-              zIndex: 3,
-              WebkitTapHighlightColor: 'transparent'
-            }}
-          />
 
           {/* Icon - Always centered relative to closed sidebar width */}
           <div style={{
@@ -492,56 +480,75 @@ function HomePage() {
                   const itemKey = typeof item === 'string' ? item : item.key;
                   const hasNestedItems = typeof item === 'object' && item.subItems;
 
+                  const isSubExpanded = expandedSubSection === itemKey;
+
                   return (
-                    <div key={idx} style={{ marginBottom: hasNestedItems ? '2px' : '0' }}>
-                      <a
-                        href="#"
+                    <div key={idx} style={{ marginBottom: '4px' }}>
+                      <div
                         className="clickable-element"
                         onClick={(e) => {
                           e.preventDefault();
-                          // Navigation logic
-                          if (itemKey === 'home-17') {
-                            navigate('/home-17');
-                          } else if (itemKey === 'uk-memories') {
-                            navigate('/uk-memories');
-                          } else if (itemKey === 'component-library') {
-                            navigate('/experiments/component-library');
-                          } else if (itemKey === 'golden-unknown') {
-                            navigate('/experiments/golden-unknown');
-                          } else if (itemKey === 'thoughts') {
-                            navigate('/thoughts');
+                          e.stopPropagation();
+
+                          if (hasNestedItems) {
+                            // Toggle third-level accordion
+                            setExpandedSubSection(isSubExpanded ? null : itemKey);
+                          } else {
+                            // Navigate for non-nested items
+                            if (itemKey === 'home-17') {
+                              navigate('/home-17');
+                            } else if (itemKey === 'uk-memories') {
+                              navigate('/uk-memories');
+                            } else if (itemKey === 'component-library') {
+                              navigate('/experiments/component-library');
+                            } else if (itemKey === 'golden-unknown') {
+                              navigate('/experiments/golden-unknown');
+                            } else if (itemKey === 'thoughts') {
+                              navigate('/thoughts');
+                            }
                           }
                         }}
                         style={{
                           display: 'block',
-                          color: 'rgba(0,0,0,0.7)',
+                          color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
                           fontSize: '12px',
                           fontWeight: '500',
                           letterSpacing: '0.1em',
                           textDecoration: 'none',
-                          padding: '1px 0',
-                          transition: 'color 0.25s ease-in-out',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-out',
                           opacity: isExpanded ? 1 : 0,
-                          transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
+                          transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s',
+                          backgroundColor: 'transparent'
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.color = '#EECF00';
+                          e.currentTarget.style.color = '#EECF00';
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.color = 'rgba(0,0,0,0.7)';
+                          e.currentTarget.style.color = hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)';
+                          e.currentTarget.style.backgroundColor = 'transparent';
                         }}
-                      >{itemLabel}</a>
+                      >{itemLabel}{hasNestedItems && (isSubExpanded ? ' −' : ' +')}</div>
 
-                      {/* Render nested sub-items */}
+                      {/* Render nested sub-items with accordion */}
                       {hasNestedItems && (
-                        <div style={{ marginLeft: '15px', marginTop: '2px' }}>
+                        <div style={{
+                          marginLeft: '15px',
+                          marginTop: '4px',
+                          maxHeight: isSubExpanded ? '200px' : '0px',
+                          overflow: 'hidden',
+                          transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}>
                           {item.subItems.map((nestedItem, nestedIdx) => (
-                            <a
+                            <div
                               key={nestedIdx}
-                              href="#"
                               className="clickable-element"
                               onClick={(e) => {
                                 e.preventDefault();
+                                e.stopPropagation();
                                 // Add nested navigation logic here as needed
                               }}
                               style={{
@@ -551,18 +558,21 @@ function HomePage() {
                                 fontWeight: '400',
                                 letterSpacing: '0.08em',
                                 textDecoration: 'none',
-                                padding: '1px 0',
-                                transition: 'color 0.25s ease-in-out',
-                                opacity: isExpanded ? 1 : 0,
-                                transitionDelay: isExpanded ? `${(idx + nestedIdx) * 0.05}s` : '0s'
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease-out',
+                                backgroundColor: 'transparent'
                               }}
                               onMouseEnter={(e) => {
-                                e.target.style.color = '#EECF00';
+                                e.currentTarget.style.color = '#EECF00';
+                                e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.06)';
                               }}
                               onMouseLeave={(e) => {
-                                e.target.style.color = 'rgba(0,0,0,0.6)';
+                                e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
+                                e.currentTarget.style.backgroundColor = 'transparent';
                               }}
-                            >{nestedItem}</a>
+                            >{nestedItem}</div>
                           ))}
                         </div>
                       )}
@@ -962,20 +972,35 @@ function HomePage() {
             </svg>
           </div>
 
-          {/* HOME Label */}
-          <div style={{
-            position: 'absolute',
-            top: '100px',
-            left: '40px',
-            transform: 'translateX(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
-            whiteSpace: 'nowrap'
-          }}>
+          {/* HOME Label - Breadcrumb indicator */}
+          <div
+            className="clickable-element"
+            onClick={handleHomeClick}
+            style={{
+              position: 'absolute',
+              top: '100px',
+              left: '40px',
+              transform: 'translateX(-50%) rotate(-90deg)',
+              transformOrigin: 'center',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'background-color 0.2s ease-out'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
             <span style={{
-              color: 'black',
-              fontWeight: '600',
+              color: scrollOffset === 0 ? '#EECF00' : 'black',
+              fontWeight: scrollOffset === 0 ? '700' : '600',
               letterSpacing: '0.3em',
-              fontSize: '14px'
+              fontSize: '14px',
+              transition: 'color 0.2s ease-out, font-weight 0.2s ease-out'
             }}>HOME</span>
           </div>
         </div>
@@ -989,8 +1014,9 @@ function HomePage() {
             overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px',
-            padding: '10px 0',
+            justifyContent: 'center', // Center items vertically
+            gap: '8px',
+            padding: '20px 0',
             minHeight: 0 // Critical for flex scroll behavior
           }}
         >
