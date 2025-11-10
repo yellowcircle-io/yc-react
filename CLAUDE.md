@@ -8,33 +8,52 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### On Every Session Startup:
 
-1. **Check Current Work Status:**
+1. **Verify Sync Status (CRITICAL):**
+   ```bash
+   ./.claude/verify-sync.sh
+   ```
+   Run this script to verify:
+   - Git status (uncommitted changes)
+   - GitHub sync (ahead/behind remote)
+   - Critical files exist and are current
+   - Dropbox sync active (Mac only)
+
+   **If out of sync:** Run `git pull` to get latest changes BEFORE starting work.
+
+2. **Check Current Work Status:**
    ```bash
    cat .claude/shared-context/WIP_CURRENT_CRITICAL.md
    ```
    This file contains the current work-in-progress, context from the last session, and next steps. **Always read this before starting work.**
 
-2. **Identify This Machine:**
+3. **Identify This Machine:**
    - Determine which machine you're running on (Mac Mini, MacBook Air, etc.)
    - Check if `.claude/INSTANCE_LOG_[MACHINE].md` exists for this machine
    - If not, this is a **first-time setup** - read `.claude/MULTI_MACHINE_SETUP_CRITICAL.md`
 
-3. **Before Ending Session:**
+4. **Before Ending Session:**
    - Update `.claude/shared-context/WIP_CURRENT_CRITICAL.md` with current status
    - Update machine-specific instance log (`.claude/INSTANCE_LOG_[MACHINE].md`)
+   - Commit and push changes: `git add .claude/ dev-context/ && git commit -m "Update" && git push`
    - Wait 30 seconds for Dropbox sync before user switches machines
 
 ### Key Files:
 
+- 🔴 **`.claude/verify-sync.sh`** - Sync status checker (RUN FIRST every session)
 - 🔴 **`.claude/shared-context/WIP_CURRENT_CRITICAL.md`** - Current work status (check EVERY session)
+- 🔴 **`.claude/MULTI_ENVIRONMENT_SYNC_GUIDE.md`** - Complete sync guide for all platforms
+- 🔴 **`MULTI_ENVIRONMENT_SETUP_COMPLETE.md`** - Quick start guide
 - 🔴 **`.claude/MULTI_MACHINE_SETUP_CRITICAL.md`** - Setup instructions for new machines
 - 🔴 **`.claude/CODESPACES_MOBILE_ACCESS_CRITICAL.md`** - Mobile/Codespace access guide
 - **`.claude/README.md`** - Complete multi-machine system overview
 - **`.claude/INSTANCE_LOG_[MACHINE].md`** - Machine-specific session history
 
-### Multi-Machine Sync:
+### Multi-Environment Sync (Updated Nov 9, 2025):
 - **Dropbox:** Syncs files between Mac Mini and MacBook Air (10-30 seconds)
-- **GitHub:** Version control and Codespaces access (commit `.claude/` for mobile access)
+- **GitHub:** ALL platforms - Mac, Codespaces, iPad/iPhone, Web (commit `.claude/` + `dev-context/`)
+- **Real-time:** 7 access points supported (Mac Mini, MacBook Air, Codespaces, iPad/iPhone SSH, Web, Google Drive backup, future machines)
+- **Auto-sync:** `git pull` before work, `git push` after changes
+- **Verification:** Run `./.claude/verify-sync.sh` anytime to check status
 
 ### Custom Commands:
 
