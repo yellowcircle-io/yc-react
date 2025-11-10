@@ -203,13 +203,13 @@ If Mac Mini can see this message, bidirectional sync is confirmed working! 🎉
 
 ---
 
-**Last Activity:** Multi-Environment Sync System Enabled
+**Last Activity:** Sync Hierarchy Corrected - Dropbox PRIMARY
 **Machine:** MacBook Air
-**Status:** ✅ Real-time sync now active across ALL platforms
+**Status:** ✅ Dropbox auto-sync active, GitHub foundational
 
 ---
 
-## 🎯 NOVEMBER 9, 2025 UPDATE - MULTI-ENVIRONMENT SYNC ENABLED
+## 🎯 NOVEMBER 9, 2025 UPDATE - MULTI-ENVIRONMENT SYNC + HIERARCHY CORRECTED
 
 ### ✅ COMPLETED TODAY:
 1. **GitHub Sync Enabled:**
@@ -243,7 +243,33 @@ If Mac Mini can see this message, bidirectional sync is confirmed working! 🎉
    - Enforced git push after roadmap updates
    - ALL Claude Code instances now check sync status automatically
 
+6. **Sync Hierarchy Corrected (CRITICAL):**
+   - **1️⃣ PRIMARY: Dropbox** (10-30s automatic) - Mac Mini ↔ MacBook Air
+   - **2️⃣ SECONDARY: Google Drive** (Backup + Rho projects, NOT manual)
+   - **3️⃣ TERTIARY: GitHub** (Foundational version control, update often)
+   - Mac-to-Mac work: Dropbox handles everything automatically (just wait 30s)
+   - Git push: For version control + remote access (Codespaces/Web/iPad)
+   - Created `.claude/MAC_MINI_SLASH_COMMANDS_FIX.md` for troubleshooting
+   - Mac Mini slash commands: Just restart Claude Code (files already synced via Dropbox)
+
 ### 🔄 HOW TO USE:
+
+**For Mac-to-Mac work (Mac Mini ↔ MacBook Air):**
+```bash
+# PRIMARY: Dropbox handles sync automatically
+# Just save files and wait 30 seconds before switching machines
+# That's it!
+```
+
+**For remote access (Codespaces/Web/iPad):**
+```bash
+# Need to use GitHub
+git pull   # Get latest
+# Work...
+git push   # Share changes
+```
+
+**For version control (foundational - do often):**
 
 **On ANY machine/device:**
 ```bash
