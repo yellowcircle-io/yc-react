@@ -393,11 +393,11 @@ function HomePage() {
         flexShrink: 0
       }}>
         {/* Main navigation item container */}
-        <div
+        <button
+          type="button"
           className="clickable-element"
-          onClick={handleClick}
-          onTouchEnd={(e) => {
-            e.preventDefault();
+          onClick={(e) => {
+            e.stopPropagation();
             handleClick();
           }}
           onMouseEnter={() => setIsHovered(true)}
@@ -405,15 +405,19 @@ function HomePage() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            padding: '8px 8px 8px 0',
+            padding: '10px 8px 10px 0',
             position: 'relative',
-            minHeight: '44px',
+            minHeight: '48px',
             width: '100%',
             borderRadius: '6px',
             backgroundColor: isHovered && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
             cursor: 'pointer',
             transition: 'background-color 0.2s ease-out',
-            WebkitTapHighlightColor: 'transparent'
+            WebkitTapHighlightColor: 'transparent',
+            border: 'none',
+            outline: 'none',
+            textAlign: 'left',
+            font: 'inherit'
           }}
         >
 
@@ -434,7 +438,9 @@ function HomePage() {
             justifyContent: 'center',
             zIndex: 2,
             pointerEvents: 'none',
-            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            WebkitTransition: 'transform 0.25s ease-out',
+            MozTransition: 'transform 0.25s ease-out',
+            transition: 'transform 0.25s ease-out'
           }}>
             <img
               src={icon}
@@ -443,9 +449,11 @@ function HomePage() {
               height="24"
               style={{
                 display: 'block',
-                transition: 'filter 0.3s ease-out, transform 0.2s ease-out',
                 filter: isExpanded ? 'brightness(1.2) saturate(1.1)' : 'brightness(1)',
-                transform: isHovered ? 'rotate(-3deg)' : 'rotate(0deg)'
+                transform: isHovered ? 'rotate(-3deg)' : 'rotate(0deg)',
+                WebkitTransition: 'filter 0.25s ease-out, transform 0.2s ease-out',
+                MozTransition: 'filter 0.25s ease-out, transform 0.2s ease-out',
+                transition: 'filter 0.25s ease-out, transform 0.2s ease-out'
               }}
             />
           </div>
@@ -456,7 +464,7 @@ function HomePage() {
             left: '60px',
             top: '50%',
             color: isExpanded ? '#EECF00' : 'black',
-            fontSize: '14px',
+            fontSize: '15px',
             fontWeight: isExpanded ? '700' : '600',
             letterSpacing: '0.2em',
             opacity: sidebarOpen ? 1 : 0,
@@ -465,8 +473,8 @@ function HomePage() {
             whiteSpace: 'nowrap',
             pointerEvents: 'none'
           }}>{label}</span>
-        </div>
-        
+        </button>
+
         {/* Sub-items - accordion style with nested support */}
         <div style={{
           marginLeft: '60px',
@@ -476,148 +484,169 @@ function HomePage() {
           opacity: sidebarOpen && isExpanded ? 1 : 0,
           transition: 'max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out 0.1s'
         }}>
-            {subItems && (
-              <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
-                {subItems.map((item, idx) => {
-                  // Handle both string items and object items with nested subItems
-                  const itemLabel = typeof item === 'string' ? item : item.label;
-                  const itemKey = typeof item === 'string' ? item : item.key;
-                  const hasNestedItems = typeof item === 'object' && item.subItems;
+          {subItems && (
+            <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
+              {subItems.map((item, idx) => {
+                // Handle both string items and object items with nested subItems
+                const itemLabel = typeof item === 'string' ? item : item.label;
+                const itemKey = typeof item === 'string' ? item : item.key;
+                const hasNestedItems = typeof item === 'object' && item.subItems;
 
-                  const isSubExpanded = expandedSubSection === itemKey;
+                const isSubExpanded = expandedSubSection === itemKey;
 
-                  return (
-                    <div key={idx} style={{ marginBottom: '4px' }}>
-                      <div
-                        className="clickable-element"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                return (
+                  <div key={idx} style={{ marginBottom: '2px' }}>
+                    <button
+                      type="button"
+                      className="clickable-element"
+                      onClick={(e) => {
+                        e.stopPropagation();
 
-                          if (hasNestedItems) {
-                            // Toggle third-level accordion
-                            setExpandedSubSection(isSubExpanded ? null : itemKey);
-                          } else {
-                            // Navigate for non-nested items
-                            if (itemKey === 'home-17') {
-                              navigate('/home-17');
-                            } else if (itemKey === 'uk-memories') {
-                              navigate('/uk-memories');
-                            } else if (itemKey === 'component-library') {
-                              navigate('/experiments/component-library');
-                            } else if (itemKey === 'golden-unknown') {
-                              navigate('/experiments/golden-unknown');
-                            } else if (itemKey === 'thoughts') {
-                              navigate('/thoughts');
-                            }
+                        if (hasNestedItems) {
+                          // Toggle third-level accordion
+                          setExpandedSubSection(isSubExpanded ? null : itemKey);
+                        } else {
+                          // Navigate for non-nested items
+                          if (itemKey === 'home-17') {
+                            navigate('/home-17');
+                          } else if (itemKey === 'uk-memories') {
+                            navigate('/uk-memories');
+                          } else if (itemKey === 'component-library') {
+                            navigate('/experiments/component-library');
+                          } else if (itemKey === 'golden-unknown') {
+                            navigate('/experiments/golden-unknown');
+                          } else if (itemKey === 'thoughts') {
+                            navigate('/thoughts');
                           }
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          letterSpacing: '0.03em',
-                          textDecoration: 'none',
-                          padding: '5px 6px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          opacity: isExpanded ? 1 : 0,
-                          transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
-                          transitionDelay: isExpanded ? `${idx * 0.06}s` : '0s',
-                          backgroundColor: 'transparent',
-                          whiteSpace: 'nowrap',
-                          overflow: 'visible'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color = '#EECF00';
-                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
-                          e.currentTarget.style.transform = 'translateX(2px)';
-                          e.currentTarget.style.paddingLeft = '8px';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color = hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)';
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.transform = 'translateX(0)';
-                          e.currentTarget.style.paddingLeft = '6px';
-                        }}
-                      >
-                        <span>{itemLabel}</span>
-                        {hasNestedItems && (
-                          <span style={{
-                            fontSize: '14px',
-                            fontWeight: '400',
-                            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            transform: isSubExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                            display: 'inline-block'
-                          }}>▼</span>
-                        )}
-                      </div>
-
-                      {/* Render nested sub-items with accordion */}
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        letterSpacing: '0.03em',
+                        textDecoration: 'none',
+                        padding: '7px 6px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        backgroundColor: 'transparent',
+                        whiteSpace: 'nowrap',
+                        overflow: 'visible',
+                        width: '100%',
+                        border: 'none',
+                        outline: 'none',
+                        textAlign: 'left',
+                        font: 'inherit',
+                        opacity: isExpanded ? 1 : 0,
+                        transform: isExpanded ? 'translateX(0) translateZ(0)' : 'translateX(-8px) translateZ(0)',
+                        transitionDelay: isExpanded ? `${idx * 0.06}s` : '0s',
+                        willChange: 'transform, opacity',
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        WebkitTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.25s ease, padding-left 0.2s ease, opacity 0.3s ease',
+                        MozTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.25s ease, padding-left 0.2s ease, opacity 0.3s ease',
+                        transition: 'color 0.2s ease, background-color 0.2s ease, transform 0.25s ease, padding-left 0.2s ease, opacity 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#EECF00';
+                        e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+                        e.currentTarget.style.transform = 'translateX(2px)';
+                        e.currentTarget.style.paddingLeft = '8px';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)';
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                        e.currentTarget.style.paddingLeft = '6px';
+                      }}
+                    >
+                      <span>{itemLabel}</span>
                       {hasNestedItems && (
-                        <div style={{
-                          marginLeft: '12px',
-                          marginTop: '2px',
-                          maxHeight: isSubExpanded ? '300px' : '0px',
-                          overflow: 'hidden',
-                          opacity: isSubExpanded ? 1 : 0,
-                          transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out 0.1s'
-                        }}>
-                          {item.subItems.map((nestedItem, nestedIdx) => (
-                            <div
-                              key={nestedIdx}
-                              className="clickable-element"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                // Add nested navigation logic here as needed
-                              }}
-                              style={{
-                                display: 'block',
-                                color: 'rgba(0,0,0,0.6)',
-                                fontSize: '10px',
-                                fontWeight: '400',
-                                letterSpacing: '0.02em',
-                                textDecoration: 'none',
-                                padding: '4px 6px',
-                                marginBottom: '1px',
-                                borderRadius: '3px',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                                opacity: isSubExpanded ? 1 : 0,
-                                transform: isSubExpanded ? 'translateX(0)' : 'translateX(-6px)',
-                                transitionDelay: isSubExpanded ? `${nestedIdx * 0.05}s` : '0s',
-                                backgroundColor: 'transparent',
-                                whiteSpace: 'nowrap',
-                                overflow: 'visible'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.color = '#EECF00';
-                                e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
-                                e.currentTarget.style.transform = 'translateX(2px)';
-                                e.currentTarget.style.paddingLeft = '8px';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.transform = 'translateX(0)';
-                                e.currentTarget.style.paddingLeft = '6px';
-                              }}
-                            >{nestedItem}</div>
-                          ))}
-                        </div>
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: '400',
+                          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          transform: isSubExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          display: 'inline-block'
+                        }}>▼</span>
                       )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                    </button>
+
+                    {/* Render nested sub-items with accordion */}
+                    {hasNestedItems && (
+                      <div style={{
+                        marginLeft: '12px',
+                        marginTop: '2px',
+                        maxHeight: isSubExpanded ? '300px' : '0px',
+                        overflow: 'hidden',
+                        opacity: isSubExpanded ? 1 : 0,
+                        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out 0.1s'
+                      }}>
+                        {item.subItems.map((nestedItem, nestedIdx) => (
+                          <button
+                            type="button"
+                            key={nestedIdx}
+                            className="clickable-element"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Add nested navigation logic here as needed
+                            }}
+                            style={{
+                              display: 'block',
+                              color: 'rgba(0,0,0,0.6)',
+                              fontSize: '10px',
+                              fontWeight: '400',
+                              letterSpacing: '0.02em',
+                              textDecoration: 'none',
+                              padding: '6px 6px',
+                              marginBottom: '1px',
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              backgroundColor: 'transparent',
+                              whiteSpace: 'nowrap',
+                              overflow: 'visible',
+                              width: '100%',
+                              border: 'none',
+                              outline: 'none',
+                              textAlign: 'left',
+                              font: 'inherit',
+                              opacity: isSubExpanded ? 1 : 0,
+                              transform: isSubExpanded ? 'translateX(0) translateZ(0)' : 'translateX(-6px) translateZ(0)',
+                              transitionDelay: isSubExpanded ? `${nestedIdx * 0.05}s` : '0s',
+                              willChange: 'transform, opacity',
+                              backfaceVisibility: 'hidden',
+                              WebkitBackfaceVisibility: 'hidden',
+                              WebkitTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease, opacity 0.3s ease',
+                              MozTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease, opacity 0.3s ease',
+                              transition: 'color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease, opacity 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#EECF00';
+                              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
+                              e.currentTarget.style.transform = 'translateX(2px)';
+                              e.currentTarget.style.paddingLeft = '8px';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                              e.currentTarget.style.paddingLeft = '6px';
+                            }}
+                          >
+                            {nestedItem}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -966,7 +995,12 @@ function HomePage() {
         transition: 'width 0.5s ease-out',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        transform: 'translateZ(0)',
+        willChange: 'width',
+        WebkitTransform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
       }}>
 
         {/* HEADER SECTION - Toggle + HOME Label */}
