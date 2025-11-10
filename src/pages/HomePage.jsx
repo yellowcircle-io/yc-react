@@ -957,7 +957,7 @@ function HomePage() {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        width: sidebarOpen ? 'min(max(280px, 35vw), 472px)' : '80px',
         height: '100vh',
         backgroundColor: 'rgba(242, 242, 242, 0.96)',
         backdropFilter: 'blur(8px)',
