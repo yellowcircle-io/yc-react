@@ -14,9 +14,31 @@
 
 When this command is invoked, follow these steps:
 
+### 0. **Verify Sync Status (CRITICAL - DO FIRST)**
+
+**ALWAYS run the sync verification script before reading any files:**
+
+```bash
+./.claude/verify-sync.sh
+```
+
+**Check the output:**
+- ✅ All green checkmarks = proceed with roadmap
+- ⚠️ Yellow warnings about being behind remote = STOP and run `git pull` FIRST
+- ⚠️ Uncommitted changes = Note for later (commit before ending session)
+- ❌ Red errors = Fix sync issues before continuing
+
+**If behind remote (not up to date with GitHub):**
+```bash
+git pull
+```
+Then re-run verification to confirm sync is working.
+
+**Why this is critical:** Without verifying sync, you may be working with outdated roadmap data or context from a previous session on a different machine.
+
 ### 1. **Load Current Context**
 
-Read the following files to understand current state:
+After verifying sync status, read the following files to understand current state:
 
 ```
 PRIMARY FILES (ALWAYS READ):
@@ -30,9 +52,25 @@ REFERENCE FILES (READ AS NEEDED):
 - /Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle/.claude/INSTANCE_LOG_MacBookAir.md (if on MacBook Air)
 ```
 
-### 2. **Present Current Status**
+### 2. **Present Sync Status First**
 
-Display a concise summary including:
+Before showing the roadmap, display sync status summary:
+
+```markdown
+# 🔄 Sync Status
+
+**Git:** [Up to date / Behind remote / Ahead of remote / Uncommitted changes]
+**Last Commit:** [commit hash] - [message] ([time ago])
+**Machine:** [Mac Mini / MacBook Air / Codespaces / Other]
+
+✅ Ready to proceed with roadmap
+```
+
+If NOT up to date with remote, show warning and recommend `git pull` before continuing.
+
+### 3. **Present Current Status**
+
+After confirming sync, display roadmap summary:
 
 ```markdown
 # 🎯 Roadmap Status - [Current Date]
@@ -115,24 +153,42 @@ After any changes, update:
 1. **ROADMAP_CHECKLIST_NOV8_2025.md** - For completed tasks (✅)
 2. **WIP_CURRENT_CRITICAL.md** - For current status and next steps
 3. **INSTANCE_LOG_[MACHINE].md** - Log this session's actions
-4. Commit changes to GitHub if substantial updates were made
+4. **ALWAYS commit changes to GitHub** to sync across all platforms
 
-### 6. **Sync Considerations**
+### 6. **Sync and Commit (REQUIRED)**
+
+**CRITICAL:** After ANY roadmap updates, you MUST sync changes to ensure all platforms have latest data.
+
+**Workflow:**
+```bash
+# Stage changes
+git add .claude/ dev-context/
+
+# Commit with descriptive message
+git commit -m "Update roadmap: [brief description]"
+
+# Push to sync everywhere
+git push
+
+# Verify sync worked
+./.claude/verify-sync.sh
+```
+
+**Multi-platform sync ensures:**
+- ✅ Mac Mini sees MacBook Air updates
+- ✅ Codespaces has latest roadmap
+- ✅ iPad/iPhone via SSH gets changes
+- ✅ Web sessions start with current data
+- ✅ Future machines just need `git pull`
 
 **IMPORTANT:** Since this command may be used via:
-- **Web/SSH:** Files must be in GitHub (run `git pull` first)
-- **Desktop:** Files are in Dropbox + GitHub
-- **Codespaces:** Files are in GitHub clone
+- **Web/SSH:** Files MUST be in GitHub (run `git pull` first, `git push` after)
+- **Desktop:** Files sync via Dropbox + GitHub (30 seconds + instant)
+- **Codespaces:** Files are in GitHub clone (instant after push)
 
-**Recommended workflow:**
+**Always end roadmap session with:**
 ```bash
-# At start of session
-git pull
-
-# After making changes
-git add .claude/ dev-context/
-git commit -m "Update roadmap: [brief description]"
-git push
+git push && ./.claude/verify-sync.sh
 ```
 
 This ensures all access methods have latest roadmap data.
