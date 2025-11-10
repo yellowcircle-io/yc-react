@@ -359,19 +359,9 @@ function HomePage() {
     return height;
   };
 
-  // Navigation Item Component - Fixed positioning with accordion functionality
+  // Navigation Item Component - Relative positioning with accordion functionality
   const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
     const isExpanded = expandedSection === itemKey && sidebarOpen;
-
-    // Calculate vertical position accounting for expanded items above
-    let topPosition = index * 50; // Base spacing
-    for (let i = 0; i < index; i++) {
-      const prevItemKey = navigationItems[i]?.itemKey;
-      if (expandedSection === prevItemKey && sidebarOpen) {
-        const prevSubItems = navigationItems[i]?.subItems || [];
-        topPosition += calculateExpandedHeight(prevSubItems) + 5;
-      }
-    }
 
     const handleClick = () => {
       if (!sidebarOpen) {
@@ -394,11 +384,10 @@ function HomePage() {
 
     return (
       <div style={{
-        position: 'absolute',
-        top: `${topPosition}px`,
-        left: 0,
+        position: 'relative',
+        marginTop: index === 0 ? '0' : '0px', // No extra margin for first item
         width: '100%',
-        transition: 'top 0.3s ease-out' // Smooth movement for accordion
+        transition: 'all 0.3s ease-out' // Smooth transitions
       }}>
         {/* Main navigation item container */}
         <div 
@@ -966,18 +955,17 @@ function HomePage() {
           }}>HOME</span>
         </div>
 
-        {/* Navigation Items Container - Centered vertically in viewport */}
+        {/* Navigation Items Container - Scrollable when needed */}
         <div
           className="navigation-items-container"
           style={{
             position: 'absolute',
-            top: '50%',
+            top: '120px', // Fixed position from top instead of centered
             left: 0,
-            transform: 'translateY(-50%)',
             width: '100%',
-            minHeight: '240px', // Minimum space, but can expand
-            maxHeight: 'calc(100vh - 200px)', // Allow expansion but leave room for HOME and logo
-            overflowY: 'visible' // Let content expand naturally
+            maxHeight: 'calc(100vh - 240px)', // Leave room for HOME (100px) and logo (60px) plus padding
+            overflowY: 'auto', // Scroll when content exceeds maxHeight
+            paddingBottom: '20px' // Space at bottom
           }}
         >
           {/* Each navigation item */}
