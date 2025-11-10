@@ -422,7 +422,11 @@ function HomePage() {
             position: 'absolute',
             left: '40px', // Center of 80px closed sidebar width
             top: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: isExpanded
+              ? 'translate(-50%, -50%) scale(1.05)'
+              : isHovered
+                ? 'translate(-50%, -50%) scale(1.08)'
+                : 'translate(-50%, -50%) scale(1)',
             width: '24px',
             height: '24px',
             display: 'flex',
@@ -430,7 +434,7 @@ function HomePage() {
             justifyContent: 'center',
             zIndex: 2,
             pointerEvents: 'none',
-            transition: 'transform 0.2s ease-out'
+            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
             <img
               src={icon}
@@ -439,39 +443,39 @@ function HomePage() {
               height="24"
               style={{
                 display: 'block',
-                transition: 'filter 0.2s ease-out',
-                filter: isExpanded ? 'brightness(1.2)' : 'brightness(1)'
+                transition: 'filter 0.3s ease-out, transform 0.2s ease-out',
+                filter: isExpanded ? 'brightness(1.2) saturate(1.1)' : 'brightness(1)',
+                transform: isHovered ? 'rotate(-3deg)' : 'rotate(0deg)'
               }}
             />
           </div>
 
           {/* Label - appears to the RIGHT of the centered icon when sidebar opens */}
-          {sidebarOpen && (
-            <span style={{
-              position: 'absolute',
-              left: '60px', // Moved closer to centered icon area
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: isExpanded ? '#EECF00' : 'black',
-              fontSize: '14px',
-              fontWeight: isExpanded ? '700' : '600',
-              letterSpacing: '0.2em',
-              transition: 'color 0.3s ease-out, font-weight 0.3s ease-out',
-              whiteSpace: 'nowrap',
-              pointerEvents: 'none'
-            }}>{label}</span>
-          )}
+          <span style={{
+            position: 'absolute',
+            left: '60px',
+            top: '50%',
+            color: isExpanded ? '#EECF00' : 'black',
+            fontSize: '14px',
+            fontWeight: isExpanded ? '700' : '600',
+            letterSpacing: '0.2em',
+            opacity: sidebarOpen ? 1 : 0,
+            transform: sidebarOpen ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-10px)',
+            transition: 'color 0.3s ease-out, font-weight 0.3s ease-out, opacity 0.4s ease-out 0.1s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none'
+          }}>{label}</span>
         </div>
         
         {/* Sub-items - accordion style with nested support */}
-        {sidebarOpen && (
-          <div style={{
-            marginLeft: '75px',
-            marginTop: '-5px',
-            maxHeight: isExpanded ? '600px' : '0px',
-            overflow: 'hidden',
-            transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}>
+        <div style={{
+          marginLeft: '75px',
+          marginTop: '-5px',
+          maxHeight: sidebarOpen && isExpanded ? '600px' : '0px',
+          overflow: 'hidden',
+          opacity: sidebarOpen && isExpanded ? 1 : 0,
+          transition: 'max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out 0.1s'
+        }}>
             {subItems && (
               <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
                 {subItems.map((item, idx) => {
@@ -509,38 +513,57 @@ function HomePage() {
                           }
                         }}
                         style={{
-                          display: 'block',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                           color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
                           fontSize: '12px',
                           fontWeight: '500',
                           letterSpacing: '0.1em',
                           textDecoration: 'none',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
                           cursor: 'pointer',
-                          transition: 'all 0.2s ease-out',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                           opacity: isExpanded ? 1 : 0,
-                          transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s',
+                          transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                          transitionDelay: isExpanded ? `${idx * 0.06}s` : '0s',
                           backgroundColor: 'transparent'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.color = '#EECF00';
-                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+                          e.currentTarget.style.transform = 'translateX(2px)';
+                          e.currentTarget.style.paddingLeft = '12px';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.color = hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)';
                           e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                          e.currentTarget.style.paddingLeft = '10px';
                         }}
-                      >{itemLabel}{hasNestedItems && (isSubExpanded ? ' −' : ' +')}</div>
+                      >
+                        <span>{itemLabel}</span>
+                        {hasNestedItems && (
+                          <span style={{
+                            fontSize: '14px',
+                            fontWeight: '400',
+                            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            transform: isSubExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                            display: 'inline-block'
+                          }}>▼</span>
+                        )}
+                      </div>
 
                       {/* Render nested sub-items with accordion */}
                       {hasNestedItems && (
                         <div style={{
                           marginLeft: '15px',
                           marginTop: '4px',
-                          maxHeight: isSubExpanded ? '200px' : '0px',
+                          maxHeight: isSubExpanded ? '300px' : '0px',
                           overflow: 'hidden',
-                          transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                          opacity: isSubExpanded ? 1 : 0,
+                          transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out 0.1s'
                         }}>
                           {item.subItems.map((nestedItem, nestedIdx) => (
                             <div
@@ -558,19 +581,27 @@ function HomePage() {
                                 fontWeight: '400',
                                 letterSpacing: '0.08em',
                                 textDecoration: 'none',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
+                                padding: '5px 10px',
+                                marginBottom: '2px',
+                                borderRadius: '5px',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s ease-out',
+                                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                opacity: isSubExpanded ? 1 : 0,
+                                transform: isSubExpanded ? 'translateX(0)' : 'translateX(-6px)',
+                                transitionDelay: isSubExpanded ? `${nestedIdx * 0.05}s` : '0s',
                                 backgroundColor: 'transparent'
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.color = '#EECF00';
-                                e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.06)';
+                                e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
+                                e.currentTarget.style.transform = 'translateX(2px)';
+                                e.currentTarget.style.paddingLeft = '12px';
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
                                 e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.transform = 'translateX(0)';
+                                e.currentTarget.style.paddingLeft = '10px';
                               }}
                             >{nestedItem}</div>
                           ))}
@@ -960,15 +991,39 @@ function HomePage() {
               padding: '8px',
               width: '40px',
               height: '40px',
+              borderRadius: '6px',
+              backgroundColor: 'transparent',
               WebkitTapHighlightColor: 'transparent',
-              transition: 'transform 0.2s ease-out'
+              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease-out'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateX(-50%) scale(1.12)';
+              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="black" viewBox="0 0 16 16">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              fill="black"
+              viewBox="0 0 16 16"
+              style={{
+                transition: 'transform 0.3s ease-out',
+                transform: sidebarOpen ? 'rotate(0deg)' : 'rotate(0deg)'
+              }}
+            >
               <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/>
-              <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
+              <path
+                d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"
+                style={{
+                  transition: 'opacity 0.3s ease-out',
+                  opacity: sidebarOpen ? 0.5 : 1
+                }}
+              />
             </svg>
           </div>
 
@@ -1033,14 +1088,15 @@ function HomePage() {
         <div style={{
           flexShrink: 0,
           height: '85px',
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          position: 'relative'
         }}>
           <div
             className="yc-logo clickable-element"
             style={{
+              position: 'absolute',
+              left: '40px',
+              bottom: '20px',
+              transform: 'translateX(-50%)',
               width: '45px',
               height: '45px',
               minWidth: '40px',
@@ -1048,12 +1104,12 @@ function HomePage() {
               borderRadius: '50%',
               overflow: 'visible',
               cursor: 'pointer',
-              transition: 'transform 0.2s ease-out',
+              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1) rotate(5deg)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1) rotate(0deg)'}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.15) rotate(5deg)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1) rotate(0deg)'}
           >
             <img
               src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
