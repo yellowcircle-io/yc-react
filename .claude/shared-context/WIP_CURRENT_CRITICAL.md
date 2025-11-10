@@ -203,9 +203,43 @@ If Mac Mini can see this message, bidirectional sync is confirmed working! 🎉
 
 ---
 
-**Last Activity:** Sync Hierarchy Corrected - Dropbox PRIMARY
-**Machine:** MacBook Air
-**Status:** ✅ Dropbox auto-sync active, GitHub foundational
+**Last Activity:** Critical Path Issue Fixed - Dropbox Location Corrected
+**Machine:** Mac Mini
+**Status:** ⚠️ CRITICAL PATH ISSUE RESOLVED - See Nov 9 Evening Update Below
+
+---
+
+## 🚨 CRITICAL: DROPBOX PATH ISSUE (Nov 9, 2025 - 10:23 PM PST)
+
+### Issue Discovered:
+Mac Mini had **TWO separate Dropbox folders** with different content:
+1. `/Users/christophercooper_1/Dropbox/` - **OLD, NOT SYNCING** (last updated Oct 15)
+2. `/Users/christophercooper_1/Library/CloudStorage/Dropbox/` - **OFFICIAL, SYNCING** (current)
+
+### Problem Impact:
+- Dev server was running from OLD path
+- Code edits were made to NEW path
+- Changes weren't visible in browser (hard refresh didn't work)
+- Files were diverging between the two locations
+
+### Resolution:
+1. ✅ Stopped dev server from old path
+2. ✅ Restarted dev server from correct path: `/Users/christophercooper_1/Library/CloudStorage/Dropbox/`
+3. ✅ Updated `.claude/verify-sync.sh` to detect multiple Dropbox paths
+4. ✅ Updated `CLAUDE.md` with correct path warning
+5. ✅ Changes now visible in localhost
+
+### Prevention:
+- Verification script now checks Dropbox config (`~/.dropbox/info.json`)
+- Warns if project is in Dropbox but NOT official path
+- Detects multiple Dropbox folders on system
+- All future Claude Code sessions will be warned
+
+### Action Required:
+- **DO NOT use** `/Users/christophercooper_1/Dropbox/` path
+- **ALWAYS use** `/Users/christophercooper_1/Library/CloudStorage/Dropbox/` path
+- Run `./.claude/verify-sync.sh` at start of EVERY session
+- Consider removing/archiving old Dropbox folder to prevent confusion
 
 ---
 

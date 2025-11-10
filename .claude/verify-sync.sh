@@ -90,22 +90,43 @@ echo ""
 if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "☁️  Dropbox Sync Status:"
     echo "======================="
-    if [ -d "$HOME/Dropbox" ] || [ -d "$HOME/Library/CloudStorage/Dropbox" ]; then
-        # Check if current directory is in Dropbox
-        if [[ "$PWD" == *"Dropbox"* ]]; then
-            echo -e "${GREEN}✓ Project is in Dropbox folder${NC}"
 
-            # Check for .dropbox.cache to verify sync is active
-            if [ -d "$HOME/Dropbox/.dropbox.cache" ] || [ -d "$HOME/Library/CloudStorage/Dropbox/.dropbox.cache" ]; then
-                echo -e "${GREEN}✓ Dropbox sync is active${NC}"
-            else
-                echo -e "${YELLOW}⚠ Dropbox sync status unclear${NC}"
-            fi
-        else
-            echo -e "${YELLOW}⚠ Project is NOT in Dropbox folder${NC}"
+    # Check for official Dropbox path from config
+    OFFICIAL_DROPBOX=""
+    if [ -f "$HOME/.dropbox/info.json" ]; then
+        OFFICIAL_DROPBOX=$(python3 -c "import json; print(json.load(open('$HOME/.dropbox/info.json'))['personal']['path'])" 2>/dev/null)
+        if [ -n "$OFFICIAL_DROPBOX" ]; then
+            echo -e "${GREEN}✓ Official Dropbox path: $OFFICIAL_DROPBOX${NC}"
         fi
+    fi
+
+    # Check if current directory is in official Dropbox path
+    if [ -n "$OFFICIAL_DROPBOX" ] && [[ "$PWD" == "$OFFICIAL_DROPBOX"* ]]; then
+        echo -e "${GREEN}✓ Project is in official Dropbox folder${NC}"
+
+        # Check for .dropbox.cache to verify sync is active
+        if [ -d "$OFFICIAL_DROPBOX/.dropbox.cache" ]; then
+            echo -e "${GREEN}✓ Dropbox sync is active${NC}"
+        else
+            echo -e "${YELLOW}⚠ Dropbox sync status unclear${NC}"
+        fi
+    elif [[ "$PWD" == *"Dropbox"* ]]; then
+        echo -e "${RED}✗ WARNING: Project is in Dropbox folder but NOT the official path!${NC}"
+        echo -e "${RED}  Current: $PWD${NC}"
+        echo -e "${RED}  Official: $OFFICIAL_DROPBOX${NC}"
+        echo -e "${YELLOW}  ⚠ Files may not be syncing! Use official path.${NC}"
     else
-        echo -e "${YELLOW}⚠ Dropbox not found on this machine${NC}"
+        echo -e "${YELLOW}⚠ Project is NOT in Dropbox folder${NC}"
+    fi
+
+    # Detect multiple Dropbox locations
+    if [ -d "$HOME/Dropbox" ] && [ -d "$HOME/Library/CloudStorage/Dropbox" ]; then
+        echo -e "${YELLOW}⚠ Multiple Dropbox folders detected:${NC}"
+        echo -e "  1. $HOME/Dropbox"
+        echo -e "  2. $HOME/Library/CloudStorage/Dropbox"
+        if [ -n "$OFFICIAL_DROPBOX" ]; then
+            echo -e "${YELLOW}  → Use official path: $OFFICIAL_DROPBOX${NC}"
+        fi
     fi
     echo ""
 fi
