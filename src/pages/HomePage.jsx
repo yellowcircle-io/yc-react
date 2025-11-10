@@ -385,9 +385,9 @@ function HomePage() {
     return (
       <div style={{
         position: 'relative',
-        marginTop: index === 0 ? '0' : '0px', // No extra margin for first item
+        marginBottom: '50px', // Space between navigation items
         width: '100%',
-        transition: 'all 0.3s ease-out' // Smooth transitions
+        transition: 'all 0.3s ease-out'
       }}>
         {/* Main navigation item container */}
         <div 
@@ -955,17 +955,18 @@ function HomePage() {
           }}>HOME</span>
         </div>
 
-        {/* Navigation Items Container - Scrollable when needed */}
+        {/* Navigation Items Container - Centered with proper spacing */}
         <div
           className="navigation-items-container"
           style={{
             position: 'absolute',
-            top: '120px', // Fixed position from top instead of centered
+            top: '50%',
             left: 0,
+            transform: 'translateY(-50%)',
             width: '100%',
-            maxHeight: 'calc(100vh - 240px)', // Leave room for HOME (100px) and logo (60px) plus padding
-            overflowY: 'auto', // Scroll when content exceeds maxHeight
-            paddingBottom: '20px' // Space at bottom
+            maxHeight: 'calc(100vh - 200px)',
+            overflowY: 'auto',
+            paddingBottom: '20px'
           }}
         >
           {/* Each navigation item */}
