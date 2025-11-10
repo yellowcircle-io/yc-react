@@ -308,45 +308,70 @@ function HomePage() {
 
   const navigationItems = [
     {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "EXPERIMENTS",
-      itemKey: "experiments",
-      subItems: ["golden unknown", "being + rhyme", "cath3dral", "17-frame animatic", "travel memories"]
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
+      label: "STORIES",
+      itemKey: "stories",
+      subItems: [
+        {
+          label: "Projects",
+          key: "projects",
+          subItems: ["Brand Development", "Marketing Architecture", "Email Development"]
+        },
+        { label: "Golden Unknown", key: "golden-unknown" },
+        {
+          label: "Cath3dral",
+          key: "cath3dral",
+          subItems: ["Being + Rhyme"]
+        },
+        { label: "Thoughts", key: "thoughts" }
+      ]
     },
     {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684385/write-book_gfaiu8.png",
-      label: "THOUGHTS",
-      itemKey: "thoughts",
-      subItems: ["blog"]
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
+      label: "LABS",
+      itemKey: "labs",
+      subItems: [
+        { label: "Visual Noteboard", key: "visual-noteboard" },
+        { label: "UK-Memories", key: "uk-memories" },
+        { label: "Component Library", key: "component-library" }
+      ]
     },
     {
       icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
       label: "ABOUT",
       itemKey: "about",
-      subItems: ["about me", "about yellowcircle", "contact"]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "WORKS",
-      itemKey: "works",
-      subItems: ["consulting", "rho", "reddit", "cv"]
+      subItems: []
     }
   ];
+
+  // Calculate total height for expanded sections (recursive)
+  const calculateExpandedHeight = (items) => {
+    if (!items || items.length === 0) return 0;
+
+    let height = 0;
+    items.forEach(item => {
+      height += 18; // Each item base height
+      if (typeof item === 'object' && item.subItems) {
+        height += calculateExpandedHeight(item.subItems);
+      }
+    });
+    return height;
+  };
 
   // Navigation Item Component - Fixed positioning with accordion functionality
   const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
     const isExpanded = expandedSection === itemKey && sidebarOpen;
-    
+
     // Calculate vertical position accounting for expanded items above
     let topPosition = index * 50; // Base spacing
     for (let i = 0; i < index; i++) {
       const prevItemKey = navigationItems[i]?.itemKey;
       if (expandedSection === prevItemKey && sidebarOpen) {
         const prevSubItems = navigationItems[i]?.subItems || [];
-        topPosition += prevSubItems.length * 18 + 5; // Tighter spacing to match new layout
+        topPosition += calculateExpandedHeight(prevSubItems) + 5;
       }
     }
-    
+
     const handleClick = () => {
       if (!sidebarOpen) {
         // First click: open sidebar and expand this section
@@ -356,7 +381,7 @@ function HomePage() {
         // Subsequent clicks: toggle accordion or navigate
         if (expandedSection === itemKey) {
           // If already expanded, navigate to the page
-          if (itemKey === 'experiments') {
+          if (itemKey === 'labs') {
             navigate('/experiments');
           }
           setExpandedSection(null);
@@ -446,49 +471,98 @@ function HomePage() {
           )}
         </div>
         
-        {/* Sub-items - accordion style */}
+        {/* Sub-items - accordion style with nested support */}
         {sidebarOpen && (
           <div style={{
-            marginLeft: '75px', // Moved 15px closer to category title (was 60px, now closer to icon)
-            marginTop: '-5px', // Pull up closer to category title by 5px
-            maxHeight: isExpanded ? `${(subItems?.length || 0) * 18 + 5}px` : '0px', // Tighter spacing
+            marginLeft: '75px',
+            marginTop: '-5px',
+            maxHeight: isExpanded ? `${calculateExpandedHeight(subItems) + 5}px` : '0px',
             overflow: 'hidden',
             transition: 'max-height 0.3s ease-out'
           }}>
             {subItems && (
-              <div style={{ paddingTop: '0px', paddingBottom: '0px' }}> {/* No padding for tighter spacing */}
-                {subItems.map((item, idx) => (
-                  <a key={idx}
-                     href="#"
-                     className="clickable-element"
-                     onClick={(e) => {
-                       e.preventDefault();
-                       if (item === '17-frame animatic') {
-                         navigate('/home-17');
-                       } else if (item === 'travel memories') {
-                         navigate('/uk-memories');
-                       }
-                     }}
-                     style={{
-                       display: 'block',
-                       color: 'rgba(0,0,0,0.7)',
-                       fontSize: '12px',
-                       fontWeight: '500',
-                       letterSpacing: '0.1em',
-                       textDecoration: 'none',
-                       padding: '1px 0', // Very tight padding
-                       transition: 'color 0.25s ease-in-out',
-                       opacity: isExpanded ? 1 : 0,
-                       transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
-                     }}
-                     onMouseEnter={(e) => {
-                       e.target.style.color = '#EECF00';
-                     }}
-                     onMouseLeave={(e) => {
-                       e.target.style.color = 'rgba(0,0,0,0.7)';
-                     }}
-                  >{item}</a>
-                ))}
+              <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
+                {subItems.map((item, idx) => {
+                  // Handle both string items and object items with nested subItems
+                  const itemLabel = typeof item === 'string' ? item : item.label;
+                  const itemKey = typeof item === 'string' ? item : item.key;
+                  const hasNestedItems = typeof item === 'object' && item.subItems;
+
+                  return (
+                    <div key={idx} style={{ marginBottom: hasNestedItems ? '2px' : '0' }}>
+                      <a
+                        href="#"
+                        className="clickable-element"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Navigation logic
+                          if (itemKey === 'uk-memories') {
+                            navigate('/uk-memories');
+                          } else if (itemKey === 'component-library') {
+                            navigate('/experiments/component-library');
+                          } else if (itemKey === 'golden-unknown') {
+                            navigate('/experiments/golden-unknown');
+                          } else if (itemKey === 'thoughts') {
+                            navigate('/thoughts');
+                          }
+                        }}
+                        style={{
+                          display: 'block',
+                          color: 'rgba(0,0,0,0.7)',
+                          fontSize: '12px',
+                          fontWeight: hasNestedItems ? '600' : '500',
+                          letterSpacing: '0.1em',
+                          textDecoration: 'none',
+                          padding: '1px 0',
+                          transition: 'color 0.25s ease-in-out',
+                          opacity: isExpanded ? 1 : 0,
+                          transitionDelay: isExpanded ? `${idx * 0.05}s` : '0s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = '#EECF00';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = 'rgba(0,0,0,0.7)';
+                        }}
+                      >{itemLabel}</a>
+
+                      {/* Render nested sub-items */}
+                      {hasNestedItems && (
+                        <div style={{ marginLeft: '15px', marginTop: '2px' }}>
+                          {item.subItems.map((nestedItem, nestedIdx) => (
+                            <a
+                              key={nestedIdx}
+                              href="#"
+                              className="clickable-element"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                // Add nested navigation logic here as needed
+                              }}
+                              style={{
+                                display: 'block',
+                                color: 'rgba(0,0,0,0.6)',
+                                fontSize: '11px',
+                                fontWeight: '400',
+                                letterSpacing: '0.08em',
+                                textDecoration: 'none',
+                                padding: '1px 0',
+                                transition: 'color 0.25s ease-in-out',
+                                opacity: isExpanded ? 1 : 0,
+                                transitionDelay: isExpanded ? `${(idx + nestedIdx) * 0.05}s` : '0s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.color = '#EECF00';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.color = 'rgba(0,0,0,0.6)';
+                              }}
+                            >{nestedItem}</a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
