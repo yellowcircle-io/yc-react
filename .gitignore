@@ -37,7 +37,10 @@ dist-ssr
 
 # Design assets (large images over 500KB)
 design-assets/
-dev-context/
+# dev-context/ - NOW TRACKED FOR MULTI-MACHINE SYNC
+# Large perplexity exports only
+dev-context/01-research/perplexity-exports/*.md
+dev-context/01-research/perplexity-exports/*.html
 
 # Backup and archive directories
 backups/

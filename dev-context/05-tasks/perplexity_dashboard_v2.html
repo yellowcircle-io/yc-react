@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perplexity Export Progress - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-detail {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .filters {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4a5568;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        th:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.5;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-pending {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        .error-text {
+            color: #e53e3e;
+            font-size: 0.9em;
+            font-family: monospace;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+            font-size: 1.1em;
+        }
+
+        .last-updated {
+            text-align: right;
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .auto-refresh-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #48bb78;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .auto-refresh-indicator.paused {
+            background: #a0aec0;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Perplexity Export Progress</h1>
+        <p class="subtitle">
+            Enhanced Dashboard with Real-time Updates, Filtering & Sorting
+            <span class="auto-refresh-indicator" id="refreshIndicator"></span>
+        </p>
+
+        <div class="controls">
+            <label for="fileInput" class="btn btn-primary">📂 Load CSV</label>
+            <input type="file" id="fileInput" accept=".csv">
+            <button class="btn btn-secondary" onclick="manualRefresh()">🔄 Refresh Data</button>
+            <button class="btn btn-primary" onclick="toggleAutoRefresh()">⏸️ Toggle Auto-Refresh</button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>🔍 Search Title</label>
+                <input type="text" id="searchInput" placeholder="Type to search..." oninput="filterTable()">
+            </div>
+            <div class="filter-group">
+                <label>📋 Status Filter</label>
+                <select id="statusFilter" onchange="filterTable()">
+                    <option value="all">All Threads</option>
+                    <option value="completed">✅ Completed Only</option>
+                    <option value="failed">❌ Failed Only</option>
+                    <option value="pending">⏳ Pending Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>📅 Date Filter</label>
+                <input type="date" id="dateFilter" onchange="filterTable()">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable(0)">#</th>
+                        <th class="sortable" onclick="sortTable(1)">Title</th>
+                        <th class="sortable" onclick="sortTable(2)">Status</th>
+                        <th class="sortable" onclick="sortTable(3)">Export Date</th>
+                        <th class="sortable" onclick="sortTable(4)">Error</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="5" class="no-data">Load a CSV file to see export progress</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="last-updated" id="lastUpdated"></div>
+    </div>
+
+    <script>
+        let csvData = [];
+        let filteredData = [];
+        let sortColumn = -1;
+        let sortAscending = true;
+        let autoRefreshEnabled = true;
+        let refreshInterval = null;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    parseCSV(event.target.result);
+                    startAutoRefresh();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const headers = lines[0].split(',');
+
+            csvData = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = parseCSVLine(lines[i]);
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header.trim()] = values[index] || '';
+                    });
+                    csvData.push(row);
+                }
+            }
+
+            filteredData = [...csvData];
+            updateStats();
+            updateTable();
+            updateLastUpdated();
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function updateStats() {
+            const total = csvData.length;
+            const completed = csvData.filter(row => row.completed === 'True').length;
+            const failed = csvData.filter(row => row.completed === 'False' && row.error).length;
+            const pending = csvData.filter(row => row.completed === 'False' && !row.error).length;
+
+            const completedPercent = ((completed / total) * 100).toFixed(1);
+
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">TOTAL THREADS</div>
+                    <div class="stat-value">${total}</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-label">COMPLETED</div>
+                    <div class="stat-value">${completed}</div>
+                    <div class="stat-detail">${completedPercent}% complete</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-label">FAILED</div>
+                    <div class="stat-value">${failed}</div>
+                    <div class="stat-detail">${((failed / total) * 100).toFixed(1)}% failed</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-label">PENDING</div>
+                    <div class="stat-value">${pending}</div>
+                </div>
+            `;
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">No data matches your filters</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredData.map((row, index) => {
+                const status = row.completed === 'True' ? 'completed' : (row.error ? 'failed' : 'pending');
+                const statusBadge = status === 'completed' ? '✅ Completed' :
+                                   status === 'failed' ? '❌ Failed' : '⏳ Pending';
+                const statusClass = status === 'completed' ? 'status-success' :
+                                   status === 'failed' ? 'status-error' : 'status-pending';
+
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${row.title || 'N/A'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusBadge}</span></td>
+                        <td>${row.export_timestamp || 'Not exported'}</td>
+                        <td><span class="error-text">${row.error || '—'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            filteredData = csvData.filter(row => {
+                // Search filter
+                if (searchTerm && !row.title?.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                // Status filter
+                if (statusFilter !== 'all') {
+                    if (statusFilter === 'completed' && row.completed !== 'True') return false;
+                    if (statusFilter === 'failed' && (row.completed === 'True' || !row.error)) return false;
+                    if (statusFilter === 'pending' && (row.completed === 'True' || row.error)) return false;
+                }
+
+                // Date filter
+                if (dateFilter && row.export_timestamp) {
+                    const rowDate = row.export_timestamp.split(' ')[0]; // Extract date part
+                    if (rowDate !== dateFilter) return false;
+                }
+
+                return true;
+            });
+
+            updateTable();
+        }
+
+        function sortTable(columnIndex) {
+            const headers = ['#', 'title', 'status', 'export_timestamp', 'error'];
+            const columnKey = headers[columnIndex];
+
+            if (sortColumn === columnIndex) {
+                sortAscending = !sortAscending;
+            } else {
+                sortColumn = columnIndex;
+                sortAscending = true;
+            }
+
+            // Update header indicators
+            document.querySelectorAll('th.sortable').forEach((th, index) => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+                if (index === columnIndex) {
+                    th.classList.add(sortAscending ? 'sorted-asc' : 'sorted-desc');
+                }
+            });
+
+            filteredData.sort((a, b) => {
+                let aVal, bVal;
+
+                if (columnIndex === 0) {
+                    // For index, use array position
+                    aVal = csvData.indexOf(a);
+                    bVal = csvData.indexOf(b);
+                } else if (columnIndex === 2) {
+                    // For status, convert to sortable value
+                    aVal = a.completed === 'True' ? 2 : (a.error ? 0 : 1);
+                    bVal = b.completed === 'True' ? 2 : (b.error ? 0 : 1);
+                } else {
+                    aVal = a[columnKey] || '';
+                    bVal = b[columnKey] || '';
+                }
+
+                if (aVal < bVal) return sortAscending ? -1 : 1;
+                if (aVal > bVal) return sortAscending ? 1 : -1;
+                return 0;
+            });
+
+            updateTable();
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent =
+                `Last updated: ${now.toLocaleString()}`;
+        }
+
+        function manualRefresh() {
+            if (csvData.length > 0) {
+                // Trigger file input to reload
+                document.getElementById('fileInput').click();
+            }
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const indicator = document.getElementById('refreshIndicator');
+
+            if (autoRefreshEnabled) {
+                indicator.classList.remove('paused');
+                startAutoRefresh();
+            } else {
+                indicator.classList.add('paused');
+                stopAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+
+            if (autoRefreshEnabled) {
+                refreshInterval = setInterval(() => {
+                    // Auto-refresh by reloading the same file
+                    const fileInput = document.getElementById('fileInput');
+                    if (fileInput.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            parseCSV(event.target.result);
+                        };
+                        reader.readAsText(fileInput.files[0]);
+                    }
+                }, 5000); // Refresh every 5 seconds
+            }
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+    </script>
+</body>
+</html>
