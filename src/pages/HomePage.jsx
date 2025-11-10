@@ -610,6 +610,16 @@ function HomePage() {
           }
         }
 
+        /* Footer equal columns - ensure 50/50 split */
+        .footer-content {
+          display: flex !important;
+        }
+        .footer-section {
+          flex: 1 1 50% !important;
+          min-width: 0 !important;
+          max-width: 50% !important;
+        }
+
         /* Footer responsive fixes - keep 50/50 layout on all viewports */
         @media (max-width: 768px) {
           /* Reduce padding in footer sections but keep side-by-side */
@@ -981,7 +991,7 @@ function HomePage() {
           position: 'fixed',
           bottom: '40px',
           left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-          maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(640px, 50vw)',
+          maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
           zIndex: 61,
           pointerEvents: 'none',
           transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
@@ -1042,6 +1052,7 @@ function HomePage() {
         {/* Full Footer Content */}
         <div
           onClick={handleFooterToggle}
+          className="footer-content"
           style={{
             position: 'absolute',
             top: '0',
@@ -1053,7 +1064,7 @@ function HomePage() {
           }}
         >
           {/* Contact Section */}
-          <div style={{
+          <div className="footer-section footer-contact" style={{
             flex: '1',
             backgroundColor: 'rgba(0,0,0,0.9)',
             backdropFilter: 'blur(12px)',
@@ -1117,7 +1128,7 @@ function HomePage() {
           </div>
 
           {/* Projects Section */}
-          <div style={{
+          <div className="footer-section footer-projects" style={{
             flex: '1',
             backgroundColor: '#EECF00',
             padding: '40px',
