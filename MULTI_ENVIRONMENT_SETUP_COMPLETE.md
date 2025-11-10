@@ -8,17 +8,36 @@
 
 ## 🎉 What's Now Enabled
 
-Your yellowCircle project now has **real-time context sharing** across ALL access points:
+Your yellowCircle project now has **real-time context sharing** with a three-tier sync system:
 
-| Platform | Sync Method | Status |
+### **Sync Hierarchy:**
+
+**1️⃣ PRIMARY: Dropbox** (Automatic, 10-30 seconds)
+- Mac Mini ↔ MacBook Air: Real-time sync
+- Claude Code gets context immediately
+- No manual commands needed
+
+**2️⃣ SECONDARY: Google Drive** (Backup + Rho Projects)
+- Automatic backup repository
+- Rho-related project storage
+- Additional redundancy
+
+**3️⃣ TERTIARY: GitHub** (Version Control - Update Often!)
+- Foundational version control
+- Required for Codespaces/Web/remote access
+- Manual push after significant work
+
+### **Access Points:**
+
+| Platform | Primary Sync | Status |
 |----------|-------------|--------|
-| **Mac Mini** | Dropbox + GitHub | ✅ Active |
-| **MacBook Air** | Dropbox + GitHub | ✅ Active |
-| **iPad/iPhone (SSH)** | Direct to Mac via SSH | ✅ Active |
-| **GitHub Codespaces** | Git clone | ✅ Ready |
-| **Claude Code Web** | GitHub clone | ✅ Ready |
-| **Google Drive** | Manual backup | ✅ Optional |
-| **Future Machines** | `git pull` | ✅ Ready |
+| **Mac Mini** | Dropbox (auto) | ✅ Active |
+| **MacBook Air** | Dropbox (auto) | ✅ Active |
+| **iPad/iPhone (SSH)** | SSH → Dropbox (real-time) | ✅ Active |
+| **Google Drive** | Google Drive sync | ✅ Active |
+| **GitHub Codespaces** | GitHub (manual pull) | ✅ Ready |
+| **Claude Code Web** | GitHub (manual pull) | ✅ Ready |
+| **Future Machines** | Dropbox or git pull | ✅ Ready |
 
 ---
 
@@ -58,21 +77,31 @@ cat .claude/shared-context/WIP_CURRENT_CRITICAL.md
 
 ### **After Making Changes**
 
+**PRIMARY (Automatic):**
 ```bash
-# Stage changes
+# Just save files - Dropbox syncs automatically
+# Wait 30 seconds before switching Macs
+```
+
+**FOUNDATIONAL (After significant work):**
+```bash
+# Push to GitHub for version control + remote access
 git add .claude/ dev-context/
-
-# Commit
 git commit -m "Update: [description]"
-
-# Push to sync everywhere
 git push
 ```
 
-### **Switch to Different Machine**
+### **Switch Between Macs**
 
+**Mac to Mac:**
 ```bash
-# Just pull latest
+# Wait 30 seconds for Dropbox sync
+# That's it! Files are already synced
+```
+
+**From Codespaces/Web:**
+```bash
+# Pull latest from GitHub
 git pull
 
 # Continue working

@@ -34,8 +34,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 4. **Before Ending Session:**
    - Update `.claude/shared-context/WIP_CURRENT_CRITICAL.md` with current status
    - Update machine-specific instance log (`.claude/INSTANCE_LOG_[MACHINE].md`)
-   - Commit and push changes: `git add .claude/ dev-context/ && git commit -m "Update" && git push`
-   - Wait 30 seconds for Dropbox sync before user switches machines
+   - **PRIMARY:** Wait 30 seconds for Dropbox sync (automatic - just wait!)
+   - **FOUNDATIONAL:** Push to GitHub after significant work:
+     ```bash
+     git add .claude/ dev-context/
+     git commit -m "Update: [description]"
+     git push
+     ```
+   - Git push is for version control + remote access (Codespaces/Web/iPad)
 
 ### Key Files:
 
@@ -49,11 +55,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`.claude/INSTANCE_LOG_[MACHINE].md`** - Machine-specific session history
 
 ### Multi-Environment Sync (Updated Nov 9, 2025):
-- **Dropbox:** Syncs files between Mac Mini and MacBook Air (10-30 seconds)
-- **GitHub:** ALL platforms - Mac, Codespaces, iPad/iPhone, Web (commit `.claude/` + `dev-context/`)
-- **Real-time:** 7 access points supported (Mac Mini, MacBook Air, Codespaces, iPad/iPhone SSH, Web, Google Drive backup, future machines)
-- **Auto-sync:** `git pull` before work, `git push` after changes
-- **Verification:** Run `./.claude/verify-sync.sh` anytime to check status
+
+**Sync Hierarchy (in order of priority):**
+
+1. **PRIMARY: Dropbox** (10-30 seconds automatic)
+   - Mac Mini ↔ MacBook Air: Real-time context sharing
+   - Claude Code reads from Dropbox files immediately
+   - No manual commands needed
+   - Wait 30 seconds before switching machines
+
+2. **SECONDARY: Google Drive** (Backup + Rho Projects)
+   - Automatic backup repository
+   - Rho-related project storage
+   - Additional redundancy
+
+3. **TERTIARY: GitHub** (Version Control - UPDATE OFTEN!)
+   - Foundational version control and history
+   - Enables Codespaces, Web, remote access
+   - Push after significant work sessions
+   - Required for: `git commit` then `git push`
+
+**For Mac-to-Mac work:** Dropbox handles everything automatically
+**For remote access (Codespaces/Web):** Requires `git pull` first
+**Verification:** Run `./.claude/verify-sync.sh` anytime to check status
 
 ### Custom Commands:
 

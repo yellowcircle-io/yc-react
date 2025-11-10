@@ -7,17 +7,36 @@
 
 ## 🎯 Overview
 
-This project supports **real-time context sharing** across ALL access points:
+This project supports **real-time context sharing** with a three-tier sync system:
+
+### **Sync Hierarchy:**
+
+**1️⃣ PRIMARY: Dropbox** (Real-time between Macs)
+- Mac Mini ↔ MacBook Air: 10-30 seconds automatic sync
+- Claude Code gets context immediately via Dropbox files
+- No manual commands needed
+
+**2️⃣ SECONDARY: Google Drive** (Backup + Rho Projects)
+- Backup repository for all project files
+- Rho-related project storage and collaboration
+- Automatic sync (when configured)
+
+**3️⃣ TERTIARY: GitHub** (Version Control + Remote Access)
+- Foundational version control (update often!)
+- Required for: Codespaces, Web, iPad/iPhone remote access
+- Manual git push/pull required
+
+### **Access Points:**
 
 | Environment | Sync Method | Sync Time | Auto-Sync |
 |------------|-------------|-----------|-----------|
-| **Mac Mini** | Dropbox + GitHub | 10-30s (Dropbox) | ✅ Yes |
-| **MacBook Air** | Dropbox + GitHub | 10-30s (Dropbox) | ✅ Yes |
-| **Google Drive** | Manual copy from Dropbox | Manual | ❌ No |
-| **GitHub** | Git push/pull | Instant | ✅ Yes (after commit) |
-| **GitHub Codespaces** | Git clone from GitHub | Instant | ✅ Yes (git pull) |
-| **iPad/iPhone (SSH/Termius)** | SSH to Mac Mini/Air | Real-time | ✅ Yes |
-| **Claude Code Web** | GitHub clone | Instant | ✅ Yes (git pull) |
+| **Mac Mini** | Dropbox (primary) | 10-30s | ✅ Yes |
+| **MacBook Air** | Dropbox (primary) | 10-30s | ✅ Yes |
+| **Google Drive** | Google Drive sync | Auto | ✅ Yes |
+| **GitHub** | Git push/pull | Manual | ⚠️ Manual |
+| **GitHub Codespaces** | GitHub clone | After push | ⚠️ Requires git pull |
+| **iPad/iPhone (SSH)** | SSH to Mac → Dropbox | Real-time | ✅ Yes |
+| **Claude Code Web** | GitHub clone | After push | ⚠️ Requires git pull |
 
 ---
 
@@ -44,20 +63,30 @@ This project supports **real-time context sharing** across ALL access points:
 
 ### **Mac Mini / MacBook Air (Desktop)**
 
-**Automatic Sync:**
-1. **Dropbox** syncs files between machines (10-30 seconds)
-2. **Manual Git** push to GitHub for web/mobile access
+**PRIMARY: Dropbox Auto-Sync (Immediate)**
+1. Save files → Dropbox syncs automatically (10-30 seconds)
+2. Claude Code on other Mac gets updates instantly
+3. No commands needed - just wait 30 seconds before switching
 
-**Workflow:**
+**IMPORTANT: Git is Foundational (Update Often)**
+After significant work sessions:
 ```bash
-# After making changes
-git status
+# Commit to GitHub for version control + remote access
 git add .claude/ dev-context/
 git commit -m "Update roadmap: [description]"
 git push
-
-# Wait 30 seconds for Dropbox sync before switching machines
 ```
+
+**Why push to GitHub often:**
+- ✅ Version control and history
+- ✅ Enables Codespaces/Web access
+- ✅ Backup beyond Dropbox/Google Drive
+- ✅ Collaboration and remote work
+
+**Normal workflow:**
+1. Work on Mac → Dropbox syncs to other Mac automatically
+2. Switch machines → Files already synced via Dropbox
+3. Periodically push to GitHub (after sessions or major updates)
 
 ---
 
@@ -130,18 +159,22 @@ git push
 
 ---
 
-### **Google Drive (Manual Backup)**
+### **Google Drive (Backup + Rho Projects)**
 
-**Purpose:** Archival backup only (not for active sync)
+**Purpose:**
+- Backup repository for all project files
+- Rho-related project storage and collaboration
+- Additional redundancy beyond Dropbox
 
-**Workflow:**
-```bash
-# Copy from Dropbox to Google Drive (manual)
-cp -r ~/Dropbox/CC\ Projects/yellowcircle/yellow-circle/dev-context/ \
-      ~/Google\ Drive/yellowcircle-backup/dev-context/
-```
+**Sync Method:** Automatic (when Google Drive desktop app configured)
 
-**Recommendation:** Use GitHub as primary sync, Google Drive for weekly backups.
+**Contains:**
+- Project backups
+- Rho-specific work files
+- Shared collaboration documents
+- Archive of dev-context periodically
+
+**Not for:** Real-time Claude Code context (use Dropbox for that)
 
 ---
 
