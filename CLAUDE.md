@@ -56,6 +56,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Multi-Environment Sync (Updated Nov 9, 2025):
 
+**⚠️ CRITICAL: Correct Dropbox Path**
+
+**Official Dropbox location (Mac):** `/Users/[USERNAME]/Library/CloudStorage/Dropbox`
+
+**DO NOT USE:** `/Users/[USERNAME]/Dropbox` (old path, not synced!)
+
+The `.claude/verify-sync.sh` script will detect and warn about incorrect paths.
+
 **Sync Hierarchy (in order of priority):**
 
 1. **PRIMARY: Dropbox** (10-30 seconds automatic)
@@ -63,6 +71,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Claude Code reads from Dropbox files immediately
    - No manual commands needed
    - Wait 30 seconds before switching machines
+   - **MUST use official path:** `~/Library/CloudStorage/Dropbox`
 
 2. **SECONDARY: Google Drive** (Backup + Rho Projects)
    - Automatic backup repository
@@ -75,7 +84,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Push after significant work sessions
    - Required for: `git commit` then `git push`
 
-**For Mac-to-Mac work:** Dropbox handles everything automatically
+**For Mac-to-Mac work:** Dropbox handles everything automatically (use correct path!)
 **For remote access (Codespaces/Web):** Requires `git pull` first
 **Verification:** Run `./.claude/verify-sync.sh` anytime to check status
 
