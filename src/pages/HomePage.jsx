@@ -959,7 +959,7 @@ function HomePage() {
         top: 0,
         width: sidebarOpen ? 'min(max(280px, 35vw), 472px)' : '80px',
         height: '100vh',
-        backgroundColor: 'rgba(242, 242, 242, 0.96)',
+        backgroundColor: 'rgba(242, 242, 242, 0.44)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         zIndex: 50,
