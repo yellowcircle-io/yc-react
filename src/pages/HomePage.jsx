@@ -359,19 +359,9 @@ function HomePage() {
     return height;
   };
 
-  // Navigation Item Component - Absolute positioning with accordion functionality
+  // Navigation Item Component - Natural flex flow with accordion functionality
   const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
     const isExpanded = expandedSection === itemKey && sidebarOpen;
-
-    // Calculate vertical position accounting for expanded items above
-    let topPosition = index * 50; // Base spacing between items
-    for (let i = 0; i < index; i++) {
-      const prevItemKey = navigationItems[i]?.itemKey;
-      if (expandedSection === prevItemKey && sidebarOpen) {
-        const prevSubItems = navigationItems[i]?.subItems || [];
-        topPosition += calculateExpandedHeight(prevSubItems) + 10; // Add expanded height plus spacing
-      }
-    }
 
     const handleClick = () => {
       if (!sidebarOpen) {
@@ -394,25 +384,33 @@ function HomePage() {
 
     return (
       <div style={{
-        position: 'absolute',
-        top: `${topPosition}px`,
-        left: 0,
+        position: 'relative',
         width: '100%',
-        transition: 'top 0.3s ease-out' // Smooth movement for accordion
+        flexShrink: 0
       }}>
         {/* Main navigation item container */}
-        <div 
+        <div
           style={{
             display: 'flex',
             alignItems: 'center',
             padding: '8px 0',
             position: 'relative',
             minHeight: '40px',
-            width: '100%'
+            width: '100%',
+            borderRadius: '4px',
+            transition: 'background-color 0.2s ease-out'
+          }}
+          onMouseEnter={(e) => {
+            if (sidebarOpen) {
+              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
           {/* Clickable area - covers full width for better interaction */}
-          <div 
+          <div
             className="clickable-element"
             onClick={handleClick}
             onTouchEnd={(e) => {
@@ -432,7 +430,7 @@ function HomePage() {
           />
 
           {/* Icon - Always centered relative to closed sidebar width */}
-          <div style={{ 
+          <div style={{
             position: 'absolute',
             left: '40px', // Center of 80px closed sidebar width
             top: '50%',
@@ -443,14 +441,19 @@ function HomePage() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            transition: 'transform 0.2s ease-out'
           }}>
-            <img 
+            <img
               src={icon}
               alt={label}
-              width="24" 
-              height="24" 
-              style={{ display: 'block' }}
+              width="24"
+              height="24"
+              style={{
+                display: 'block',
+                transition: 'filter 0.2s ease-out',
+                filter: isExpanded ? 'brightness(1.2)' : 'brightness(1)'
+              }}
             />
           </div>
 
@@ -477,9 +480,9 @@ function HomePage() {
           <div style={{
             marginLeft: '75px',
             marginTop: '-5px',
-            maxHeight: isExpanded ? `${calculateExpandedHeight(subItems) + 5}px` : '0px',
+            maxHeight: isExpanded ? '600px' : '0px',
             overflow: 'hidden',
-            transition: 'max-height 0.3s ease-out'
+            transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
           }}>
             {subItems && (
               <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
@@ -903,7 +906,7 @@ function HomePage() {
       </nav>
 
       {/* ===========================================
-          SIDEBAR MODULE - Consistent Alignment System
+          SIDEBAR MODULE - Flexbox Three-Section Layout
           =========================================== */}
       <div style={{
         position: 'fixed',
@@ -911,112 +914,127 @@ function HomePage() {
         top: 0,
         width: sidebarOpen ? 'min(35vw, 472px)' : '80px',
         height: '100vh',
-        maxHeight: '100vh',
         backgroundColor: 'rgba(242, 242, 242, 0.96)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         zIndex: 50,
         transition: 'width 0.5s ease-out',
-        overflowY: 'auto'
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}>
-        
-        {/* Sidebar Toggle Button - Fixed pixel position, never moves */}
-        <div 
-          className="clickable-element"
-          onClick={handleSidebarToggle}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            handleSidebarToggle();
-          }}
-          style={{
-            position: 'absolute',
-            top: '20px',
-            left: '40px',
-            transform: 'translateX(-50%)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px',
-            width: '40px',
-            height: '40px',
-            WebkitTapHighlightColor: 'transparent'
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="black" viewBox="0 0 16 16">
-            <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/>
-            <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
-          </svg>
-        </div>
-        
-        {/* HOME Label - Fixed pixel position, never moves */}
-        <div style={{ 
-          position: 'absolute',
-          top: '100px',
-          left: '40px',
-          transform: 'translateX(-50%) rotate(-90deg)',
-          transformOrigin: 'center',
-          whiteSpace: 'nowrap'
+
+        {/* HEADER SECTION - Toggle + HOME Label */}
+        <div style={{
+          flexShrink: 0,
+          height: '140px',
+          position: 'relative'
         }}>
-          <span style={{ 
-            color: 'black', 
-            fontWeight: '600', 
-            letterSpacing: '0.3em', 
-            fontSize: '14px'
-          }}>HOME</span>
+          {/* Sidebar Toggle Button */}
+          <div
+            className="clickable-element"
+            onClick={handleSidebarToggle}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleSidebarToggle();
+            }}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '40px',
+              transform: 'translateX(-50%)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '8px',
+              width: '40px',
+              height: '40px',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'transform 0.2s ease-out'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1)'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="black" viewBox="0 0 16 16">
+              <path d="M14 2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/>
+              <path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z"/>
+            </svg>
+          </div>
+
+          {/* HOME Label */}
+          <div style={{
+            position: 'absolute',
+            top: '100px',
+            left: '40px',
+            transform: 'translateX(-50%) rotate(-90deg)',
+            transformOrigin: 'center',
+            whiteSpace: 'nowrap'
+          }}>
+            <span style={{
+              color: 'black',
+              fontWeight: '600',
+              letterSpacing: '0.3em',
+              fontSize: '14px'
+            }}>HOME</span>
+          </div>
         </div>
 
-        {/* Navigation Items Container - Centered with proper spacing */}
-        <div
+        {/* NAVIGATION SECTION - Scrollable flex container */}
+        <nav
           className="navigation-items-container"
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: 0,
-            transform: 'translateY(-50%)',
-            width: '100%',
-            height: '400px', // Enough space for all items when expanded
-            maxHeight: 'calc(100vh - 200px)',
+            flex: 1,
             overflowY: 'auto',
-            paddingBottom: '20px'
+            overflowX: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            padding: '10px 0',
+            minHeight: 0 // Critical for flex scroll behavior
           }}
         >
-          {/* Each navigation item */}
           {navigationItems.map((item, index) => (
-            <NavigationItem 
-              key={item.itemKey} 
-              {...item} 
+            <NavigationItem
+              key={item.itemKey}
+              {...item}
               index={index}
-              sidebarOpen={sidebarOpen}
-              expandedSection={expandedSection}
-              setExpandedSection={setExpandedSection}
-              setSidebarOpen={setSidebarOpen}
             />
           ))}
-        </div>
+        </nav>
 
-        {/* YC Logo - Responsive positioning for mobile */}
-        <div className="yc-logo" style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '45px',
-          height: '45px',
-          minWidth: '40px',
-          minHeight: '40px',
-          borderRadius: '50%',
-          overflow: 'visible',
-          zIndex: 100,
-          cursor: 'pointer'
-        }}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          <img
-            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
-            alt="YC Logo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-          />
+        {/* FOOTER SECTION - YC Logo */}
+        <div style={{
+          flexShrink: 0,
+          height: '85px',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div
+            className="yc-logo clickable-element"
+            style={{
+              width: '45px',
+              height: '45px',
+              minWidth: '40px',
+              minHeight: '40px',
+              borderRadius: '50%',
+              overflow: 'visible',
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease-out',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1) rotate(5deg)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1) rotate(0deg)'}
+          >
+            <img
+              src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
+              alt="YC Logo"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+            />
+          </div>
         </div>
       </div>
 
