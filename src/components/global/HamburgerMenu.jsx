@@ -1,156 +1,377 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useLayout } from '../../contexts/LayoutContext';
 
 /**
- * Shared Hamburger Menu Component
- * Fullscreen overlay menu with animated navigation items
+ * HamburgerMenu - Three-line button and full-screen menu overlay
+ * Inspired by canals-amsterdam.com - right-aligned with slide-in animation
  */
-const HamburgerMenu = ({
-  isOpen = false,
-  onClose,
-  menuItems = [],
-  customStyles = {}
-}) => {
+function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { menuOpen } = useLayout();
+  const [hoveredItem, setHoveredItem] = React.useState(null);
 
-  // Close menu on escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when menu is open
-      document.body.style.overflow = 'hidden';
+  // Close menu on location change
+  React.useEffect(() => {
+    if (menuOpen && onMenuToggle) {
+      onMenuToggle();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, onClose]);
-
-  const handleItemClick = (item) => {
-    if (item.onClick) {
-      item.onClick();
-    } else if (item.path) {
-      navigate(item.path);
+  // Inject keyframe animations
+  React.useEffect(() => {
+    const styleId = 'hamburger-menu-animations';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 0.96;
+          }
+        }
+        @keyframes slideInMenuItem {
+          from {
+            transform: translateX(50px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
-    onClose();
+  }, []);
+
+  const handleMenuClick = () => {
+    if (onMenuToggle) onMenuToggle();
   };
 
-  if (!isOpen) return null;
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    if (onHomeClick) onHomeClick(e);
+  };
+
+  const handleFooterToggle = () => {
+    if (onFooterToggle) onFooterToggle();
+  };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(242, 242, 242, 0.98)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      zIndex: 2000,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      opacity: isOpen ? 1 : 0,
-      transition: 'opacity 0.3s ease-out',
-      ...customStyles.container
-    }}>
-      {/* Close Button */}
+    <>
+      {/* Hamburger Menu Button */}
       <button
-        type="button"
-        onClick={onClose}
+        onClick={handleMenuClick}
         style={{
-          position: 'absolute',
-          top: '30px',
-          right: '30px',
-          width: '50px',
-          height: '50px',
-          borderRadius: '50%',
+          position: 'fixed',
+          right: '50px',
+          top: '20px',
+          padding: '10px',
           backgroundColor: 'transparent',
           border: 'none',
           cursor: 'pointer',
+          zIndex: 260,
+          pointerEvents: 'auto'
+        }}
+      >
+        <div style={{
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'transform 0.2s ease-out',
-          zIndex: 2001
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'rotate(0deg) scale(1)'}
-        aria-label="Close menu"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
+          width: '24px',
+          height: '18px',
+          position: 'relative'
+        }}>
+          {[0, 1, 2].map((index) => (
+            <div key={index} style={{
+              position: 'absolute',
+              top: '50%',
+              left: index === 1 ? '60%' : '50%',
+              width: '40px',
+              height: '3px',
+              backgroundColor: 'black',
+              transformOrigin: 'center',
+              transform: menuOpen
+                ? index === 0
+                  ? 'translate(-50%, -50%) rotate(45deg)'
+                  : index === 2
+                    ? 'translate(-50%, -50%) rotate(-45deg)'
+                    : 'translate(-50%, -50%)'
+                : `translate(-50%, -50%) translateY(${(index - 1) * 6}px)`,
+              opacity: menuOpen && index === 1 ? 0 : 1,
+              transition: 'all 0.3s ease'
+            }}></div>
+          ))}
+        </div>
       </button>
 
-      {/* Menu Items */}
-      <nav style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '20px',
-        ...customStyles.nav
-      }}>
-        {menuItems.map((item, index) => (
-          <button
-            key={item.id || index}
-            type="button"
-            onClick={() => handleItemClick(item)}
-            style={{
-              fontSize: item.fontSize || '32px',
-              fontWeight: item.fontWeight || '600',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'black',
-              cursor: 'pointer',
-              backgroundColor: 'transparent',
-              border: 'none',
-              outline: 'none',
-              padding: '12px 24px',
-              transition: 'color 0.2s ease-out, transform 0.2s ease-out',
-              font: 'inherit',
-              opacity: 0,
-              transform: 'translateY(20px)',
-              animation: isOpen ? `slideInUp 0.4s ease-out ${index * 0.1}s forwards` : 'none',
-              ...customStyles.item
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = '#EECF00';
-              e.target.style.transform = 'translateY(0) scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = 'black';
-              e.target.style.transform = 'translateY(0) scale(1)';
-            }}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      {/* Menu Overlay - Slides in from right with right-aligned content */}
+      {menuOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#EECF00',
+          opacity: 0.96,
+          zIndex: 250,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          paddingRight: 'max(50px, 5vw)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          animation: 'slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: '5px'
+          }}>
+            {['HOME', 'STORIES', 'LABS', 'WORKS', 'CONTACT'].map((item, index) => {
+              const isIndented = item.startsWith('>');
+              const displayText = isIndented ? item.substring(1) : item;
+              const isButton = item === 'WORKS' || item === 'CONTACT';
 
-      {/* Animation keyframes injected via style tag */}
-      <style>
-        {`
-          @keyframes slideInUp {
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}
-      </style>
-    </div>
+              if (isButton) {
+                return (
+                  <div
+                    key={item}
+                    className={item === 'WORKS' ? 'menu-button-works' : 'menu-button-contact'}
+                    onClick={item === 'CONTACT' ? handleFooterToggle : undefined}
+                    style={{
+                      backgroundColor: item === 'WORKS' ? 'white' : 'black',
+                      border: 'none',
+                      padding: '15px 40px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      animation: `slideInMenuItem 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.12}s both`,
+                      textAlign: 'right',
+                      transition: 'all 0.3s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (item === 'WORKS') {
+                        e.currentTarget.style.backgroundColor = 'black';
+                        e.currentTarget.querySelector('span').style.color = 'white';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#EECF00';
+                        e.currentTarget.querySelector('span').style.color = 'white';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (item === 'WORKS') {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.querySelector('span').style.color = 'black';
+                      } else {
+                        e.currentTarget.style.backgroundColor = 'black';
+                        e.currentTarget.querySelector('span').style.color = '#EECF00';
+                      }
+                    }}
+                  >
+                    <span style={{
+                      color: item === 'WORKS' ? 'black' : '#EECF00',
+                      fontSize: 'clamp(1.5rem, 8vh, 6rem)',
+                      fontWeight: '900',
+                      fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                      letterSpacing: '0.3em',
+                      transition: 'color 0.3s ease-in-out'
+                    }}>{displayText}</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={item}
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    gap: '20px'
+                  }}
+                  onMouseEnter={() => {
+                    if (item === 'LABS') setHoveredItem('LABS');
+                  }}
+                  onMouseLeave={() => {
+                    if (item === 'LABS') setHoveredItem(null);
+                  }}
+                >
+                  {/* Show Labs sub-items to the LEFT of LABS when hovering */}
+                  {item === 'LABS' && hoveredItem === 'LABS' && (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      gap: '8px',
+                      marginRight: '20px'
+                    }}>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate('/uk-memories');
+                        }}
+                        style={{
+                          textDecoration: 'none',
+                          color: 'black',
+                          fontSize: 'clamp(0.9rem, 3.5vh, 2.5rem)',
+                          fontWeight: '700',
+                          fontFamily: 'Helvetica, Arial, sans-serif',
+                          letterSpacing: '0.2em',
+                          padding: '8px 0px',
+                          borderRadius: '4px',
+                          textAlign: 'right',
+                          display: 'block',
+                          opacity: 0.8,
+                          transition: 'all 0.3s ease-in-out',
+                          animation: 'slideInMenuItem 0.3s ease-in-out',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = 'white';
+                          e.target.style.opacity = 1;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = 'black';
+                          e.target.style.opacity = 0.8;
+                        }}
+                      >
+                        UK-Memories &gt;
+                      </a>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate('/unity-notes');
+                        }}
+                        style={{
+                          textDecoration: 'none',
+                          color: 'black',
+                          fontSize: 'clamp(0.9rem, 3.5vh, 2.5rem)',
+                          fontWeight: '700',
+                          fontFamily: 'Helvetica, Arial, sans-serif',
+                          letterSpacing: '0.2em',
+                          padding: '8px 0px',
+                          borderRadius: '4px',
+                          textAlign: 'right',
+                          display: 'block',
+                          opacity: 0.8,
+                          transition: 'all 0.3s ease-in-out',
+                          animation: 'slideInMenuItem 0.35s ease-in-out',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = 'white';
+                          e.target.style.opacity = 1;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = 'black';
+                          e.target.style.opacity = 0.8;
+                        }}
+                      >
+                        Unity Notes &gt;
+                      </a>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate('/experiments/component-library');
+                        }}
+                        style={{
+                          textDecoration: 'none',
+                          color: 'black',
+                          fontSize: 'clamp(0.9rem, 3.5vh, 2.5rem)',
+                          fontWeight: '700',
+                          fontFamily: 'Helvetica, Arial, sans-serif',
+                          letterSpacing: '0.2em',
+                          padding: '8px 0px',
+                          borderRadius: '4px',
+                          textAlign: 'right',
+                          display: 'block',
+                          opacity: 0.8,
+                          transition: 'all 0.3s ease-in-out',
+                          animation: 'slideInMenuItem 0.4s ease-in-out',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = 'white';
+                          e.target.style.opacity = 1;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = 'black';
+                          e.target.style.opacity = 0.8;
+                        }}
+                      >
+                        Component Library &gt;
+                      </a>
+                    </div>
+                  )}
+
+                  <a
+                    href="#"
+                    onClick={
+                      item === 'HOME' ? handleHomeClick :
+                      item === 'STORIES' ? undefined :
+                      item === 'LABS' ? () => navigate('/experiments') :
+                      undefined
+                    }
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      if (item === 'HOME') handleHomeClick(e);
+                      else if (item === 'LABS') navigate('/experiments');
+                    }}
+                    className={`menu-item-${index + 1} menu-link`}
+                    style={{
+                      textDecoration: 'none',
+                      color: 'black',
+                      fontSize: 'clamp(1.5rem, 8vh, 6rem)',
+                      fontWeight: '900',
+                      fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                      letterSpacing: '0.3em',
+                      padding: '10px 20px',
+                      paddingRight: isIndented ? '60px' : '20px',
+                      borderRadius: '4px',
+                      WebkitTapHighlightColor: 'transparent',
+                      userSelect: 'none',
+                      animation: `slideInMenuItem 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.12}s both`,
+                      textAlign: 'right',
+                      display: 'block',
+                      transition: 'color 0.3s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.color = 'black';
+                    }}
+                  >
+                    {displayText}
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
   );
-};
+}
 
 export default HamburgerMenu;
