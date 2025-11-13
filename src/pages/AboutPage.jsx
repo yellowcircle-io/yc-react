@@ -1,414 +1,144 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useParallax } from '../hooks';
-import TailwindSidebar from '../components/shared/TailwindSidebar';
+import { useLayout } from '../contexts/LayoutContext';
+import Layout from '../components/global/Layout';
+import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 
-const AboutPage = () => {
+function AboutPage() {
   const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [footerOpen, setFooterOpen] = useState(false);
-  const [navCircleAtEnd] = useState(false);
-  const [expandedAccordionItems, setExpandedAccordionItems] = useState(new Set());
+  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
 
-  // Use shared parallax hook
-  const { x, y } = useParallax({
-    enableMouse: true,
-    enableDeviceMotion: true,
-    mouseIntensity: 0.6,
-    motionIntensity: 0.6
-  });
-
-  const circleTransform = {
-    transform: `translate(${x}px, ${y}px)`
-  };
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleFooter = () => setFooterOpen(!footerOpen);
-
-  const toggleAccordionItem = (item) => {
-    const newExpanded = new Set(expandedAccordionItems);
-    if (newExpanded.has(item)) {
-      newExpanded.delete(item);
-    } else {
-      newExpanded.add(item);
+  // Inject stagger animation
+  React.useEffect(() => {
+    const styleId = 'text-stagger-animations';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
-    setExpandedAccordionItems(newExpanded);
+  }, []);
+
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    navigate('/');
   };
 
-  const handleSidebarNavigation = (path) => {
-    navigate(path);
-    setSidebarOpen(false);
-  };
-
-  const handleMenuNavigation = (path) => {
-    navigate(path);
-    setIsMenuOpen(false);
-  };
+  // HomePage's navigation structure
+  const navigationItems = [
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
+      label: "STORIES",
+      itemKey: "stories",
+      subItems: [
+        {
+          label: "Projects",
+          key: "projects",
+          subItems: ["Brand Development", "Marketing Architecture", "Email Development"]
+        },
+        { label: "Golden Unknown", key: "golden-unknown" },
+        {
+          label: "Cath3dral",
+          key: "cath3dral",
+          subItems: ["Being + Rhyme"]
+        },
+        { label: "Thoughts", key: "thoughts" }
+      ]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
+      label: "LABS",
+      itemKey: "labs",
+      subItems: [
+        { label: "UK-Memories", key: "uk-memories" },
+        { label: "Home-17", key: "home-17" },
+        { label: "Visual Noteboard", key: "visual-noteboard" },
+        { label: "Component Library", key: "component-library" }
+      ]
+    },
+    {
+      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
+      label: "ABOUT",
+      itemKey: "about",
+      subItems: []
+    }
+  ];
 
   return (
-    <div
-      className="relative h-screen w-full overflow-auto bg-white"
-      style={{
-        backgroundColor: '#f8fafc',
-        backgroundImage: `
-          radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(255, 183, 77, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 40% 40%, rgba(254, 202, 202, 0.05) 0%, transparent 50%)
-        `
-      }}
+    <Layout
+      onHomeClick={handleHomeClick}
+      onFooterToggle={handleFooterToggle}
+      onMenuToggle={handleMenuToggle}
+      navigationItems={navigationItems}
+      pageLabel="ABOUT"
     >
-      {/* FOUNDATION BACKGROUND LAYER - WHITE BASE */}
-      <div
-        className="foundation-background-layer"
-        data-layer="foundation"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: '#FFFFFF',
-          zIndex: -1000,
-          pointerEvents: 'none'
-        }}
-        aria-hidden="true"
-      />
+      {/* Main Content - Matches HomePage positioning */}
+      <div style={{
+        position: 'fixed',
+        bottom: '40px',
+        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
+        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        zIndex: 61,
+        pointerEvents: 'none',
+        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
+        transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
+      }}>
+        <div style={{
+          ...TYPOGRAPHY.container
+        }}>
+          {/* Large "ABOUT" heading */}
+          <h1 style={{
+            ...TYPOGRAPHY.h1,
+            color: COLORS.yellow,
+            ...EFFECTS.blurLight,
+            display: 'inline-block',
+            animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
+          }}>
+            ABOUT
+          </h1>
 
-      {/* Background Yellow Circle */}
-      <div 
-        className="fixed pointer-events-none z-0"
-        style={{
-          top: '50%',
-          left: '50%',
-          width: '600px',
-          height: '600px',
-          marginLeft: '-300px',
-          marginTop: '-300px',
-          background: 'radial-gradient(circle, rgba(255, 183, 77, 0.15) 0%, rgba(255, 183, 77, 0.05) 40%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(1px)',
-          ...circleTransform
-        }}
-      />
-
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-6 flex justify-between items-center bg-white/80 backdrop-blur-sm">
-        <button 
-          onClick={() => navigate('/')}
-          className="text-2xl font-bold hover:text-orange-400 transition-colors duration-300"
-          style={{ fontFamily: 'SF Pro Display, system-ui, sans-serif' }}
-        >
-          yellowCIRCLE
-        </button>
-        
-        <button 
-          onClick={toggleSidebar}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-          aria-label="Toggle sidebar"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-      </header>
-
-
-      {/* Shared Tailwind Sidebar */}
-      <TailwindSidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        expandedItems={expandedAccordionItems}
-        onToggleItem={toggleAccordionItem}
-        currentPage="about"
-      />
-
-
-      {/* Main Content */}
-      <main className="relative z-10 pt-24 pb-32">
-        <div className="max-w-4xl mx-auto px-6">
-          {/* Page Header */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl font-bold mb-6" style={{ color: '#8b5cf6', fontFamily: 'SF Pro Display, system-ui, sans-serif' }}>
-              About
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Designer, developer, and creative explorer building meaningful digital experiences at the intersection of art and technology.
+          <div style={{ position: 'relative', minHeight: '120px' }}>
+            {/* Main subtitle */}
+            <p style={{
+              ...TYPOGRAPHY.h2,
+              color: COLORS.black,
+              backgroundColor: COLORS.backgroundLight,
+              ...EFFECTS.blur,
+              display: 'inline-block',
+              padding: '2px 6px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
+            }}>
+              Marketer, designer, developer. Explorer
             </p>
           </div>
 
-          {/* About Sections */}
-          <div className="space-y-16">
-            {/* Philosophy Section */}
-            <section className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h2 className="text-3xl font-semibold mb-6" style={{ color: '#8b5cf6' }}>
-                Philosophy
-              </h2>
-              <div className="prose prose-lg max-w-none">
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  I believe in the power of intentional design to create experiences that resonate on both emotional and functional levels. 
-                  Every project is an opportunity to explore new possibilities, push creative boundaries, and solve meaningful problems.
-                </p>
-                <p className="text-gray-700 leading-relaxed">
-                  My approach combines technical precision with artistic intuition, always considering the human element in digital interactions. 
-                  Whether working on experimental interfaces or production applications, I strive to create work that is both innovative and accessible.
-                </p>
-              </div>
-            </section>
-
-            {/* Background Section */}
-            <section className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h2 className="text-3xl font-semibold mb-6" style={{ color: '#8b5cf6' }}>
-                Background
-              </h2>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900">Design</h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    Specializing in interaction design, visual systems, and user experience. I focus on creating cohesive design languages 
-                    that scale across platforms while maintaining their unique character and usability.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900">Development</h3>
-                  <p className="text-gray-700 leading-relaxed">
-                    Proficient in modern web technologies including React, JavaScript, and CSS. I enjoy working at the intersection 
-                    of design and code, bringing concepts to life with attention to performance and accessibility.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Skills Section */}
-            <section className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h2 className="text-3xl font-semibold mb-6" style={{ color: '#8b5cf6' }}>
-                Skills & Expertise
-              </h2>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                  <h3 className="font-semibold mb-3" style={{ color: '#8b5cf6' }}>Design</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• Interface Design</li>
-                    <li>• Visual Systems</li>
-                    <li>• Typography</li>
-                    <li>• Color Theory</li>
-                    <li>• Prototyping</li>
-                  </ul>
-                </div>
-                <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
-                  <h3 className="font-semibold mb-3" style={{ color: '#f59e0b' }}>Development</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• React & JavaScript</li>
-                    <li>• CSS & Animations</li>
-                    <li>• Responsive Design</li>
-                    <li>• Performance Optimization</li>
-                    <li>• Version Control</li>
-                  </ul>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <h3 className="font-semibold mb-3" style={{ color: '#3b82f6' }}>Creative</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• Creative Direction</li>
-                    <li>• Brand Identity</li>
-                    <li>• Content Strategy</li>
-                    <li>• Digital Art</li>
-                    <li>• Experimental Media</li>
-                  </ul>
-                </div>
-              </div>
-            </section>
-
-            {/* Values Section */}
-            <section className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h2 className="text-3xl font-semibold mb-6" style={{ color: '#8b5cf6' }}>
-                Values
-              </h2>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2" style={{ color: '#8b5cf6' }}>Curiosity</h3>
-                    <p className="text-gray-700">
-                      Constantly exploring new tools, techniques, and perspectives to push the boundaries of what's possible.
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2" style={{ color: '#8b5cf6' }}>Quality</h3>
-                    <p className="text-gray-700">
-                      Committed to excellence in every detail, from initial concept to final implementation.
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2" style={{ color: '#8b5cf6' }}>Collaboration</h3>
-                    <p className="text-gray-700">
-                      Believing that the best work emerges from diverse perspectives and open communication.
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2" style={{ color: '#8b5cf6' }}>Impact</h3>
-                    <p className="text-gray-700">
-                      Focusing on creating work that makes a positive difference in people's lives and experiences.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Contact CTA */}
-            <section className="text-center py-12">
-              <h2 className="text-3xl font-semibold mb-4" style={{ color: '#8b5cf6' }}>
-                Let's Create Something Together
-              </h2>
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                Interested in collaborating or learning more about my work? I'd love to hear from you.
-              </p>
-              <button 
-                onClick={() => handleSidebarNavigation('/about/contact')}
-                className="inline-flex items-center px-8 py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                style={{ 
-                  backgroundColor: '#8b5cf6',
-                  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
-                }}
-              >
-                Get In Touch
-                <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </button>
-            </section>
-          </div>
+          {/* Description text */}
+          <p style={{
+            ...TYPOGRAPHY.body,
+            margin: '10px 0 0 0',
+            backgroundColor: COLORS.backgroundLight,
+            ...EFFECTS.blur,
+            display: 'inline-block',
+            padding: '4px 8px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
+          }}>
+            building meaningful digital experiences at the intersection of art and technology. #polymath
+          </p>
         </div>
-      </main>
-
-      {/* Navigation Circle */}
-      <div 
-        className="fixed bottom-8 right-8 w-16 h-16 rounded-full border-2 border-gray-300 bg-white/80 backdrop-blur-sm flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 hover:border-purple-400 z-30"
-        onClick={toggleFooter}
-        style={{
-          transform: `rotate(${navCircleAtEnd ? '0deg' : '-90deg'})`,
-          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
-        }}
-      >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2"
-          style={{ color: '#8b5cf6' }}
-        >
-          <polyline points="6,9 12,15 18,9"></polyline>
-        </svg>
       </div>
-
-      {/* Footer */}
-      <footer 
-        className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 transform transition-transform duration-300 ease-in-out z-20 ${
-          footerOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
-      >
-        <div className="p-6">
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4" style={{ color: '#8b5cf6' }}>Connect</h3>
-              <div className="space-y-2">
-                <a href="mailto:hello@yellowcircle.dev" className="block text-gray-700 hover:text-purple-600 transition-colors duration-200">
-                  hello@yellowcircle.dev
-                </a>
-                <a href="#" className="block text-gray-700 hover:text-purple-600 transition-colors duration-200">
-                  LinkedIn
-                </a>
-                <a href="#" className="block text-gray-700 hover:text-purple-600 transition-colors duration-200">
-                  Twitter
-                </a>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4" style={{ color: '#8b5cf6' }}>Quick Links</h3>
-              <div className="space-y-2">
-                <button 
-                  onClick={() => handleSidebarNavigation('/about/timeline')}
-                  className="block text-gray-700 hover:text-purple-600 transition-colors duration-200 text-left"
-                >
-                  Timeline
-                </button>
-                <button 
-                  onClick={() => handleSidebarNavigation('/about/services')}
-                  className="block text-gray-700 hover:text-purple-600 transition-colors duration-200 text-left"
-                >
-                  Services
-                </button>
-                <button 
-                  onClick={() => handleSidebarNavigation('/works')}
-                  className="block text-gray-700 hover:text-purple-600 transition-colors duration-200 text-left"
-                >
-                  View All Works
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Hamburger Menu Overlay */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold" style={{ color: '#8b5cf6' }}>Menu</h2>
-              <button 
-                onClick={toggleMenu}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <nav className="space-y-4">
-              <button 
-                onClick={() => handleMenuNavigation('/')}
-                className="block w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                Home
-              </button>
-              <button 
-                onClick={() => handleMenuNavigation('/experiments')}
-                className="block w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                Experiments
-              </button>
-              <button 
-                onClick={() => handleMenuNavigation('/thoughts')}
-                className="block w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                Thoughts
-              </button>
-              <button 
-                onClick={() => handleMenuNavigation('/about')}
-                className="block w-full text-left p-3 hover:bg-purple-100 rounded-lg transition-colors duration-200"
-                style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
-              >
-                <span style={{ color: '#8b5cf6' }}>About</span>
-              </button>
-              <button 
-                onClick={() => handleMenuNavigation('/works')}
-                className="block w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                Works
-              </button>
-            </nav>
-          </div>
-        </div>
-      )}
-    </div>
+    </Layout>
   );
-};
+}
 
 export default AboutPage;
