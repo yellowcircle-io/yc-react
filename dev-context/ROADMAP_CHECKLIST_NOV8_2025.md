@@ -395,18 +395,78 @@ firebase deploy          # Deploy to production
    - ✅ Deployed to production (545 lines removed)
    - **Completed:** Nov 10, 2025
 
-2. **🔄 yellowCircle Phase 5 (Tier 2) - IN PROGRESS** ⭐⭐
-   - Migrate ExperimentsPage to global Sidebar
-   - Migrate ThoughtsPage to global Sidebar
-   - Remove ~400-600 lines of duplicated code
-   - **Target:** Complete by Nov 11
+2. **✅ yellowCircle Phase 5 (Tier 2) - COMPLETE** ⭐⭐
+   - ✅ Migrated ExperimentsPage to global Sidebar
+   - ✅ Migrated ThoughtsPage to global Sidebar
+   - ✅ Removed ~400-600 lines of duplicated code
+   - **Completed:** Nov 12, 2025
 
-3. **yellowCircle Homepage - Language & Icons** ⭐
+3. **✅ yellowCircle Global Components UX Fixes - COMPLETE** ⭐⭐
+   - ✅ Fixed breadcrumb positioning (calc-based to prevent overlap)
+   - ✅ Menu overlay auto-close on navigation
+   - ✅ Unity Notes sidebar structure synced with global module
+   - ✅ 404 button color matched to Circle Nav
+   - ✅ Footer click-outside close handler
+   - **Completed:** Nov 13, 2025
+
+4. **yellowCircle Homepage - Language & Icons** ⭐
    - Simplify copy
    - Update iconography
    - **Target:** Complete by Nov 15
 
-**Goal for Week:** Complete Phase 5 global component migration (all pages refactored)
+**Goal for Week:** ✅ ACHIEVED - Phase 5 complete + UX improvements deployed
+
+---
+
+## 📊 NOVEMBER 13, 2025 SESSION SUMMARY
+
+### ✅ Global Components UX Fixes Completed
+
+**Session Duration:** ~2 hours
+**Files Modified:** 5 (3 global components, 2 pages)
+**Build Status:** ✅ Successful (1,192.61 kB)
+**Deployment Status:** Ready for production
+
+#### Fixes Implemented:
+
+1. **Breadcrumb Positioning Fix**
+   - File: `src/components/global/Sidebar.jsx:469`
+   - Issue: Text overlapping with sidebar icons on longer labels
+   - Solution: `top: 'calc(160% + 60px)'` + `left: '40px'`
+   - Impact: All pages with sidebar (9+ pages)
+
+2. **Menu Overlay Auto-Close**
+   - File: `src/components/global/HamburgerMenu.jsx:16-32`
+   - Issue: Menu persisting/reopening on navigation
+   - Solution: Location-based useEffect with auto-close
+   - Impact: All pages using Layout component
+
+3. **Unity Notes Sidebar Sync**
+   - File: `src/pages/UnityNotesPage.jsx:973-1004`
+   - Issue: Sidebar structure inconsistent with global module
+   - Solution: Updated navigationItems to object arrays with nested support
+   - Impact: Unity Notes page navigation consistency
+
+4. **404 Button Color Match**
+   - File: `src/pages/NotFoundPage.jsx:144,148`
+   - Issue: Button color didn't match Circle Nav
+   - Solution: Changed to `rgb(238, 207, 0)`
+   - Impact: Visual consistency on 404 page
+
+5. **Footer Click-Outside Close**
+   - File: `src/components/global/Footer.jsx:12,21-32,36`
+   - Issue: Footer required manual close
+   - Solution: Added click-outside handler with ref
+   - Impact: Improved UX on all pages with footer
+
+#### Documentation Created:
+- `GLOBAL_COMPONENTS_UX_FIXES_NOV13_2025.md` (detailed fixes + testing)
+
+#### Next Steps:
+1. Git commit and push
+2. Deploy to Firebase production
+3. Monitor analytics for errors
+4. Continue with Homepage language & iconography updates
 
 ---
 
