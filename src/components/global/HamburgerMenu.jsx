@@ -182,7 +182,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                   >
                     <span style={{
                       color: item === 'WORKS' ? 'black' : '#EECF00',
-                      fontSize: 'clamp(1.5rem, 8vh, 6rem)',
+                      fontSize: 'clamp(2rem, 5vh, 4rem)',
                       fontWeight: '900',
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
                       letterSpacing: '0.3em',
@@ -228,7 +228,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                         style={{
                           textDecoration: 'none',
                           color: 'black',
-                          fontSize: 'clamp(0.9rem, 3.5vh, 2.5rem)',
+                          fontSize: 'clamp(1rem, 2.5vh, 2rem)',
                           fontWeight: '700',
                           fontFamily: 'Helvetica, Arial, sans-serif',
                           letterSpacing: '0.2em',
@@ -262,7 +262,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                         style={{
                           textDecoration: 'none',
                           color: 'black',
-                          fontSize: 'clamp(0.9rem, 3.5vh, 2.5rem)',
+                          fontSize: 'clamp(1rem, 2.5vh, 2rem)',
                           fontWeight: '700',
                           fontFamily: 'Helvetica, Arial, sans-serif',
                           letterSpacing: '0.2em',
@@ -296,7 +296,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                         style={{
                           textDecoration: 'none',
                           color: 'black',
-                          fontSize: 'clamp(0.9rem, 3.5vh, 2.5rem)',
+                          fontSize: 'clamp(1rem, 2.5vh, 2rem)',
                           fontWeight: '700',
                           fontFamily: 'Helvetica, Arial, sans-serif',
                           letterSpacing: '0.2em',
@@ -341,7 +341,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                     style={{
                       textDecoration: 'none',
                       color: 'black',
-                      fontSize: 'clamp(1.5rem, 8vh, 6rem)',
+                      fontSize: 'clamp(2rem, 5vh, 4rem)',
                       fontWeight: '900',
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
                       letterSpacing: '0.3em',
