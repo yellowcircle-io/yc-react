@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { LayoutProvider } from './contexts/LayoutContext';
 import HomePage from './pages/HomePage';
 import Home17Page from './pages/Home17Page';
 import ExperimentsPage from './pages/ExperimentsPage';
@@ -11,6 +12,8 @@ import TimeCapsulePage from './pages/TimeCapsulePage';
 import CapsuleViewPage from './pages/CapsuleViewPage';
 import FeedbackPage from './pages/FeedbackPage';
 import SitemapPage from './pages/SitemapPage';
+import DirectoryPage from './pages/DirectoryPage';
+import UnityNotesPage from './pages/UnityNotesPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Experiment sub-routes
@@ -24,7 +27,8 @@ import BlogPage from './pages/thoughts/BlogPage';
 
 function RouterApp() {
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <LayoutProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/home-17" element={<Home17Page />} />
@@ -55,6 +59,12 @@ function RouterApp() {
         {/* Sitemap */}
         <Route path="/sitemap" element={<SitemapPage />} />
 
+        {/* Directory - Navigation & Testing */}
+        <Route path="/directory" element={<DirectoryPage />} />
+
+        {/* Unity Notes - Second Brain App */}
+        <Route path="/unity-notes" element={<UnityNotesPage />} />
+
         {/* Placeholder routes for future sub-pages */}
         <Route path="/about/timeline" element={<AboutPage />} />
         <Route path="/about/services" element={<AboutPage />} />
@@ -68,6 +78,7 @@ function RouterApp() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
+    </LayoutProvider>
   );
 }
 
