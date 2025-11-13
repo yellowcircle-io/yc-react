@@ -55,12 +55,14 @@ function Footer({ onFooterToggle }) {
           right: '0',
           bottom: '0',
           display: 'flex',
+          flexWrap: 'wrap',
           cursor: footerOpen ? 'default' : 'pointer'
         }}
       >
         {/* Contact Section */}
         <div className="footer-section footer-contact" style={{
-          flex: '1',
+          flex: '1 1 50%',
+          minWidth: 'min(300px, 100%)',
           backgroundColor: 'rgba(0,0,0,0.9)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
@@ -71,7 +73,7 @@ function Footer({ onFooterToggle }) {
         }}>
           <h2 style={{
             color: 'white',
-            fontSize: '24px',
+            fontSize: 'clamp(18px, 4vw, 24px)',
             fontWeight: '600',
             letterSpacing: '0.3em',
             margin: '0 0 20px 0',
@@ -87,10 +89,11 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(255,255,255,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
+              transition: 'color 0.3s ease',
+              wordBreak: 'break-word'
             }}
             onMouseEnter={(e) => e.target.style.color = 'white'}
             onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
@@ -99,7 +102,7 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(255,255,255,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
@@ -111,7 +114,7 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(255,255,255,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
@@ -124,7 +127,8 @@ function Footer({ onFooterToggle }) {
 
         {/* Projects Section */}
         <div className="footer-section footer-projects" style={{
-          flex: '1',
+          flex: '1 1 50%',
+          minWidth: 'min(300px, 100%)',
           backgroundColor: '#EECF00',
           padding: '40px',
           display: 'flex',
@@ -133,7 +137,7 @@ function Footer({ onFooterToggle }) {
         }}>
           <h2 style={{
             color: 'black',
-            fontSize: '24px',
+            fontSize: 'clamp(18px, 4vw, 24px)',
             fontWeight: '600',
             letterSpacing: '0.3em',
             margin: '0 0 20px 0',
@@ -149,7 +153,7 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(0,0,0,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
@@ -161,7 +165,7 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(0,0,0,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
@@ -173,7 +177,7 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(0,0,0,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
@@ -185,7 +189,7 @@ function Footer({ onFooterToggle }) {
             <a href="#" style={{
               color: 'rgba(0,0,0,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
@@ -202,7 +206,7 @@ function Footer({ onFooterToggle }) {
               style={{
               color: 'rgba(0,0,0,0.8)',
               textDecoration: 'none',
-              fontSize: '14px',
+              fontSize: 'clamp(11px, 2.5vw, 14px)',
               fontWeight: '500',
               letterSpacing: '0.1em',
               transition: 'color 0.3s ease'
