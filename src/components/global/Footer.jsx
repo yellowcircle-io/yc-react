@@ -31,9 +31,38 @@ function Footer({ onFooterToggle }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [footerOpen, onFooterToggle]);
 
+  // Inject responsive styles
+  React.useEffect(() => {
+    const styleId = 'footer-responsive-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @media (max-width: 768px) {
+          .footer-container {
+            height: 600px !important;
+            bottom: -590px !important;
+          }
+          .footer-container.footer-open {
+            bottom: 0 !important;
+          }
+          .footer-content {
+            flex-direction: column !important;
+          }
+          .footer-section {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   return (
     <div
       ref={footerRef}
+      className={`footer-container ${footerOpen ? 'footer-open' : ''}`}
       style={{
         position: 'fixed',
         bottom: footerOpen ? '0' : '-290px',
@@ -55,7 +84,7 @@ function Footer({ onFooterToggle }) {
           right: '0',
           bottom: '0',
           display: 'flex',
-          flexWrap: 'wrap',
+          flexDirection: 'row',
           cursor: footerOpen ? 'default' : 'pointer'
         }}
       >
