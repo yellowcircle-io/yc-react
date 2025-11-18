@@ -46,11 +46,17 @@ PRIMARY FILES (ALWAYS READ - use relative paths from repo root):
 - .claude/shared-context/WIP_CURRENT_CRITICAL.md
 - dev-context/PROJECT_ROADMAP_NOV2025.md
 
+RESTORE POINTS (CHECK FOR RECENT CHECKPOINTS):
+- .claude/RESTORE_POINT_NOV18_2025.md (Latest: Nov 18 - Strategic + Automation)
+- [Future restore points will be listed here]
+
 REFERENCE FILES (READ AS NEEDED):
 - DECISIONS.md
 - .claude/INSTANCE_LOG_MacMini.md (if on Mac Mini)
 - .claude/INSTANCE_LOG_MacBookAir.md (if on MacBook Air)
 ```
+
+**Note on Restore Points**: If WIP_CURRENT_CRITICAL.md references a restore point (🔴 RESTORE POINT), read that file for complete session context, strategic decisions, and automation architecture.
 
 ### 2. **Present Sync Status First**
 
@@ -62,11 +68,19 @@ Before showing the roadmap, display sync status summary:
 **Git:** [Up to date / Behind remote / Ahead of remote / Uncommitted changes]
 **Last Commit:** [commit hash] - [message] ([time ago])
 **Machine:** [Mac Mini / MacBook Air / Codespaces / Other]
+**Latest Restore Point:** [Date if available] - [Brief description]
 
 ✅ Ready to proceed with roadmap
 ```
 
 If NOT up to date with remote, show warning and recommend `git pull` before continuing.
+
+**If a recent restore point exists** (within last 7 days), mention it:
+```
+📍 Recent Restore Point Available: RESTORE_POINT_NOV18_2025.md
+   Contains: Strategic decisions, automation architecture, EOY timeline
+   Read this for complete context from that session.
+```
 
 ### 3. **Present Current Status**
 
@@ -232,11 +246,24 @@ WIP_CURRENT:        .claude/shared-context/WIP_CURRENT_CRITICAL.md
 DECISIONS:          DECISIONS.md
 ```
 
+**Restore Points (Comprehensive Checkpoints):**
+```
+LATEST_RESTORE:     .claude/RESTORE_POINT_NOV18_2025.md
+                    (Strategic session + Automation architecture + EOY timeline)
+```
+
 **Supporting Files:**
 ```
 INSTANCE_LOG:       .claude/INSTANCE_LOG_[MACHINE].md
 CLAUDE_MD:          CLAUDE.md
 MULTI_MACHINE:      .claude/MULTI_MACHINE_SETUP_CRITICAL.md
+```
+
+**Strategic Documents (Rho Assessments 2026):**
+```
+PORTFOLIO_ANALYSIS:       /CC Projects/Rho Assessments 2026/COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md
+RHO_ASSESSMENT:           /CC Projects/Rho Assessments 2026/RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md
+STEALTH_MODE_STRATEGY:    /CC Projects/Rho Assessments 2026/STEALTH_MODE_STRATEGY_CRITICAL.md (⚠️ SENSITIVE)
 ```
 
 ---
@@ -281,6 +308,41 @@ Claude:
 
 ---
 
+## Automation Architecture (Nov 18, 2025)
+
+**System Status**: Programmatic automation designed, ready to deploy
+
+**Available Automations** (see RESTORE_POINT_NOV18_2025.md for full details):
+
+1. **Roadmap Sync to Notion** (Daily 8 AM)
+   - Script: `.claude/automation/sync-roadmap-to-notion.js`
+   - Status: Ready to deploy (30 min setup)
+   - Purpose: Auto-sync PROJECT_ROADMAP → Notion database
+
+2. **Daily Feedback Loop** (Daily 6 PM)
+   - Workflow: N8N "Daily Feedback Loop"
+   - Status: Ready to import (2 hrs setup)
+   - Purpose: Auto-analyze progress → update WIP_CURRENT_CRITICAL.md
+
+3. **Smart Notifications** (Every 4 hours)
+   - Workflow: N8N "Smart Reminders"
+   - Status: Ready to import (1 hr setup)
+   - Purpose: Notify when no update in 24 hrs
+
+4. **Unity Notes Hub** (Week 3-4)
+   - Component: UnityNotesHub.jsx
+   - Status: Architecture designed (20-30 hrs build)
+   - Purpose: Central orchestration (Notion + N8N + deployments)
+
+5. **End-to-End Marketing** (Week 5-6)
+   - Workflow: N8N "End-to-End Campaign"
+   - Status: Architecture designed (20 hrs build)
+   - Purpose: One-click campaign deployment
+
+**Check automation status**: Ask "Is automation running?" to verify deployment state.
+
+---
+
 ## Notes for Claude Code Web / SSH Access
 
 **CRITICAL:** When using this command from web or SSH:
@@ -308,5 +370,5 @@ After running this command, the user should:
 
 ---
 
-**Last Updated:** November 8, 2025
-**Version:** 1.0
+**Last Updated:** November 18, 2025
+**Version:** 1.1 (Added: Restore points, automation architecture, strategic docs references)
