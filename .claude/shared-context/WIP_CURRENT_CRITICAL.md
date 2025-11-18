@@ -2,11 +2,77 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 18, 2025 at 2:30 PM PST
+**Updated:** November 18, 2025 at 4:45 PM PST
 **Machine:** Mac Mini (Primary)
-**Status:** ✅ RESTORE POINT CREATED - Full System State Captured + Automation Architecture Designed
+**Status:** 🔴 NEW PRIORITIES ADDED - Roadmap updated with P0 Rho analysis + P1 tasks
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## 🎯 NOVEMBER 18, 2025 AFTERNOON UPDATE - NEW ROADMAP PRIORITIES - 4:45 PM PST
+
+### ✅ ROADMAP UPDATES COMPLETED
+
+**Three new priority tasks added to roadmap:**
+
+**1. 🔴 P0: Rho - Lifecycle Manager Interview Analysis (9-14 hours)**
+- **Status:** Ready to start (awaiting documents)
+- **Priority:** Work hours (daytime)
+- **Scope:**
+  - Analyze new Lifecycle Manager interview
+  - Evaluate Conversion.AI (conversion.ai) as solution
+  - Evaluate Default (default.com) as solution
+  - Compare against HubSpot sprawl, technical debt, Salesforce sync issues
+  - Compare against Unity MAP 'stealth' solution
+  - Create recommendation report
+- **Location in roadmap:** ROADMAP_CHECKLIST section 3 (before Events Upload)
+
+**2. 🟡 P1: Personal - Job Interview & Description Analysis (7-11 hours)**
+- **Status:** Ready to start (awaiting documents)
+- **Priority:** Free time/after work
+- **Scope:**
+  - Review job interview notes/transcripts
+  - Review job descriptions collected
+  - Extract patterns, skill gaps, compensation insights
+  - Compare against Rho position
+  - Create strategic positioning report
+- **Location in roadmap:** New "Personal Development" section 7
+
+**3. 🟡 P1: yellowCircle - "Own Your Story Series" (11-18 hours)**
+- **Status:** Scoping phase
+- **Priority:** Free time/after work
+- **Scope:**
+  - Define "Own Your Story Series" brand/format
+  - Review existing case studies in repository
+  - Draft first piece: "Why Your GTM Sucks"
+  - Plan additional topics (MAP, Sales/Marketing alignment, Data, Content)
+  - Design Stories > Projects > Thoughts navigation integration
+- **Location in roadmap:** ROADMAP_CHECKLIST section 5
+
+### Files Updated
+1. ✅ `dev-context/ROADMAP_CHECKLIST_NOV8_2025.md`
+   - Updated "This Week's Focus" section (Nov 18-22, 2025)
+   - Added Rho Lifecycle Manager analysis (section 3)
+   - Added "Own Your Story Series" (section 5)
+   - Added Job Interview Analysis (new Personal Development section 7)
+   - Moved previous week's achievements to archive section
+
+2. ✅ `dev-context/PROJECT_ROADMAP_NOV2025.md`
+   - Updated "Immediate Next Steps" section
+   - Added P0 priority: Rho analysis (work hours)
+   - Added P1 priorities: Automation deployment, Job analysis, "Own Your Story" series
+   - Deferred previous Stealth Mode Phase 1 items pending P0 completion
+
+### Next Actions
+- **P0 (NOW - Work Hours):** Start Rho Lifecycle Manager analysis when documents attached
+- **P1 (AFTER WORK):** Deploy automation architecture (Notion sync, N8N workflows)
+- **P1 (FREE TIME):** Job interview analysis when documents attached
+- **P1 (FREE TIME):** "Own Your Story Series" scoping and first draft
+
+### Dependencies
+- Lifecycle Manager interview documents (pending attachment)
+- Job interview/description documents (pending attachment)
 
 ---
 
