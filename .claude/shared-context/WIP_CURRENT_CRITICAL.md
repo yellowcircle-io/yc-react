@@ -2,9 +2,227 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 13, 2025 at 9:45 PM PST
+**Updated:** November 18, 2025 at 12:00 PM PST
 **Machine:** Mac Mini (Primary)
-**Status:** ✅ DEPLOYED TO PRODUCTION - All UX fixes + mobile hotfixes live
+**Status:** ✅ RHO STRATEGIC ASSESSMENT COMPLETE - Stealth Mode Strategy Documented
+
+---
+
+## 🎯 NOVEMBER 18, 2025 - RHO STRATEGIC ASSESSMENT & STEALTH MODE STRATEGY - 12:00 PM PST
+
+### ✅ THREE MAJOR STRATEGIC DOCUMENTS COMPLETED
+**Location:** `/CC Projects/Rho Assessments 2026/`
+**Total Output:** ~135 KB of comprehensive strategic analysis
+**Session Duration:** Extended deep-dive strategic planning session
+
+### What Was Accomplished
+
+**1. COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md (40 KB)**
+- Complete portfolio analysis across ALL projects (yellowCircle, Unity Notes, Rho, Golden Unknown, Cath3dral, 2nd Brain)
+- Multi-Machine Framework documentation locations catalogued
+- Current state, goals, problems, positives for each project
+- Consolidated timeline: Nov 2025 - Sep 2026 with 866-1,139 hour estimate
+- Recommended next steps by segment with critical decision point
+
+**Key Insights:**
+- yellowCircle v1.2.0 deployed, 67% code duplication reduction
+- Unity Notes ecosystem architecture designed (220-260 hours for full implementation)
+- Rho: 177 files organized, 30-51 hours remaining work
+- Decision required: Unity Notes foundation layer OR Rho integration first
+
+**2. RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md (60 KB)**
+- Part 1: Total assessment of Rho's technical/organizational challenges
+  - 45-minute data lag disaster documented with user journey table
+  - Schema chaos across 4 systems (detailed code examples)
+  - $2.5M+/year cost of inaction breakdown
+  - Failed Lifecycle Manager hire root cause analysis
+
+- Part 2: MVP Unity MAP Architecture
+  - AI Orchestration Layer (Claude Code MCP + OpenAI)
+  - N8N Workflow Engine (event-driven, real-time)
+  - Airtable canonical data store
+  - Rho Components Library (email templates, journey templates)
+  - Complete N8N workflow JSON example (application abandonment recovery)
+
+- Part 3: Trimurti Framework Leverage
+  - Unity MAP as productizable SaaS
+  - Pricing tiers: $1,500-5,000+/mo
+  - GTM strategy: Internal validation → Beta (3-5 customers) → Public launch (20-30 customers, $300K-600K ARR)
+
+- Part 4: Implementation Roadmap
+  - 4 months timeline (Dec 2025 - Mar 2026)
+  - Budget: $760-6,400 vs Skydog $32K (76-98% cost savings)
+  - Success metrics: hours 30→10/week, errors 15%→<2%, lag 45min→<5min
+
+**Recommendation:** Build Unity MAP MVP instead of Skydog engagement (fixes root cause, 10x cost savings, productizable IP)
+
+**3. STEALTH_MODE_STRATEGY_CRITICAL.md (35-40 KB) ⚠️ SENSITIVE**
+**CRITICAL STRATEGIC PIVOT:** User clarified Unity MAP should be built in STEALTH mode as Rho may not be long-term workplace
+
+- Part 1: Critical Reality Check
+  - Legal risk assessment: IP ownership is BIGGEST risk
+  - Employment agreement implications
+  - Conflict of interest analysis
+  - Resource theft risk levels (Rho's N8N/Airtable = HIGH risk)
+  - Ethical "Clean Hands" test
+  - 5 Skydog outcome scenarios with probabilities:
+    - Scenario 1: Hero (25%) - promoted, team hired, 20 hrs/week
+    - Scenario 2: Status Quo Plus (30%) - 20-25 hrs/week, no promotion
+    - Scenario 3: Pivot to Salesforce (20%) - HubSpot expertise devalued
+    - Scenario 4: Downsizing (15%) - layoff, severance
+    - Scenario 5: Thrives (10%) - VP role, IPO path
+
+- Part 2: Stealth Mode Operating Principles
+  - Principle 1: Clean Room Implementation (code examples: RIGHT vs WRONG)
+  - Principle 2: Work-for-hire mentality (9 AM - 5 PM 100% for Rho)
+  - Principle 3: Public learning over stealth building (blog, LinkedIn, open-source)
+  - Principle 4: Options thinking over all-in commitment (4 parallel revenue streams)
+
+- Part 3: Phased Approach
+  - Phase 1: Extract value, build portfolio (Months 1-3)
+    - Rho: 40 hrs/week (exceptional value)
+    - Personal: 10-15 hrs/week (case study, website, LinkedIn, learn N8N)
+    - Total: 50-55 hrs/week (sustainable)
+
+  - Phase 2: Skill validation, revenue test (Months 4-6)
+    - Consulting pilot: 2-3 free audits
+    - Unity MAP landing page: waitlist
+    - N8N workflow templates: Gumroad $49-99
+    - Validation metrics: 50+ waitlist, $500-1K template revenue
+    - **DECISION POINT:** Stay, stay 6-12 months, or exit
+
+  - Phase 3: Commit or pivot (Months 7-12)
+    - Path A: Unity MAP SaaS (if >100 waitlist, 5+ beta commitments)
+    - Path B: Consulting (if <50 waitlist but 3+ consulting clients)
+    - Path C: Stay at Rho (if promoted, $180K-220K, equity)
+
+- Part 4: Balancing Act
+  - Time allocation problem: 40 hrs/week Rho + 15-20 hrs/week personal = 55-60 hrs/week (BURNOUT risk)
+  - 3 Buckets framework:
+    - Bucket 1 MUST DO: 116 hrs/week (Rho 40, sleep 56, life 20)
+    - Bucket 2 HIGH ROI: 13 hrs/week (personal brand 5, skills 3, consulting 5)
+    - Bucket 3 LONG-TERM BET: 5-10 hrs/week (Unity MAP if capacity)
+    - Result: 18-23 hrs/week discretionary time
+
+  - Options Stacking Strategy:
+    - Personal brand: 5 hrs/week → 1K followers
+    - Consulting pipeline: 5 hrs/week → $12K-40K/mo MRR
+    - Unity MAP components: 5-10 hrs/week → Templates + open-source
+    - Total: 15-20 hrs/week sustainable, compounding effect
+
+  - Modular Building Strategy:
+    - Module 1: N8N templates (Months 1-3) → $980/mo
+    - Module 2: Email components (Months 4-6) → $4K/mo
+    - Module 3: Schema mapping (Months 7-9) → $1K/mo
+    - Module 4: AI campaign builder (Months 10-12) → $2.5K/mo
+    - **Total after 12 months:** $8,480/mo MRR = $101,760/year WITHOUT leaving Rho
+
+- Part 5: Skydog Audit Outcomes - Detailed scenarios with strategies
+
+- Part 6: Critical Recommendations
+  - This Week: Assess Skydog trajectory (2 hrs), document baseline (3 hrs), LinkedIn post (2 hrs), personal N8N setup (3 hrs)
+  - Next 4 Weeks: Rho focus + personal brand (10 hrs/week total)
+  - Next 3 Months: Based on Skydog results, activate appropriate path
+  - 12-Month Vision: $334K-742K total revenue (Rho + consulting + Unity MAP modules)
+
+- Part 7: Final Critical Assessment
+  - **DO THIS:** Deliver value to Rho, document everything, build personal brand, learn on personal time, test revenue, build incrementally, maintain clean hands
+  - **DON'T DO THIS:** Build on Rho time, use Rho infrastructure, copy Rho code, slack off, pitch internally, burn bridges, go all-in
+  - **Critical assessment:** "Unity MAP as 4-month full-time equivalent project while employed at Rho is UNREALISTIC and RISKY"
+  - **What to actually do:** Build OPTIONS (personal brand + consulting + Unity MAP components), ship incrementally, prioritize near-term revenue
+  - **Bottom line:** "Build options, not all-in bets. Ship incrementally, not big bang. Prioritize near-term revenue (consulting, templates), not long-term bets (Unity MAP SaaS). Stay flexible."
+
+### Files Created
+1. `/CC Projects/Rho Assessments 2026/COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md` (40 KB)
+2. `/CC Projects/Rho Assessments 2026/RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md` (60 KB)
+3. `/CC Projects/Rho Assessments 2026/STEALTH_MODE_STRATEGY_CRITICAL.md` (35-40 KB) ⚠️ SENSITIVE
+
+### Key Strategic Shift
+**From:** Build Unity MAP FOR Rho (pitch to leadership)
+**To:** Build Unity MAP THROUGH Rho in STEALTH mode (personal IP, clean hands, options thinking)
+
+This is a FUNDAMENTAL ethical/legal/strategic pivot that changes the entire approach.
+
+### Files Read (Context Gathering)
+- `rho-structure-metadata.json` - Project metadata
+- `RHO_UNIFIED_STRUCTURE.md` - Visual documentation
+- `PROJECT_ROADMAP_NOV2025.md` - Overall priorities
+- `WIP_CURRENT_CRITICAL.md` - Current work status
+- `ROADMAP_CHECKLIST_NOV8_2025.md` - Task breakdown
+- `03_Rho_Position_CRITICAL.md` - Strategic assessment (first 300 lines)
+- `Marketing Ops [Living Document].md` - Organizational context
+- `01-root-cause-analysis.md` - Data architecture failure
+- `07-mops-action-plan.md` - Skydog engagement plan
+- `08-technical-architecture.md` - Technical specs (first 250 lines)
+- `12-storyblok-integration.md` - CMS integration (first 200 lines)
+- `Rho _ Marketing Org_ Strategic Audit.md` - Strategic audit (first 300 lines)
+
+### Next Steps
+1. **Immediate:** Review all three strategic documents
+2. **This Week:** Follow STEALTH_MODE_STRATEGY recommendations for Week 1
+   - Assess Skydog trajectory (2 hrs)
+   - Document baseline (3 hrs)
+   - LinkedIn post (2 hrs)
+   - Personal N8N setup (3 hrs)
+3. **Decision Point:** Choose between Unity Notes foundation OR Rho integration based on stealth mode strategy
+4. **Monitor:** Skydog audit outcomes (will inform Phases 2-3)
+5. **Sync:** Wait 30 seconds for Dropbox sync, optionally commit to GitHub
+
+### Critical Notes
+- **⚠️ SENSITIVE:** STEALTH_MODE_STRATEGY_CRITICAL.md contains sensitive strategic planning - extreme discretion required
+- **Legal considerations:** Clean room implementation, IP ownership, resource use all documented
+- **Time allocation:** Options stacking (15-20 hrs/week) is sustainable vs all-in Unity MAP (unrealistic)
+- **Revenue potential:** $334K-742K/year after 12 months across all options
+- **Skydog impact:** Unknown - outcomes will inform Phase 2 and 3 decisions
+
+---
+
+## 🎉 NOVEMBER 17, 2025 - RHO DOCUMENTS UNIFIED - 5:00 PM PST
+
+### ✅ UNIFIED STRUCTURE COMPLETE
+**Location:** `/CC Projects/Rho Assessments 2026/`
+**Total Files:** 177 documents organized across 5 directories
+**Source:** Google Drive → Dropbox sync complete
+
+### What Was Accomplished
+
+**1. Created Unified Directory Structure:**
+- `01-strategic-analysis/` - 10 strategic analysis documents (all CRITICAL files)
+- `02-mops-infrastructure/` - 28+ MOps project files (complete from Google Drive)
+- `03-professional-details/` - Resumes, work samples, assessment subfolder
+- `04-research-exports/` - 116 Perplexity exports + CSV inventory
+- `05-work-samples/` - 14 HTML templates + JS files from Google Drive
+
+**2. Files Copied from Google Drive:**
+- ✅ Complete MOps Infrastructure Project (28+ files)
+  - All 12 numbered assessment documents (01-12.md)
+  - CHANGELOG, README, GIT_COMMANDS
+  - Skydog engagement documents (multiple versions)
+  - Org Chart folder (PDF, PNG, CSV)
+  - Lifecycle Manager candidate files
+- ✅ Work Samples (14 files)
+  - HubSpot HTML templates
+  - GTM JavaScript implementations
+  - Email body/design templates
+
+**3. Files Reorganized:**
+- Strategic analysis files → `01-strategic-analysis/`
+- Research/Perplexity exports → `04-research-exports/`
+- All files now properly categorized
+
+**4. Verification:**
+- ✅ Dropbox sync completed (30s wait)
+- ✅ All Google Drive Rho files now exist in Dropbox
+- ✅ Unified structure established for multi-machine access
+- ✅ Foundation (Dropbox) now complete for Rho documentation
+
+### Key Achievement
+**All Rho-related files from Google Drive now exist in Dropbox**, establishing the complete private/foundation repository as specified. Google Drive remains partially shared with external organization, but Dropbox now has the complete unified archive.
+
+### Next Steps
+- Monitor MacBook Air sync to verify files appear
+- Roadmap work can continue with complete Rho context
+- All assessment/strategic documents now accessible offline
 
 ---
 
