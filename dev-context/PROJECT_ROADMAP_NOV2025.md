@@ -351,39 +351,144 @@ You mentioned additional context for "2nd Brain" app as **Visual Note App**.
 
 ---
 
-## 📋 Immediate Next Steps (Updated for Stealth Mode Strategy)
+## 📋 Immediate Next Steps (Updated Nov 18, 2025)
+
+### 🔴 P0 PRIORITY - THIS WEEK (WORK HOURS)
+
+#### 1. Rho - Lifecycle Manager Interview Analysis (9-14 hours)
+**Status:** Ready to start (awaiting documents)
+**Timeline:** 1-2 days during work hours
+
+```
+NEW - Added Nov 18, 2025:
+
+Phase 1: Interview Analysis (2-3 hrs)
+- Review Lifecycle Manager interview (pending attachment)
+- Extract HubSpot pain points and technical debt issues
+- Map problems to Unity MAP capabilities
+
+Phase 2: Conversion.AI Evaluation (2-3 hrs)
+- Research conversion.ai capabilities and features
+- Analyze integration complexity with HubSpot/Salesforce
+- Document pros/cons for Rho use case
+
+Phase 3: Default Evaluation (2-3 hrs)
+- Research default.com capabilities and features
+- Analyze integration complexity with existing stack
+- Document pros/cons for Rho use case
+
+Phase 4: Comparative Analysis (2-3 hrs)
+- Create comparison matrix: Unity MAP vs. Conversion.AI vs. Default
+- Analyze against sprawl, technical debt, Salesforce sync issues
+- Cost-benefit analysis (build vs. buy)
+
+Phase 5: Recommendation (1-2 hrs)
+- Document findings in analysis report
+- Create executive summary with recommendations
+- Prepare for stakeholder discussion
+```
+
+### 🟡 P1 PRIORITY - THIS WEEK (FREE TIME/AFTER WORK)
+
+#### 2. Automation Architecture Deployment (3.5 hours)
+**Status:** Ready to deploy
+**Timeline:** After work hours
+
+```
+1. Deploy Notion roadmap sync (30 min)
+   - Set up NOTION_API_KEY
+   - Run sync-roadmap-to-notion.js script
+   - Configure LaunchAgent for daily 8 AM execution
+
+2. Set up daily feedback loop workflow (2 hrs)
+   - Import N8N workflow JSON
+   - Configure Claude API integration
+   - Test automated WIP file updates
+
+3. Configure smart notifications (1 hr)
+   - Set up Slack webhook notifications
+   - Configure 4-hour check intervals
+   - Test notification system
+```
+
+#### 3. Personal - Job Interview Analysis (7-11 hours)
+**Status:** Ready to start (awaiting documents)
+**Timeline:** Free time over next few days
+
+```
+NEW - Added Nov 18, 2025:
+
+Phase 1: Document Review (2-3 hrs)
+- Review job interview notes/transcripts (pending attachment)
+- Review job descriptions (pending attachment)
+- Organize by role type, company stage, industry
+
+Phase 2: Pattern Analysis (2-3 hrs)
+- Identify common themes
+- Extract skill gaps vs. market demands
+- Analyze compensation ranges
+- Document red/green flags
+
+Phase 3: Strategic Insights (2-3 hrs)
+- Compare against Rho position
+- Identify market positioning opportunities
+- Create development roadmap
+
+Phase 4: Documentation (1-2 hrs)
+- Create analysis report and comparison matrix
+- Update resume/portfolio based on findings
+```
+
+#### 4. yellowCircle - "Own Your Story Series" Scoping (11-18 hours)
+**Status:** Scoping phase
+**Timeline:** Free time over next week
+
+```
+NEW - Added Nov 18, 2025:
+
+Phase 1: Series Definition (2-3 hrs)
+- Define "Own Your Story Series" brand identity
+- Establish content format and structure
+- Outline first 5-10 topics
+
+Phase 2: Case Study Inventory (1-2 hrs)
+- Review existing case studies in repository
+- Catalog documented expertise
+- Map case studies to topics
+
+Phase 3: First Piece - "Why Your GTM Sucks" (5-8 hrs)
+- Research common GTM failures
+- Draft content with case study examples
+- Create supporting visuals
+- Working title: "[H3] Own Your Story: [H1] Why Your GTM Sucks"
+
+Phase 4: Additional Topics Scoping (2-3 hrs)
+- "Why Your MAP Is a Mess"
+- "Why Your Sales and Marketing Are Divorced"
+- "Why Your Data Is Lying to You"
+- "Why Your Content Strategy Is Backwards"
+
+Phase 5: Integration Planning (1-2 hrs)
+- Plan Stories > Projects > Thoughts navigation
+- Design series landing page
+```
+
+### ⚠️ DEFERRED: Stealth Mode Phase 1 Setup (from previous planning)
+
+The following items from previous planning are deferred pending completion of P0 Rho analysis:
+
+```
+1. Assess Skydog trajectory (2 hrs) - DEFERRED
+2. Document baseline (3 hrs) - DEFERRED
+3. LinkedIn post (2 hrs) - CAN PROCEED (aligns with "Own Your Story" series)
+4. Personal N8N setup (3 hrs) - DEFERRED (will do during automation deployment)
+```
 
 ### ⚠️ CRITICAL: Review Strategic Documents First
 **Before ANY implementation work, review:**
 1. COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md - Understand full project landscape
 2. RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md - Unity MAP technical architecture
 3. STEALTH_MODE_STRATEGY_CRITICAL.md - Legal/ethical framework and phasing
-
-### Priority 1: This Week (10 hours total) - Stealth Mode Phase 1 Setup
-```
-From STEALTH_MODE_STRATEGY recommendations:
-
-1. Assess Skydog trajectory (2 hrs)
-   - Review Skydog audit progress
-   - Understand timeline and scope
-   - Identify potential impact on workload (20-40 hrs/week?)
-
-2. Document baseline (3 hrs)
-   - Current Rho responsibilities and time allocation
-   - Pain points and inefficiencies
-   - Potential automation opportunities (keep generic, not Rho-specific)
-
-3. LinkedIn post (2 hrs)
-   - Marketing Ops technical challenge (generic, not Rho-specific)
-   - Public learning over stealth building
-   - Position as thought leader in MAP space
-
-4. Personal N8N setup (3 hrs)
-   - Install N8N locally (clean room, not Rho infrastructure)
-   - Explore workflow builder interface
-   - Test basic automation (email notification, webhook handling)
-   - Document learnings for future templates
-```
 
 ### Priority 2: Options Stacking (Next 4 Weeks) - 10 hrs/week
 ```
