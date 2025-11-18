@@ -1,7 +1,46 @@
 # Project Roadmap - November 2025
 
-**Date:** November 13, 2025
-**Status:** Global Components Migration Complete - yellowCircle
+**Date:** November 18, 2025
+**Status:** Rho Strategic Assessment Complete - Stealth Mode Strategy Established
+
+---
+
+## 🎯 NOVEMBER 18, 2025 - STRATEGIC PIVOT TO STEALTH MODE
+
+### Major Strategic Documents Completed
+
+**Three comprehensive strategic documents created** totaling ~135 KB of analysis:
+
+1. **COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md** (40 KB)
+   - Complete analysis of ALL projects across Trimurti framework
+   - Multi-Machine Framework documentation audit
+   - Consolidated timeline with 866-1,139 hour estimates
+   - Critical decision: Unity Notes foundation OR Rho integration first
+
+2. **RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md** (60 KB)
+   - Complete assessment of Rho's $2.5M+/year technical/organizational challenges
+   - Unity MAP MVP architecture (AI + N8N + Airtable + Rho Components)
+   - Productization path via Trimurti framework
+   - 4-month implementation roadmap with $760-6,400 budget
+
+3. **STEALTH_MODE_STRATEGY_CRITICAL.md** (35-40 KB) ⚠️ SENSITIVE
+   - **FUNDAMENTAL PIVOT:** Build Unity MAP THROUGH Rho in stealth mode (not FOR Rho)
+   - Legal/ethical analysis: IP ownership, clean room implementation, resource use
+   - 3-phase approach with time allocation and revenue projections
+   - Options stacking strategy: $334K-742K/year potential across multiple streams
+   - 5 Skydog outcome scenarios with probabilities and strategies
+   - **Core recommendation:** Build OPTIONS, not all-in bets
+
+**Location:** `/CC Projects/Rho Assessments 2026/`
+
+### Strategic Shift Impact on Roadmap
+
+**Previous Approach:** Build Unity MAP for Rho, pitch to leadership
+**New Approach:** Build Unity MAP components in stealth mode with clean hands
+**Time Allocation:** 15-20 hrs/week personal work (sustainable) vs 4-month full-time (unrealistic)
+**Revenue Model:** Modular building → $8,480/mo MRR after 12 months WITHOUT leaving Rho
+
+**This changes ALL downstream priorities and timelines.**
 
 ---
 
@@ -149,47 +188,119 @@ All pages now follow unified structure:
 
 ---
 
-## 🎯 Project Priority Order
+## 🎯 Project Priority Order (Updated for Stealth Mode Strategy)
 
-### **1st Order: yellowCircle / Rho** [ETA: Present to EOY 2025]
+### **STEALTH MODE FRAMEWORK: Options Stacking Over Sequential Projects**
 
-#### **RHO**
-- [ ] Events Upload Process
+**Critical Shift:** Previous roadmap assumed sequential project completion (yellowCircle → Rho → Golden Unknown → Cath3dral).
 
-#### **YELLOWCIRCLE**
-1. [ ] **Homepage Design Update**
-   - Better sidebar UX
-   - Simplified language
-   - Improved iconography
-   - Refined typography
-   - Update "Your Circle For" → "Your Circle" with new H1 styling
-
-2. [ ] **Global Components Standardization**
-   - Use updated homepage as template
-   - Ensure proper usage across all pages
-   - Explore Storyblok or similar integration
-   - ClaudeCode integration for streamlined development
-
-3. [ ] **UK Memories Integration**
-   - Align with 2nd Brain / Visual Note App development
-   - Incorporate new design system
+**New Approach:** Parallel options stacking with modular building across all projects simultaneously.
+- Time allocation: 15-20 hrs/week personal work across ALL projects
+- Focus: Revenue-generating activities and personal IP building
+- Timeline: 12-month options stacking vs 24-month sequential completion
 
 ---
 
-### **2nd Order: Golden Unknown Brand** [ETA: Mid-Nov 2024 to Q1 2026]
+### **Priority 1: Stealth Mode Phase 1 - Foundation (Months 1-3)**
 
-- [ ] Logo Refinement
-- [ ] Social Media Assets
-- [ ] Asset / Clothing Creation
-- [ ] Advertisements
+**Time Allocation:** 10-15 hrs/week
+**Goal:** Extract value, build portfolio, establish clean hands framework
+
+#### **RHO (40 hrs/week - Day Job)**
+- [ ] **Deliver exceptional value** to maintain position and reputation
+- [ ] **Events Upload Process** - Complete for immediate Rho value
+- [ ] **Monitor Skydog audit outcomes** - Will inform Phase 2/3 decisions
+- [ ] **Document learnings** (generic, anonymized) for personal brand
+- [ ] **Identify automation opportunities** (keep generic for Unity MAP templates)
+
+#### **Personal Brand (5 hrs/week)**
+- [ ] **LinkedIn thought leadership** - 2-3 posts/week on Marketing Ops challenges
+- [ ] **Case study drafting** - Anonymized Rho organizational assessment
+- [ ] **Personal website refresh** - Showcase consulting services and thought leadership
+- [ ] **Network building** - Identify 5-10 potential consulting leads
+
+#### **Skill Development (3 hrs/week)**
+- [ ] **N8N local setup** - Install, explore, test basic workflows
+- [ ] **N8N workflow templates** - Build 2-3 generic, reusable templates
+- [ ] **React email components** - Experiment with rendering patterns
+- [ ] **AI orchestration** - Claude MCP server exploration, OpenAI Assistants testing
+
+#### **Unity Notes Foundation (0-5 hrs/week - if capacity)**
+- [ ] **Architecture refinement** - Review ecosystem architecture document
+- [ ] **Technology research** - ReactFlow, Figma API, Notion integration patterns
+- [ ] **MVP scope reduction** - Identify smallest shippable product
+
+#### **yellowCircle (Deferred to Month 2-3)**
+- [ ] Homepage design update - 12-17 hours (defer until Phase 1 complete)
+- [ ] Global components standardization - 13-20 hours (defer)
 
 ---
 
-### **3rd Order: Cath3dral Creation** [ETA: Q1-Q3 2026]
+### **Priority 2: Stealth Mode Phase 2 - Validation (Months 4-6)**
 
-- [ ] Being and Rhyme
-- [ ] B-Corp Incorporation(s)
-- [ ] Closed loop system
+**Time Allocation:** 13 hrs/week
+**Goal:** Skill validation, revenue test, decision point
+
+#### **Consulting Pilot (5 hrs/week)**
+- [ ] **2-3 free audits** - Marketing Ops assessments for early clients
+- [ ] **Service offering refinement** - Based on audit feedback
+- [ ] **Pricing validation** - Test $3K-8K audit packages
+- [ ] **Revenue target** - First $1K-3K in consulting fees
+
+#### **Unity MAP Templates (5 hrs/week)**
+- [ ] **N8N workflow templates** - Package 5-10 templates for Gumroad
+- [ ] **Email component library** - React templates for common patterns
+- [ ] **Schema mapping guides** - Generic MAP integration documentation
+- [ ] **Revenue target** - $500-1K/month template sales
+
+#### **Unity MAP Landing Page (3 hrs/week)**
+- [ ] **Build waitlist page** - Simple landing page with value proposition
+- [ ] **Collect email signups** - Target: 50+ waitlist signups
+- [ ] **Customer discovery** - Interview 10-15 waitlist members
+- [ ] **Validation metrics** - Assess product-market fit signals
+
+**DECISION POINT at Month 6:**
+- If >100 waitlist + 5+ beta commitments → Unity MAP SaaS (Phase 3 Path A)
+- If <50 waitlist but 3+ consulting clients → Consulting focus (Phase 3 Path B)
+- If promoted, $180K-220K, equity at Rho → Stay at Rho (Phase 3 Path C)
+
+---
+
+### **Priority 3: Stealth Mode Phase 3 - Commit or Pivot (Months 7-12)**
+
+**Path determined by Phase 2 outcomes and Skydog trajectory.**
+
+#### **Path A: Unity MAP SaaS** (if strong validation signals)
+- [ ] Build MVP (first paying customer)
+- [ ] Beta program (3-5 customers, $1,500-2,500/mo each)
+- [ ] Refine based on feedback
+- [ ] Public launch preparation
+
+#### **Path B: Consulting** (if weak SaaS signals but strong consulting demand)
+- [ ] Scale to 3-5 active clients
+- [ ] Productize service offerings
+- [ ] Build referral network
+- [ ] Target: $12K-40K/mo MRR
+
+#### **Path C: Stay at Rho** (if promoted with meaningful equity/compensation)
+- [ ] Negotiate role expansion
+- [ ] Continue options stacking at lower intensity
+- [ ] Maintain consulting/templates as side income
+- [ ] Re-evaluate annually
+
+---
+
+### **Cross-Cutting: Golden Unknown & Cath3dral** [Opportunistic timing, not timeline-driven]
+
+**Golden Unknown Brand:**
+- [ ] Logo refinement - 5-8 hours (Month 3-6, if capacity)
+- [ ] Social media assets - 8-12 hours (Month 6-9, if capacity)
+- [ ] Asset/clothing creation - 15-25 hours (Month 9-12, if revenue from other sources)
+
+**Cath3dral:**
+- [ ] Being and Rhyme - Q1-Q3 2026 (pending Phase 2 outcomes)
+- [ ] B-Corp incorporation(s) - Q3 2026 (pending revenue validation)
+- [ ] Closed loop system - 2026 (long-term vision)
 
 ---
 
@@ -240,44 +351,95 @@ You mentioned additional context for "2nd Brain" app as **Visual Note App**.
 
 ---
 
-## 📋 Immediate Next Steps (This Week)
+## 📋 Immediate Next Steps (Updated for Stealth Mode Strategy)
 
-### Priority 1: yellowCircle Homepage
+### ⚠️ CRITICAL: Review Strategic Documents First
+**Before ANY implementation work, review:**
+1. COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md - Understand full project landscape
+2. RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md - Unity MAP technical architecture
+3. STEALTH_MODE_STRATEGY_CRITICAL.md - Legal/ethical framework and phasing
+
+### Priority 1: This Week (10 hours total) - Stealth Mode Phase 1 Setup
 ```
-1. Create new sidebar UX design
-2. Simplify language throughout
-3. Update iconography
-4. Implement new H1 typography system:
-   - "Your Circle" header
-   - Font: Helvetica Neue, 900 weight
-   - Size: clamp(1.17rem, 22.52vw, 20.98rem)
-   - Styling: backdrop-filter: blur(3px)
-   - Color: rgba(244, 244, 204, 0.3)
-   - Line-height: 0.82
-   - Margin: 7rem 0px
-   - Padding: 2px 6px
+From STEALTH_MODE_STRATEGY recommendations:
+
+1. Assess Skydog trajectory (2 hrs)
+   - Review Skydog audit progress
+   - Understand timeline and scope
+   - Identify potential impact on workload (20-40 hrs/week?)
+
+2. Document baseline (3 hrs)
+   - Current Rho responsibilities and time allocation
+   - Pain points and inefficiencies
+   - Potential automation opportunities (keep generic, not Rho-specific)
+
+3. LinkedIn post (2 hrs)
+   - Marketing Ops technical challenge (generic, not Rho-specific)
+   - Public learning over stealth building
+   - Position as thought leader in MAP space
+
+4. Personal N8N setup (3 hrs)
+   - Install N8N locally (clean room, not Rho infrastructure)
+   - Explore workflow builder interface
+   - Test basic automation (email notification, webhook handling)
+   - Document learnings for future templates
 ```
 
-### Priority 2: Perplexity Ongoing Solution
+### Priority 2: Options Stacking (Next 4 Weeks) - 10 hrs/week
 ```
-Option A: Browser Extension (Immediate)
-  - Install "Save my Chatbot"
-  - Use for ad-hoc exports as needed
+Based on 3 Buckets framework:
+- Bucket 2 HIGH ROI: 13 hrs/week (personal brand 5, skills 3, consulting 5)
+- Focus on building OPTIONS not all-in bets
 
-Option B: Zapier Automation (This Month)
-  - Set up Perplexity API account
-  - Create Zapier workflow
-  - Auto-export new conversations
-  - Cost: ~$30/month
+Week 1-4 Activities:
+1. Personal Brand (5 hrs/week):
+   - LinkedIn posts (2-3 per week on Marketing Ops challenges)
+   - Case study draft (Rho organizational assessment - anonymized)
+   - Personal website refresh (showcase thought leadership)
+
+2. Skill Development (3 hrs/week):
+   - N8N workflow templates (generic, reusable)
+   - React email component experimentation
+   - AI orchestration patterns (Claude MCP, OpenAI Assistants)
+
+3. Consulting Pipeline (5 hrs/week):
+   - Identify 2-3 potential consulting targets
+   - Draft service offering (Marketing Ops audits)
+   - Pricing model research ($3K-8K audit packages)
 ```
 
-### Priority 3: 2nd Brain App Scoping
+### Priority 3: Decision Point - Unity Notes OR Rho Integration
 ```
-1. Gather all context documents
-2. Review Visual Note app requirements
-3. Create feature comparison: 2nd Brain vs HubSpot/Squarespace
-4. Map out MVP features
-5. Explore Grid.io case study
+From COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS:
+
+**Decision Required:** Choose ONE for next phase:
+
+Option A: Unity Notes Foundation Layer (220-260 hours)
+  - Build personal 2nd Brain app
+  - Clean room implementation (zero Rho IP)
+  - Productizable for other clients
+  - Aligns with stealth mode strategy
+
+Option B: Rho Integration Components (30-51 hours remaining)
+  - Finish Rho documentation organization
+  - Extract generic patterns for Unity MAP
+  - Higher short-term Rho value
+  - Risk: May use Rho-specific IP
+
+**Recommendation based on stealth mode:** Option A (Unity Notes Foundation)
+- Clean hands approach
+- Builds personal IP
+- 15-20 hrs/week sustainable pace = 11-17 weeks
+- Allows monitoring Skydog outcomes before committing to Rho work
+```
+
+### Priority 4: yellowCircle Homepage (Deferred to Month 2-3)
+```
+Originally Priority 1, now deferred based on stealth mode time allocation:
+- 12-17 hours estimated
+- Non-revenue generating
+- Can wait until after Phase 1 setup complete
+- Will revisit after Skydog outcomes clearer (Month 2-3)
 ```
 
 ---
@@ -393,26 +555,103 @@ h1.your-circle {
 
 ---
 
-## 🚀 Success Criteria
+## 🚀 Success Criteria (Updated for Stealth Mode Strategy)
 
-### **yellowCircle (EOY 2025):**
-- ✅ Homepage redesigned with new typography
-- ✅ Global components standardized
-- ✅ UK Memories integrated
-- ✅ Rho events upload functional
+### **Phase 1: Foundation (Months 1-3) - CURRENT PHASE**
 
-### **2nd Brain App (Q1 2026):**
-- ✅ Full scope documented
-- ✅ Visual Note features defined
-- ✅ CRM/MA positioning clear
-- ✅ MVP features mapped
-- ✅ Grid.io lessons incorporated
+**Personal Brand:**
+- ✅ 12+ LinkedIn posts published (2-3 per week)
+- ✅ Personal website refreshed with consulting services
+- ✅ Case study drafted (anonymized Rho assessment)
+- ✅ 5-10 potential consulting leads identified
 
-### **Infrastructure:**
-- ✅ Multi-machine context system optimized
-- ✅ Notion integration layer active
-- ✅ Claude Web → Code integration working
-- ✅ Documentation comprehensive
+**Skill Development:**
+- ✅ N8N installed locally and 2-3 workflow templates built
+- ✅ React email component experimentation complete
+- ✅ Claude MCP server exploration documented
+
+**Rho (Day Job):**
+- ✅ Events upload process complete and functional
+- ✅ Exceptional value delivered (maintain reputation)
+- ✅ Skydog audit trajectory assessed
+- ✅ Generic learnings documented for personal use
+
+**Time Allocation:**
+- ✅ Sustainable 50-55 hrs/week total (40 Rho + 10-15 personal)
+- ✅ No burnout, maintaining work-life balance
+
+---
+
+### **Phase 2: Validation (Months 4-6)**
+
+**Consulting:**
+- ✅ 2-3 free audits completed
+- ✅ Service offering refined based on feedback
+- ✅ First $1K-3K in consulting fees earned
+
+**Unity MAP Templates:**
+- ✅ 5-10 N8N workflow templates packaged for sale
+- ✅ Email component library created
+- ✅ $500-1K/month in template sales
+
+**Unity MAP SaaS:**
+- ✅ Landing page live with waitlist
+- ✅ 50+ email signups collected
+- ✅ 10-15 customer discovery interviews completed
+
+**DECISION CRITERIA:**
+- Strong validation: >100 waitlist + 5+ beta commitments → Path A (Unity MAP SaaS)
+- Moderate validation: <50 waitlist but 3+ consulting clients → Path B (Consulting)
+- Rho promotion: $180K-220K + equity → Path C (Stay at Rho)
+
+---
+
+### **Phase 3: Commit or Pivot (Months 7-12)**
+
+**Path A Success Criteria (Unity MAP SaaS):**
+- ✅ First paying customer acquired
+- ✅ 3-5 beta customers live ($1,500-2,500/mo each)
+- ✅ Product refined based on feedback
+- ✅ Public launch preparation complete
+- ✅ $4,500-12,500/mo MRR
+
+**Path B Success Criteria (Consulting):**
+- ✅ 3-5 active consulting clients
+- ✅ Service offerings productized
+- ✅ Referral network established
+- ✅ $12K-40K/mo MRR
+
+**Path C Success Criteria (Stay at Rho):**
+- ✅ Role expansion negotiated
+- ✅ Consulting/templates maintained as side income
+- ✅ Options stacking continues at lower intensity
+- ✅ Annual re-evaluation scheduled
+
+---
+
+### **12-Month Revenue Targets (All Paths Combined)**
+
+**Conservative:** $334K/year
+- Rho: $130K (base salary maintained)
+- Consulting: $12K-40K (1-3 clients)
+- Unity MAP templates: $6K-12K ($500-1K/mo)
+- Unity MAP SaaS: $0-180K (0-12 customers)
+
+**Aggressive:** $742K/year
+- Rho: $180K (promoted)
+- Consulting: $240K-480K (10-20 clients or 5-10 retainers)
+- Unity MAP templates: $12K-24K ($1K-2K/mo)
+- Unity MAP SaaS: $180K-360K (12-24 customers)
+
+**Key Metric:** Options stacking creates FLOOR of $148K-202K (Rho + templates + 1-2 consulting clients) while maintaining CEILING potential of $742K+
+
+---
+
+### **Infrastructure (Ongoing):**
+- ✅ Multi-machine context system optimized and operational
+- ✅ WIP_CURRENT_CRITICAL.md updated after every major session
+- ✅ Strategic documents synced via Dropbox (30s) and GitHub (version control)
+- ✅ Clean hands framework maintained (zero Rho IP in personal projects)
 
 ---
 
