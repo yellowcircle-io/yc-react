@@ -79,12 +79,18 @@ jobs:
             return null;
 
       - name: Revert commit
-        if: steps.check-reverts.outputs.result != 'null'
+        if: steps.check-reverts.outputs.result != 'null' && steps.check-reverts.outputs.result != ''
         run: |
           REVERT_DATA='${{ steps.check-reverts.outputs.result }}'
 
-          if [ "$REVERT_DATA" != "null" ]; then
+          if [ "$REVERT_DATA" != "null" ] && [ -n "$REVERT_DATA" ]; then
             COMMIT_HASH=$(echo "$REVERT_DATA" | jq -r '.commitHash')
+
+            # Skip if commit hash is empty or null
+            if [ -z "$COMMIT_HASH" ] || [ "$COMMIT_HASH" = "null" ]; then
+              echo "⚠️ No valid commit hash found, skipping revert"
+              exit 0
+            fi
 
             # Configure git
             git config user.name "github-actions[bot]"
@@ -97,4 +103,6 @@ jobs:
             git push
 
             echo "✅ Successfully reverted commit: $COMMIT_HASH"
+          else
+            echo "ℹ️ No reverts needed at this time"
           fi
