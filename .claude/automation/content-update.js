@@ -120,9 +120,9 @@ try {
 
   console.log('✅ Changes committed to git\n');
 
-  // Optionally push (commented out for safety - uncomment to auto-push)
-  // execSync('git push', { cwd: REPO_ROOT });
-  // console.log('✅ Pushed to GitHub');
+  // Auto-push to GitHub
+  execSync('git push', { cwd: REPO_ROOT });
+  console.log('✅ Pushed to GitHub');
 
 } catch (error) {
   console.error('⚠️  Git commit failed:', error.message);
