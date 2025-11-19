@@ -10,6 +10,7 @@
     "alerts:deadline": "node deadline-alerts.js",
     "alerts:blocked": "node blocked-tasks-alert.js",
     "summary:weekly": "node weekly-summary.js",
+    "content:update": "node content-update.js",
     "test:all": "npm run wip:sync && npm run alerts:deadline && npm run alerts:blocked && npm run summary:weekly",
     "test": "node sync-roadmap-to-notion.js --dry-run"
   },
