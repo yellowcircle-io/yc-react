@@ -138,7 +138,9 @@ let fullCommand = config.script;
 // If passthrough, append all remaining args
 if (config.passthrough && args.length > 1) {
   const additionalArgs = args.slice(1).join(' ');
-  fullCommand += ` -- ${additionalArgs}`;
+  // Only use '--' separator for npm commands, not direct node calls
+  const separator = config.script.startsWith('npm ') ? ' -- ' : ' ';
+  fullCommand += separator + additionalArgs;
 }
 
 // Execute command
