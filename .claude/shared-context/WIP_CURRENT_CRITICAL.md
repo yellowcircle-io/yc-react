@@ -66,11 +66,30 @@
 - ✅ Content updates deploy to Firebase
 - ⏳ Ready for iPhone iCloud sync (wait 30 seconds)
 
-**Next Steps:**
-1. Wait for iCloud to sync shortcut to iPhone (~30 seconds)
-2. Test shortcut on iPhone
-3. Create remaining 4 shortcuts (Sync, WIP, Deadline, Summary)
-4. Document final working configuration
+**Next Steps (IMMEDIATE):**
+1. ⏳ Finish testing Apple Shortcut on iPhone
+   - Wait for iCloud sync (~30 seconds)
+   - Test content update from iPhone
+   - Verify git push works from mobile
+   - Create remaining 4 shortcuts (Sync, WIP, Deadline, Summary)
+
+2. 🎯 yellowCircle Website Updates (PRIORITY)
+   - **"Own Your Story" Content Series**
+     - Define series brand/format
+     - Review existing case studies
+     - Draft first piece: "Why Your GTM Sucks"
+     - Plan additional topics
+
+   - **Unity Notes Updates**
+     - Implement changes from user feedback
+     - Update navigation structure
+     - Sync with global component system
+
+**To Resume This Work:**
+In any new Claude Code session (Web/CLI/Codespaces), just say:
+```
+Read .claude/shared-context/WIP_CURRENT_CRITICAL.md and continue from where we left off
+```
 
 **Commits Today:**
 - `595fb7b` - Reset headline to "ABOUT"
