@@ -1,0 +1,73 @@
+# iPhone Shortcut: yellowCircle SSH Command
+# Import this into iOS Shortcuts app
+
+Name: yellowCircle Command
+Icon: Terminal (orange)
+Color: Orange
+
+---
+
+## Shortcut Actions:
+
+### 1. Ask for Input
+Type: Menu
+Prompt: "What command?"
+Choices:
+  - WIP Sync
+  - Deadline Alerts
+  - Blocked Tasks
+  - Weekly Summary
+  - Full Sync
+  - Run All
+
+### 2. Set Variable
+Name: command_name
+Value: [Based on menu choice]
+  - WIP Sync → wip:sync
+  - Deadline Alerts → alerts:deadline
+  - Blocked Tasks → alerts:blocked
+  - Weekly Summary → summary:weekly
+  - Full Sync → sync
+  - Run All → test:all
+
+### 3. Run Script Over SSH
+Host: [YOUR_MAC_IP]  # e.g., 192.168.1.100 or mac-mini.local
+Port: 22
+User: [YOUR_MAC_USERNAME]  # e.g., christopherwilliamson
+Authentication: Password or Key
+Script:
+```bash
+cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation
+npm run [command_name]
+```
+
+### 4. Set Variable
+Name: output
+Value: [Shell Script Result from step 3]
+
+### 5. Show Notification
+Title: ✅ Command Complete
+Body: [output variable]
+
+---
+
+## How to Import:
+
+1. Open Shortcuts app on iPhone
+2. Tap + to create new shortcut
+3. Add actions as described above
+4. Replace [YOUR_MAC_IP] and [YOUR_MAC_USERNAME]
+5. Test with "WIP Sync" option
+
+---
+
+## Siri Integration:
+
+After creating shortcut, add to Siri:
+- Settings → Siri & Search → Shortcuts
+- Find "yellowCircle Command"
+- Tap "Add to Siri"
+- Record phrase: "yellowCircle Command"
+
+Now you can say:
+"Hey Siri, yellowCircle Command"
