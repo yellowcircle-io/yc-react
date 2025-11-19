@@ -104,7 +104,7 @@ function AboutPage() {
             ...EFFECTS.blurLight,
             display: 'inline-block',
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
-          }}>YellowWorld!</h1>
+          }}>Hello from shortcut</h1>
 
           <div style={{ position: 'relative', minHeight: '120px' }}>
             {/* Main subtitle */}
