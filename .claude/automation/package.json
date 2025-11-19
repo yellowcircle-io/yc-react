@@ -1,0 +1,22 @@
+{
+  "name": "yellowcircle-automation",
+  "version": "1.0.0",
+  "description": "Automation scripts for yellowCircle project management",
+  "main": "sync-roadmap-to-notion.js",
+  "scripts": {
+    "sync": "node sync-roadmap-to-notion.js",
+    "sync:dry-run": "node sync-roadmap-to-notion.js --dry-run",
+    "test": "node sync-roadmap-to-notion.js --dry-run"
+  },
+  "keywords": [
+    "notion",
+    "automation",
+    "roadmap",
+    "sync"
+  ],
+  "author": "Christopher Cooper",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/client": "^2.2.15"
+  }
+}
