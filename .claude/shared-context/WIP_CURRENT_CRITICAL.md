@@ -2,11 +2,82 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 18, 2025 at 9:15 PM PST
+**Updated:** November 19, 2025 at 5:10 PM PST
 **Machine:** Mac Mini (Primary)
-**Status:** ⚙️ AUTOMATION DEPLOYMENT IN PROGRESS - Phase 1 script complete, Notion setup next
+**Status:** ✅ MOBILE COMMAND SYSTEM COMPLETE - iPhone shortcuts operational
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## 🎯 NOVEMBER 19, 2025 - MOBILE COMMAND SYSTEM COMPLETE - 5:10 PM PST
+
+### ✅ APPLE SHORTCUTS AUTOMATION - COMPLETE
+
+**Mobile Command System for yellowCircle - OPERATIONAL**
+- Created Apple Shortcut for content updates via iPhone/Mac
+- SSH-based execution on Mac Mini
+- Dynamic content updates without Claude Code/Notion/GitHub login
+- Full git automation (commit + push) integrated
+
+**What Was Built:**
+1. **Command Router** (`.claude/automation/shortcut-router.js`)
+   - Central dispatcher for all automation commands
+   - 5 commands: sync, wip, content, deadline, summary
+   - Passthrough argument handling for dynamic commands
+   - Fixed separator handling (npm vs node commands)
+
+2. **Content Update Script** (`.claude/automation/content-update.js`)
+   - Template-based page content updates
+   - Supports: headline, description, background sections
+   - Git commit with multiline messages via stdin
+   - Auto-push to GitHub + Firebase deployment
+   - Edge case handling (no changes detection)
+
+3. **SSH Scripts** (`.claude/shortcuts/SSH_SCRIPTS_REFERENCE.md`)
+   - Working format: `source ~/.nvm/nvm.sh; cd ~/path; node script.js`
+   - Single-line execution (semicolons, not `&&`)
+   - NVM sourcing required for SSH sessions
+
+4. **Apple Shortcut Configuration**
+   - 3 "Ask for Input" actions (page, section, text)
+   - 1 "Run script over SSH" action with embedded variables
+   - 1 "Show alert" action for deployment status
+   - Variable pills inserted via "Add Variable" button (NOT typed text)
+   - Single-line command with no line breaks
+
+**Technical Fixes Applied:**
+1. Router argument separator (-- only for npm, not node)
+2. Git commit multiline messages (use stdin with -F -)
+3. No-changes detection (git diff --cached --quiet)
+4. SSH variable interpolation (blue pills in Script field)
+5. Text parameter quoting (single quotes for multi-word text)
+
+**Files Created/Modified:**
+- `.claude/automation/shortcut-router.js` (160 lines)
+- `.claude/automation/content-update.js` (155 lines)
+- `.claude/automation/test-content-update.sh` (48 lines)
+- `.claude/shortcuts/SSH_SCRIPTS_REFERENCE.md`
+- Multiple debug/fix commits
+
+**Current Status:**
+- ✅ Shortcut works on Mac with hardcoded test
+- ✅ Git commit and push successful
+- ✅ Content updates deploy to Firebase
+- ⏳ Ready for iPhone iCloud sync (wait 30 seconds)
+
+**Next Steps:**
+1. Wait for iCloud to sync shortcut to iPhone (~30 seconds)
+2. Test shortcut on iPhone
+3. Create remaining 4 shortcuts (Sync, WIP, Deadline, Summary)
+4. Document final working configuration
+
+**Commits Today:**
+- `595fb7b` - Reset headline to "ABOUT"
+- `f273773` - Fix: Check for changes before attempting commit
+- `03f89af` - Fix: Git commit with multiline messages via stdin
+- `b8fd7ed` - Fix: Router argument separator for direct node calls
+- Multiple test commits from shortcut debugging
 
 ---
 
