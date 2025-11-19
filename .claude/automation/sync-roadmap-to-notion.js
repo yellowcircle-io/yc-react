@@ -13,6 +13,9 @@
  *   NOTION_ROADMAP_DB_ID - Database ID for yellowCircle Roadmap
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const { Client } = require('@notionhq/client');
 const fs = require('fs');
 const path = require('path');
@@ -275,6 +278,107 @@ async function syncTaskToNotion(task) {
 }
 
 /**
+ * Setup database schema with required properties
+ */
+async function setupDatabaseSchema() {
+  if (DRY_RUN) {
+    console.log('[DRY RUN] Would setup database schema\n');
+    return;
+  }
+
+  try {
+    console.log('🔧 Setting up database schema...');
+
+    // Get current database to check existing properties
+    const database = await notion.databases.retrieve({
+      database_id: ROADMAP_DB_ID,
+    });
+
+    const existingProps = Object.keys(database.properties);
+    const requiredProps = ['Feature', 'Status', 'Priority', 'Category', 'Description', 'Estimated Hours'];
+    const missingProps = requiredProps.filter(prop => !existingProps.includes(prop));
+
+    if (missingProps.length === 0) {
+      console.log('✓ Database schema already configured\n');
+      return;
+    }
+
+    console.log(`  Adding ${missingProps.length} missing properties: ${missingProps.join(', ')}`);
+
+    // Build properties object with only missing properties
+    const newProperties = {};
+
+    if (missingProps.includes('Feature')) {
+      newProperties['Feature'] = { title: {} };
+    }
+
+    if (missingProps.includes('Status')) {
+      newProperties['Status'] = {
+        select: {
+          options: [
+            { name: 'Not Started', color: 'gray' },
+            { name: 'In Progress', color: 'blue' },
+            { name: 'Complete', color: 'green' },
+            { name: 'Blocked', color: 'red' },
+          ],
+        },
+      };
+    }
+
+    if (missingProps.includes('Priority')) {
+      newProperties['Priority'] = {
+        select: {
+          options: [
+            { name: 'P0', color: 'red' },
+            { name: 'P1', color: 'orange' },
+            { name: 'P2', color: 'yellow' },
+            { name: 'P3', color: 'gray' },
+          ],
+        },
+      };
+    }
+
+    if (missingProps.includes('Category')) {
+      newProperties['Category'] = {
+        select: {
+          options: [
+            { name: 'yellowCircle', color: 'yellow' },
+            { name: 'Rho', color: 'blue' },
+            { name: 'Unity Notes', color: 'purple' },
+            { name: 'Personal', color: 'green' },
+          ],
+        },
+      };
+    }
+
+    if (missingProps.includes('Description')) {
+      newProperties['Description'] = {
+        rich_text: {},
+      };
+    }
+
+    if (missingProps.includes('Estimated Hours')) {
+      newProperties['Estimated Hours'] = {
+        number: {
+          format: 'number',
+        },
+      };
+    }
+
+    // Update database with new properties
+    await notion.databases.update({
+      database_id: ROADMAP_DB_ID,
+      properties: newProperties,
+    });
+
+    console.log('✅ Database schema configured successfully\n');
+  } catch (error) {
+    console.error('❌ Error setting up database schema:', error.message);
+    throw error;
+  }
+}
+
+/**
  * Main execution
  */
 async function main() {
@@ -294,6 +398,9 @@ async function main() {
     console.error('❌ Error: NOTION_ROADMAP_DB_ID environment variable not set');
     process.exit(1);
   }
+
+  // Setup database schema first
+  await setupDatabaseSchema();
 
   console.log('📋 Parsing roadmap files...\n');
 

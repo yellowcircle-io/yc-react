@@ -1,0 +1,40 @@
+name: Blocked Tasks Alert
+
+on:
+  schedule:
+    # Run daily at 10:00 AM PST (18:00 UTC)
+    - cron: '0 18 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-blocked-tasks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd .claude/automation
+          npm install
+
+      - name: Check for blocked tasks
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_ROADMAP_DB_ID: ${{ secrets.NOTION_ROADMAP_DB_ID }}
+        run: |
+          cd .claude/automation
+          node blocked-tasks-alert.js
+
+      - name: Create blocked tasks summary
+        if: always()
+        run: |
+          echo "### Blocked Tasks Check Complete" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ Checked for tasks blocked >48 hours" >> $GITHUB_STEP_SUMMARY
