@@ -116,7 +116,12 @@ try {
   const commitMessage = `Update: ${page} page ${section}\n\n${text || background}\n\n🤖 Via mobile command system\n\nCo-Authored-By: Claude <noreply@anthropic.com>`;
 
   execSync(`git add "${pageFile}"`, { cwd: REPO_ROOT });
-  execSync(`git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, { cwd: REPO_ROOT });
+
+  // Use heredoc-style commit message to handle newlines properly
+  execSync(`git commit -F -`, {
+    cwd: REPO_ROOT,
+    input: commitMessage
+  });
 
   console.log('✅ Changes committed to git\n');
 
@@ -126,7 +131,9 @@ try {
 
 } catch (error) {
   console.error('⚠️  Git commit failed:', error.message);
+  console.error('Full error:', error);
   console.log('Changes saved to file but not committed\n');
+  process.exit(1); // Exit with error so shortcut knows it failed
 }
 
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
