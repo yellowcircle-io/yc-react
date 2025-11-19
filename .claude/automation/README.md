@@ -28,20 +28,19 @@ npm install
 
 1. Go to Notion, create new page: "yellowCircle Roadmap"
 2. Create a database (full page database, not inline)
-3. Add the following properties:
+3. **Properties are created automatically!** The sync script will add:
+   - Feature (Title)
+   - Status (Select: Not Started, In Progress, Complete, Blocked)
+   - Priority (Select: P0, P1, P2, P3)
+   - Category (Select: yellowCircle, Rho, Unity Notes, Personal)
+   - Description (Text)
+   - Estimated Hours (Number)
 
-| Property Name | Type | Options |
-|--------------|------|---------|
-| Feature | Title | (default) |
-| Status | Select | Not Started, In Progress, Complete, Blocked |
-| Priority | Select | P0, P1, P2, P3 |
-| Category | Select | yellowCircle, Rho, Unity Notes, Personal |
-| Description | Text | (long text) |
-| Estimated Hours | Number | (default) |
-| Due Date | Date | (default) |
-| Related Files | URL | (default) |
+4. Optionally add these properties manually if you want them:
+   - Due Date (Date) - Used by deadline alerts
+   - Related Files (URL) - For linking to markdown files
 
-4. Create views:
+5. Create views (optional, but recommended):
    - **Kanban** (Board view by Status) - Set as default
    - **This Week** (Table view, filter: Due Date is this week)
    - **By Priority** (Table view, sort by Priority P0 first)
@@ -177,21 +176,76 @@ npm run sync:dry-run
 
 ---
 
-## Automation Workflows (Future)
+## Automation Workflows (GitHub Actions)
 
-### Daily Feedback Loop (Phase 2)
+All workflows run automatically via GitHub Actions. You can also run them manually locally.
 
-Coming soon: N8N workflow that:
-- Reads `.claude/shared-context/WIP_CURRENT_CRITICAL.md` daily
-- Updates Notion task statuses
-- Sends daily summary notification
+### Daily WIP Sync
 
-### Smart Notifications (Phase 3)
+**Runs:** Daily at 8:00 AM PST
+**Manual Trigger:** `npm run wip:sync`
 
-Coming soon:
-- Deadline alerts (24 hours before due date)
-- Blocked task alerts (blocked >48 hours)
-- Weekly summary (Friday 5 PM)
+Reads `WIP_CURRENT_CRITICAL.md` and updates Notion:
+- Marks tasks as "In Progress" if mentioned in current work
+- Marks tasks as "Complete" if mentioned in completed section
+- Generates daily summary of progress
+
+```bash
+npm run wip:sync
+```
+
+### Deadline Alerts
+
+**Runs:** Daily at 8:00 AM PST
+**Manual Trigger:** `npm run alerts:deadline`
+
+Checks for:
+- Tasks due within 24 hours
+- Overdue tasks
+- Creates alert file: `.claude/shared-context/DEADLINE_ALERTS.md`
+
+```bash
+npm run alerts:deadline
+```
+
+### Blocked Tasks Alert
+
+**Runs:** Daily at 10:00 AM PST
+**Manual Trigger:** `npm run alerts:blocked`
+
+Identifies:
+- Tasks blocked >48 hours (needs attention)
+- Recently blocked tasks (<48 hours)
+- Creates alert file: `.claude/shared-context/BLOCKED_TASKS_ALERTS.md`
+
+```bash
+npm run alerts:blocked
+```
+
+### Weekly Summary
+
+**Runs:** Every Friday at 5:00 PM PST
+**Manual Trigger:** `npm run summary:weekly`
+
+Generates comprehensive report:
+- Tasks completed this week
+- Hours logged vs estimated
+- Tasks in progress / blocked / not started
+- Breakdown by category and priority
+- Next week's priorities
+- Creates summary file: `.claude/shared-context/WEEKLY_SUMMARY.md`
+
+```bash
+npm run summary:weekly
+```
+
+### Test All Automations
+
+Run all automation scripts at once:
+
+```bash
+npm run test:all
+```
 
 ---
 
@@ -230,42 +284,73 @@ Coming soon:
 
 ```
 .claude/automation/
-├── package.json              # Node.js dependencies
-├── .env.example              # Environment template
-├── .env                      # Your config (gitignored)
-├── README.md                 # This file
-├── sync-roadmap-to-notion.js # Main sync script
-└── (future workflows)
-    ├── daily-feedback.js
-    ├── smart-notifications.js
-    └── time-tracking.js
+├── package.json                # Node.js dependencies & scripts
+├── .env.example                # Environment template
+├── .env                        # Your config (gitignored)
+├── README.md                   # This file
+├── sync-roadmap-to-notion.js   # Main roadmap sync script
+├── daily-wip-sync.js           # Daily WIP → Notion sync
+├── deadline-alerts.js          # Deadline monitoring
+├── blocked-tasks-alert.js      # Blocked task detection
+└── weekly-summary.js           # Weekly progress reports
+
+.github/workflows/
+├── daily-wip-sync.yml          # Daily WIP automation
+├── deadline-alerts.yml         # Deadline check automation
+├── blocked-tasks-alert.yml     # Blocked task automation
+└── weekly-summary.yml          # Weekly summary automation
 ```
 
 ---
 
 ## Next Steps
 
-After successful sync:
+### 1. Set Up GitHub Secrets
 
-1. **Organize in Notion**
-   - Drag tasks in Kanban view
-   - Set due dates
-   - Add additional notes in Description
+For GitHub Actions to work, add your Notion credentials as repository secrets:
 
-2. **Update markdown files**
-   - Markdown files remain source of truth
-   - Sync script will update Notion on next run
-   - Future: Bidirectional sync (Notion → Markdown)
+1. Go to your GitHub repository
+2. Click **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Add two secrets:
+   - Name: `NOTION_API_KEY`, Value: Your Notion API key
+   - Name: `NOTION_ROADMAP_DB_ID`, Value: Your database ID
 
-3. **Deploy Phase 2** (Daily Feedback Loop)
-   - Set up N8N workflow
-   - Connect to WIP file updates
-   - Configure notifications (Slack/Discord/Email)
+### 2. Enable GitHub Actions
 
-4. **Deploy Phase 3** (Smart Notifications)
-   - Deadline reminders
-   - Blocked task alerts
-   - Weekly summaries
+1. Go to **Actions** tab in your GitHub repository
+2. Enable workflows if not already enabled
+3. Manually trigger a workflow to test:
+   - Click on a workflow (e.g., "Daily WIP Sync")
+   - Click "Run workflow" → "Run workflow"
+
+### 3. Organize in Notion
+
+- Drag tasks in Kanban view
+- Set due dates (enables deadline alerts)
+- Add additional notes in Description
+- Update task status as you work
+
+### 4. Maintain Markdown Files
+
+- Markdown files remain source of truth
+- Run `npm run sync` after updating roadmap files
+- GitHub Actions will sync automatically daily
+- Future enhancement: Bidirectional sync (Notion → Markdown)
+
+### 5. Monitor Automation
+
+Check generated files:
+- `.claude/shared-context/DEADLINE_ALERTS.md`
+- `.claude/shared-context/BLOCKED_TASKS_ALERTS.md`
+- `.claude/shared-context/WEEKLY_SUMMARY.md`
+
+### 6. Future Enhancements (Optional)
+
+- Add N8N for complex workflow routing
+- Integrate Slack/Discord for notifications
+- Add time tracking based on git commits
+- Build bidirectional sync (Notion → Markdown)
 
 ---
 
