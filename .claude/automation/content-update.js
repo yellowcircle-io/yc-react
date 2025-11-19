@@ -113,9 +113,19 @@ console.log('✅ File updated successfully\n');
 
 // Git commit
 try {
-  const commitMessage = `Update: ${page} page ${section}\n\n${text || background}\n\n🤖 Via mobile command system\n\nCo-Authored-By: Claude <noreply@anthropic.com>`;
-
   execSync(`git add "${pageFile}"`, { cwd: REPO_ROOT });
+
+  // Check if there are staged changes
+  try {
+    execSync('git diff --cached --quiet', { cwd: REPO_ROOT });
+    // If quiet check passes (exit code 0), no changes staged
+    console.log('ℹ️  No changes detected - content is already up to date\n');
+    process.exit(0);
+  } catch {
+    // Exit code 1 means there ARE changes - continue with commit
+  }
+
+  const commitMessage = `Update: ${page} page ${section}\n\n${text || background}\n\n🤖 Via mobile command system\n\nCo-Authored-By: Claude <noreply@anthropic.com>`;
 
   // Use heredoc-style commit message to handle newlines properly
   execSync(`git commit -F -`, {
