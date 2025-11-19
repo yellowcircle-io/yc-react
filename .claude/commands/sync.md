@@ -1,0 +1,1 @@
+See: automation.md
