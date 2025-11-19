@@ -72,6 +72,53 @@ jobs:
             all|"run all"|"test:all")
               npm run test:all 2>&1 | tee output.txt
               ;;
+            content*|"update content"*)
+              # Parse content update from issue body
+              # Expected format:
+              # content update
+              # page: about
+              # section: headline
+              # text: "New text"
+              # revert: 1h (optional)
+
+              ISSUE_BODY="${{ github.event.issue.body }}"
+
+              PAGE=$(echo "$ISSUE_BODY" | grep -i "page:" | sed 's/page://I' | xargs)
+              SECTION=$(echo "$ISSUE_BODY" | grep -i "section:" | sed 's/section://I' | xargs)
+              TEXT=$(echo "$ISSUE_BODY" | grep -i "text:" | sed 's/text://I' | xargs | sed 's/^["'\'']//' | sed 's/["'\'']$//')
+              REVERT=$(echo "$ISSUE_BODY" | grep -i "revert:" | sed 's/revert://I' | xargs)
+
+              if [ -z "$PAGE" ] || [ -z "$SECTION" ] || [ -z "$TEXT" ]; then
+                echo "❌ Error: Missing required parameters" > output.txt
+                echo "" >> output.txt
+                echo "Content update requires:" >> output.txt
+                echo "page: [home|about|works|hands|experiments|thoughts]" >> output.txt
+                echo "section: [headline|description|background]" >> output.txt
+                echo "text: \"Your new content\"" >> output.txt
+                echo "revert: 1h (optional - auto-revert after 1 hour)" >> output.txt
+              else
+                # Run content update
+                npm run content:update -- --page="$PAGE" --section="$SECTION" --text="$TEXT" 2>&1 | tee output.txt
+
+                # If revert flag set, store commit hash for later revert
+                if [ -n "$REVERT" ]; then
+                  COMMIT_HASH=$(git rev-parse HEAD)
+                  echo "" >> output.txt
+                  echo "⏰ Auto-revert scheduled for: $REVERT" >> output.txt
+                  echo "Commit to revert: $COMMIT_HASH" >> output.txt
+
+                  # Store in issue comment for revert workflow
+                  echo "REVERT_COMMIT=$COMMIT_HASH" >> $GITHUB_ENV
+                  echo "REVERT_TIME=$REVERT" >> $GITHUB_ENV
+                fi
+
+                # Push changes
+                git push 2>&1 | tee -a output.txt
+                echo "" >> output.txt
+                echo "✅ Changes pushed to GitHub" >> output.txt
+                echo "🔗 View at: https://yellowcircle-app.web.app" >> output.txt
+              fi
+              ;;
             *)
               echo "Unknown command: $COMMAND" > output.txt
               echo "" >> output.txt
@@ -82,6 +129,7 @@ jobs:
               echo "- blocked: Check blocked tasks" >> output.txt
               echo "- summary: Generate weekly summary" >> output.txt
               echo "- all: Run all automations" >> output.txt
+              echo "- content update: Update page content" >> output.txt
               ;;
           esac
 
@@ -90,6 +138,28 @@ jobs:
           echo "output<<EOF" >> $GITHUB_OUTPUT
           echo "$OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Add auto-revert label
+        if: github.event_name == 'issues' && env.REVERT_COMMIT != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['auto-revert']
+            });
+
+            // Add comment with revert info
+            const revertComment = `## ⏰ Auto-Revert Scheduled\n\nThis change will automatically revert in: **${{ env.REVERT_TIME }}**\n\nCommit to revert: \`${{ env.REVERT_COMMIT }}\`\n\nTo cancel auto-revert, remove the \`auto-revert\` label.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: revertComment
+            });
 
       - name: Comment result on issue
         if: github.event_name == 'issues'
