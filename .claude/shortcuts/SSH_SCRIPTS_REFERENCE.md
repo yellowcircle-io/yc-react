@@ -20,7 +20,7 @@ Quick reference for creating yellowCircle 5-action shortcut in Shortcuts app.
 ### 1. Sync Roadmap
 
 ```bash
-cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation && node shortcut-router.js sync
+source ~/.nvm/nvm.sh; cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation; node shortcut-router.js sync
 ```
 
 **What it does:** Syncs roadmap to Notion database
@@ -30,7 +30,7 @@ cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claud
 ### 2. WIP Sync
 
 ```bash
-cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation && node shortcut-router.js wip
+source ~/.nvm/nvm.sh; cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation; node shortcut-router.js wip
 ```
 
 **What it does:** Runs daily WIP sync to Notion
@@ -40,7 +40,7 @@ cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claud
 ### 3. Update Content
 
 ```bash
-cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation && node shortcut-router.js content --page=about --section=headline --text="From iPhone"
+source ~/.nvm/nvm.sh; cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation; node shortcut-router.js content --page=about --section=headline --text="From iPhone"
 ```
 
 **What it does:** Updates About page headline (example - customize as needed)
@@ -50,7 +50,7 @@ cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claud
 ### 4. Check Deadlines
 
 ```bash
-cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation && node shortcut-router.js deadline
+source ~/.nvm/nvm.sh; cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation; node shortcut-router.js deadline
 ```
 
 **What it does:** Checks for upcoming deadlines
@@ -60,7 +60,7 @@ cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claud
 ### 5. Weekly Summary
 
 ```bash
-cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation && node shortcut-router.js summary
+source ~/.nvm/nvm.sh; cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle/.claude/automation; node shortcut-router.js summary
 ```
 
 **What it does:** Generates weekly summary report
