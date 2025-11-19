@@ -1,0 +1,100 @@
+name: Auto-Revert Content Changes
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-reverts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for revert
+
+      - name: Check for auto-revert issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get all open issues with 'auto-revert' label
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'auto-revert',
+              state: 'closed',
+              per_page: 100
+            });
+
+            const now = new Date();
+            const oneHourAgo = new Date(now - 60 * 60 * 1000);
+
+            for (const issue of issues.data) {
+              const closedAt = new Date(issue.closed_at);
+
+              // Check if issue was closed more than 1 hour ago
+              if (closedAt < oneHourAgo) {
+                // Find the commit hash from issue comments
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number
+                });
+
+                const revertComment = comments.data.find(c => c.body.includes('Auto-Revert Scheduled'));
+                if (revertComment) {
+                  const commitMatch = revertComment.body.match(/Commit to revert: `([a-f0-9]+)`/);
+
+                  if (commitMatch) {
+                    const commitHash = commitMatch[1];
+
+                    console.log(`Reverting commit ${commitHash} from issue #${issue.number}`);
+
+                    // Store commit hash for next step
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      body: `## ⏪ Auto-Revert Executed\n\nReverted commit: \`${commitHash}\`\n\nExecuted at: ${now.toISOString()}`
+                    });
+
+                    // Remove auto-revert label
+                    await github.rest.issues.removeLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      name: 'auto-revert'
+                    }).catch(e => console.log('Label already removed'));
+
+                    // Export for shell script
+                    return { commitHash, issueNumber: issue.number };
+                  }
+                }
+              }
+            }
+
+            return null;
+
+      - name: Revert commit
+        if: steps.check-reverts.outputs.result != 'null'
+        run: |
+          REVERT_DATA='${{ steps.check-reverts.outputs.result }}'
+
+          if [ "$REVERT_DATA" != "null" ]; then
+            COMMIT_HASH=$(echo "$REVERT_DATA" | jq -r '.commitHash')
+
+            # Configure git
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            # Revert the commit
+            git revert --no-edit "$COMMIT_HASH"
+
+            # Push changes
+            git push
+
+            echo "✅ Successfully reverted commit: $COMMIT_HASH"
+          fi
