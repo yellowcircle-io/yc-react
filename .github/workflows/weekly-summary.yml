@@ -1,0 +1,40 @@
+name: Weekly Summary
+
+on:
+  schedule:
+    # Run every Friday at 5:00 PM PST (Saturday 1:00 AM UTC)
+    - cron: '0 1 * * 6'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  generate-weekly-summary:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd .claude/automation
+          npm install
+
+      - name: Generate weekly summary
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_ROADMAP_DB_ID: ${{ secrets.NOTION_ROADMAP_DB_ID }}
+        run: |
+          cd .claude/automation
+          node weekly-summary.js
+
+      - name: Create weekly summary output
+        if: always()
+        run: |
+          echo "### Weekly Summary Generated" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ Weekly progress report created" >> $GITHUB_STEP_SUMMARY
