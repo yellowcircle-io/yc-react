@@ -54,7 +54,7 @@ const COMMANDS = {
 
   // Content Updates
   'content': {
-    script: 'npm run content:update',
+    script: 'node content-update.js',
     description: 'Update page content',
     category: 'content',
     passthrough: true // Pass all args to script
