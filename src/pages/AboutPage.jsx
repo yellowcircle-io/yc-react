@@ -130,9 +130,7 @@ function AboutPage() {
             display: 'inline-block',
             padding: '4px 8px',
             animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
-          }}>
-            building meaningful digital experiences at the intersection of art and technology. #polymath
-          </p>
+          }}>Building meaningful digital experiences at the intersection of art and technology. #polymath</p>
         </div>
       </div>
     </Layout>
