@@ -25,6 +25,9 @@ import ComponentLibraryPage from './pages/experiments/ComponentLibraryPage';
 // Thoughts sub-routes
 import BlogPage from './pages/thoughts/BlogPage';
 
+// Own Your Story - Thought Leadership Series
+import OwnYourStoryArticle1Page from './pages/OwnYourStoryArticle1Page';
+
 function RouterApp() {
   return (
     <LayoutProvider>
@@ -48,6 +51,9 @@ function RouterApp() {
         
         {/* Thoughts Sub-routes */}
         <Route path="/thoughts/blog" element={<BlogPage />} />
+
+        {/* Own Your Story - Thought Leadership Series */}
+        <Route path="/thoughts/why-your-gtm-sucks" element={<OwnYourStoryArticle1Page />} />
 
         {/* Travel Time Capsule */}
         <Route path="/uk-memories" element={<TimeCapsulePage />} />
