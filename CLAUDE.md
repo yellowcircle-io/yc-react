@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📚 Documentation Navigation
+
+**📖 [REPOSITORY_TOC.md](REPOSITORY_TOC.md)** - Complete repository documentation index
+**🗂️ [.claude/TABLE_OF_CONTENTS.md](.claude/TABLE_OF_CONTENTS.md)** - Multi-Machine Framework documentation
+
+---
+
 ## 🔴 MULTI-MACHINE CONTEXT SYSTEM - READ FIRST
 
 **⚠️ IMPORTANT:** This repository uses a multi-machine Claude Code context sharing system.
