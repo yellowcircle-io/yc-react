@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
+import globalContent from '../../config/globalContent';
 
 /**
  * Footer - Two-section footer (Contact + Projects)
- * Matches HomePage.jsx lines 1197-1439 exactly
+ * Now driven by globalContent configuration
+ * Editable via: .claude/automation/global-manager.js
  */
 function Footer({ onFooterToggle }) {
   const navigate = useNavigate();
@@ -59,6 +61,10 @@ function Footer({ onFooterToggle }) {
     }
   }, []);
 
+  // Get configuration
+  const contactConfig = globalContent.footer.contact;
+  const projectsConfig = globalContent.footer.projects;
+
   return (
     <div
       ref={footerRef}
@@ -92,7 +98,7 @@ function Footer({ onFooterToggle }) {
         <div className="footer-section footer-contact" style={{
           flex: '1 1 50%',
           minWidth: 'min(300px, 100%)',
-          backgroundColor: 'rgba(0,0,0,0.9)',
+          backgroundColor: contactConfig.colors.backgroundColor,
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           padding: '40px',
@@ -101,56 +107,37 @@ function Footer({ onFooterToggle }) {
           justifyContent: 'flex-start'
         }}>
           <h2 style={{
-            color: 'white',
+            color: contactConfig.colors.titleColor,
             fontSize: 'clamp(18px, 4vw, 24px)',
             fontWeight: '600',
             letterSpacing: '0.3em',
             margin: '0 0 20px 0',
-            borderBottom: '2px solid white',
+            borderBottom: `2px solid ${contactConfig.colors.borderColor}`,
             paddingBottom: '10px'
-          }}>CONTACT</h2>
+          }}>{contactConfig.title}</h2>
 
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '15px'
           }}>
-            <a href="#" style={{
-              color: 'rgba(255,255,255,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease',
-              wordBreak: 'break-word'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'white'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
-            >EMAIL@YELLOWCIRCLE.IO</a>
-
-            <a href="#" style={{
-              color: 'rgba(255,255,255,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'white'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
-            >LINKEDIN</a>
-
-            <a href="#" style={{
-              color: 'rgba(255,255,255,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'white'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(255,255,255,0.8)'}
-            >TWITTER</a>
+            {contactConfig.links.map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                style={{
+                  color: contactConfig.colors.linkColor,
+                  textDecoration: 'none',
+                  fontSize: 'clamp(11px, 2.5vw, 14px)',
+                  fontWeight: '500',
+                  letterSpacing: '0.1em',
+                  transition: 'color 0.3s ease',
+                  wordBreak: link.type === 'email' ? 'break-word' : 'normal'
+                }}
+                onMouseEnter={(e) => e.target.style.color = contactConfig.colors.linkHoverColor}
+                onMouseLeave={(e) => e.target.style.color = contactConfig.colors.linkColor}
+              >{link.text}</a>
+            ))}
           </div>
         </div>
 
@@ -158,91 +145,47 @@ function Footer({ onFooterToggle }) {
         <div className="footer-section footer-projects" style={{
           flex: '1 1 50%',
           minWidth: 'min(300px, 100%)',
-          backgroundColor: '#EECF00',
+          backgroundColor: projectsConfig.colors.backgroundColor,
           padding: '40px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start'
         }}>
           <h2 style={{
-            color: 'black',
+            color: projectsConfig.colors.titleColor,
             fontSize: 'clamp(18px, 4vw, 24px)',
             fontWeight: '600',
             letterSpacing: '0.3em',
             margin: '0 0 20px 0',
-            borderBottom: '2px solid black',
+            borderBottom: `2px solid ${projectsConfig.colors.borderColor}`,
             paddingBottom: '10px'
-          }}>PROJECTS</h2>
+          }}>{projectsConfig.title}</h2>
 
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '15px'
           }}>
-            <a href="#" style={{
-              color: 'rgba(0,0,0,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'black'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
-            >GOLDEN UNKNOWN</a>
-
-            <a href="#" style={{
-              color: 'rgba(0,0,0,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'black'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
-            >BEING + RHYME</a>
-
-            <a href="#" style={{
-              color: 'rgba(0,0,0,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'black'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
-            >CATH3DRAL</a>
-
-            <a href="#" style={{
-              color: 'rgba(0,0,0,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'black'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
-            >RHO CONSULTING</a>
-
-            <a href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate('/uk-memories');
-              }}
-              style={{
-              color: 'rgba(0,0,0,0.8)',
-              textDecoration: 'none',
-              fontSize: 'clamp(11px, 2.5vw, 14px)',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = 'black'}
-            onMouseLeave={(e) => e.target.style.color = 'rgba(0,0,0,0.8)'}
-            >TRAVEL MEMORIES</a>
+            {projectsConfig.links.map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                onClick={link.route ? (e) => {
+                  e.preventDefault();
+                  navigate(link.route);
+                } : undefined}
+                style={{
+                  color: projectsConfig.colors.linkColor,
+                  textDecoration: 'none',
+                  fontSize: 'clamp(11px, 2.5vw, 14px)',
+                  fontWeight: '500',
+                  letterSpacing: '0.1em',
+                  transition: 'color 0.3s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.color = projectsConfig.colors.linkHoverColor}
+                onMouseLeave={(e) => e.target.style.color = projectsConfig.colors.linkColor}
+              >{link.text}</a>
+            ))}
           </div>
         </div>
       </div>

@@ -1,14 +1,20 @@
 import React from 'react';
+import globalContent from '../../config/globalContent';
 
 /**
  * Header - yellowCIRCLE navigation bar
- * Matches HomePage.jsx lines 941-980 exactly
+ * Now driven by globalContent configuration
+ * Editable via: .claude/automation/global-manager.js
  */
 function Header({ onHomeClick }) {
   const handleHomeClick = (e) => {
     e.preventDefault();
     if (onHomeClick) onHomeClick(e);
   };
+
+  // Get configuration
+  const headerConfig = globalContent.header;
+  const { logoText, colors, styling } = headerConfig;
 
   return (
     <nav style={{
@@ -30,7 +36,7 @@ function Header({ onHomeClick }) {
         href="#"
         onClick={handleHomeClick}
         style={{
-          backgroundColor: 'black',
+          backgroundColor: colors.backgroundColor,
           padding: '10px 20px',
           position: 'absolute',
           left: '50%',
@@ -40,13 +46,18 @@ function Header({ onHomeClick }) {
         }}
       >
         <h1 style={{
-          fontSize: '16px',
-          fontWeight: '600',
-          letterSpacing: '0.2em',
+          fontSize: styling.fontSize,
+          fontWeight: styling.fontWeight,
+          letterSpacing: styling.letterSpacing,
           margin: 0
         }}>
-          <span style={{ color: '#fbbf24', fontStyle: 'italic' }}>yellow</span>
-          <span style={{ color: 'white' }}>CIRCLE</span>
+          <span style={{
+            color: colors.part1Color,
+            fontStyle: styling.part1Style
+          }}>{logoText.part1}</span>
+          <span style={{
+            color: colors.part2Color
+          }}>{logoText.part2}</span>
         </h1>
       </a>
     </nav>

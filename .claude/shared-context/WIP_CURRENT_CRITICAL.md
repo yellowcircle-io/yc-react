@@ -2,28 +2,35 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 22, 2025 at 1:20 AM PST
-**Machine:** MacBook Air (Secondary) - Parallel work with Mac Mini
-**Status:** 🔄 PARALLEL WORK: MacBook Air (Technical) + Mac Mini (Content)
+**Updated:** November 22, 2025 at 5:10 PM PST
+**Machine:** Mac Mini (Primary) - Parallel work with MacBook Air
+**Status:** 🔄 PARALLEL WORK: Mac Mini (Content Creation) + MacBook Air (Technical)
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
 ---
 
-## 🔄 NOVEMBER 22, 2025 - PARALLEL WORK SESSIONS - 1:20 AM PST
+## 🔄 NOVEMBER 22, 2025 - PARALLEL WORK SESSIONS - 5:10 PM PST
 
 ### ⚡ CONCURRENT MULTI-MACHINE WORK - ACTIVE
 
-**MacBook Air (This Update):** Technical Foundation Track
+**Mac Mini (This Update):** Content Creation Track - EXECUTION STARTED
+- **Focus:** "Own Your Story" Article 1 - "Why Your GTM Sucks: The Human Cost of Operations Theater"
+- **Reference:** LiveIntent Mobile Report PDF structure + case studies
+- **Started:** 5:10 PM PST
+- **Status:** 🔄 In Progress - Beginning execution phase
+- **Parameters Approved:**
+  - **Title:** "Why Your GTM Sucks: The Human Cost of Operations Theater"
+  - **Voice Mix:** 60% Confrontational / 40% Creative Explorer
+  - **Persona Names:** Gender-neutral (Alex, Jordan, Casey, Morgan, Riley)
+  - **CTAs:** Two buttons - "Schedule a Consultation" + "Get the Audit Template" (both with email capture)
+  - **Launch:** Draft page on production with versioning/rollback features
+  - **Format:** Interactive web (horizontal scroll >800px) + PDF export
+
+**MacBook Air (Parallel Session):** Technical Foundation Track
 - **Focus:** Global components, Homepage redesign, Unity Notes, Page Management Phase 2
 - **Started:** 1:15 AM PST
 - **Status:** 🔄 In Progress - Extending page-manager.js for global components
-
-**Mac Mini (Parallel Session):** Content Creation Track
-- **Focus:** "Own Your Story" Article 1 - "Why Your GTM Sucks"
-- **Reference:** LiveIntent Mobile Report PDF structure + case studies
-- **Started:** ~1:15 AM PST
-- **Status:** 🔄 In Progress - Analyzing brand voice and case study structure
 
 **Sync Coordination:**
 - Both machines updating WIP sequentially with machine identifier
@@ -31,9 +38,17 @@
 - Mac Mini: Content commits
 - Merge coordination as needed
 
-**Next Steps:**
-- **MacBook Air:** Complete global component editing system (3-4 hours)
-- **Mac Mini:** Complete first article draft (5-8 hours)
+**Mac Mini Next Steps:**
+1. ✅ Create todo list for article execution
+2. ✅ Update WIP with Mac Mini session details
+3. 🔄 Research 2025 industry data (mobile engagement, MOps alignment stats)
+4. 🔄 Build React horizontal scroll component structure
+5. 🔄 Write article content (35 sections, 60/40 voice)
+6. 🔄 Create data visualizations and persona cards
+7. 🔄 Build email capture forms for CTAs
+8. 🔄 Generate PDF export version
+9. 🔄 Implement versioning/rollback system
+10. 🔄 Deploy draft to production
 
 ---
 
