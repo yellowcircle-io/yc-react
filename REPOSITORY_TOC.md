@@ -8,6 +8,8 @@
 
 ## 📚 Quick Navigation
 
+**📊 Notion Import:** [REPOSITORY_TOC_NOTION.csv](REPOSITORY_TOC_NOTION.csv) - Import this CSV into Notion for database view
+
 ### 🔴 Start Here
 1. [CLAUDE.md](CLAUDE.md) - **READ FIRST** - Claude Code project instructions
 2. [README.md](README.md) - Project overview and setup
