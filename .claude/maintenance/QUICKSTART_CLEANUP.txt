@@ -1,0 +1,131 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                   DISK SPACE CLEANUP - QUICK START                   ║
+║                         Generated: 2025-11-21                        ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📊 CURRENT STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Disk:       228 GB total
+  Used:       23 GB (68%)
+  Available:  11 GB
+  Target:     Reclaim 18-40 GB
+
+🎯 POTENTIAL SAVINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Browser Caches:        7.6 GB  ✓ Safe to delete
+  Chrome Profiles:       8.7 GB  ⚠ Choose which to delete
+  Application Caches:    4.0 GB  ✓ Safe to delete
+  Adobe Caches:          3.4 GB  ✓ Safe (if not using Adobe)
+  Developer Caches:      4.0 GB  ✓ Safe to delete
+  Old Installers:        0.7 GB  ✓ Safe to delete
+  Misc Caches:           2.5 GB  ✓ Safe to delete
+  ─────────────────────────────
+  TOTAL:              ~30-40 GB
+
+🚀 THREE WAYS TO CLEAN UP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 1: Automated Script (Recommended)
+─────────────────────────────────────────
+  Step 1: Preview what will be deleted
+    $ ./cleanup_preview.sh
+
+  Step 2: Run cleanup (interactive)
+    $ ./cleanup_disk_space.sh
+
+  ✓ Asks before deleting each category
+  ✓ Shows sizes and paths
+  ✓ Tracks total space reclaimed
+  ✓ Colored output for easy reading
+
+OPTION 2: Manual Commands (Quick & Safe)
+─────────────────────────────────────────
+  # Clear browser caches (7.6 GB)
+  $ rm -rf ~/Library/Caches/Google/Chrome/*
+  $ rm -rf ~/Library/Caches/Firefox/*
+  $ rm -rf ~/Library/Caches/Microsoft\ Edge/*
+
+  # Clear npm cache (1.7 GB)
+  $ npm cache clean --force
+
+  # Delete desktop installers (0.7 GB)
+  $ rm ~/Desktop/*.dmg ~/Desktop/*.pkg
+
+  # Clear Adobe caches (3.4 GB)
+  $ rm -rf ~/Library/Caches/Adobe/*
+
+OPTION 3: Manual Chrome Profile Cleanup (8 GB)
+───────────────────────────────────────────────
+  1. Open Chrome
+  2. Go to: chrome://version/
+  3. Note your current "Profile Path"
+  4. Settings → Profiles → Delete unused profiles
+
+  Your Chrome profiles:
+    • Profile 6:  3.4 GB ⚠ Largest
+    • Profile 8:  1.4 GB
+    • Default:    1.4 GB
+    • Profile 3:  2.1 GB
+    • Profile 9:  1.0 GB
+    • Profile 2:  575 MB
+    • Profile 7:  254 MB
+    • Profile 1:   58 MB
+    • Profile 10:  16 MB
+    • Profile 5:   48 MB
+
+📁 FILES CREATED FOR YOU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. cleanup_preview.sh      - Preview mode (no deletions)
+  2. cleanup_disk_space.sh   - Main cleanup script
+  3. CLEANUP_README.md       - Detailed documentation
+  4. QUICKSTART_CLEANUP.txt  - This file
+
+⚡ FASTEST PATH TO 20+ GB FREE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Run these three commands (2 minutes):
+
+  1. $ rm -rf ~/Library/Caches/Google/Chrome/*      # 4.4 GB
+  2. $ rm -rf ~/Library/Caches/Firefox/*            # 2.5 GB
+  3. $ rm -rf ~/Library/Caches/Adobe/*              # 3.4 GB
+  4. $ npm cache clean --force                      # 1.7 GB
+  5. $ rm -rf ~/Library/Caches/Microsoft\ Edge/*    # 1.2 GB
+  6. $ rm ~/Desktop/*.dmg ~/Desktop/*.pkg           # 0.7 GB
+  7. $ rm -rf ~/.cache                              # 1.5 GB
+  8. $ rm -rf ~/Library/Caches/Yarn                 # 339 MB
+
+  Total: ~15.8 GB in under 2 minutes!
+
+⚠️ IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✓ Browser caches rebuild automatically
+  ✓ Your bookmarks/passwords are NOT affected
+  ✓ npm/Yarn caches rebuild on next install
+  ✓ Active projects (Yellow Circle) are protected
+  ⚠ Verify Chrome profile before deleting
+  ⚠ Empty Trash after cleanup to finalize
+
+📞 NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • Read: CLEANUP_README.md (detailed guide)
+  • Preview first: ./cleanup_preview.sh
+  • Script asks for confirmation at each step
+  • Deleted files go to Trash (can be restored)
+
+🎉 AFTER CLEANUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Empty Trash to finalize deletions
+  2. Restart your Mac for best performance
+  3. Check disk space: $ df -h /
+  4. Run cleanup monthly for maintenance
+
+═══════════════════════════════════════════════════════════════════════
+
+Ready to start? Run this:
+
+    ./cleanup_preview.sh
+
+Or for fastest cleanup (browser caches only):
+
+    rm -rf ~/Library/Caches/Google/Chrome/* ~/Library/Caches/Firefox/* ~/Library/Caches/Adobe/*
+
+═══════════════════════════════════════════════════════════════════════

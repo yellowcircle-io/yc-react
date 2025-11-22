@@ -685,3 +685,60 @@ Location: `.claude/shared-context/`
 ---
 
 **End of Log**
+
+### Session November 21, 2025 - Disk Maintenance System
+
+**Date:** November 21, 2025
+**Context:** Disk space cleanup and maintenance framework integration
+
+**Tasks Completed:**
+
+1. **Disk Space Analysis**
+   - Analyzed 228 GB disk with only 11 GB available
+   - Identified 30-40 GB potential savings
+   - Created comprehensive cleanup strategy
+
+2. **Created Maintenance Scripts**
+   - `cleanup_disk_space.sh` (11 KB) - Interactive cleanup
+   - `cleanup_preview.sh` (4.9 KB) - Dry-run preview
+   - `CLEANUP_README.md` (6.2 KB) - Full documentation
+   - `QUICKSTART_CLEANUP.txt` (6.6 KB) - Quick reference
+
+3. **Executed Initial Cleanup**
+   - Cleared browser caches: 7.6 GB
+   - Cleared Adobe caches: 3.4 GB
+   - Cleared npm/Yarn caches: 2.4 GB
+   - Cleared developer caches: 1.5 GB
+   - Cleared updater caches: 1.2 GB
+   - Deleted desktop installers: 650 MB
+   - **Total Reclaimed: 24 GB** (11 GB → 35 GB available)
+
+4. **Integrated into Multi-Machine Framework**
+   - Created `.claude/maintenance/` directory
+   - Moved all cleanup scripts to framework
+   - Created `MAC_MINI_DISK_MAINTENANCE.md` guide
+   - Established monthly maintenance schedule
+
+**Files Created:**
+- `.claude/maintenance/cleanup_disk_space.sh`
+- `.claude/maintenance/cleanup_preview.sh`
+- `.claude/maintenance/CLEANUP_README.md`
+- `.claude/maintenance/QUICKSTART_CLEANUP.txt`
+- `.claude/MAC_MINI_DISK_MAINTENANCE.md`
+
+**Results:**
+- Before: 11 GB available (68% capacity)
+- After: 35 GB available (41% capacity)
+- Space Reclaimed: 24 GB (218% increase)
+
+**Maintenance Schedule Established:**
+- Monthly: Browser, npm/Yarn, updater caches
+- Quarterly: Full cleanup including Adobe
+- As needed: Desktop installers after app installs
+
+**Next Scheduled Cleanup:** December 1, 2025
+
+**Machine Note:** This maintenance system is Mac Mini specific due to different storage patterns on MacBook Air.
+
+---
+
