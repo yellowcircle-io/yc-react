@@ -61,29 +61,45 @@
 - Multiple debug/fix commits
 
 **Current Status:**
-- ✅ Shortcut works on Mac with hardcoded test
-- ✅ Git commit and push successful
-- ✅ Content updates deploy to Firebase
-- ⏳ Ready for iPhone iCloud sync (wait 30 seconds)
+- ✅ **Mobile command system COMPLETE and operational**
+- ✅ SSH key authentication configured (secure, no expiration)
+- ✅ Expanded to 4 content sections: headline, subtitle, body, background
+- ✅ 10+ aliases for convenience (h1, description, tagline, bodycopy, etc.)
+- ✅ Works on Mac and iPhone via iCloud-synced shortcuts
+- ✅ Auto-deploy to Firebase working end-to-end
+
+**Mobile Editing Capabilities:**
+- **Sections:** headline, subtitle, body, background
+- **Pages:** home, about, works, hands, experiments, thoughts
+- **Aliases:** h1, description, tagline, bodycopy, bodytext, bg, bgimage
+- **Authentication:** SSH key (Mac Mini → GitHub)
+- **Flow:** Edit from iPhone → SSH to Mac → Git commit/push → Firebase deploy
+
+**Key Documentation Files:**
+- `.claude/shortcuts/CONTENT_EXPANSION_GUIDE.md` - How to add pages, edit Unity Notes
+- `.claude/shortcuts/SSH_SCRIPTS_REFERENCE.md` - Working SSH command formats
+- `.claude/automation/content-update.js` - Content update script (4 sections)
+- `.claude/automation/shortcut-router.js` - Command dispatcher
+
+**Latest Commits:**
+- `50a685d` - Add: Content expansion guide
+- `6eacf39` - Add: Expanded content sections (subtitle, body)
+- `5790068` - Fix: SSH key authentication for git push
+- `cc4107c` - Test: Body section update
 
 **Next Steps (IMMEDIATE):**
-1. ⏳ Finish testing Apple Shortcut on iPhone
-   - Wait for iCloud sync (~30 seconds)
-   - Test content update from iPhone
-   - Verify git push works from mobile
-   - Create remaining 4 shortcuts (Sync, WIP, Deadline, Summary)
+1. ✅ Mobile content system complete (ready for use)
+2. ⏳ Create remaining 4 shortcuts (Sync, WIP, Deadline, Summary) - optional
+3. 🎯 **START: "Own Your Story" Content Series** (PRIORITY)
+   - Define series brand/format
+   - Review existing case studies
+   - Draft first piece: "Why Your GTM Sucks"
+   - Plan additional topics
 
-2. 🎯 yellowCircle Website Updates (PRIORITY)
-   - **"Own Your Story" Content Series**
-     - Define series brand/format
-     - Review existing case studies
-     - Draft first piece: "Why Your GTM Sucks"
-     - Plan additional topics
-
-   - **Unity Notes Updates**
-     - Implement changes from user feedback
-     - Update navigation structure
-     - Sync with global component system
+4. 🎯 **Unity Notes Updates** (PRIORITY)
+   - Implement changes from user feedback
+   - Update navigation structure
+   - Sync with global component system
 
 **To Resume This Work:**
 In any new Claude Code session (Web/CLI/Codespaces), just say:
