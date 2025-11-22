@@ -104,7 +104,7 @@ function AboutPage() {
             ...EFFECTS.blurLight,
             display: 'inline-block',
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
-          }}>About.</h1>
+          }}>New</h1>
 
           <div style={{ position: 'relative', minHeight: '120px' }}>
             {/* Main subtitle */}
