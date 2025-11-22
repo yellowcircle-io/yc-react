@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 22, 2025 at 12:25 AM PST
+**Updated:** November 22, 2025 at 12:30 AM PST
 **Machine:** Mac Mini (Primary)
-**Status:** ✅ PHASE 1 PAGE MANAGEMENT SYSTEM COMPLETE
+**Status:** ✅ PHASE 1 PAGE MANAGEMENT + IPHONE TESTING DOCS - COMPLETE & MERGED
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -139,6 +139,46 @@ Read these files in order:
 3. `.claude/shortcuts/EXTENDED_FUNCTIONALITY_SPEC.md` (Phase 2-4 specs)
 
 Then test: `cd .claude/automation && node page-manager.js --action=create --template=about --name=test-page --preview`
+
+---
+
+## 🎯 NOVEMBER 20, 2025 - IPHONE TESTING DOCUMENTATION COMPLETE - 12:05 AM PST
+
+### ✅ IPHONE SHORTCUT SETUP GUIDE & TESTING SCRIPTS - COMPLETE
+
+**Continuation from Nov 19 mobile command system work**
+
+**What Was Created:**
+
+1. **Mac Testing Script** (`.claude/automation/test-all-commands.sh`)
+   - Tests all 5 automation commands from Mac terminal
+   - Safe testing mode with prompts before modifying data
+   - Verifies SSH, Node.js, and automation scripts work
+   - 78 lines, executable script
+
+2. **Complete iPhone Setup Guide** (`.claude/shortcuts/IPHONE_SHORTCUT_SETUP_GUIDE.md`)
+   - Step-by-step unified 5-command menu shortcut creation
+   - Dynamic content updates with variable inputs
+   - All 5 SSH scripts with proper configuration
+   - Comprehensive troubleshooting for common issues
+   - Safe testing workflow (read-only commands first)
+   - 427 lines, 11 KB complete guide
+
+**Files Committed:**
+- Commit: `c530842` - "Add: iPhone shortcut testing and setup documentation"
+- 2 files, 505 lines total
+- Merged from branch: `claude/continue-critical-wip-01FgMP59bwtFq8YDWcopJqKv`
+
+**Current Status:**
+- ✅ All automation scripts ready (10 total in `.claude/automation/`)
+- ✅ Testing documentation complete
+- ✅ Setup guide complete
+- ✅ All files merged into main
+
+**Next Steps (COMPLETED ON NOV 22 - See Phase 1 above):**
+- ✅ Test on Mac Mini
+- ✅ Create page management system
+- ✅ Extend iPhone shortcut capabilities
 
 ---
 
@@ -296,4 +336,6 @@ Then say: "Continue drafting 'Why Your GTM Sucks' article outline"
 
 ---
 
-[Rest of file content remains the same...]
+## 🎯 NOVEMBER 19, 2025 - MOBILE COMMAND SYSTEM COMPLETE - 5:10 PM PST
+
+[Previous content remains...]
