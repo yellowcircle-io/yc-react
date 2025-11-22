@@ -1,0 +1,47 @@
+Category,Document,File Path,Purpose,Priority,When to Use,Update Frequency
+Critical Files,CLAUDE.md,../CLAUDE.md,Project instructions for Claude Code,Critical,Every session start,As needed
+Critical Files,WIP_CURRENT_CRITICAL.md,shared-context/WIP_CURRENT_CRITICAL.md,Current work status,Critical,Before/after machine switch,Every switch
+Critical Files,verify-sync.sh,verify-sync.sh,Sync verification tool,Critical,Every session start,Monthly
+Setup Guides,MULTI_MACHINE_SETUP_CRITICAL.md,MULTI_MACHINE_SETUP_CRITICAL.md,New machine setup instructions,Critical,Setting up new machine,Rare
+Setup Guides,MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md,MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md,MacBook Air verification,Critical,First time on MacBook Air,Once
+Setup Guides,MACBOOK_AIR_SYNC_INSTRUCTIONS.md,MACBOOK_AIR_SYNC_INSTRUCTIONS.md,MacBook Air sync setup,Critical,MacBook Air sync coordination,Rare
+Setup Guides,CODESPACES_MOBILE_ACCESS_CRITICAL.md,CODESPACES_MOBILE_ACCESS_CRITICAL.md,Mobile/Codespaces access,Optional,iPad/iPhone/Web access,Rare
+Setup Guides,SSH_KEYCHAIN_AUTO_UNLOCK.md,SSH_KEYCHAIN_AUTO_UNLOCK.md,SSH key automation,Optional,Mac SSH access,Rare
+Setup Guides,TERMIUS_KEYCHAIN_FIX.md,TERMIUS_KEYCHAIN_FIX.md,Termius SSH client setup,Optional,iPad/iPhone SSH,Rare
+Sync & Coordination,MULTI_ENVIRONMENT_SYNC_GUIDE.md,MULTI_ENVIRONMENT_SYNC_GUIDE.md,Complete sync guide (all platforms),Critical,Any sync questions,Quarterly
+Sync & Coordination,SYNC_EXPLAINED.md,SYNC_EXPLAINED.md,How sync hierarchy works,Reference,Understanding sync,Rare
+Sync & Coordination,DROPBOX_PATH_CLEANUP_AUDIT.md,DROPBOX_PATH_CLEANUP_AUDIT.md,Dropbox path issues,Troubleshooting,Mac Mini Dropbox problems,As needed
+Sync & Coordination,MAC_MINI_SLASH_COMMANDS_FIX.md,MAC_MINI_SLASH_COMMANDS_FIX.md,Slash command sync fix,Troubleshooting,Commands not updating,As needed
+Sync & Coordination,GOOGLE_DRIVE_SYNC_GUIDE.md,GOOGLE_DRIVE_SYNC_GUIDE.md,Google Drive backup setup,Reference,Setting up backup sync,Rare
+Instance Logs,INSTANCE_LOG_MacMini.md,INSTANCE_LOG_MacMini.md,Primary development machine log,Critical,Mac Mini sessions,After each session
+Instance Logs,INSTANCE_LOG_MacBookAir.md,INSTANCE_LOG_MacBookAir.md,Secondary machine log,Critical,MacBook Air sessions,After each session
+Maintenance,MAC_MINI_DISK_MAINTENANCE.md,MAC_MINI_DISK_MAINTENANCE.md,Maintenance system guide,Critical,Monthly cleanup schedule,Monthly
+Maintenance,CLEANUP_README.md,maintenance/CLEANUP_README.md,Full cleanup documentation,Reference,Cleanup reference,Quarterly
+Maintenance,QUICKSTART_CLEANUP.txt,maintenance/QUICKSTART_CLEANUP.txt,Quick cleanup commands,Reference,Fast cleanup,Monthly
+Maintenance,cleanup_disk_space.sh,maintenance/cleanup_disk_space.sh,Interactive cleanup script,Critical,Monthly/as needed,N/A (executable)
+Maintenance,cleanup_preview.sh,maintenance/cleanup_preview.sh,Dry-run preview script,Critical,Before cleanup,N/A (executable)
+Automation,automation README,automation/README.md,Automation architecture,Optional,Setting up automation,Rare
+Automation,AUTOMATION_DEPLOYMENT_COMPLETE.md,AUTOMATION_DEPLOYMENT_COMPLETE.md,Deployment summary,Reference,Understanding automation,Archive
+Automation,shortcut-router.js,automation/shortcut-router.js,Command dispatcher,Optional,Mobile commands,N/A (executable)
+Automation,content-update.js,automation/content-update.js,Content update system,Optional,Content updates,N/A (executable)
+Automation,sync-roadmap-to-notion.js,automation/sync-roadmap-to-notion.js,Notion sync (planned),Optional,Future automation,N/A (planned)
+Mobile & Shortcuts,MOBILE_COMMAND_SYSTEM.md,MOBILE_COMMAND_SYSTEM.md,Mobile editing via shortcuts,Optional,iPhone/Mac shortcuts,Rare
+Mobile & Shortcuts,SSH_SCRIPTS_REFERENCE.md,shortcuts/SSH_SCRIPTS_REFERENCE.md,SSH command formats,Reference,Creating shortcuts,As needed
+Mobile & Shortcuts,CONTENT_EXPANSION_GUIDE.md,shortcuts/CONTENT_EXPANSION_GUIDE.md,Adding pages/sections,Reference,Expanding content,As needed
+Slash Commands,commands README,commands/README.md,Command documentation,Reference,Creating commands,As needed
+Slash Commands,roadmap.md,commands/roadmap.md,/roadmap command,Critical,Managing roadmap,Weekly
+Remote Access,SSH_REMOTE_ACCESS_FINAL.md,SSH_REMOTE_ACCESS_FINAL.md,SSH access setup,Optional,Setting up remote access,Rare
+Remote Access,SSH_SHORTCUTS_AND_ACCESS.md,SSH_SHORTCUTS_AND_ACCESS.md,SSH shortcuts guide,Optional,Quick SSH connections,Rare
+Remote Access,SSH_TERMIUS_ACCESS_GUIDE.md,SSH_TERMIUS_ACCESS_GUIDE.md,Termius client setup,Optional,iPad/iPhone SSH,Rare
+Remote Access,TEAMVIEWER_SETUP.md,TEAMVIEWER_SETUP.md,TeamViewer configuration,Optional,Remote desktop access,Rare
+Remote Access,TERMIUS_TROUBLESHOOTING.md,TERMIUS_TROUBLESHOOTING.md,Termius issues,Troubleshooting,SSH connection problems,As needed
+Shared Context,WIP_CURRENT_CRITICAL.md,shared-context/WIP_CURRENT_CRITICAL.md,Current work status,Critical,Before/after switch,Every switch
+Shared Context,DECISIONS.md,shared-context/DECISIONS.md,Decision log,Reference,After major decisions,As needed
+Shared Context,shared-context README,shared-context/README.md,Context usage guide,Reference,Understanding context,Rare
+Historical,RESTORE_POINT_NOV18_2025.md,RESTORE_POINT_NOV18_2025.md,Nov 18 restore point,Archive,Returning to Nov 18,Archive
+Historical,EMAIL_COMMAND_EXAMPLES.md,EMAIL_COMMAND_EXAMPLES.md,Email command examples,Archive,Automation reference,Archive
+Design,DESIGN_INSPIRATION.md,DESIGN_INSPIRATION.md,Design references,Reference,Visual design work,As needed
+Design,SIDEBAR_BEST_PRACTICES.md,SIDEBAR_BEST_PRACTICES.md,Sidebar design patterns,Reference,Building sidebars,As needed
+Design,SIDEBAR_NAV_ANALYSIS.md,SIDEBAR_NAV_ANALYSIS.md,Navigation analysis,Reference,Navigation design,As needed
+Framework,TABLE_OF_CONTENTS.md,TABLE_OF_CONTENTS.md,This table of contents,Critical,Navigation/reference,Monthly
+Framework,README.md,README.md,Framework overview,Critical,Understanding framework,Quarterly
