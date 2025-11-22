@@ -1,0 +1,68 @@
+Category,Document,File Path,Purpose,Priority,Type,Update Frequency
+Critical Files,CLAUDE.md,CLAUDE.md,Claude Code project instructions,Critical,Documentation,As needed
+Critical Files,README.md,README.md,Project overview and setup,Critical,Documentation,Quarterly
+Critical Files,REPOSITORY_TOC.md,REPOSITORY_TOC.md,Complete repository navigation,Critical,Navigation,When major files added
+Critical Files,WIP_CURRENT_CRITICAL.md,.claude/shared-context/WIP_CURRENT_CRITICAL.md,Current work status,Critical,Context,Every switch
+Critical Files,verify-sync.sh,.claude/verify-sync.sh,Sync verification tool,Critical,Script,Every session
+Application - Pages,HomePage.jsx,src/pages/HomePage.jsx,Main landing page with parallax,Core,Component,As needed
+Application - Pages,Home17Page.jsx,src/pages/Home17Page.jsx,Alternative home (17-frame),Core,Component,As needed
+Application - Pages,AboutPage.jsx,src/pages/AboutPage.jsx,About yellowCircle,Core,Component,As needed
+Application - Pages,WorksPage.jsx,src/pages/WorksPage.jsx,Portfolio/work showcase,Core,Component,As needed
+Application - Pages,HandsPage.jsx,src/pages/HandsPage.jsx,Interactive hand visualizations,Core,Component,As needed
+Application - Pages,ThoughtsPage.jsx,src/pages/ThoughtsPage.jsx,Blog/thought leadership,Core,Component,As needed
+Application - Pages,ExperimentsPage.jsx,src/pages/ExperimentsPage.jsx,Interactive experiments,Core,Component,As needed
+Application - Pages,TimeCapsulePage.jsx,src/pages/TimeCapsulePage.jsx,Time capsule creation,Core,Component,As needed
+Application - Pages,CapsuleViewPage.jsx,src/pages/CapsuleViewPage.jsx,View saved capsules,Core,Component,As needed
+Application - Pages,FeedbackPage.jsx,src/pages/FeedbackPage.jsx,User feedback form,Core,Component,As needed
+Application - Pages,UnityNotesPage.jsx,src/pages/UnityNotesPage.jsx,Unity project notes,Core,Component,As needed
+Application - Pages,DirectoryPage.jsx,src/pages/DirectoryPage.jsx,Site directory,Core,Component,As needed
+Application - Pages,SitemapPage.jsx,src/pages/SitemapPage.jsx,XML sitemap,Core,Component,As needed
+Application - Pages,NotFoundPage.jsx,src/pages/NotFoundPage.jsx,404 error page,Core,Component,As needed
+Application - Components,ErrorBoundary.jsx,src/components/ErrorBoundary.jsx,Error handling wrapper,Core,Component,As needed
+Application - Hooks,useParallax.js,src/hooks/useParallax.js,Parallax effect logic,Core,Hook,As needed
+Application - Hooks,useScrollOffset.js,src/hooks/useScrollOffset.js,Scroll position tracking,Core,Hook,As needed
+Application - Hooks,useSidebar.js,src/hooks/useSidebar.js,Sidebar state management,Core,Hook,As needed
+Application - Hooks,useFirebaseCapsule.js,src/hooks/useFirebaseCapsule.js,Firebase capsule operations,Core,Hook,As needed
+Application - Contexts,LayoutContext.jsx,src/contexts/LayoutContext.jsx,Global layout state,Core,Context,As needed
+Application - Config,firebase.js,src/config/firebase.js,Firebase initialization,Core,Config,Rare
+Application - Utils,cloudinaryUpload.js,src/utils/cloudinaryUpload.js,Image upload to Cloudinary,Core,Utility,As needed
+Application - Styles,constants.js,src/styles/constants.js,Style constants and theme,Core,Config,As needed
+Application - Entry,main.jsx,src/main.jsx,React app entry point,Core,Entry,Rare
+Application - Entry,RouterApp.jsx,src/RouterApp.jsx,Router configuration,Core,Config,As needed
+Build Config,vite.config.js,vite.config.js,Vite build configuration,Critical,Config,Rare
+Build Config,package.json,package.json,Dependencies & scripts,Critical,Config,As needed
+Build Config,eslint.config.js,eslint.config.js,ESLint configuration,Important,Config,Rare
+Build Config,firebase.json,firebase.json,Firebase hosting config,Critical,Config,Rare
+Firebase Functions,index.js,functions/index.js,Cloud Functions entry point,Important,Code,As needed
+Firebase Functions,package.json,functions/package.json,Functions dependencies,Important,Config,As needed
+Deployment,QUICK_START_DEPLOYMENT.md,QUICK_START_DEPLOYMENT.md,Fast deployment guide,Important,Documentation,Quarterly
+Deployment,STAGING_DEPLOYMENT_GUIDE.md,STAGING_DEPLOYMENT_GUIDE.md,Staging environment,Important,Documentation,Rare
+Deployment,PRODUCTION_READINESS.md,PRODUCTION_READINESS.md,Production checklist,Critical,Documentation,Before deploy
+Deployment,FIREBASE-QUOTA-EXCEEDED.md,FIREBASE-QUOTA-EXCEEDED.md,Quota troubleshooting,Important,Documentation,As needed
+Strategy - Critical,01_Visual_Notes_Technical_Roadmap_CRITICAL.md,dev-context/01_Visual_Notes_Technical_Roadmap_CRITICAL.md,Technical roadmap,Critical,Strategy,Monthly
+Strategy - Critical,02_yellowCircle_Strategy_CRITICAL.md,dev-context/02_yellowCircle_Strategy_CRITICAL.md,Business strategy,Critical,Strategy,Quarterly
+Strategy - Critical,03_Rho_Position_CRITICAL.md,dev-context/03_Rho_Position_CRITICAL.md,Rho positioning,Critical,Strategy,Quarterly
+Strategy - Content,OWN_YOUR_STORY_SERIES_BLUEPRINT.md,dev-context/OWN_YOUR_STORY_SERIES_BLUEPRINT.md,Thought leadership series,Important,Strategy,Monthly
+Strategy - Content,CASE_STUDY_EXAMPLES_LIBRARY.md,dev-context/CASE_STUDY_EXAMPLES_LIBRARY.md,Case study repository,Reference,Reference,As needed
+Strategy - Roadmap,PROJECT_ROADMAP_NOV2025.md,dev-context/PROJECT_ROADMAP_NOV2025.md,Current roadmap,Critical,Strategy,Monthly
+Strategy - Roadmap,ROADMAP_CHECKLIST_NOV8_2025.md,dev-context/ROADMAP_CHECKLIST_NOV8_2025.md,Checklist tracking,Important,Checklist,Weekly
+Strategy - Roadmap,NEXT_STEPS_NOV13_2025.md,dev-context/NEXT_STEPS_NOV13_2025.md,Immediate next steps,Important,Checklist,Daily
+Framework - Core,TABLE_OF_CONTENTS.md,.claude/TABLE_OF_CONTENTS.md,Framework documentation index,Critical,Navigation,When framework files added
+Framework - Core,README.md,.claude/README.md,Framework overview,Critical,Documentation,Quarterly
+Framework - Core,FRAMEWORK_TOC_NOTION.csv,.claude/FRAMEWORK_TOC_NOTION.csv,Notion import for framework,Reference,Data,When framework updated
+Framework - Maintenance,MAC_MINI_DISK_MAINTENANCE.md,.claude/MAC_MINI_DISK_MAINTENANCE.md,Disk cleanup system,Critical,Documentation,Monthly
+Framework - Maintenance,cleanup_disk_space.sh,.claude/maintenance/cleanup_disk_space.sh,Interactive cleanup script,Critical,Script,Monthly
+Framework - Maintenance,cleanup_preview.sh,.claude/maintenance/cleanup_preview.sh,Dry-run preview,Critical,Script,Before cleanup
+Framework - Automation,shortcut-router.js,.claude/automation/shortcut-router.js,Command dispatcher,Optional,Script,As needed
+Framework - Automation,content-update.js,.claude/automation/content-update.js,Content update system,Optional,Script,As needed
+Framework - Commands,roadmap.md,.claude/commands/roadmap.md,/roadmap command,Critical,Command,Weekly
+Testing,PRODUCTION_TEST_PLAN.md,PRODUCTION_TEST_PLAN.md,Production testing,Critical,Documentation,Before deploy
+Testing,QUICK_TEST_CHECKLIST.md,QUICK_TEST_CHECKLIST.md,Fast testing,Important,Checklist,As needed
+Testing,KNOWN_ISSUES.md,KNOWN_ISSUES.md,Known bugs,Critical,Documentation,As needed
+Testing,TROUBLESHOOTING.md,TROUBLESHOOTING.md,General troubleshooting,Important,Documentation,As needed
+Design,DESIGN_INSPIRATION.md,.claude/DESIGN_INSPIRATION.md,Design inspiration sources,Reference,Reference,As needed
+Design,SIDEBAR_BEST_PRACTICES.md,.claude/SIDEBAR_BEST_PRACTICES.md,Sidebar design patterns,Reference,Reference,As needed
+Design,GLOBAL_COMPONENTS_SPEC.md,GLOBAL_COMPONENTS_SPEC.md,Component specifications,Reference,Documentation,As needed
+Historical,PHASE5_DEPLOYMENT_COMPLETE.md,PHASE5_DEPLOYMENT_COMPLETE.md,Phase 5 complete,Archive,Documentation,Archive
+Historical,DEPLOYMENT_NOV10_2025.md,DEPLOYMENT_NOV10_2025.md,Nov 10 deployment,Archive,Documentation,Archive
+Historical,ALPHA_DEPLOYMENT_SUMMARY.md,ALPHA_DEPLOYMENT_SUMMARY.md,Alpha phase,Archive,Documentation,Archive
