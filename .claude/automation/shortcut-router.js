@@ -60,6 +60,26 @@ const COMMANDS = {
     passthrough: true // Pass all args to script
   },
 
+  // Page Management
+  'create-page': {
+    script: 'node page-manager.js --action=create',
+    description: 'Create new page from template',
+    category: 'pages',
+    passthrough: true
+  },
+  'duplicate-page': {
+    script: 'node page-manager.js --action=duplicate',
+    description: 'Duplicate existing page',
+    category: 'pages',
+    passthrough: true
+  },
+  'delete-page': {
+    script: 'node page-manager.js --action=delete',
+    description: 'Delete a page',
+    category: 'pages',
+    passthrough: true
+  },
+
   // Test All
   'all': {
     script: 'npm run test:all',
