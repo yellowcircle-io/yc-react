@@ -144,6 +144,105 @@ Expected output:
 
 ## Usage
 
+### Global Component Management
+
+Edit global components (Header, Footer, Theme) directly from iPhone via SSH or command line.
+
+**Quick Commands via Shortcut Router:**
+```bash
+# List all global configuration
+node shortcut-router.js global --action=list
+
+# List specific component
+node shortcut-router.js global --action=list --component=header
+node shortcut-router.js global --action=list --component=footer
+node shortcut-router.js global --action=list --component=theme
+
+# Edit header
+node shortcut-router.js edit-header --field=part1 --value="golden"
+node shortcut-router.js edit-header --field=part1Color --value="#FF0000"
+
+# Edit footer contact section
+node shortcut-router.js edit-footer --section=contact --action=add --text="GITHUB" --url="https://github.com"
+node shortcut-router.js edit-footer --section=contact --action=remove --text="TWITTER"
+node shortcut-router.js edit-footer --section=contact --field=title --value="GET IN TOUCH"
+
+# Edit footer projects section
+node shortcut-router.js edit-footer --section=projects --action=add --text="NEW PROJECT" --url="/new-project"
+node shortcut-router.js edit-footer --section=projects --action=edit --text="TRAVEL MEMORIES" --field=url --value="/memories"
+
+# Edit theme
+node shortcut-router.js edit-theme --field=primary --value="#FF0000"
+node shortcut-router.js edit-theme --field=fontFamily --value="Georgia, serif"
+
+# Preview changes without applying
+node shortcut-router.js edit-header --field=part1 --value="test" --preview
+```
+
+**Direct Usage (Advanced):**
+```bash
+# Header fields: part1, part2, part1Color, part2Color, backgroundColor, fontSize, fontWeight, letterSpacing
+node global-manager.js --component=header --field=part1 --value="golden"
+
+# Footer actions: add, remove, edit
+node global-manager.js --component=footer --section=contact --action=add --text="GITHUB" --url="https://github.com"
+
+# Theme fields (colors): primary, primaryDark, secondary, accent, background, text, textMuted
+# Theme fields (typography): fontFamily, headingWeight, bodyWeight, letterSpacing
+node global-manager.js --component=theme --field=primary --value="#EECF00"
+
+# Flags
+--preview        # Show changes without applying
+--dry-run        # Test execution without modifying files
+--no-commit      # Skip automatic git commit
+--no-build       # Skip build validation
+```
+
+**Configuration File:**
+- Location: `src/config/globalContent.js`
+- Contains all editable content for Header, Footer, and Theme
+- Automatically validated with `npm run build` on changes
+- Auto-commits to git with descriptive messages
+
+### Page Management
+
+Manage pages (create, duplicate, delete) directly from iPhone via SSH or command line.
+
+**Quick Commands via Shortcut Router:**
+```bash
+# Create new page from template
+node shortcut-router.js create-page --slug=contact --title="Contact Us" --template=standard
+
+# Duplicate existing page
+node shortcut-router.js duplicate-page --source=about --slug=about-us --title="About Us"
+
+# Delete page
+node shortcut-router.js delete-page --slug=old-page
+
+# Preview mode (see what would happen)
+node shortcut-router.js create-page --slug=test --title="Test Page" --preview
+```
+
+**Direct Usage (Advanced):**
+```bash
+# Create with custom options
+node page-manager.js --action=create --slug=services --title="Our Services" --template=minimal --route=/services
+
+# Duplicate with modifications
+node page-manager.js --action=duplicate --source=works --slug=portfolio --title="Portfolio"
+
+# Delete with confirmation skip
+node page-manager.js --action=delete --slug=old-page --force
+
+# Templates available: standard, minimal, fullscreen
+# Flags: --preview, --dry-run, --no-commit, --no-build, --force
+```
+
+**Page Templates:**
+- `standard` - Full layout with header, footer, sidebar
+- `minimal` - Clean layout, header only
+- `fullscreen` - Immersive experience, no chrome
+
 ### Sync Roadmap to Notion
 
 ```bash
@@ -288,11 +387,18 @@ npm run test:all
 ├── .env.example                # Environment template
 ├── .env                        # Your config (gitignored)
 ├── README.md                   # This file
+├── shortcut-router.js          # 🆕 Command router for iPhone shortcuts
+├── global-manager.js           # 🆕 Global component editor (Header, Footer, Theme)
+├── page-manager.js             # 🆕 Page management (create, duplicate, delete)
+├── content-update.js           # 🆕 Content editing for pages
 ├── sync-roadmap-to-notion.js   # Main roadmap sync script
 ├── daily-wip-sync.js           # Daily WIP → Notion sync
 ├── deadline-alerts.js          # Deadline monitoring
 ├── blocked-tasks-alert.js      # Blocked task detection
 └── weekly-summary.js           # Weekly progress reports
+
+src/config/
+└── globalContent.js            # 🆕 Centralized global component configuration
 
 .github/workflows/
 ├── daily-wip-sync.yml          # Daily WIP automation
