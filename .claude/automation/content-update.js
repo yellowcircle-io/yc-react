@@ -8,10 +8,16 @@
  *
  * Usage:
  *   node content-update.js --page=about --section=headline --text="New headline"
+ *   node content-update.js --page=about --section=subtitle --text="New subtitle"
+ *   node content-update.js --page=about --section=body --text="New body text"
  *   node content-update.js --page=home --section=background --background="url"
  *
  * Supported pages: home, about, works, hands, experiments, thoughts
- * Supported sections: headline, description, background
+ * Supported sections:
+ *   - headline (aliases: h1)
+ *   - subtitle (aliases: description, tagline)
+ *   - body (aliases: bodycopy, bodytext)
+ *   - background (aliases: bg, bgimage)
  */
 
 const fs = require('fs');
@@ -74,17 +80,47 @@ switch (section) {
     }
     break;
 
+  case 'subtitle':
   case 'description':
   case 'tagline':
-    // Find and replace description/tagline (first large paragraph)
-    const descRegex = /(<p className="[^"]*text-lg[^"]*"[^>]*>)(.*?)(<\/p>)/s;
-    if (descRegex.test(content)) {
-      content = content.replace(descRegex, `$1${text}$3`);
-      updated = true;
+    // Find and replace subtitle (first paragraph with TYPOGRAPHY.h2 or text-lg)
+    // Tries multiple patterns for flexibility
+    const subtitlePatterns = [
+      /(<p[^>]*TYPOGRAPHY\.h2[^>]*>)(.*?)(<\/p>)/s,
+      /(<p className="[^"]*text-lg[^"]*"[^>]*>)(.*?)(<\/p>)/s,
+      /(<p style=\{[^}]*TYPOGRAPHY\.h2[^}]*\}>)(.*?)(<\/p>)/s
+    ];
+
+    for (const regex of subtitlePatterns) {
+      if (regex.test(content)) {
+        content = content.replace(regex, `$1${text}$3`);
+        updated = true;
+        break;
+      }
+    }
+    break;
+
+  case 'body':
+  case 'bodycopy':
+  case 'bodytext':
+    // Find and replace body text (paragraph with TYPOGRAPHY.body)
+    const bodyPatterns = [
+      /(<p[^>]*TYPOGRAPHY\.body[^>]*>)(.*?)(<\/p>)/s,
+      /(<p style=\{[^}]*TYPOGRAPHY\.body[^}]*\}>)(.*?)(<\/p>)/s
+    ];
+
+    for (const regex of bodyPatterns) {
+      if (regex.test(content)) {
+        content = content.replace(regex, `$1${text}$3`);
+        updated = true;
+        break;
+      }
     }
     break;
 
   case 'background':
+  case 'bg':
+  case 'bgimage':
     // Update background image URL
     if (background) {
       const bgRegex = /(backgroundImage:.*?url\(['"])(.*?)(['"])/;
@@ -97,7 +133,8 @@ switch (section) {
 
   default:
     console.error(`❌ Error: Unknown section: ${section}`);
-    console.error('Supported sections: headline, description, background');
+    console.error('Supported sections: headline, subtitle, body, background');
+    console.error('Aliases: h1, description, tagline, bodycopy, bodytext, bg, bgimage');
     process.exit(1);
 }
 
