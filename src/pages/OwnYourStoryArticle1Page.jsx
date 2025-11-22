@@ -515,18 +515,260 @@ function TableOfContentsSection({ mobile }) {
 
 // Section 4: Why This Matters - Page 1
 function WhyThisMattersSectionPage1({ mobile }) {
-  // Content TK - Will be written next
-  return <PlaceholderSection title="Why This Matters - Page 1" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{
+        ...TYPOGRAPHY.h2,
+        color: COLORS.yellow,
+        marginBottom: mobile ? '20px' : '40px'
+      }}>
+        The Data Isn't People
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '20px' }}>
+          In 2015, LiveIntent analyzed 90 million email users and reminded marketers of something fundamental: "Data isn't people. Data is data."
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          Ten years later, we're making the same mistake in Marketing Operations.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          You see "$2.5M/year" and think "technology problem." You see "300 manual workflows" and think "inefficiency problem." You see "45-minute data lag" and think "integration issue."
+        </p>
+
+        <p style={{ marginBottom: '20px', fontWeight: '700', color: COLORS.yellow }}>
+          Wrong.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          These are people problems. They have names. They have job titles that don't match their job descriptions. They have goals that contradict their skills. They have families who ask why they're working weekends again.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          And they're drowning—not because your MAP sucks, but because you hired a Lifecycle Marketer and gave them Demand Gen goals. Then you blamed the tools when the real problem walked past you in the hallway yesterday looking exhausted.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          This isn't a consultant's projection. This is what actually happened when five organizations—200 to 2,000 employees, B2B SaaS and enterprise technology, $45M+ combined marketing budgets—decided to fix their "marketing automation problem."
+        </p>
+
+        <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+          Turns out, their marketing automation was fine.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 // Section 5: Why This Matters - Page 2
 function WhyThisMattersSectionPage2({ mobile }) {
-  return <PlaceholderSection title="Why This Matters - Page 2" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{
+        ...TYPOGRAPHY.h2,
+        color: COLORS.yellow,
+        marginBottom: mobile ? '20px' : '40px'
+      }}>
+        The Research
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '20px' }}>
+          This article is built on five comprehensive GTM assessments conducted between 2023 and 2025. Real companies. Real failures. Real people paying the price.
+        </p>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>
+          Data Source:
+        </h3>
+        <ul style={{ marginLeft: '20px', marginBottom: '20px', lineHeight: '1.8' }}>
+          <li>Five organizations (anonymized)</li>
+          <li>Time period: 2023-2025</li>
+          <li>Combined employee count: 200-2,000</li>
+          <li>Industries: B2B SaaS, enterprise technology</li>
+          <li>Combined MAT budget: $45M+ annually</li>
+          <li>Platforms analyzed: Marketo, HubSpot, Salesforce, Tableau, custom data warehouses</li>
+          <li>Total time studying these failures: 14 months</li>
+        </ul>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>
+          What we looked for:
+        </h3>
+        <ul style={{ marginLeft: '20px', marginBottom: '20px', lineHeight: '1.8' }}>
+          <li>Where the job description and actual work diverged</li>
+          <li>How long it took people to start building workarounds</li>
+          <li>What "tool problems" were actually org chart problems</li>
+          <li>The moment people started updating their resumes</li>
+        </ul>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>
+          What we found:
+        </h3>
+        <p style={{ marginBottom: '20px' }}>
+          Every single organization followed the same pattern. They hired someone competent. They gave them a title that implied one type of work. They assigned goals that required completely different skills. Then they acted surprised when velocity collapsed and attribution stayed broken.
+        </p>
+
+        <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+          The technical debt wasn't in the code. It was in the organizational assumptions nobody questioned.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 // Section 6: Why This Matters - Page 3
 function WhyThisMattersSectionPage3({ mobile }) {
-  return <PlaceholderSection title="Why This Matters - Page 3" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  const stageStyle = {
+    marginBottom: '30px',
+    padding: '20px',
+    backgroundColor: 'rgba(251, 191, 36, 0.05)',
+    borderLeft: `4px solid ${COLORS.yellow}`
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{
+        ...TYPOGRAPHY.h2,
+        color: COLORS.yellow,
+        marginBottom: mobile ? '20px' : '40px'
+      }}>
+        The Pattern
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '30px' }}>
+          Here's what organizational failure looks like when you map it:
+        </p>
+
+        <div style={stageStyle}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+            Stage 1: The Hiring Misalignment (Month 0)
+          </h3>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Job description says "Lifecycle Marketing Operations"</li>
+            <li>Interview conversation emphasizes "customer journey" and "nurture programs"</li>
+            <li>Candidate has 5+ years experience building sophisticated journey paths</li>
+            <li>Offer accepted with excitement</li>
+          </ul>
+        </div>
+
+        <div style={stageStyle}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+            Stage 2: The Goal Misalignment (Month 1-3)
+          </h3>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>First 1:1 is about MQL volume</li>
+            <li>Boss asks "Why aren't we generating more leads?"</li>
+            <li>Candidate realizes title and actual work don't match</li>
+            <li>First manual workaround created (just one, seems temporary)</li>
+          </ul>
+        </div>
+
+        <div style={stageStyle}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+            Stage 3: The Data Ownership Vacuum (Month 3-6)
+          </h3>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Nobody owns the schema</li>
+            <li>Attribution model has 8% fill rate</li>
+            <li>Data lag increases from 5 minutes to 15 minutes</li>
+            <li>Manual workarounds now number 20+</li>
+            <li>Velocity drops 40%</li>
+          </ul>
+        </div>
+
+        <div style={stageStyle}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+            Stage 4: The Tool Theater (Month 6-12)
+          </h3>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>"Maybe Marketo just isn't right for us"</li>
+            <li>Consultant hired for $175K</li>
+            <li>Migration discussed</li>
+            <li>Data schema ownership still unassigned</li>
+            <li>Workarounds now 87+, velocity down 70%</li>
+          </ul>
+        </div>
+
+        <div style={stageStyle}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+            Stage 5: The Human Absorption (Month 12-18)
+          </h3>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Person spends 67% of time maintaining workarounds</li>
+            <li>Campaigns per month: Was 3, now 0.7</li>
+            <li>Car crying frequency: Twice a month</li>
+            <li>Resume updates: Every Sunday night</li>
+            <li>Tenure estimate: 4 months remaining</li>
+          </ul>
+        </div>
+
+        <div style={stageStyle}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+            Stage 6: The Repeat (Month 18+)
+          </h3>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Person quits</li>
+            <li>New hire asked to "fix" the "tool problem"</li>
+            <li>Pattern repeats</li>
+            <li>Technical debt compounds</li>
+            <li>$2.5M/year recurring cost established</li>
+          </ul>
+        </div>
+
+        <p style={{ marginTop: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+          This happened in all five organizations. Not similar patterns. The same pattern. Different names, same story.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 // Section 7-11: Big Picture Pages
