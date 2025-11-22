@@ -2,11 +2,95 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 19, 2025 at 5:10 PM PST
-**Machine:** Mac Mini (Primary)
-**Status:** ✅ MOBILE COMMAND SYSTEM COMPLETE - iPhone shortcuts operational
+**Updated:** November 20, 2025 at 12:05 AM PST
+**Machine:** Codespaces (Remote)
+**Status:** ✅ IPHONE SHORTCUT TESTING DOCUMENTATION COMPLETE - Ready for Mac Mini testing
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## 🎯 NOVEMBER 20, 2025 - IPHONE TESTING DOCUMENTATION COMPLETE - 12:05 AM PST
+
+### ✅ IPHONE SHORTCUT SETUP GUIDE & TESTING SCRIPTS - COMPLETE
+
+**Continuation from Nov 19 mobile command system work**
+
+**What Was Created:**
+
+1. **Mac Testing Script** (`.claude/automation/test-all-commands.sh`)
+   - Tests all 5 automation commands from Mac terminal
+   - Safe testing mode with prompts before modifying data
+   - Verifies SSH, Node.js, and automation scripts work
+   - 78 lines, executable script
+
+2. **Complete iPhone Setup Guide** (`.claude/shortcuts/IPHONE_SHORTCUT_SETUP_GUIDE.md`)
+   - Step-by-step unified 5-command menu shortcut creation
+   - Dynamic content updates with variable inputs
+   - All 5 SSH scripts with proper configuration
+   - Comprehensive troubleshooting for common issues
+   - Safe testing workflow (read-only commands first)
+   - 427 lines, 11 KB complete guide
+
+**Files Committed:**
+- Commit: `c530842` - "Add: iPhone shortcut testing and setup documentation"
+- 2 files, 505 lines total
+- Pushed to branch: `claude/continue-critical-wip-01FgMP59bwtFq8YDWcopJqKv`
+
+**Current Status:**
+- ✅ All automation scripts ready (10 total in `.claude/automation/`)
+- ✅ Testing documentation complete
+- ✅ Setup guide complete
+- ✅ All files committed and pushed
+- ⏳ **NEXT:** User needs to test on Mac Mini
+
+**Next Steps (IMMEDIATE - User Action Required):**
+
+1. **On Mac Mini - Pull Latest Files:**
+   ```bash
+   cd ~/Library/CloudStorage/Dropbox/CC\ Projects/yellowcircle/yellow-circle
+   git pull
+   ```
+
+2. **Test Automation Commands:**
+   ```bash
+   cd .claude/automation
+   chmod +x test-all-commands.sh
+   ./test-all-commands.sh
+   ```
+
+3. **Create iPhone Shortcut:**
+   ```bash
+   cd .claude/shortcuts
+   open IPHONE_SHORTCUT_SETUP_GUIDE.md
+   # Follow step-by-step guide (10-15 mins)
+   ```
+
+4. **Test on iPhone:**
+   - Wait for iCloud sync (30-60 seconds)
+   - Test "Check Deadlines" (safe, read-only)
+   - Test "Content Update" (verify git commit)
+
+**After iPhone Testing Complete - Next Priorities:**
+
+2. 🎯 **yellowCircle Website Updates** (PRIORITY)
+   - "Own Your Story" Content Series
+     - Define series brand/format
+     - Review existing case studies
+     - Draft first piece: "Why Your GTM Sucks"
+
+   - Unity Notes Updates
+     - Implement changes from user feedback
+     - Update navigation structure
+
+**To Resume This Work:**
+In any new Claude Code session, just say:
+```
+Read .claude/shared-context/WIP_CURRENT_CRITICAL.md and continue from where we left off
+```
+
+**Session Commits:**
+- `c530842` - Add: iPhone shortcut testing and setup documentation
 
 ---
 
