@@ -2,11 +2,143 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 21, 2025 at 10:55 PM PST
+**Updated:** November 22, 2025 at 12:25 AM PST
 **Machine:** Mac Mini (Primary)
-**Status:** ✅ DISK MAINTENANCE SYSTEM INTEGRATED INTO FRAMEWORK
+**Status:** ✅ PHASE 1 PAGE MANAGEMENT SYSTEM COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## 🎯 NOVEMBER 22, 2025 - PHASE 1 PAGE MANAGEMENT SYSTEM COMPLETE - 12:25 AM PST
+
+### ✅ PHASE 1: PAGE CREATION/DUPLICATION SYSTEM - OPERATIONAL
+
+**iPhone Shortcut System Extended - Page Management Now Available**
+- Create new pages from templates via command line or iPhone SSH
+- Duplicate existing pages with content modifications
+- Delete pages (with protection for core pages)
+- Automatic validation, rollback, and git automation
+- Full documentation and testing complete
+
+**Files Created:**
+1. **`.claude/automation/page-manager.js`** (16.5 KB)
+   - Create, duplicate, delete page actions
+   - Validation system (name format, route availability, template exists)
+   - Preview mode (--preview flag shows changes before applying)
+   - Dry-run mode (--dry-run tests without modifying files)
+   - Automatic rollback on build failure (git checkpoints)
+   - Auto-updates RouterApp.jsx (imports and routes)
+   - Auto-updates content-update.js (PAGE_FILES mapping)
+   - Build validation before committing
+   - Git commit and push automation
+
+2. **`.claude/shortcuts/PAGE_MANAGEMENT_GUIDE.md`** (comprehensive documentation)
+   - Complete targeting rules documentation
+   - Usage examples for all actions (create, duplicate, delete)
+   - iPhone SSH workflow recommendations
+   - Troubleshooting guide
+   - Validation rules and safety features
+   - Template reference (about, works, hands, home, experiments, thoughts)
+
+3. **Updated `.claude/automation/shortcut-router.js`**
+   - Added `create-page` command
+   - Added `duplicate-page` command
+   - Added `delete-page` command
+   - New "pages" category in command menu
+
+**How It Works:**
+
+**From Command Line:**
+```bash
+cd .claude/automation
+
+# Create new page
+node page-manager.js --action=create --template=about --name=projects \
+  --headline="PROJECTS." --subtitle="Portfolio of work" \
+  --body="Explore my projects"
+
+# Duplicate page
+node page-manager.js --action=duplicate --source=about --name=about-alt
+
+# Delete page
+node page-manager.js --action=delete --name=projects
+
+# Preview before applying (any action)
+node page-manager.js --action=create --template=about --name=test --preview
+```
+
+**From iPhone SSH (Recommended Workflow):**
+```
+Step 1: Create page (basic)
+cd .claude/automation && node page-manager.js --action=create --template=about --name=projects
+
+Step 2: Edit content (use existing content command)
+Command: content
+Page: projects
+Section: headline
+Text: PROJECTS.
+```
+
+**Validation & Safety Features:**
+- ✅ Pre-flight checks (name format, duplicate detection, template exists)
+- ✅ Git checkpoint before changes
+- ✅ Build validation after changes
+- ✅ Automatic rollback on failure
+- ✅ Post-change verification (routes resolve, imports work)
+- ✅ Core page protection (home, about, works, hands cannot be deleted)
+
+**Targeting Rules:**
+
+**Format:** `--action=[ACTION] --template=[TEMPLATE] --name=[NAME] --section=[CONTENT]`
+
+**Actions:**
+- `create` - Create new page from template (requires: --template, --name)
+- `duplicate` - Duplicate existing page (requires: --source, --name)
+- `delete` - Delete a page (requires: --name)
+
+**Content Sections (Optional During Creation):**
+- `--headline` - Main page heading (h1)
+- `--subtitle` - Subheading paragraph (h2)
+- `--body` - Main body paragraph
+- `--background` - Background image URL
+
+**Page Name Rules:**
+- ✅ Lowercase only (e.g., `projects`, `about-alt`)
+- ✅ Hyphens allowed (e.g., `contact-form`)
+- ❌ No spaces or special characters
+- ❌ Must be unique (no duplicate routes)
+
+**Testing Complete:**
+- Created test page "projects" successfully
+- Verified all file updates (ProjectsPage.jsx, RouterApp.jsx, content-update.js)
+- Build validation passed
+- Git automation working
+- Preview mode functional
+- Rollback system tested
+
+**What This Enables:**
+
+1. **Mobile Page Creation** - Create new pages from iPhone via SSH
+2. **Rapid Prototyping** - Quickly duplicate and modify pages
+3. **Safe Experimentation** - Preview and rollback features
+4. **Content Management** - Combined with existing content command, full CMS workflow
+5. **No Claude Code Required** - All operations via command line/SSH
+
+**Next Steps (Phase 2 - Planned):**
+- Global components editing (footer, header, colors)
+- Multiple body paragraphs support
+- Navigation structure editing
+- List items and custom sections
+- Simple GUI for inline editing (optional)
+
+**To Resume on MacBook Air:**
+Read these files in order:
+1. `.claude/shared-context/WIP_CURRENT_CRITICAL.md` (this file)
+2. `.claude/shortcuts/PAGE_MANAGEMENT_GUIDE.md` (complete guide)
+3. `.claude/shortcuts/EXTENDED_FUNCTIONALITY_SPEC.md` (Phase 2-4 specs)
+
+Then test: `cd .claude/automation && node page-manager.js --action=create --template=about --name=test-page --preview`
 
 ---
 
