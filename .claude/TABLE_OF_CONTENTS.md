@@ -8,6 +8,8 @@
 
 ## 📚 Quick Navigation
 
+**🗂️ For Complete Repository Documentation:** See [../REPOSITORY_TOC.md](../REPOSITORY_TOC.md) - Full repository navigation including application code
+
 ### 🔴 Critical Files (Read First)
 1. [CLAUDE.md](../CLAUDE.md) - Project instructions for Claude Code
 2. [WIP_CURRENT_CRITICAL.md](shared-context/WIP_CURRENT_CRITICAL.md) - Current work status
@@ -17,6 +19,7 @@
 - **New Machine Setup:** [MULTI_MACHINE_SETUP_CRITICAL.md](#setup-guides)
 - **MacBook Air First Run:** [MACBOOK_AIR_FIRST_RUN_NOV2_2025_CRITICAL.md](#setup-guides)
 - **Sync Guide:** [MULTI_ENVIRONMENT_SYNC_GUIDE.md](#sync-coordination)
+- **Application Code:** [../REPOSITORY_TOC.md#-application-code](../REPOSITORY_TOC.md#-application-code)
 
 ---
 
