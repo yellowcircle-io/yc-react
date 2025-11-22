@@ -1,7 +1,20 @@
 # Claude Code Multi-Machine Context System
 
 **Created:** November 2, 2025
+**Last Updated:** November 21, 2025
 **Purpose:** Enable seamless Claude Code work across multiple machines and devices
+
+---
+
+## 📚 Navigation
+
+**📖 [Complete Table of Contents](TABLE_OF_CONTENTS.md)** - Full documentation index with all 46+ framework files
+
+**Quick Links:**
+- [Getting Started](#critical-files-requiring-user-attention)
+- [Sync Coordination](#sync-methods)
+- [Disk Maintenance](MAC_MINI_DISK_MAINTENANCE.md) - Mac Mini only
+- [Current Work Status](shared-context/WIP_CURRENT_CRITICAL.md)
 
 ---
 
@@ -18,6 +31,8 @@ This directory contains a **dual-sync multi-machine context sharing system** tha
 1. **Dropbox** - Fast file sync for seamless machine switching (10-30 seconds)
 2. **GitHub** - Version control and Codespaces access for mobile devices
 3. **Google Drive** - Additional data source for Rho assessments (one-time import, not active sync)
+
+**Framework Version:** 2.1 (Nov 21, 2025 - Disk Maintenance System + TOC)
 
 ---
 
