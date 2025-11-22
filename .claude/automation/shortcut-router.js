@@ -80,6 +80,32 @@ const COMMANDS = {
     passthrough: true
   },
 
+  // Global Components
+  'global': {
+    script: 'node global-manager.js',
+    description: 'Edit global components (header, footer, theme)',
+    category: 'global',
+    passthrough: true
+  },
+  'edit-footer': {
+    script: 'node global-manager.js --component=footer',
+    description: 'Edit footer content',
+    category: 'global',
+    passthrough: true
+  },
+  'edit-header': {
+    script: 'node global-manager.js --component=header',
+    description: 'Edit header content',
+    category: 'global',
+    passthrough: true
+  },
+  'edit-theme': {
+    script: 'node global-manager.js --component=theme',
+    description: 'Edit theme colors/typography',
+    category: 'global',
+    passthrough: true
+  },
+
   // Test All
   'all': {
     script: 'npm run test:all',
