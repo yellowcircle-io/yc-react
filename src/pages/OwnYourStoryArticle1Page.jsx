@@ -1480,6 +1480,85 @@ function PersonaMeetSection({ name, role, mobile }) {
   }
 
   // Placeholder for other personas
+  // Morgan - Meet
+  if (name === 'Morgan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          Meet {name}
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          {role} | Hired Q2 2023 | 650-person SaaS
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <p style={{ marginBottom: '15px' }}>Morgan is a HubSpot expert.</p>
+          <p style={{ marginBottom: '15px' }}>Seven years of experience. Certified. Built programs for three different companies. Knows the platform inside and out.</p>
+          <p style={{ marginBottom: '30px' }}>
+            Previous company ran on HubSpot for 5 years under Morgan's leadership. Clean data. Automated workflows. Reports that actually helped make decisions. It worked.
+          </p>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>The Opportunity:</p>
+            <p style={{ fontStyle: 'italic', marginBottom: '20px' }}>
+              "We're migrating from HubSpot to Marketo. We need someone to lead the transition and then optimize the new platform."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Morgan's Thought Process:</p>
+            <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "I've never used Marketo, but I've led platform migrations before. The principles are the same: clean data, clear workflows, documented processes. Platform is just the tool. The strategy is what matters."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>The Interview:</p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP Marketing:</span> "Why are we switching to Marketo?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "That's actually my first question too. What's driving the change?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "HubSpot doesn't scale to enterprise needs. Marketo has better reporting, more advanced automation, stronger Salesforce integration."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Makes sense. What's the current state of your HubSpot instance?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Honestly? It's a mess. Data's all over the place. That's part of why we're switching—fresh start."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Morgan's Internal Alarm Bell:</p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              "A messy HubSpot instance doesn't get cleaner by moving to Marketo. The mess moves with you."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Just to clarify—have you done a data audit? Because if we migrate messy data, we'll just have a messy Marketo instance."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "The migration partner will help clean it up during the move."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Morgan's Thought:</p>
+            <p style={{ fontStyle: 'italic' }}>
+              "That's not how this works. But okay, I'll fix it once I'm in there."
+            </p>
+          </div>
+
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)' }}>
+            <p style={{ marginBottom: '10px' }}>Offer accepted: June 2023</p>
+            <p style={{ marginBottom: '10px' }}>Migration start date: July 2023</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Morgan's optimism: Moderate (that alarm bell is still ringing)
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return <PlaceholderSection title={`Meet ${name} - ${role}`} mobile={mobile} />;
 }
 
@@ -1743,6 +1822,101 @@ function PersonaPromiseSection({ name, mobile }) {
   }
 
   // Placeholder for other personas
+  // Morgan - The Promise
+  if (name === 'Morgan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Promise
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>Marketing Operations Lead</p>
+
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              "Lead our migration from HubSpot to Marketo and own our marketing automation strategy. You'll manage the transition, optimize the platform, and build scalable processes for our growing marketing team."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Key Responsibilities:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Lead HubSpot → Marketo migration (6-month project)</li>
+              <li>Partner with migration vendor</li>
+              <li>Own marketing automation strategy</li>
+              <li>Build workflows, campaigns, and reports in Marketo</li>
+              <li>Train marketing team on new platform</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Requirements:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>5+ years marketing operations experience</li>
+              <li>Platform migration experience (HubSpot, Marketo, or similar)</li>
+              <li>Strong project management skills</li>
+              <li>Strategic thinker who can design scalable processes</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What We Offer:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Lead a high-impact platform transformation</li>
+              <li>Executive visibility (report to VP Marketing)</li>
+              <li>$120K salary + bonus</li>
+              <li>Growth opportunity as we scale</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              Morgan's Migration Plan (presented in interview):
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Phase 1 (Months 1-2): Audit & Clean</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Audit HubSpot data quality</li>
+              <li>Define data standards for migration</li>
+              <li>Clean duplicates, standardize fields</li>
+              <li>Document current workflows and campaigns</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Phase 2 (Months 3-4): Migrate & Test</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Work with vendor on data migration</li>
+              <li>Rebuild workflows in Marketo</li>
+              <li>Test integrations (Salesforce, etc.)</li>
+              <li>Parallel run both systems</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Phase 3 (Months 5-6): Optimize & Train</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Sunset HubSpot</li>
+              <li>Optimize Marketo setup</li>
+              <li>Train marketing team</li>
+              <li>Document processes</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>
+              <span style={{ fontWeight: '700' }}>VP's reaction:</span> "This is exactly what we need. You're hired."
+            </p>
+          </div>
+
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Offer Details:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Title: Marketing Operations Lead</li>
+              <li>Salary: $120K</li>
+              <li>Start: June 15, 2023</li>
+              <li>Scope: Lead migration, then own platform strategy</li>
+              <li>Migration budget: $180K (vendor + licenses)</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Morgan's confidence: "I can do this."
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return <PlaceholderSection title={`${name}: The Promise`} mobile={mobile} />;
 }
 
@@ -2200,6 +2374,203 @@ function PersonaRealitySection({ name, mobile }) {
     );
   }
 
+  // Morgan - The Reality
+  if (name === 'Morgan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Reality
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Month 1-2: Audit Discovery */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              Month 1-2: The Audit Discovery
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>Morgan starts auditing HubSpot.</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Findings:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>47,000 duplicate contacts (no merge strategy)</li>
+              <li>Custom fields: 312 (87 are unused, 43 are duplicates with different names)</li>
+              <li>Workflows: 156 (92 are inactive, 28 nobody understands)</li>
+              <li>Data definitions: Undocumented</li>
+              <li>Schema ownership: Nobody</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Morgan's Report to VP (Week 3):</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>
+              "We need to clean this up before migration. If we move 47K duplicates into Marketo, they'll still be duplicates. Just in a more expensive platform."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can the vendor handle that during migration?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "They can dedupe based on email, but the deeper issues—field definitions, schema design—we need to own that."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "2-3 weeks if we prioritize it."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We're already paying the vendor. Let's just move forward and clean it up in Marketo after."
+            </p>
+
+            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Morgan's Alarm Bell: Now screaming</p>
+          </div>
+
+          {/* Month 3-6: The Migration */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 3-6: The Migration</p>
+
+            <p style={{ marginBottom: '15px' }}>Vendor migrates data from HubSpot to Marketo.</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Result:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>47,000 duplicates successfully migrated (still duplicates)</li>
+              <li>312 custom fields recreated (still mostly useless)</li>
+              <li>Workflows rebuilt (still nobody knows what 28 of them do)</li>
+              <li>Cost: $180K</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 6: Go-Live</p>
+            <p style={{ marginBottom: '10px' }}>HubSpot sunset.</p>
+            <p style={{ marginBottom: '20px' }}>Marketo is now the system of record.</p>
+
+            <p style={{ fontWeight: '700', fontStyle: 'italic' }}>
+              Morgan's assessment: "We spent $180K to move the mess from one platform to another."
+            </p>
+          </div>
+
+          {/* Month 7: Reports Don't Match */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 7: The Reports Don't Match</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px', fontSize: '0.95rem' }}>
+              <li>Sales reports opportunity data from Salesforce: "$2.3M closed-won from marketing this quarter"</li>
+              <li>Marketing reports opportunity data from Marketo: "$1.8M closed-won from marketing this quarter"</li>
+              <li>Finance reports: "$2.1M" (uses different attribution rules)</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Meeting (Week 27):</p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Why don't these match?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Because we never defined data standards before migration. Salesforce, Marketo, and Finance are using different field definitions for 'marketing-sourced.'"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you fix it?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Yes, but we need to define schema standards and get cross-functional buy-in on definitions. That's what I proposed in Month 2."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "3-4 weeks if we prioritize it."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "That seems complex. Is Marketo just harder to use than HubSpot?"
+            </p>
+
+            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Morgan's Internal Scream: Prolonged</p>
+          </div>
+
+          {/* Month 8: Governance Proposal Rejected */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.25)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 8: The Data Governance Proposal</p>
+
+            <p style={{ marginBottom: '15px' }}>Morgan writes a comprehensive proposal:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Data Governance Framework</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Cost: $32K audit (external partner to document current state)</li>
+              <li>Ongoing: $6K/month data governance ownership (could be Morgan + data analyst time)</li>
+              <li>Timeline: 2 months to implement standards</li>
+              <li>Benefit: Reports that match, clean attribution, no more "which number is right?" meetings</li>
+            </ul>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP's reaction:</span> "This seems really complex. Isn't there a simpler solution?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "The simple solution was doing this before migration. Now we need to retrofit it."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Let me think about it."
+            </p>
+
+            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Month 8 Status: Proposal tabled as "too complex"</p>
+          </div>
+
+          {/* Month 9-14: Firefighting */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.3)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 9-14: The Firefighting</p>
+
+            <p style={{ marginBottom: '10px' }}>Morgan spends 6 months firefighting reporting discrepancies.</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem' }}>
+              <li>Every week: "Why do these numbers not match?"</li>
+              <li>Every week: Morgan explains that undefined data schema means numbers will never match</li>
+              <li>Every week: VP asks "Can't you just make them match?"</li>
+              <li>Every week: Morgan dies a little inside</li>
+            </ul>
+          </div>
+
+          {/* Month 15: The Unthinkable */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.35)', border: `2px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: COLORS.yellow }}>
+              Month 15: The Unthinkable Conversation
+            </p>
+
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP (in strategy meeting):</span> "You know, maybe Marketo just isn't right for us. I'm hearing Pardot is really good for Salesforce integration..."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontWeight: '700' }}>Morgan (out loud): "..."</p>
+            <p style={{ marginBottom: '20px', fontWeight: '700', color: COLORS.yellow }}>
+              Morgan (internally): "WE SPENT $180K TO MIGRATE FROM HUBSPOT TO MARKETO BECAUSE OF 'SALESFORCE INTEGRATION' AND NOW YOU WANT TO MIGRATE AGAIN?!"
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Pardot won't fix the data schema issue."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "But it's built by Salesforce, so the integration would be native..."
+            </p>
+
+            <p style={{ marginBottom: '15px', fontWeight: '700', color: COLORS.yellow }}>
+              Morgan (internally): "THE INTEGRATION ISN'T THE PROBLEM. THE ORG CHART IS THE PROBLEM."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Let me update my proposal from Month 8. Data governance first, then we can evaluate platforms."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Okay, send it over."
+            </p>
+          </div>
+
+          {/* Month 16 */}
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 16:</p>
+            <p style={{ marginBottom: '10px' }}>Morgan updates resume.</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Every Sunday night.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Reality`} mobile={mobile} />;
 }
@@ -2627,6 +2998,159 @@ function PersonaCostSection({ name, mobile }) {
             </p>
             <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
               Or for ignoring Casey in Month 1.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Morgan - The Cost
+  if (name === 'Morgan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Cost
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Financial Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Financial Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>HubSpot → Marketo Migration:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Vendor cost: $120K</li>
+              <li>Marketo first-year licenses: $60K</li>
+              <li>Morgan's time (6 months): ~$60K</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Total: $180K</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>What It Fixed:</p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic' }}>Nothing (migrated the mess to a new platform)</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>
+              Month 8 Data Governance Proposal (rejected):
+            </p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>External audit: $32K</li>
+              <li>Ongoing ownership: $6K/month = $72K/year</li>
+              <li>Timeline: 2 months</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Total first year: $104K</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>What It Would Fix:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>Root cause (undefined data schema)</p>
+          </div>
+
+          {/* Organizational Math */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Organizational Math:</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Spent $180K on migration that didn't fix root cause</li>
+              <li>Rejected $104K proposal that would fix root cause</li>
+              <li>Reason: "Too complex"</li>
+              <li>Now discussing another migration (Marketo → Pardot): ~$200K estimated</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Total Potential Spend: $380K (two migrations)
+            </p>
+            <p style={{ fontWeight: '700', marginBottom: '10px', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Actual Problem Cost to Fix: $104K (one governance project)
+            </p>
+            <p style={{ fontWeight: '700', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Waste: $276K and counting
+            </p>
+          </div>
+
+          {/* Firefighting Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 9-15 Firefighting Cost:</p>
+
+            <p style={{ marginBottom: '10px' }}>Morgan's time spent reconciling reports: 15 hours/week</p>
+            <p style={{ marginBottom: '10px' }}>Cost: ~$52K (6 months × Morgan's salary)</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Value created: Zero (fires put out, none prevented)
+            </p>
+          </div>
+
+          {/* Human Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Human Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 7:</p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic' }}>
+              Morgan's realization: "I led this migration perfectly. The migration isn't the problem. The org chart is the problem."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 8:</p>
+            <p style={{ marginBottom: '10px' }}>Morgan's proposal rejected as "too complex."</p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic' }}>
+              Morgan's thought: "I literally designed a solution. It's not complex. You just don't want to prioritize it."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 12:</p>
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Conversation with former colleague:</p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Colleague:</span> "How's the new job?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "I migrated us from HubSpot to Marketo."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Colleague:</span> "Nice! How's it going?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "The same problems exist. We just paid $180K to move them."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Colleague:</span> "Did you propose fixing the root cause?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "In Month 2 and Month 8. Both rejected."
+            </p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Colleague:</span> "That sucks."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 15:</p>
+            <p style={{ marginBottom: '10px' }}>Morgan hears "maybe Pardot" conversation.</p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.yellow }}>
+              Morgan's internal monologue: "I can't do this again."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 16:</p>
+            <p style={{ marginBottom: '10px' }}>Resume updated.</p>
+            <p style={{ marginBottom: '10px' }}>LinkedIn profile changed to "open to opportunities."</p>
+            <p style={{ fontWeight: '700' }}>Projected departure: Month 20</p>
+          </div>
+
+          {/* The Real Cost */}
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              The Real Cost:
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>You hired a migration expert.</p>
+            <p style={{ marginBottom: '15px' }}>They correctly diagnosed that your HubSpot mess would become a Marketo mess.</p>
+            <p style={{ marginBottom: '15px' }}>They proposed fixing it twice.</p>
+            <p style={{ marginBottom: '15px' }}>You rejected it as "too complex."</p>
+            <p style={{ marginBottom: '15px' }}>You spent $180K migrating the mess.</p>
+            <p style={{ marginBottom: '30px' }}>You're considering another $200K migration (Marketo → Pardot).</p>
+
+            <p style={{ marginBottom: '30px', fontWeight: '700', fontSize: '1.1rem' }}>
+              The actual fix costs $104K.
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>But Morgan will be gone before you realize that.</p>
+            <p style={{ marginBottom: '15px' }}>And the next person will propose the same thing.</p>
+            <p style={{ marginBottom: '30px' }}>And you'll reject it again.</p>
+
+            <p style={{ marginBottom: '15px', fontWeight: '700' }}>Because the problem isn't the tools.</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              It's that you'd rather spend $380K on platform migrations than $104K admitting the org chart needs data governance.
             </p>
           </div>
         </div>
