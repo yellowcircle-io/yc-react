@@ -144,6 +144,37 @@ Expected output:
 
 ## Usage
 
+### 📱 iPhone Menu Interface (Recommended for Mobile)
+
+For the easiest iPhone experience, use the interactive menu system:
+
+```bash
+cd .claude/automation && node iphone-menu.js
+```
+
+**Features:**
+- ✅ Navigate with numbered menus
+- ✅ Guided prompts for all inputs
+- ✅ Built-in preview confirmations
+- ✅ No need to remember command syntax
+- ✅ Organized by category (Global, Pages, Content, Sync)
+
+**Example Flow:**
+```
+1. Run: node iphone-menu.js
+2. Select: [1] Global Components
+3. Select: [1] Edit Header
+4. Select: [1] Change Logo Text (part1)
+5. Enter: "golden"
+6. Preview? (y/n): y
+7. Apply? (y/n): y
+✅ Done!
+```
+
+**Complete Documentation:** See `NOTION_IPHONE_WORKFLOW_GUIDE.md` for full iPhone setup guide with Apple Shortcuts examples.
+
+---
+
 ### Global Component Management
 
 Edit global components (Header, Footer, Theme) directly from iPhone via SSH or command line.
@@ -203,6 +234,28 @@ node global-manager.js --component=theme --field=primary --value="#EECF00"
 - Contains all editable content for Header, Footer, and Theme
 - Automatically validated with `npm run build` on changes
 - Auto-commits to git with descriptive messages
+
+**Safety Features:**
+- ✅ **Automatic Backup:** Creates backup before every change
+- ✅ **Build Validation:** Runs `npm run build` before committing
+- ✅ **Auto-Restore:** If build fails, restores from backup automatically
+- ✅ **Preview Mode:** Test changes without applying (`--preview` flag)
+- ✅ **Rollback Support:** Undo last change with `rollback` command
+
+**Rollback Commands:**
+```bash
+# Rollback last committed change (creates revert commit)
+node shortcut-router.js rollback
+
+# Restore uncommitted changes to last commit
+node shortcut-router.js restore
+
+# View last change
+node shortcut-router.js last-change
+
+# View recent history
+node shortcut-router.js history
+```
 
 ### Page Management
 
@@ -383,28 +436,30 @@ npm run test:all
 
 ```
 .claude/automation/
-├── package.json                # Node.js dependencies & scripts
-├── .env.example                # Environment template
-├── .env                        # Your config (gitignored)
-├── README.md                   # This file
-├── shortcut-router.js          # 🆕 Command router for iPhone shortcuts
-├── global-manager.js           # 🆕 Global component editor (Header, Footer, Theme)
-├── page-manager.js             # 🆕 Page management (create, duplicate, delete)
-├── content-update.js           # 🆕 Content editing for pages
-├── sync-roadmap-to-notion.js   # Main roadmap sync script
-├── daily-wip-sync.js           # Daily WIP → Notion sync
-├── deadline-alerts.js          # Deadline monitoring
-├── blocked-tasks-alert.js      # Blocked task detection
-└── weekly-summary.js           # Weekly progress reports
+├── package.json                        # Node.js dependencies & scripts
+├── .env.example                        # Environment template
+├── .env                                # Your config (gitignored)
+├── README.md                           # This file
+├── NOTION_IPHONE_WORKFLOW_GUIDE.md    # 📱 Complete iPhone/Apple Shortcuts guide
+├── shortcut-router.js                  # 🆕 Command router for iPhone shortcuts
+├── iphone-menu.js                      # 📱 Interactive menu interface for iPhone
+├── global-manager.js                   # 🆕 Global component editor (Header, Footer, Theme)
+├── page-manager.js                     # 🆕 Page management (create, duplicate, delete)
+├── content-update.js                   # 🆕 Content editing for pages
+├── sync-roadmap-to-notion.js           # Main roadmap sync script
+├── daily-wip-sync.js                   # Daily WIP → Notion sync
+├── deadline-alerts.js                  # Deadline monitoring
+├── blocked-tasks-alert.js              # Blocked task detection
+└── weekly-summary.js                   # Weekly progress reports
 
 src/config/
-└── globalContent.js            # 🆕 Centralized global component configuration
+└── globalContent.js                    # 🆕 Centralized global component configuration
 
 .github/workflows/
-├── daily-wip-sync.yml          # Daily WIP automation
-├── deadline-alerts.yml         # Deadline check automation
-├── blocked-tasks-alert.yml     # Blocked task automation
-└── weekly-summary.yml          # Weekly summary automation
+├── daily-wip-sync.yml                  # Daily WIP automation
+├── deadline-alerts.yml                 # Deadline check automation
+├── blocked-tasks-alert.yml             # Blocked task automation
+└── weekly-summary.yml                  # Weekly summary automation
 ```
 
 ---

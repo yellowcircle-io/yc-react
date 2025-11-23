@@ -1246,20 +1246,472 @@ function BigPictureSectionPage5({ mobile }) {
   );
 }
 
-// Persona Sections (Template - will be customized per persona)
+// Persona Sections - Meet [Name]
 function PersonaMeetSection({ name, role, mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  // Alex - Marketing Operations Manager
+  if (name === 'Alex') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          Meet {name}
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          {role} | Hired Q1 2023 | 800-person B2B SaaS
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <p style={{ marginBottom: '20px' }}>
+            Alex was hired to "optimize lifecycle programs."
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            They'd spent five years at their previous company designing sophisticated nurture paths—the kind where a single persona could experience seventeen different journey variations based on behavior, firmographic fit, and engagement history.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            They loved it. They were good at it.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            The job description said "Lifecycle." The interview said "Customer journey." The hiring manager said, "We need someone who really understands how to move people through stages."
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            Alex said, "That's exactly what I love—designing experiences that guide people."
+          </p>
+
+          <p style={{ marginBottom: '30px' }}>
+            Offer signed. Start date set. Excitement: High.
+          </p>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>What Alex Expected:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Build multi-touch nurture programs</li>
+              <li>Implement behavioral scoring</li>
+              <li>Design stage-based journey paths</li>
+              <li>Optimize conversion rates between lifecycle stages</li>
+              <li>A/B test messaging and timing</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Alex's Background:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>5 years lifecycle marketing experience</li>
+              <li>Marketo certified expert</li>
+              <li>Built full lifecycle program from scratch at previous company</li>
+              <li>Portfolio included 12-stage customer journey with 40+ nurture variations</li>
+              <li>Exit velocity at previous company: 23% improvement in conversion rates</li>
+            </ul>
+          </div>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            "I'm going to build something beautiful here."
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Placeholder for other personas
   return <PlaceholderSection title={`Meet ${name} - ${role}`} mobile={mobile} />;
 }
 
+// Persona Sections - The Promise
 function PersonaPromiseSection({ name, mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  // Alex - The Promise
+  if (name === 'Alex') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Promise
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          What the job description said
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Job Title:</p>
+            <p style={{ marginBottom: '20px' }}>Marketing Operations Manager</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Posted:</p>
+            <p style={{ marginBottom: '20px' }}>February 2023</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Key Responsibilities (excerpt):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>"Build sophisticated nurture programs to guide prospects through the customer lifecycle"</li>
+              <li>"Optimize customer journey mapping and stage transitions"</li>
+              <li>"Implement behavioral scoring and segmentation strategies"</li>
+              <li>"Design multi-channel campaign orchestration"</li>
+              <li>"Drive conversion rate improvements through testing and optimization"</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Interview Highlights (Alex's notes from conversation):</p>
+
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Hiring Manager:</span> "We're investing heavily in the customer experience. We need someone who understands that marketing isn't just about generating leads—it's about building relationships."
+            </p>
+
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Absolutely. That's why I focus on journey design. It's not about one campaign. It's about the entire experience."
+            </p>
+
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Hiring Manager:</span> "Exactly! That's what we need. Our previous person was very tactical. We need strategic thinking."
+            </p>
+
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontWeight: '700', color: COLORS.yellow }}>
+              Alex's Note to Self After Interview: "This is perfect. They get it."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Offer Letter Highlights:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Base: $95K</li>
+              <li>Title: Marketing Operations Manager</li>
+              <li>Department: Marketing</li>
+              <li>Reports to: VP Marketing</li>
+              <li>Start Date: March 15, 2023</li>
+            </ul>
+          </div>
+
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontStyle: 'italic', marginBottom: '10px' }}>
+              <span style={{ fontWeight: '700' }}>Alex's LinkedIn Update (March 14, 2023):</span>
+            </p>
+            <p style={{ marginBottom: '15px' }}>
+              "Excited to join [Company] as Marketing Operations Manager! Looking forward to building sophisticated lifecycle programs and optimizing the customer journey. Let's do this! 🚀"
+            </p>
+            <p style={{ fontSize: '0.9rem', color: COLORS.lightGrey }}>
+              Likes: 147 | Comments: 23 (mostly "Congrats!" and "They're lucky to have you!")
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Promise`} mobile={mobile} />;
 }
 
+// Persona Sections - The Reality
 function PersonaRealitySection({ name, mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  // Alex - The Reality
+  if (name === 'Alex') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Reality
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          What the actual work became
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Month 1 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 1, Week 1:</p>
+            <p style={{ marginBottom: '10px' }}>First 1:1 with VP Marketing.</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "So, we need to talk about MQL volume. We're tracking at 40% below target this quarter."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex (internal monologue):</span> "Okay, maybe this is context before we dive into lifecycle strategy..."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you pull a report of everyone who visited the pricing page in the last 30 days and push them to sales?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Sure, I can do that. Are we thinking of that as the top of a nurture sequence or...?"
+            </p>
+            <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "No, just send the list to sales. We need MQLs."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 1, Week 4 - Alex's workload breakdown (actual time logged):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>45% | Manual list pulls for sales ("pricing page visitors," "webinar attendees," "content downloaders")</li>
+              <li>25% | Firefighting form failures (webhook broke, nobody's fixing it)</li>
+              <li>15% | Explaining why attribution doesn't work (spoiler: 8% fill rate)</li>
+              <li>10% | Actual lifecycle optimization work</li>
+              <li>5% | Meetings about "why aren't we generating more MQLs?"</li>
+            </ul>
+            <p style={{ marginTop: '15px' }}>Campaigns shipped: 3 (all demand gen, not lifecycle)</p>
+            <p>Nurture programs built: 0</p>
+            <p>Excitement level: Dropping</p>
+          </div>
+
+          {/* Month 6 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 6:</p>
+            <p style={{ marginBottom: '10px' }}>Workarounds created: 43</p>
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Manual processes Alex owns:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontSize: '0.9rem' }}>
+              <li>Weekly list pull: pricing page visitors (30 min)</li>
+              <li>Daily list pull: demo requests (15 min)</li>
+              <li>Bi-weekly list pull: webinar attendees (45 min)</li>
+              <li>Manual lead score updates (webhook still broken) (2 hours/week)</li>
+              <li>Attribution reconciliation (systems don't match) (3 hours/week)</li>
+              <li>Campaign performance reporting (dashboard broke, unfixed) (2 hours/week)</li>
+              <li>Form failure triage (ongoing issue, no root cause fix) (1 hour/week)</li>
+              <li style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>... [36 more workarounds]</li>
+            </ul>
+          </div>
+
+          {/* Month 12 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 12:</p>
+            <p style={{ marginBottom: '10px' }}>Campaigns per month: 1.2 (down from 3)</p>
+            <p style={{ marginBottom: '10px' }}>Nurture programs built: Still 0</p>
+            <p style={{ marginBottom: '20px' }}>Workarounds: 87</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Conversation with friend (text exchange):</p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "How's the new job?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "I'm a glorified list puller."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "What?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "I was hired to build lifecycle programs. I pull lists for sales all day."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "Did you talk to your boss?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Four times. He keeps saying 'we'll get to lifecycle stuff once we hit our MQL targets.'"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "Are you hitting targets?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "No. Because I'm not building the nurture programs that would actually convert people. I'm just pulling lists."
+            </p>
+          </div>
+
+          {/* Month 18 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 18:</p>
+            <p style={{ marginBottom: '10px' }}>Campaigns per month: 0.7</p>
+            <p style={{ marginBottom: '15px' }}>Workarounds maintained: 87 (personal), 300 (team-wide)</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Time allocation:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>67% | Maintaining workarounds</li>
+              <li>18% | Firefighting</li>
+              <li>10% | Meetings explaining why velocity is slow</li>
+              <li>5% | Actual strategic work</li>
+              <li>0% | Learning/development</li>
+            </ul>
+
+            <p style={{ marginTop: '15px', marginBottom: '5px' }}>Car crying frequency: Twice a month (parking lot after particularly bad 1:1s)</p>
+            <p style={{ marginBottom: '5px' }}>Resume updates: Every Sunday night</p>
+            <p style={{ marginBottom: '5px' }}>Therapy topic: "I thought I forgot how to do my job"</p>
+            <p style={{ marginBottom: '5px' }}>LinkedIn activity: None (down from daily)</p>
+          </div>
+
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>
+            What Changed Between Month 1 and Month 18:
+          </p>
+          <p style={{ marginTop: '10px' }}>
+            Not Alex's skill. Not Marketo's capability. Not budget.
+          </p>
+          <p style={{ marginTop: '10px', fontStyle: 'italic' }}>
+            What changed: The gap between job title and actual work crushed Alex's capacity to build anything strategic.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Reality`} mobile={mobile} />;
 }
 
+// Persona Sections - The Cost
 function PersonaCostSection({ name, mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  // Alex - The Cost
+  if (name === 'Alex') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Cost
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          What this misalignment actually costs
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Financial Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Financial Cost:</p>
+
+            <p style={{ marginBottom: '10px' }}>Alex's salary: $95K/year</p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Alex's effective hourly rate:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Contracted: 40 hours/week = $45.67/hour</li>
+              <li>Actual: 60 hours/week = $30.44/hour (working overtime for free)</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Cost of 87 manual workarounds (Alex's personal load):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Average time per workaround: 1.5 hours/month</li>
+              <li>Total time: 130.5 hours/month</li>
+              <li>Annual cost in Alex's time: ~$47,600</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Opportunity cost of strategic work NOT built:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Lifecycle programs not launched: 3 (estimated)</li>
+              <li>Conversion rate improvement not realized: ~15% (based on Alex's previous company performance)</li>
+              <li>Revenue impact of 15% conversion improvement: ~$2.3M ARR (company's $15M pipeline × 15%)</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Recruiting cost when Alex quits:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>External recruiter fee: 25% of salary = $23,750</li>
+              <li>Internal time cost: ~$5K</li>
+              <li>Onboarding cost: ~$8K</li>
+              <li>Time to productivity: 6 months</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Total replacement cost: $28K-$47K</li>
+            </ul>
+          </div>
+
+          {/* Human Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Human Cost:</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Slack messages containing "urgent": 2,847 in past year (tracked)</li>
+              <li>Weekends worked: 41 of 52 (79%)</li>
+              <li>Vacation days taken: 3 of 15 (canceled 8 due to "urgency")</li>
+              <li>Sunday night resume updates: 47</li>
+              <li>Car crying sessions: ~24 (estimated, Alex stopped counting)</li>
+              <li>Therapy sessions discussing work: 18</li>
+              <li>Friends who've said "You should just quit": 6</li>
+              <li>Self-doubt moments per week: Daily</li>
+              <li>Number of times Alex's expertise was actually used: 4 in 18 months</li>
+            </ul>
+          </div>
+
+          {/* Organizational Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Organizational Cost:</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Institutional knowledge at risk: High (Alex is the only one who understands the 87 workarounds)</li>
+              <li>Team morale impact: Moderate (others see Alex drowning, wonder if they're next)</li>
+              <li>Attribution fill rate: Still 8% (Casey tried, failed, nobody helped)</li>
+              <li>Data lag: Now 45 minutes (was 5 minutes when Alex started)</li>
+              <li>Lifecycle programs built: 0</li>
+              <li>Strategic marketing capability: Declining</li>
+              <li>VP's assessment of "marketing operations": "Why can't we move faster?"</li>
+            </ul>
+          </div>
+
+          {/* The Real Cost */}
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              The Real Cost:
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>You hired someone talented.</p>
+            <p style={{ marginBottom: '15px' }}>You paid them $95K to pull lists.</p>
+            <p style={{ marginBottom: '15px' }}>You ignored their expertise for 18 months.</p>
+            <p style={{ marginBottom: '15px' }}>You're about to spend $40K replacing them.</p>
+            <p style={{ marginBottom: '30px' }}>Then you'll hire someone new and do it again.</p>
+
+            <p style={{ marginBottom: '20px', fontWeight: '700' }}>
+              The cost isn't $95K salary. The cost is the $2.3M in conversion improvements you didn't get because you couldn't see the difference between a Lifecycle Marketer and a Demand Gen Coordinator.
+            </p>
+
+            <p style={{ marginBottom: '10px' }}>But hey, at least you hit your MQL targets.</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Oh wait. You didn't.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Cost`} mobile={mobile} />;
 }
 

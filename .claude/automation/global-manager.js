@@ -93,6 +93,36 @@ function readConfig() {
   }
 }
 
+// Create backup of current config
+function createBackup() {
+  try {
+    const backupPath = CONFIG.configFile + '.backup';
+    fs.copyFileSync(CONFIG.configFile, backupPath);
+    info(`Backup created: ${backupPath}`);
+    return backupPath;
+  } catch (err) {
+    warning(`Failed to create backup: ${err.message}`);
+    return null;
+  }
+}
+
+// Restore from backup
+function restoreFromBackup(backupPath) {
+  try {
+    if (backupPath && fs.existsSync(backupPath)) {
+      fs.copyFileSync(backupPath, CONFIG.configFile);
+      success(`Restored from backup: ${backupPath}`);
+      // Clean up backup
+      fs.unlinkSync(backupPath);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    error(`Failed to restore from backup: ${err.message}`);
+    return false;
+  }
+}
+
 // Write updated configuration
 function writeConfig(config) {
   const content = `/**
@@ -386,12 +416,23 @@ function main() {
 
   // Write updated config
   if (!args.preview) {
+    // Create backup before writing
+    const backupPath = createBackup();
+
     writeConfig(config);
 
     // Validate build
     if (!validateBuild()) {
-      error('Build validation failed');
+      error('Build validation failed - restoring from backup');
+      if (restoreFromBackup(backupPath)) {
+        info('Config restored to previous state');
+      }
       process.exit(1);
+    }
+
+    // Build successful - clean up backup
+    if (backupPath && fs.existsSync(backupPath)) {
+      fs.unlinkSync(backupPath);
     }
 
     // Commit changes
