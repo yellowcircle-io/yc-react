@@ -773,23 +773,477 @@ function WhyThisMattersSectionPage3({ mobile }) {
 
 // Section 7-11: Big Picture Pages
 function BigPictureSectionPage1({ mobile }) {
-  return <PlaceholderSection title="The Big Picture - Page 1" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{
+        ...TYPOGRAPHY.h2,
+        color: COLORS.yellow,
+        marginBottom: '10px'
+      }}>
+        The Velocity Gap
+      </h2>
+
+      <h3 style={{
+        fontSize: '1.1rem',
+        fontStyle: 'italic',
+        color: COLORS.lightGrey,
+        marginBottom: mobile ? '20px' : '30px'
+      }}>
+        When hiring misalignment kills productivity
+      </h3>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '20px' }}>
+          When Alex was hired as a "Marketing Operations Manager" in Q1 2023, they shipped three campaigns in their first month.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          By Q4 2024, that number was 0.7 campaigns per month.
+        </p>
+
+        <p style={{ marginBottom: '30px' }}>
+          Not because they got worse at their job. Because they spent 67% of their time fixing data schemas nobody owned.
+        </p>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>
+          The Math:
+        </h3>
+
+        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Year 1, Month 1:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>3 campaigns shipped</li>
+            <li>5% time on firefighting</li>
+            <li>85% time on strategic building</li>
+            <li>10% time on learning/development</li>
+          </ul>
+        </div>
+
+        <div style={{ marginBottom: '30px', padding: '15px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Year 2, Month 18:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>0.7 campaigns shipped (77% velocity loss)</li>
+            <li>67% time maintaining manual workarounds</li>
+            <li>18% time on firefighting</li>
+            <li>10% time on strategic building</li>
+            <li>5% time on meetings explaining why things are slow</li>
+            <li>0% time on learning/development</li>
+          </ul>
+        </div>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>
+          What caused the velocity gap?
+        </h3>
+
+        <p style={{ marginBottom: '20px' }}>
+          Not lack of skill. Not tool limitations. Not budget constraints.
+        </p>
+
+        <p style={{ marginBottom: '30px' }}>
+          Role misalignment created a workflow debt spiral. Each month, the gap between "what the job title says" and "what the boss actually wants" generated new workarounds. Each workaround required maintenance. Maintenance consumed time that should have gone to building.
+        </p>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>
+          Industry Context (2025 Data):
+        </h3>
+
+        <p style={{ marginBottom: '15px' }}>
+          Marketing Operations professionals report their time is dominated by KTLO (Keep the Lights On) work: managing tech, handling campaign operations, pulling reports, addressing urgent issues.
+        </p>
+
+        <p style={{ marginBottom: '15px' }}>
+          Only 37% report having a strategic voice in their organizations despite the function maturing.
+        </p>
+
+        <p style={{ marginBottom: '15px' }}>
+          Role clarity scores dropped 9% in 2024. Feeling valued dropped 5%. Fair pay perception dropped 8%.
+        </p>
+
+        <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+          They're working harder than ever. They're accomplishing less than ever. And leadership keeps asking, "Why aren't we more agile?"
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function BigPictureSectionPage2({ mobile }) {
-  return <PlaceholderSection title="The Big Picture - Page 2" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  const attemptStyle = {
+    marginBottom: '25px',
+    padding: '20px',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderLeft: `4px solid ${COLORS.yellow}`,
+    borderRadius: '4px'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        The Attribution Illusion
+      </h2>
+      <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+        How org chart problems disguise as data problems
+      </h3>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '20px' }}>Casey built three attribution models in fourteen months.</p>
+        <p style={{ marginBottom: '30px' }}>Not because they wanted to. Because the first two failed.</p>
+
+        <div style={attemptStyle}>
+          <h4 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>Attempt 1: The Lone Wolf Build</h4>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Timeline: 4 months</li>
+            <li>Team size: Casey alone</li>
+            <li>Data fill rate: 8%</li>
+            <li>Cost: $0 external, Casey's sanity</li>
+            <li>Outcome: Casey blamed for the 8%, started therapy</li>
+          </ul>
+        </div>
+
+        <div style={attemptStyle}>
+          <h4 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>Attempt 2: The Consultant Band-Aid</h4>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Timeline: 6 months</li>
+            <li>Team size: Casey + $175K consultant</li>
+            <li>Data fill rate: 42%</li>
+            <li>Cost: $175K + Casey's continued sanity erosion</li>
+            <li>Outcome: Better, but still useless for actual decision-making. Consultant left. Casey stayed to maintain it.</li>
+          </ul>
+        </div>
+
+        <div style={{ ...attemptStyle, borderLeft: `4px solid #10b981` }}>
+          <h4 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#10b981', marginBottom: '10px' }}>Attempt 3: The Org Chart Fix</h4>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6' }}>
+            <li>Timeline: 4 months</li>
+            <li>Team size: Casey + data engineer partner + proper cross-functional alignment</li>
+            <li>Data fill rate: 85%</li>
+            <li>Cost: $40K</li>
+            <li>Outcome: Actually works. Casey can sleep now.</li>
+          </ul>
+        </div>
+
+        <p style={{ marginTop: '30px', marginBottom: '15px', fontWeight: '700' }}>What Changed Between Attempt 2 and Attempt 3?</p>
+        <p style={{ marginBottom: '20px' }}>Not the tools. Marketo didn't get smarter. Salesforce didn't release a magic update.</p>
+        <p style={{ marginBottom: '20px' }}>What changed: Someone finally said, "Wait, who owns the data schema?" And then they assigned ownership. With decision-making authority. And accountability.</p>
+        <p style={{ marginBottom: '20px' }}>Casey was capable from day one. The 8% wasn't a skill problem. It was an org chart problem masquerading as an attribution problem.</p>
+        <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>But nobody apologized for the therapy bills.</p>
+      </div>
+    </section>
+  );
 }
 
 function BigPictureSectionPage3({ mobile }) {
-  return <PlaceholderSection title="The Big Picture - Page 3" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        The Build vs Buy Trap
+      </h2>
+      <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+        When you fix the wrong problem
+      </h3>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '15px' }}>Morgan led a migration from HubSpot to Marketo. Six months, $180K all-in.</p>
+        <p style={{ marginBottom: '15px' }}>Month 7: Data schema issues surfaced. Reports don't match between systems.</p>
+        <p style={{ marginBottom: '15px' }}>Month 8: Morgan proposed data governance framework. Rejected as "too complex."</p>
+        <p style={{ marginBottom: '15px' }}>Months 8-14: Morgan firefights reporting discrepancies while maintaining dual-system frankenstack.</p>
+        <p style={{ marginBottom: '15px' }}>Month 15: Leadership conversation includes phrase "Maybe we should switch to Pardot?"</p>
+        <p style={{ marginBottom: '30px' }}>Month 16: Morgan updates resume.</p>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>The Pattern:</h3>
+        <div style={{ padding: '15px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444`, marginBottom: '20px' }}>
+          <p><strong>Problem:</strong> Data schema has no owner</p>
+          <p><strong>Symptom:</strong> Reports don't match between systems</p>
+          <p><strong>Diagnosis:</strong> "HubSpot was easier"</p>
+          <p><strong>Solution:</strong> "Let's switch to [other MAP]"</p>
+          <p style={{ marginTop: '10px', fontWeight: '700', color: COLORS.yellow }}><strong>Actual Problem:</strong> Still no data owner</p>
+        </div>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>The Correct Diagnosis Would Have Been:</h3>
+        <div style={{ padding: '15px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderLeft: `4px solid #10b981`, marginBottom: '20px' }}>
+          <p><strong>Problem:</strong> Data schema ownership vacuum</p>
+          <p><strong>Symptom:</strong> Reports will never match regardless of platform</p>
+          <p><strong>Diagnosis:</strong> Org chart gap, not tool gap</p>
+          <p><strong>Solution:</strong> Assign data governance ownership ($32K audit + $6K/month ongoing)</p>
+          <p style={{ marginTop: '10px', fontWeight: '700', color: '#10b981' }}><strong>Actual Solution Cost:</strong> $104K first year vs $180K migration that didn't fix root cause</p>
+        </div>
+
+        <p style={{ marginTop: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+          It's not build vs buy. It's "fix the org chart" vs "buy another tool and pretend that's the same thing."
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function BigPictureSectionPage4({ mobile }) {
-  return <PlaceholderSection title="The Big Picture - Page 4" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  const phaseStyle = {
+    marginBottom: '25px',
+    padding: '15px',
+    backgroundColor: 'rgba(251, 191, 36, 0.05)',
+    borderLeft: `4px solid ${COLORS.yellow}`
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        The Technical Debt Spiral
+      </h2>
+      <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+        How $2.5M/year happens incrementally
+      </h3>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '30px' }}>Technical debt doesn't announce itself. It accumulates in tiny decisions that seem reasonable at the time.</p>
+
+        <div style={phaseStyle}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>Month 1: The First Workaround</h4>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>"I'll just manually pull this list once a week until we fix the sync. Should take a week or two."</p>
+          <p style={{ fontSize: '0.9rem', color: COLORS.lightGrey }}>Time cost: 30 minutes/week | Annual cost: $800</p>
+        </div>
+
+        <div style={phaseStyle}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>Month 3: The Workaround Has Friends</h4>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>"Okay, the list pull is still manual, but now I also need to manually update lead scores..."</p>
+          <p style={{ fontSize: '0.9rem', color: COLORS.lightGrey }}>Workarounds: 8 | Time cost: 6 hours/week | Annual cost: $15,600</p>
+        </div>
+
+        <div style={phaseStyle}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>Month 8: The Workaround City</h4>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>"I have 47 workarounds now. Some of them have workarounds."</p>
+          <p style={{ fontSize: '0.9rem', color: COLORS.lightGrey }}>Workarounds: 47 | Time cost: 18 hours/week | Annual cost: $46,800</p>
+        </div>
+
+        <div style={phaseStyle}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>Month 14: The Workaround Civilization</h4>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>"87 workarounds. I document them in a spreadsheet, but I'm the only one who understands it."</p>
+          <p style={{ fontSize: '0.9rem', color: COLORS.lightGrey }}>Workarounds: 87 | Time cost: 28 hours/week | Annual cost: $145,600</p>
+        </div>
+
+        <div style={{ ...phaseStyle, borderLeft: `4px solid #ef4444`, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
+          <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ef4444', marginBottom: '10px' }}>Month 18: The Workaround Empire</h4>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>"300 workarounds across the team. This is just 'how marketing operations works here.'"</p>
+          <p style={{ fontSize: '0.9rem', color: COLORS.lightGrey }}>Workarounds: 300 (team) | Time cost: 75 hours/week | Annual cost: $390,000</p>
+        </div>
+
+        <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: COLORS.yellow, marginTop: '30px', marginBottom: '15px' }}>Add:</h3>
+        <ul style={{ marginLeft: '20px', marginBottom: '20px', lineHeight: '1.8' }}>
+          <li>Data lag cost (45-min stale data): $340K/year</li>
+          <li>Failed platform costs: $215K sunk</li>
+          <li>Consultant fees: $400K/year</li>
+          <li>Recruiting costs: $140K/year</li>
+          <li>Opportunity cost: Unquantified but substantial</li>
+        </ul>
+
+        <p style={{ fontSize: '1.5rem', fontWeight: '700', color: COLORS.yellow, marginTop: '20px' }}>Total: $2.5M+/year recurring cost</p>
+        <p style={{ marginTop: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+          And none of it shows up as "technical debt" on any report. It shows up as "why is marketing ROI declining?" and "why can't we move faster?"
+        </p>
+      </div>
+    </section>
+  );
 }
 
+// Big Picture Section Page 5: The Mobile Parallel
 function BigPictureSectionPage5({ mobile }) {
-  return <PlaceholderSection title="The Big Picture - Page 5" mobile={mobile} />;
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        The Mobile Parallel
+      </h2>
+      <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+        We learned this lesson once. We're ignoring it again.
+      </h3>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <p style={{ marginBottom: '20px' }}>
+          In 2015, LiveIntent analyzed 90 million email users and discovered something every marketer now takes for granted: 52% of email was opened on mobile.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          But here's what's wild: In 2015, most marketing teams still designed for desktop first. Mobile was the "also consider" afterthought.
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          By 2025? 55% of emails open on mobile—but more importantly, 85% of online users check email via mobile, 90% in the US. Mobile email generates $1B+ in revenue annually.
+        </p>
+
+        <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+          We finally design mobile-first. Took us ten years, but we got there.
+        </p>
+
+        <p style={{ marginBottom: '30px', fontWeight: '700', fontSize: '1.2rem' }}>
+          Now Ask Yourself This:
+        </p>
+
+        <p style={{ marginBottom: '20px' }}>
+          In 2025, 53% of organizations experience sales/marketing hand-off misalignment. Only 11% have successful alignment. Only 37% of Marketing Ops professionals have a strategic voice in their organizations.
+        </p>
+
+        <p style={{ marginBottom: '30px', fontWeight: '700', color: COLORS.yellow }}>
+          So... when are we going to design the org chart for the reality?
+        </p>
+
+        {/* Pattern Comparison Table */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>
+            The Pattern Repeats:
+          </p>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>2015 Email:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "52% mobile opens but we design for desktop"
+            </p>
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>2025 Email:</p>
+            <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "We design mobile-first now (finally)"
+            </p>
+          </div>
+
+          <div style={{ borderTop: `1px solid rgba(251, 191, 36, 0.2)`, paddingTop: '20px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>2015 Marketing Ops:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "We'll figure out roles later, just ship campaigns"
+            </p>
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>2025 Marketing Ops:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "53% misalignment but we keep writing job descriptions like it's 2010"
+            </p>
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>2035 Marketing Ops:</p>
+            <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+              TBD but probably "We design org charts for reality now (finally)"
+            </p>
+          </div>
+        </div>
+
+        <p style={{ fontWeight: '700', marginBottom: '10px' }}>
+          Why It Took 10 Years for Email:
+        </p>
+        <p style={{ marginBottom: '20px' }}>
+          Because we treated mobile as a technical problem (responsive design! mobile-first CSS!) instead of a strategic problem (the audience changed, we need to change first).
+        </p>
+
+        <p style={{ fontWeight: '700', marginBottom: '10px' }}>
+          Why It'll Take 10 Years for Ops:
+        </p>
+        <p style={{ marginBottom: '30px' }}>
+          Because we're treating role misalignment as a technical problem (better tools! more integrations!) instead of a strategic problem (the work changed, our job descriptions didn't).
+        </p>
+
+        <p style={{ fontWeight: '700', marginBottom: '10px' }}>
+          What Mobile Taught Us:
+        </p>
+        <p style={{ marginBottom: '20px' }}>
+          You can have the best technology in the world. But if you design for the wrong audience, it fails.
+        </p>
+        <p style={{ marginBottom: '30px' }}>
+          You can have Marketo, HubSpot, Salesforce, and a $40M martech stack. But if you design the org chart for 2010 while doing 2025 work, it fails.
+        </p>
+
+        {/* Data box */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px' }}>
+            The Data We're Ignoring:
+          </p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+            <li>Mobile opens grew from 52% to 55% over 10 years (3% increase, plateau)</li>
+            <li>Marketing Ops role misalignment sits at 53% in 2025</li>
+            <li>Role clarity dropped 9% in just one year (2023→2024)</li>
+            <li>Martech stack size tripled (5-7 tools in 2015, 90-120 for enterprise in 2025)</li>
+            <li>But only 49% of tools are actively used</li>
+          </ul>
+        </div>
+
+        <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+          We learned to design mobile-first.
+        </p>
+
+        <p style={{ fontWeight: '700', fontSize: '1.2rem', color: COLORS.yellow }}>
+          When do we learn to design org-charts-first?
+        </p>
+      </div>
+    </section>
+  );
 }
 
 // Persona Sections (Template - will be customized per persona)
