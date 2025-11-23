@@ -105,6 +105,26 @@ const COMMANDS = {
     category: 'global',
     passthrough: true
   },
+  'rollback': {
+    script: 'cd ../../ && git revert HEAD --no-edit && echo "✅ Rolled back last change"',
+    description: 'Rollback last global component change',
+    category: 'global'
+  },
+  'restore': {
+    script: 'cd ../../ && git restore src/config/globalContent.js && echo "✅ Restored global config from last commit"',
+    description: 'Restore global config to last commit (uncommitted changes only)',
+    category: 'global'
+  },
+  'last-change': {
+    script: 'cd ../../ && git log -1 --stat src/config/globalContent.js',
+    description: 'Show last change to global config',
+    category: 'global'
+  },
+  'history': {
+    script: 'cd ../../ && git log --oneline -10 src/config/globalContent.js',
+    description: 'Show recent global config changes',
+    category: 'global'
+  },
 
   // Test All
   'all': {
