@@ -1410,6 +1410,75 @@ function PersonaMeetSection({ name, role, mobile }) {
     );
   }
 
+  // Casey - Marketing Attribution Specialist
+  if (name === 'Casey') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          Meet {name}
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          {role} | Hired Q1 2024 | 450-person B2B SaaS
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <p style={{ marginBottom: '20px' }}>
+            Casey built a full attribution model at their previous company.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            Not "we use last-touch and call it attribution." A real multi-touch attribution model. Custom weighting. Cross-channel journey mapping. Actually told you which campaigns drove revenue and which ones just looked good in isolation.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            It took Casey 8 months to build. Another 4 months to get sales and marketing aligned on the definitions. But when it was done, it worked. 89% data fill rate. Decisions got made based on it. Budget got allocated differently. Revenue improved.
+          </p>
+
+          <p style={{ marginBottom: '30px', fontWeight: '700' }}>
+            Casey was proud of it.
+          </p>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>The Job Posting:</p>
+            <p style={{ fontStyle: 'italic' }}>
+              "Marketing Attribution Specialist - Build our attribution model from the ground up. You'll own our multi-touch attribution strategy, implement tracking, and partner with sales and marketing to ensure we're measuring what matters."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>The Interview:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP Marketing:</span> "We have no attribution right now. We're flying blind. Last year we spent $8M on marketing and couldn't tell you which $1M actually worked."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "That's exactly what attribution solves. What's your data infrastructure like?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We have Marketo, Salesforce, and a data warehouse. You'd have access to all of it."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "And who owns the data schema definitions?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "You would, as part of building attribution."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey (mentally):</span> "Perfect. Schema ownership, cross-functional support, blank slate to build it right."
+            </p>
+          </div>
+
+          <p style={{ marginBottom: '10px' }}>Offer signed: February 2024</p>
+          <p style={{ marginBottom: '10px' }}>Casey's confidence: High</p>
+          <p style={{ marginBottom: '30px' }}>Casey's previous track record: 89% fill rate, drove $2.1M in budget reallocation based on attribution insights</p>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            "What Could Go Wrong?"
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   // Placeholder for other personas
   return <PlaceholderSection title={`Meet ${name} - ${role}`} mobile={mobile} />;
 }
@@ -1580,6 +1649,93 @@ function PersonaPromiseSection({ name, mobile }) {
 
           <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
             Jordan's thought leaving the interview: "Finally, a place that gets it."
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Casey - The Promise
+  if (name === 'Casey') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Promise
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>Marketing Attribution Specialist</p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              "Own our attribution strategy from the ground up. We're a $450-person B2B SaaS company scaling fast, and we need to know what's working. You'll build our multi-touch attribution model, implement tracking infrastructure, and partner across sales and marketing to ensure we're making data-driven decisions."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Responsibilities:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px', fontSize: '0.95rem' }}>
+              <li>Design and implement multi-touch attribution model</li>
+              <li>Define data requirements and tracking infrastructure</li>
+              <li>Partner with marketing, sales, and analytics on definitions</li>
+              <li>Build dashboards and reporting for attribution insights</li>
+              <li>Drive budget allocation recommendations based on attribution data</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What We Offer:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontSize: '0.95rem' }}>
+              <li>Blank slate to build attribution the right way</li>
+              <li>Executive support (VP Marketing sponsor)</li>
+              <li>Access to full data infrastructure</li>
+              <li>Opportunity to drive $8M+ budget decisions</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Interview Highlights:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP Marketing:</span> "We're embarrassed that we don't have attribution. Last board meeting, the CFO asked 'Which campaigns drove the most revenue?' and we had no answer. Just vibes and vanity metrics."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Attribution fixes that. But it requires cross-functional buy-in. Who would I work with?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "You'd partner with the demand gen team, sales ops, and our data analyst. Everyone's aligned that we need this."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "And data schema ownership—would I have the authority to define fields and definitions?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Absolutely. That's part of the role."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Then I can build this. I've done it before. 8-12 months to full implementation, 85%+ fill rate target."
+            </p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              VP: "Perfect. Let's do it."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Offer Accepted:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Title: Marketing Attribution Specialist</li>
+              <li>Salary: $98K</li>
+              <li>Start Date: February 1, 2024</li>
+              <li>Reporting: VP Marketing</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Casey's plan:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontSize: '0.95rem' }}>
+              <li>Month 1-2: Audit data sources, define requirements</li>
+              <li>Month 3-4: Build attribution model (first version)</li>
+              <li>Month 5-6: Implement tracking, test fill rates</li>
+              <li>Month 7-8: Iterate based on feedback</li>
+              <li>Month 9+: Run at steady state, provide insights</li>
+            </ul>
+          </div>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            "I'm going to build something they can actually use."
           </p>
         </div>
       </section>
@@ -1857,6 +2013,193 @@ function PersonaRealitySection({ name, mobile }) {
     );
   }
 
+  // Casey - The Reality
+  if (name === 'Casey') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Reality
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Attempt 1 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              Attempt 1: The Solo Build (Months 1-4)
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>Casey starts with an audit.</p>
+            <p style={{ marginBottom: '10px' }}>Good news: Marketo and Salesforce are connected.</p>
+            <p style={{ marginBottom: '20px' }}>Bad news: Nobody documented how. Or what fields mean. Or which data is source of truth.</p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Example discovery:</p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "What's the definition of an MQL?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Demand Gen Manager:</span> "Someone who hits 100 lead score points."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Sales Ops:</span> "Someone who requests a demo."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP Marketing:</span> "I thought it was when they hit a lifecycle stage?"
+            </p>
+
+            <p style={{ marginTop: '15px', marginBottom: '10px' }}>All three definitions exist in the data. None are consistently used.</p>
+            <p style={{ marginBottom: '10px' }}>Casey documents this: "We have three MQL definitions operating simultaneously."</p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Interesting. Can you just use the Salesforce one for now and we'll align on definitions later?"
+            </p>
+          </div>
+
+          {/* Month 4 Result */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 4 - Attempt 1 Launch:</p>
+            <p style={{ marginBottom: '10px' }}>Casey builds the best attribution model possible with:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Undefined MQL definitions</li>
+              <li>Undocumented campaign taxonomies</li>
+              <li>Inconsistent tracking (some campaigns tracked, some not, nobody knows which)</li>
+              <li>No cross-functional agreement on what "conversion" means</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              Result: Data fill rate: 8%
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem' }}>
+              Meaning: 92% of the time, the model can't attribute revenue to campaigns because the data is too messy
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "8%? Why so low?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Because nobody owns the data definitions. We have three different MQL definitions, campaign tracking is inconsistent, and—"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you fix it?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Yes, but I need cross-functional alignment to define standards and—"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Probably 2 months if we get everyone in a room and—"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We don't have 2 months. The board wants attribution next quarter."
+            </p>
+
+            <p style={{ marginTop: '15px', fontStyle: 'italic' }}>
+              Casey's internal dialogue: "I built an 89% fill rate model at my last company. What's different here? ...Oh. There, I had schema ownership and cross-functional alignment. Here, I have neither."
+            </p>
+          </div>
+
+          {/* Attempt 2 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              Attempt 2: The Consultant Band-Aid (Months 5-10)
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "I'm bringing in a consultant to help. They specialize in attribution."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "The problem isn't attribution expertise. It's data governance. We need to—"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "They're starting Monday."
+            </p>
+
+            <p style={{ marginBottom: '15px', fontWeight: '700' }}>Consultant cost: $175K for 6 months</p>
+
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              Consultant's first diagnosis (Week 1): "Your data governance is a mess. You need to define standards, get cross-functional alignment, and—"
+            </p>
+            <p style={{ marginBottom: '30px', fontWeight: '700', color: COLORS.yellow }}>
+              Casey (internally): "I SAID THAT IN MONTH 1."
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Months 5-10 Progress:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Got marketing and sales in a room (finally)</li>
+              <li>Defined MQL (chose one definition, deprecated the others)</li>
+              <li>Documented campaign taxonomy</li>
+              <li>Rebuilt attribution model on cleaner foundation</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              Result: Data fill rate: 42%
+            </p>
+            <p style={{ marginBottom: '10px' }}>Consultant leaves (contract complete)</p>
+            <p style={{ marginBottom: '20px' }}>Casey inherits maintenance of 42% model</p>
+
+            <p style={{ marginTop: '15px', fontStyle: 'italic' }}>
+              Casey's assessment: "42% is better than 8%, but it's still useless for real decision-making. We spent $175K to go from 'doesn't work' to 'kind of works sometimes.'"
+            </p>
+          </div>
+
+          {/* Attempt 3 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderLeft: `4px solid #22c55e` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: '#22c55e', fontSize: '1.1rem' }}>
+              Attempt 3: The Org Chart Fix (Months 11-14)
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>New VP Marketing starts (previous VP moved to another company).</p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>New VP's first question:</span> "Why is our attribution at 42%?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey (prepared):</span> "Because we never fully solved the data governance problem. The consultant got us partway there, but we need ongoing schema ownership and—"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>New VP:</span> "Show me your proposal."
+            </p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey (shocked):</span> "Really?"
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700', color: '#22c55e' }}>What Changed:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>New VP assigned a data engineer to partner with Casey</li>
+              <li>Gave Casey actual schema ownership authority</li>
+              <li>Made data governance a Q1 priority (not "next quarter")</li>
+              <li>Funded cross-functional working group</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Months 11-14:</p>
+            <p style={{ marginBottom: '10px' }}>Casey + data engineer partner:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Finished governance work consultant started</li>
+              <li>Cleaned up remaining schema issues</li>
+              <li>Automated tracking for all campaigns</li>
+              <li>Got finance, sales, and marketing aligned on revenue definitions</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: '#22c55e', fontSize: '1.2rem' }}>
+              Result: Data fill rate: 85%
+            </p>
+            <p style={{ marginBottom: '10px' }}>Cost: $40K (data engineer's time + Casey's time)</p>
+            <p style={{ marginBottom: '30px' }}>Timeline: 4 months</p>
+
+            <p style={{ marginBottom: '15px', fontWeight: '700', color: '#22c55e' }}>Attribution Finally Works:</p>
+            <p style={{ marginBottom: '10px' }}>Insight from attribution: $1.2M in budget was going to campaigns with 2% conversion rates, while high-performing campaigns were underfunded.</p>
+            <p style={{ marginBottom: '10px' }}>Budget reallocation: $800K moved to high-performers.</p>
+            <p style={{ marginBottom: '20px' }}>Projected revenue impact: $2.8M lift.</p>
+
+            <p style={{ marginTop: '15px', fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Casey's reaction: "I could have built this in Month 4 if someone had just given me schema ownership from day one."
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Reality`} mobile={mobile} />;
 }
@@ -2112,6 +2455,178 @@ function PersonaCostSection({ name, mobile }) {
             <p style={{ marginBottom: '10px' }}>But at least you got those board reports.</p>
             <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
               Even if they didn't match each other.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Casey - The Cost
+  if (name === 'Casey') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Cost
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Financial Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Financial Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>14-Month Journey:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Attempt 1 (Months 1-4): $33K (Casey's salary), 8% fill rate</li>
+              <li>Attempt 2 (Months 5-10): $175K (consultant) + $49K (Casey's salary) = $224K, 42% fill rate</li>
+              <li>Attempt 3 (Months 11-14): $40K (data engineer + Casey time), 85% fill rate</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Total Cost: $297K over 14 months
+            </p>
+
+            <p style={{ fontWeight: '700', marginTop: '20px', marginBottom: '10px' }}>
+              What It Should Have Cost:
+            </p>
+            <p style={{ marginBottom: '10px' }}>If Casey had schema ownership and cross-functional support from Month 1:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Timeline: 4-6 months (not 14)</li>
+              <li>Cost: $65K (Casey's salary for period)</li>
+              <li>Fill rate: 85%</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Money Wasted: $232K
+            </p>
+            <p style={{ fontWeight: '700', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Time Wasted: 10 months
+            </p>
+          </div>
+
+          {/* Bad Decision Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>
+              Decisions Made on Bad Data (Months 1-10):
+            </p>
+
+            <p style={{ marginBottom: '10px' }}>Budget allocated without attribution insights: $6.5M</p>
+            <p style={{ marginBottom: '20px' }}>Estimated waste from misallocation (industry average): 15-20%</p>
+
+            <p style={{ fontWeight: '700', fontSize: '1.2rem', color: COLORS.yellow, marginBottom: '20px' }}>
+              Cost of Bad Decisions: $975K - $1.3M
+            </p>
+
+            <p style={{ fontStyle: 'italic' }}>
+              Remember: Month 14 attribution revealed $1.2M was going to campaigns with 2% conversion rates while high-performers were underfunded. That $1.2M misallocation? It was happening during the entire 10 months Casey didn't have authority to fix the data.
+            </p>
+          </div>
+
+          {/* Human Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Human Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 4 (8% fill rate):</p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              Casey's internal monologue: "I built an 89% model at my last company. I must have forgotten how to do this."
+            </p>
+            <p style={{ marginBottom: '20px' }}>Therapy sessions started: Month 5</p>
+            <p style={{ marginBottom: '30px' }}>Topic: Imposter syndrome</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>
+              Month 10 (42% fill rate after consultant):
+            </p>
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Conversation with consultant (last day):</p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Consultant:</span> "You were right in Month 1, you know. The problem was always data governance."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "I know."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Consultant:</span> "You told them that."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "I know."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Consultant:</span> "They ignored you and hired me to say the same thing."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "I know."
+            </p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Consultant:</span> "That sucks."
+            </p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Yeah."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>
+              Month 14 (85% fill rate, finally working):
+            </p>
+            <p style={{ marginBottom: '15px', fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Casey's realization: "I wasn't bad at my job. The org chart was broken."
+            </p>
+            <p style={{ marginBottom: '10px' }}>Therapy topic: Organizational dysfunction (no longer imposter syndrome)</p>
+          </div>
+
+          {/* Organizational Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>The Organizational Cost:</p>
+
+            <p style={{ marginBottom: '5px', fontWeight: '700' }}>CMO's Conclusion (Month 6, looking at 8%):</p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Attribution is just too hard for our company. We're not Google. We can't do this."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontWeight: '700' }}>Board's Conclusion (Month 8):</p>
+            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Marketing can't measure ROI. Maybe we should shift budget to sales."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontWeight: '700' }}>New VP's Conclusion (Month 11):</p>
+            <p style={{ marginBottom: '15px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Wait, why didn't you just give Casey schema ownership and a data partner from day one?"
+            </p>
+
+            <p style={{ marginBottom: '10px' }}>Previous VP (no longer at company): No answer</p>
+          </div>
+
+          {/* The Real Cost */}
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              The Real Cost:
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>You hired an attribution expert.</p>
+            <p style={{ marginBottom: '15px' }}>They built an 89% fill rate model at their previous company.</p>
+            <p style={{ marginBottom: '30px' }}>At your company, you:</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Gave them no schema ownership</li>
+              <li>Gave them no cross-functional authority</li>
+              <li>Let them build a model on undefined data (8% fill rate)</li>
+              <li>Spent $175K on a consultant to say what Casey said in Month 1</li>
+              <li>Got to 42% (still unusable)</li>
+              <li>Finally gave Casey the authority they needed (Month 11)</li>
+              <li>Got to 85% in 4 months</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', fontSize: '1.1rem' }}>Total Waste:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>$232K financial</li>
+              <li>10 months timeline</li>
+              <li>$975K-$1.3M in bad budget decisions</li>
+              <li>Casey's mental health</li>
+              <li>Board's confidence in marketing</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>
+              But hey, nobody apologized for the therapy bills.
+            </p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Or for ignoring Casey in Month 1.
             </p>
           </div>
         </div>
