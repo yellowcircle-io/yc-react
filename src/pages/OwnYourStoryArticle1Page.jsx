@@ -1330,6 +1330,86 @@ function PersonaMeetSection({ name, role, mobile }) {
     );
   }
 
+  // Jordan - Marketing Data Analyst
+  if (name === 'Jordan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          Meet {name}
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          {role} | Hired Q3 2023 | 1,200-person enterprise tech
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <p style={{ marginBottom: '20px' }}>
+            Jordan loves data.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            Not in the vague "data-driven" marketing buzzword sense. In the "I get genuinely excited about designing clean schemas" sense.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            SQL is Jordan's creative medium. Tableau is their canvas. A well-normalized database makes them smile.
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>
+            Previous company: Built the entire reporting infrastructure from scratch. Designed the schema. Owned the data pipelines. Created dashboards that actually answered questions instead of generating more questions.
+          </p>
+
+          <p style={{ marginBottom: '30px', fontStyle: 'italic' }}>
+            They were the data architect. Not officially titled that, but everyone knew: If you wanted data to make sense, you asked Jordan.
+          </p>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>The Job Description (excerpt):</p>
+            <p style={{ fontStyle: 'italic' }}>
+              "Marketing Data Analyst - Own our data strategy. Design reporting architecture. Build executive dashboards. Work cross-functionally to ensure data quality and accessibility."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>The Interview:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Hiring Manager:</span> "We're drowning in data but starving for insights. We need someone who can make sense of our chaos."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "That's my specialty. Show me the chaos, I'll show you the patterns."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Hiring Manager:</span> "Perfect. Our last analyst was very tactical—ran reports but didn't think strategically about the underlying architecture."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan (mentally):</span> "Okay, so they need someone to actually architect the data. I can do that."
+            </p>
+          </div>
+
+          <p style={{ marginBottom: '10px' }}>Offer accepted.</p>
+          <p style={{ marginBottom: '10px' }}>Start date: September 2023.</p>
+          <p style={{ marginBottom: '30px', fontWeight: '700', color: COLORS.yellow }}>
+            Jordan's excitement level: High. Finally, a place that wants actual data architecture, not just dashboard puppetry.
+          </p>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>What Jordan Expected:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Design clean data schemas</li>
+              <li>Build automated reporting pipelines</li>
+              <li>Create executive dashboards</li>
+              <li>Implement data governance</li>
+              <li>Document data definitions and sources</li>
+            </ul>
+          </div>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            "Jordan's Actual Superpower: Seeing the schema that should exist underneath the mess of what does exist."
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   // Placeholder for other personas
   return <PlaceholderSection title={`Meet ${name} - ${role}`} mobile={mobile} />;
 }
@@ -1423,6 +1503,84 @@ function PersonaPromiseSection({ name, mobile }) {
               Likes: 147 | Comments: 23 (mostly "Congrats!" and "They're lucky to have you!")
             </p>
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Jordan - The Promise
+  if (name === 'Jordan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Promise
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Job Posting - Marketing Data Analyst:</p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              "We're looking for a data-obsessed analyst who can transform our marketing data chaos into strategic insights. You'll own our data architecture, design our reporting strategy, and partner with sales, marketing, and operations to ensure everyone's working from the same source of truth."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Key Responsibilities:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Design and maintain marketing data architecture</li>
+              <li>Build automated reporting and dashboards</li>
+              <li>Ensure data quality and governance</li>
+              <li>Partner cross-functionally on data strategy</li>
+              <li>Document data sources and definitions</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What We're Looking For:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Strong SQL skills (required)</li>
+              <li>Tableau or similar BI tool expertise</li>
+              <li>Data modeling and schema design experience</li>
+              <li>Strategic thinker who sees the big picture</li>
+              <li>Someone who can translate data into action</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Interview Conversation (Jordan's notes):</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Hiring Manager (VP Marketing):</span> "Our data is a mess. Honestly, I don't trust half the reports I see because they never match. Sales says one thing, marketing says another, finance says a third thing."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "That's usually a schema design issue. If everyone's pulling from different sources with different definitions, you'll never have alignment."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Exactly! That's what we need—someone who can fix the underlying architecture, not just make prettier dashboards."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Have you documented your data sources and definitions?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "No. That's what you'd help us do."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Perfect. That's where I'd start. Define the source of truth, document the schema, then build reporting on top of that foundation."
+            </p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              VP: "You're hired."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Offer Details:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Title: Marketing Data Analyst</li>
+              <li>Salary: $105K</li>
+              <li>Reports to: VP Marketing</li>
+              <li>Scope: "Own our data strategy"</li>
+              <li>Start: September 15, 2023</li>
+            </ul>
+          </div>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            Jordan's thought leaving the interview: "Finally, a place that gets it."
+          </p>
         </div>
       </section>
     );
@@ -1583,6 +1741,122 @@ function PersonaRealitySection({ name, mobile }) {
     );
   }
 
+  // Jordan - The Reality
+  if (name === 'Jordan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Reality
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Week 1:</p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP in first 1:1:</span> "Hey, can you pull a list of all opportunities created in the last 90 days with associated campaign touches? Sales needs it by EOD."
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Sure. Where's the schema documentation?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "The what?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan (internally):</span> "Okay, so step one is documenting the schema. I'll do this list pull, then propose the documentation project."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Week 2 - Jordan proposes data governance project:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px', fontSize: '0.95rem' }}>
+              <li>2 weeks to audit current data sources</li>
+              <li>2 weeks to document schema</li>
+              <li>1 week to get stakeholder alignment on definitions</li>
+              <li>2 weeks to build automated reporting on clean foundation</li>
+            </ul>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "That sounds great, but can it wait until next quarter? Right now we need you focused on pulling reports for the board meeting."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 3 - Jordan's actual workload:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>71% | "Can you pull this list?" requests (averaging 8 per day)</li>
+              <li>12% | Reconciling why two reports don't match</li>
+              <li>11% | Building dashboards on undefined data (knowing they'll be wrong)</li>
+              <li>6% | Actual data architecture work (done after hours)</li>
+            </ul>
+            <p style={{ marginTop: '15px', fontWeight: '700', color: COLORS.yellow }}>
+              Time spent doing what they were hired for: 6%
+            </p>
+          </div>
+
+          {/* Data Lag Evolution */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', border: `2px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              The Data Lag Evolution:
+            </p>
+            <p style={{ marginBottom: '15px', fontSize: '0.9rem', fontStyle: 'italic' }}>
+              Jordan tracked it obsessively because it was the canary in the coal mine:
+            </p>
+
+            <div style={{ marginBottom: '15px' }}>
+              <p style={{ fontWeight: '700' }}>Month 1:</p>
+              <p>Data refresh lag: 5 minutes</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "Healthy system"</p>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <p style={{ fontWeight: '700' }}>Month 6:</p>
+              <p>Data refresh lag: 15 minutes</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "Systems under stress, need optimization"</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Response: "Maybe next quarter"</p>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <p style={{ fontWeight: '700' }}>Month 12:</p>
+              <p>Data refresh lag: 30 minutes</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "This is a problem. Sales is working with stale data."</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Response: "Can you just run the refresh more frequently?"</p>
+            </div>
+
+            <div>
+              <p style={{ fontWeight: '700' }}>Month 18:</p>
+              <p style={{ marginBottom: '10px' }}>Data refresh lag: 45 minutes</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "This is now causing revenue impact"</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Response: "Just use yesterday's data if it's not refreshed yet"</p>
+            </div>
+          </div>
+
+          <p style={{ marginBottom: '20px', fontWeight: '700' }}>
+            Why the Lag Kept Growing:
+          </p>
+          <p style={{ marginBottom: '20px' }}>
+            Not because the systems got slower. Because nobody owned the schema.
+          </p>
+          <p style={{ marginBottom: '30px', fontStyle: 'italic' }}>
+            Every new campaign added data. Every new integration added a source. Every new dashboard added a query. All built on top of an undocumented, ungoverned mess.
+          </p>
+          <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            It's like building a skyscraper on quicksand and being confused when it sinks.
+          </p>
+
+          <p style={{ marginBottom: '10px', fontWeight: '700', color: COLORS.yellow }}>Month 18 Reality:</p>
+          <p style={{ marginBottom: '10px' }}>Jordan spends 6% of time on data architecture.</p>
+          <p style={{ marginBottom: '10px' }}>The other 94% is spent pulling lists and building dashboards on top of data that nobody owns, nobody documents, and nobody will fix.</p>
+          <p style={{ marginBottom: '20px' }}>Jordan can see the solution. Jordan has proposed the solution 14 times.</p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+            Nobody will prioritize it because "we need to hit this quarter's numbers first."
+          </p>
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>
+            Meanwhile, the 45-minute data lag means sales is calling prospects after they've already talked to a competitor.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Reality`} mobile={mobile} />;
 }
@@ -1704,6 +1978,140 @@ function PersonaCostSection({ name, mobile }) {
             <p style={{ marginBottom: '10px' }}>But hey, at least you hit your MQL targets.</p>
             <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
               Oh wait. You didn't.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Jordan - The Cost
+  if (name === 'Jordan') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Cost
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Financial Cost:</p>
+
+            <p style={{ marginBottom: '15px' }}>Jordan's salary: $105K/year</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Time allocation analysis:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Hired to design data architecture: 6% actual time spent</li>
+              <li>Pulling lists: 71% actual time spent</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Effective cost per list pull: ~$75K/year (Jordan's salary × 71%)</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>The 45-Minute Lag Impact:</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px', fontSize: '0.95rem' }}>
+              <li>Sales team size: 42 reps</li>
+              <li>Average lead response time goal: &lt;5 minutes (industry standard)</li>
+              <li>Actual response time: 50 minutes (45-min lag + 5-min rep response)</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Impact of delayed response (industry data):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Response in &lt;5 min: 21% contact rate</li>
+              <li>Response in 5-60 min: 7% contact rate</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Conversion rate drop: 67%</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Annual revenue impact (estimated):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Pipeline generated from inbound: $12M</li>
+              <li>Conversion rate loss from delay: 67%</li>
+              <li style={{ fontWeight: '700', fontSize: '1.1rem', color: COLORS.yellow }}>Estimated revenue loss: $340K/year</li>
+            </ul>
+
+            <p style={{ marginTop: '15px', fontStyle: 'italic' }}>
+              And that's just ONE symptom of ungoverned data.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>The Architecture Debt:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What Jordan proposed (Month 2):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>7 weeks of architecture work</li>
+              <li>Cost: Jordan's time (~$14K in salary)</li>
+              <li>Benefit: Clean schema, documented sources, automated reporting, eliminated 45-min lag</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What actually happened:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>18 months of patchwork</li>
+              <li>Cost: Jordan's time ($157K in salary) + data lag revenue impact ($340K) + opportunity cost of wrong decisions made on bad data (unquantified)</li>
+              <li>Benefit: More dashboards that don't match each other</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', fontSize: '1.2rem', color: COLORS.yellow }}>
+              Total 18-month cost of NOT doing the 7-week project: $497K+ quantified
+            </p>
+            <p style={{ marginTop: '10px', fontSize: '0.9rem', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              Unquantified: Bad decisions made on wrong data, sales rep frustration, deals lost to competitors who responded faster
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Human Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Jordan's Sunday night ritual:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontSize: '0.95rem' }}>
+              <li>7:00 PM: Open laptop</li>
+              <li>7:15 PM: Try to do the architecture work nobody will approve</li>
+              <li>9:30 PM: Give up because tomorrow's list pulls are piling up</li>
+              <li>10:00 PM: Update resume</li>
+              <li>10:45 PM: Close laptop</li>
+              <li>11:00 PM: Lie awake thinking about how fixable this is</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginTop: '20px', marginBottom: '10px' }}>Conversations with spouse:</p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Spouse:</span> "How was work?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "I pulled 11 lists today."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Spouse:</span> "Isn't that... not what you were hired for?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Nope."
+            </p>
+            <p style={{ fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Spouse:</span> "Are you going to quit?"
+            </p>
+            <p style={{ fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Probably."
+            </p>
+          </div>
+
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              The Real Cost:
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>You hired a data architect.</p>
+            <p style={{ marginBottom: '15px' }}>You paid them $105K to pull lists.</p>
+            <p style={{ marginBottom: '15px' }}>You ignored their warnings about the data lag.</p>
+            <p style={{ marginBottom: '15px' }}>You're losing $340K/year because sales works with stale data.</p>
+            <p style={{ marginBottom: '30px' }}>You're about to lose Jordan's institutional knowledge of your data chaos.</p>
+
+            <p style={{ marginBottom: '20px', fontWeight: '700' }}>
+              Then you'll hire someone new, ignore them for 18 months, and wonder why your data is still a mess.
+            </p>
+
+            <p style={{ marginBottom: '10px' }}>But at least you got those board reports.</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Even if they didn't match each other.
             </p>
           </div>
         </div>
