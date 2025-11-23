@@ -3639,29 +3639,591 @@ function PersonaCostSection({ name, mobile }) {
 
 // What Now Sections
 function WhatNowSectionPage1({ mobile }) {
-  return <PlaceholderSection title="What Now - Page 1" mobile={mobile} />;
-}
-
-function WhatNowSectionPage2({ mobile }) {
-  return <PlaceholderSection title="What Now - Page 2" mobile={mobile} />;
-}
-
-function WhatNowSectionPage3({ mobile }) {
-  return <PlaceholderSection title="What Now - Page 3" mobile={mobile} />;
-}
-
-// CTA Section with Email Capture
-function CTASection({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '60px 0'
+    padding: '40px 0',
+    marginBottom: '40px'
   } : {
     minWidth: '100vw',
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: mobile ? '20px' : '40px' }}>
+        Stop Buying Tools
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white, lineHeight: 1.8 }}>
+        <p style={{ marginBottom: '30px', fontSize: '1.1rem' }}>
+          You don't need another MAP.
+        </p>
+        <p style={{ marginBottom: '30px', fontSize: '1.1rem' }}>
+          You don't need a $175K consultant to run an attribution audit.
+        </p>
+        <p style={{ marginBottom: '30px', fontSize: '1.1rem' }}>
+          You don't need to migrate from Marketo to Pardot to HubSpot to whatever's next.
+        </p>
+        <p style={{ marginBottom: '40px', fontSize: '1.2rem', fontWeight: 600 }}>
+          You need to answer three questions:
+        </p>
+
+        {/* Question 1 */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '20px', fontWeight: 700 }}>
+            Question 1: Who owns your data schemas?
+          </h3>
+          <p style={{ marginBottom: '15px', color: COLORS.lightGrey }}>
+            Not "who uses the data." Not "who pulls reports." Not "who manages the platform."
+          </p>
+          <p style={{ marginBottom: '20px', fontSize: '1.2rem', fontWeight: 600, color: COLORS.white }}>
+            Who. Owns. The. Schema.
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '20px' }}>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              Who decides what "MQL" means?
+            </li>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              Who has authority to deprecate duplicate fields?
+            </li>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              Who documents what the fields actually represent?
+            </li>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              Who gets final say when sales and marketing disagree on definitions?
+            </li>
+          </ul>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            If your answer is "nobody" or "I guess marketing ops?" you have an org chart problem, not a tools problem.
+          </p>
+        </div>
+
+        {/* Question 2 */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '20px', fontWeight: 700 }}>
+            Question 2: Does your job description match the actual work?
+          </h3>
+          <p style={{ marginBottom: '15px' }}>
+            Pull the job description you used to hire your MOps person.
+          </p>
+          <p style={{ marginBottom: '15px' }}>
+            Pull the goals you set in their last 1:1.
+          </p>
+          <p style={{ marginBottom: '15px' }}>
+            Ask them to log their actual work for one week.
+          </p>
+          <p style={{ marginBottom: '20px', fontWeight: 600 }}>
+            Put all three side by side.
+          </p>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            If they don't match within 20%, you have a people problem, not a tools problem.
+          </p>
+        </div>
+
+        {/* Question 3 */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '40px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '20px', fontWeight: 700 }}>
+            Question 3: Are you measuring the right things?
+          </h3>
+          <p style={{ marginBottom: '15px' }}>
+            MQL volume is not a measure of marketing operations success.
+          </p>
+          <p style={{ marginBottom: '20px', fontWeight: 600 }}>
+            MQL volume is a measure of demand generation success.
+          </p>
+          <p style={{ marginBottom: '10px' }}>
+            If you hired a Lifecycle Marketer and measure them on MQLs, they will:
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, marginBottom: '20px' }}>
+            <li style={{ marginBottom: '8px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+              a) Build manual workarounds to hit targets
+            </li>
+            <li style={{ marginBottom: '8px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+              b) Spend zero time on lifecycle optimization
+            </li>
+            <li style={{ marginBottom: '8px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+              c) Quit in 18 months
+            </li>
+          </ul>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            Then you'll say "marketing operations has high turnover" and never connect it to goal misalignment.
+          </p>
+        </div>
+
+        {/* Hard Truth */}
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.15)',
+          border: '2px solid #ef4444',
+          padding: '30px',
+          borderRadius: '8px'
+        }}>
+          <h3 style={{ color: '#ef4444', fontSize: '1.3rem', marginBottom: '20px', fontWeight: 700 }}>
+            The Hard Truth:
+          </h3>
+          <p style={{ marginBottom: '15px' }}>
+            If you can't answer all three questions with specific names, documented standards, and aligned expectations...
+          </p>
+          <p style={{ marginBottom: '10px', fontWeight: 600 }}>
+            The next tool will fail exactly like this one.
+          </p>
+          <p style={{ marginBottom: '10px', fontWeight: 600 }}>
+            The next consultant will say what the previous four people said.
+          </p>
+          <p style={{ marginBottom: '10px', fontWeight: 600 }}>
+            The next hire will quit in 18 months.
+          </p>
+          <p style={{ marginTop: '20px', fontSize: '1.1rem', color: COLORS.white }}>
+            And you'll keep spending $2.5M/year maintaining chaos while rejecting the $350K fix.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhatNowSectionPage2({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: mobile ? '20px' : '40px' }}>
+        Start With Roles
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white, lineHeight: 1.8 }}>
+        {/* Alignment Audit */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '40px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.4rem', marginBottom: '30px', fontWeight: 700 }}>
+            The Alignment Audit (Do This Tomorrow):
+          </h3>
+
+          <div style={{ marginBottom: '30px' }}>
+            <h4 style={{ color: COLORS.white, fontSize: '1.2rem', marginBottom: '15px', fontWeight: 600 }}>
+              Step 1: Pull three documents
+            </h4>
+            <ol style={{ paddingLeft: '25px', marginBottom: 0 }}>
+              <li style={{ marginBottom: '10px' }}>The job description you used to hire your MOps team</li>
+              <li style={{ marginBottom: '10px' }}>The goals you set in their last 1:1 or performance review</li>
+              <li style={{ marginBottom: '10px' }}>Their actual work log for one week (ask them to track it)</li>
+            </ol>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <h4 style={{ color: COLORS.white, fontSize: '1.2rem', marginBottom: '15px', fontWeight: 600 }}>
+              Step 2: Compare them
+            </h4>
+            <p style={{ marginBottom: '15px' }}>Put them side by side.</p>
+            <p style={{ marginBottom: '10px' }}>Look for gaps:</p>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '8px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+                Job description says "lifecycle" but goals say "MQL volume"
+              </li>
+              <li style={{ marginBottom: '8px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+                Job description says "strategic" but work log shows "list pulls"
+              </li>
+              <li style={{ marginBottom: '8px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+                Job description says "architecture" but goals measure "campaign speed"
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <h4 style={{ color: COLORS.white, fontSize: '1.2rem', marginBottom: '15px', fontWeight: 600 }}>
+              Step 3: Quantify the misalignment
+            </h4>
+            <p style={{ marginBottom: '10px' }}>Calculate the percentage of time spent on:</p>
+            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '15px' }}>
+              <li style={{ marginBottom: '8px', paddingLeft: '20px' }}>Work that matches job description: ___%</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '20px' }}>Work that matches goals: ___%</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '20px' }}>Work that is neither (firefighting, workarounds): ___%</li>
+            </ul>
+            <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+              If those three numbers don't add up to 80%+ match, you have role misalignment.
+            </p>
+          </div>
+
+          <div>
+            <h4 style={{ color: COLORS.white, fontSize: '1.2rem', marginBottom: '15px', fontWeight: 600 }}>
+              Step 4: Fix the role before fixing the tools
+            </h4>
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '2px solid #ef4444',
+              padding: '20px',
+              borderRadius: '8px',
+              marginBottom: '20px'
+            }}>
+              <p style={{ color: '#ef4444', fontWeight: 600, marginBottom: '10px' }}>Don't do this:</p>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Migrate to a new platform</li>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Hire a consultant</li>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Add more tools to the stack</li>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Reorganize the team structure</li>
+              </ul>
+            </div>
+            <div style={{
+              background: 'rgba(34, 197, 94, 0.15)',
+              border: '2px solid #22c55e',
+              padding: '20px',
+              borderRadius: '8px'
+            }}>
+              <p style={{ color: '#22c55e', fontWeight: 600, marginBottom: '10px' }}>Do this:</p>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Rewrite the job description to match reality OR</li>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Change the goals to match the job description OR</li>
+                <li style={{ marginBottom: '6px', paddingLeft: '15px' }}>• Change the work allocation to match both</li>
+              </ul>
+            </div>
+            <p style={{ marginTop: '20px', fontSize: '1.2rem', fontWeight: 700, color: COLORS.yellow }}>
+              Pick one. Commit to it.
+            </p>
+          </div>
+        </div>
+
+        {/* Example Scenario */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.05)',
+          border: `1px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '20px', fontWeight: 700 }}>
+            Example:
+          </h3>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            Scenario: Alex (Lifecycle MOps hired, Demand Gen goals assigned)
+          </p>
+
+          <div style={{ marginBottom: '25px' }}>
+            <h4 style={{ color: COLORS.white, fontSize: '1.1rem', marginBottom: '12px', fontWeight: 600 }}>
+              Option A: Rewrite Job as Demand Gen
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• New title: Demand Generation Coordinator</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• New goals: MQL volume, list quality, campaign speed</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• New salary: Adjust down (demand gen coords make less than lifecycle strategists)</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+                → Outcome: Role clarity restored, Alex can choose if that's the job they want
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '25px' }}>
+            <h4 style={{ color: COLORS.white, fontSize: '1.1rem', marginBottom: '12px', fontWeight: 600 }}>
+              Option B: Change Goals to Lifecycle
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Keep title: Marketing Operations Manager</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• New goals: Nurture conversion rates, lifecycle stage velocity, customer retention</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Remove: MQL volume targets (move to demand gen team)</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+                → Outcome: Alex can finally do the job they were hired for
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '25px' }}>
+            <h4 style={{ color: COLORS.white, fontSize: '1.1rem', marginBottom: '12px', fontWeight: 600 }}>
+              Option C: Hire Both Roles
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Keep Alex as Lifecycle MOps</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Hire separate Demand Gen Coordinator for MQL volume work</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Split responsibilities clearly</li>
+              <li style={{ marginBottom: '8px', paddingLeft: '15px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+                → Outcome: Both functions get proper ownership
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* The Choice */}
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.15)',
+          border: '2px solid #ef4444',
+          padding: '25px',
+          borderRadius: '8px'
+        }}>
+          <h3 style={{ color: '#ef4444', fontSize: '1.3rem', marginBottom: '15px', fontWeight: 700 }}>
+            The Choice You'll Be Tempted to Make:
+          </h3>
+          <p style={{ marginBottom: '20px', fontSize: '1.2rem' }}>
+            "Can Alex just do both?"
+          </p>
+          <h3 style={{ color: COLORS.white, fontSize: '1.5rem', marginBottom: '15px', fontWeight: 700 }}>
+            The Answer:
+          </h3>
+          <p style={{ fontSize: '1.3rem', fontWeight: 700, color: '#ef4444' }}>
+            No.
+          </p>
+          <p style={{ marginTop: '15px', fontStyle: 'italic' }}>
+            That's how you got here.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhatNowSectionPage3({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 0',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto',
+    overflowY: 'auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: mobile ? '20px' : '40px' }}>
+        Own Your Story
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white, lineHeight: 1.8 }}>
+        <p style={{ marginBottom: '20px', fontSize: '1.1rem' }}>
+          Alex, Jordan, Casey, Morgan, and Riley aren't real people.
+        </p>
+        <p style={{ marginBottom: '30px', fontSize: '1.1rem' }}>
+          They're composites from five actual organizations. Real assessments. Real failures. Real costs.
+        </p>
+        <p style={{ marginBottom: '40px', fontSize: '1.1rem' }}>
+          But if you recognized yourself in any of these stories, you're not alone.
+        </p>
+
+        {/* Industry Data */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '40px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '25px', fontWeight: 700 }}>
+            The Industry Data:
+          </h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>53%</strong> of organizations experience sales/marketing misalignment
+            </li>
+            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>Only 11%</strong> have successful cross-functional alignment
+            </li>
+            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>Only 37%</strong> of MOps professionals have a strategic voice in their organizations
+            </li>
+            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              Role clarity <strong style={{ color: '#ef4444' }}>down 9%</strong> year-over-year
+            </li>
+            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              Feeling valued <strong style={{ color: '#ef4444' }}>down 5%</strong> year-over-year
+            </li>
+            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>20-40%</strong> of IT budgets consumed by technical debt
+            </li>
+          </ul>
+          <p style={{ marginTop: '25px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            This isn't a "you" problem. This is an industry pattern.
+          </p>
+          <p style={{ marginTop: '15px' }}>
+            But knowing it's common doesn't make it less expensive.
+          </p>
+        </div>
+
+        {/* The Difference */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.05)',
+          border: `1px solid ${COLORS.yellow}`,
+          padding: '30px',
+          borderRadius: '8px',
+          marginBottom: '40px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '20px', fontWeight: 700 }}>
+            The Difference Between Organizations That Fix This and Organizations That Don't:
+          </h3>
+          <p style={{ marginBottom: '15px' }}>
+            It's not budget. The organizations spending $2.5M/year on chaos have budget.
+          </p>
+          <p style={{ marginBottom: '15px' }}>
+            It's not talent. They keep hiring talented people who keep quitting.
+          </p>
+          <p style={{ marginBottom: '30px' }}>
+            It's not tools. They have Marketo, Salesforce, $40M martech stacks.
+          </p>
+          <p style={{ fontSize: '1.3rem', fontWeight: 700, color: COLORS.yellow, marginBottom: '25px' }}>
+            It's honesty.
+          </p>
+          <p style={{ marginBottom: '15px' }}>
+            The organizations that fix it are the ones willing to say:
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, marginTop: '20px' }}>
+            <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e`, fontStyle: 'italic' }}>
+              "We hired the wrong person for the role we actually needed."
+            </li>
+            <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e`, fontStyle: 'italic' }}>
+              "We wrote a job description that doesn't match the work."
+            </li>
+            <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e`, fontStyle: 'italic' }}>
+              "We're measuring the wrong things."
+            </li>
+            <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e`, fontStyle: 'italic' }}>
+              "We never assigned data schema ownership."
+            </li>
+            <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e`, fontStyle: 'italic' }}>
+              "We kept buying tools instead of fixing the org chart."
+            </li>
+          </ul>
+          <p style={{ marginTop: '25px', fontWeight: 600 }}>
+            That's hard to say.
+          </p>
+          <p style={{ marginTop: '20px', marginBottom: '15px' }}>
+            It's much easier to say:
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid #ef4444`, fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Our tools don't scale."
+            </li>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid #ef4444`, fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Attribution is just too complex for us."
+            </li>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid #ef4444`, fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Marketing ops has high turnover for some reason."
+            </li>
+            <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid #ef4444`, fontStyle: 'italic', color: COLORS.lightGrey }}>
+              "Let's try a different platform."
+            </li>
+          </ul>
+        </div>
+
+        {/* The Choice */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(34, 197, 94, 0.15) 50%, rgba(239, 68, 68, 0.15) 100%)',
+          border: `3px solid ${COLORS.yellow}`,
+          padding: '40px',
+          borderRadius: '12px'
+        }}>
+          <h3 style={{ color: COLORS.yellow, fontSize: '1.5rem', marginBottom: '30px', fontWeight: 700, textAlign: 'center' }}>
+            The Choice:
+          </h3>
+
+          <div style={{ marginBottom: '35px' }}>
+            <p style={{ marginBottom: '15px', fontSize: '1.1rem' }}>
+              You can own your story.
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, marginTop: '20px' }}>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e` }}>
+                Fix your roles before you buy another tool.
+              </li>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e` }}>
+                Assign data schema ownership.
+              </li>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e` }}>
+                Align job descriptions with actual work.
+              </li>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e` }}>
+                Stop measuring lifecycle marketers on demand gen goals.
+              </li>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #22c55e` }}>
+                Give your Riley the 6 months and executive support to rebuild instead of asking them to optimize while drowning.
+              </li>
+            </ul>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: 700, color: COLORS.white, marginBottom: '30px' }}>
+            Or:
+          </p>
+
+          <div style={{ marginBottom: '35px' }}>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+                You can keep hiring talented people and watching them quit in 18 months.
+              </li>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+                You can keep spending $2.5M/year on technical debt while rejecting $350K fixes as "too complex."
+              </li>
+              <li style={{ marginBottom: '12px', paddingLeft: '20px', borderLeft: `3px solid #ef4444` }}>
+                You can keep blaming the tools while the real problem walks past you in the hallway looking exhausted.
+              </li>
+            </ul>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, color: COLORS.yellow, marginTop: '30px' }}>
+            Your call.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// CTA Section with Email Capture
+function CTASection({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '60px 20px'
+  } : {
+    minWidth: '100vw',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 60px'
+    padding: '80px 60px',
+    maxWidth: '1000px',
+    margin: '0 auto'
   };
 
   return (
@@ -3670,43 +4232,275 @@ function CTASection({ mobile }) {
         ...TYPOGRAPHY.h2,
         color: COLORS.yellow,
         textAlign: 'center',
-        marginBottom: '40px'
+        marginBottom: '30px'
       }}>
         Ready to Fix Your GTM?
       </h2>
 
+      <p style={{
+        ...TYPOGRAPHY.body,
+        color: COLORS.white,
+        textAlign: 'center',
+        fontSize: '1.1rem',
+        marginBottom: '50px',
+        maxWidth: '700px'
+      }}>
+        If you recognized your organization in these stories, you have two options:
+      </p>
+
+      {/* CTA Options */}
       <div style={{
         display: 'flex',
         flexDirection: mobile ? 'column' : 'row',
-        gap: '30px',
+        gap: '40px',
         justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: '60px'
+        alignItems: 'stretch',
+        marginBottom: '60px',
+        width: '100%',
+        maxWidth: '900px'
       }}>
-        <button style={{
-          ...BUTTON.primary,
-          minWidth: '250px'
+        {/* Option 1 */}
+        <div style={{
+          flex: 1,
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          borderRadius: '8px',
+          padding: '30px',
+          textAlign: 'center'
         }}>
-          Schedule a Consultation
-        </button>
+          <h3 style={{
+            color: COLORS.yellow,
+            fontSize: '1.3rem',
+            fontWeight: 700,
+            marginBottom: '20px'
+          }}>
+            Option 1: Schedule a Consultation
+          </h3>
+          <p style={{
+            color: COLORS.white,
+            marginBottom: '10px',
+            lineHeight: 1.6
+          }}>
+            Let's talk about your specific situation:
+          </p>
+          <ul style={{
+            listStyle: 'none',
+            padding: 0,
+            marginBottom: '25px',
+            color: COLORS.lightGrey,
+            textAlign: 'left'
+          }}>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Where is your misalignment?</li>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• What's it costing you?</li>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• What's the path to fix it?</li>
+          </ul>
+          <button style={{
+            ...BUTTON.primary,
+            width: '100%'
+          }}>
+            Schedule a Consultation
+          </button>
+        </div>
 
-        <button style={{
-          ...BUTTON.primary,
-          minWidth: '250px'
+        {/* Option 2 */}
+        <div style={{
+          flex: 1,
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: `2px solid ${COLORS.yellow}`,
+          borderRadius: '8px',
+          padding: '30px',
+          textAlign: 'center'
         }}>
-          Get the Audit Template
-        </button>
+          <h3 style={{
+            color: COLORS.yellow,
+            fontSize: '1.3rem',
+            fontWeight: 700,
+            marginBottom: '20px'
+          }}>
+            Option 2: Get the Audit Template
+          </h3>
+          <p style={{
+            color: COLORS.white,
+            marginBottom: '10px',
+            lineHeight: 1.6
+          }}>
+            Run the alignment audit yourself:
+          </p>
+          <ul style={{
+            listStyle: 'none',
+            padding: 0,
+            marginBottom: '25px',
+            color: COLORS.lightGrey,
+            textAlign: 'left'
+          }}>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Job description vs goals vs actual work comparison template</li>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Data schema ownership assessment</li>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Technical debt cost calculator</li>
+            <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Role clarity diagnostic</li>
+          </ul>
+          <button style={{
+            ...BUTTON.primary,
+            width: '100%'
+          }}>
+            Get the Audit Template
+          </button>
+        </div>
       </div>
 
-      <p style={{
-        ...TYPOGRAPHY.body,
-        color: COLORS.lightGrey,
-        textAlign: 'center',
-        fontSize: '0.9rem',
-        marginTop: '40px'
+      {/* Article Actions */}
+      <div style={{
+        borderTop: `1px solid ${COLORS.darkGrey}`,
+        borderBottom: `1px solid ${COLORS.darkGrey}`,
+        padding: '30px 0',
+        marginBottom: '40px',
+        width: '100%',
+        maxWidth: '800px'
       }}>
-        Download this article as PDF  |  Read next: "Why Your MAP Is a Mess"
-      </p>
+        <p style={{
+          ...TYPOGRAPHY.body,
+          color: COLORS.lightGrey,
+          textAlign: 'center',
+          fontSize: '0.95rem'
+        }}>
+          <span style={{ color: COLORS.yellow, cursor: 'pointer', textDecoration: 'underline' }}>
+            Download this article as PDF
+          </span>
+          {' '} | {' '}
+          <span style={{ color: COLORS.white }}>
+            Read next: <span style={{ fontStyle: 'italic' }}>"Why Your MAP Is a Mess"</span> (Coming Soon)
+          </span>
+        </p>
+      </div>
+
+      {/* Share Section */}
+      <div style={{
+        background: 'rgba(251, 191, 36, 0.05)',
+        border: `1px solid ${COLORS.yellow}`,
+        borderRadius: '8px',
+        padding: '30px',
+        marginBottom: '50px',
+        width: '100%',
+        maxWidth: '800px'
+      }}>
+        <h3 style={{
+          color: COLORS.yellow,
+          fontSize: '1.2rem',
+          fontWeight: 700,
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          Share this article if:
+        </h3>
+        <ul style={{
+          listStyle: 'none',
+          padding: 0,
+          color: COLORS.white,
+          lineHeight: 1.8
+        }}>
+          <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+            You've lived any of these stories
+          </li>
+          <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+            You're currently Alex, Jordan, Casey, Morgan, or Riley
+          </li>
+          <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+            You're tired of "tool theater" masking org chart problems
+          </li>
+          <li style={{ marginBottom: '10px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
+            You want someone in leadership to read this
+          </li>
+        </ul>
+      </div>
+
+      {/* Final Thought */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(239, 68, 68, 0.15) 100%)',
+        border: `3px solid ${COLORS.yellow}`,
+        borderRadius: '12px',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '800px',
+        textAlign: 'center'
+      }}>
+        <h3 style={{
+          color: COLORS.yellow,
+          fontSize: '1.3rem',
+          fontWeight: 700,
+          marginBottom: '25px'
+        }}>
+          Final Thought:
+        </h3>
+        <p style={{
+          ...TYPOGRAPHY.body,
+          color: COLORS.lightGrey,
+          marginBottom: '15px',
+          fontSize: '1rem',
+          fontStyle: 'italic'
+        }}>
+          In 2015, LiveIntent reminded us: <span style={{ color: COLORS.white }}>"Data isn't people. Data is data."</span>
+        </p>
+        <p style={{
+          ...TYPOGRAPHY.body,
+          color: COLORS.white,
+          marginBottom: '30px',
+          fontSize: '1rem'
+        }}>
+          In 2025, here's the reminder:
+        </p>
+        <p style={{
+          fontSize: '1.2rem',
+          fontWeight: 600,
+          color: COLORS.yellow,
+          marginBottom: '15px'
+        }}>
+          Your GTM problems aren't tool problems.
+        </p>
+        <p style={{
+          fontSize: '1.2rem',
+          fontWeight: 600,
+          color: COLORS.yellow,
+          marginBottom: '30px'
+        }}>
+          They're people problems disguised as tool problems.
+        </p>
+        <p style={{
+          ...TYPOGRAPHY.body,
+          color: COLORS.lightGrey,
+          marginBottom: '10px'
+        }}>
+          The data is the symptoms.
+        </p>
+        <p style={{
+          ...TYPOGRAPHY.body,
+          color: COLORS.white,
+          marginBottom: '30px'
+        }}>
+          The people are paying the price.
+        </p>
+        <p style={{
+          fontSize: '1.3rem',
+          fontWeight: 700,
+          color: COLORS.yellow,
+          marginBottom: '10px'
+        }}>
+          Own your story. Fix the org chart.
+        </p>
+        <p style={{
+          fontSize: '1.1rem',
+          color: COLORS.lightGrey,
+          marginBottom: '20px'
+        }}>
+          Or keep buying tools and watching people quit.
+        </p>
+        <p style={{
+          fontSize: '1.4rem',
+          fontWeight: 700,
+          color: COLORS.yellow,
+          marginTop: '30px'
+        }}>
+          Your choice.
+        </p>
+      </div>
     </section>
   );
 }
