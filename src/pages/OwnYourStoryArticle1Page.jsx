@@ -1559,6 +1559,92 @@ function PersonaMeetSection({ name, role, mobile }) {
     );
   }
 
+  // Riley - Meet
+  if (name === 'Riley') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          Meet {name}
+        </h2>
+        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+          {role} | Hired Q4 2024 | 2,000-person enterprise
+        </h3>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <p style={{ marginBottom: '15px' }}>Riley has ten years of marketing operations experience.</p>
+          <p style={{ marginBottom: '30px' }}>
+            They've seen it all. Messy migrations. Broken attribution. Data chaos. Process debt. Riley is the person companies call when things are really broken. The fixer. The person who can walk into a disaster and find the path through.
+          </p>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>The Job Description:</p>
+            <p style={{ fontStyle: 'italic', marginBottom: '20px' }}>
+              "Senior Marketing Operations Manager - Inherit and optimize our marketing operations infrastructure. Lead a team of 3. Own our platform strategy. Drive operational excellence."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>The Interview:</p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "I'll be honest—we've had some turnover in this role. Three people in four years."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What's causing the turnover?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "The previous people couldn't handle the complexity. We need someone senior who can manage chaos and bring order."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What's the current state of the infrastructure?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Complex. We've got Marketo, Salesforce, a data warehouse, some custom tools. It's built up over years. We need someone to make sense of it."
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Riley's Thought Process:</p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              "Translation: It's a mess. They've had three people quit because they couldn't fix it. They think the next person just needs to be 'more senior.'"
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley (out loud):</span> "Can I talk to the previous people who held this role?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "They've all left the company."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Red Flag: Flashing neon</p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What's the documentation like?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "That's part of what you'd build. The previous people didn't document well."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Red Flag: Now audible alarm</p>
+          </div>
+
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>But Riley's Seen Worse:</p>
+            <p style={{ marginBottom: '20px' }}>
+              Previous job: Inherited a 7-year-old Marketo instance that nobody understood, documented it, optimized it, left it in great shape.
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Riley's confidence: "I can do this. I just need time and support."</p>
+            <p style={{ marginBottom: '10px' }}>Offer accepted: October 2024</p>
+            <p style={{ marginBottom: '10px' }}>Start date: November 1, 2024</p>
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Riley's mindset: "Document, optimize, clean up. I've done this before."
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return <PlaceholderSection title={`Meet ${name} - ${role}`} mobile={mobile} />;
 }
 
@@ -1910,6 +1996,126 @@ function PersonaPromiseSection({ name, mobile }) {
 
             <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
               Morgan's confidence: "I can do this."
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Riley - The Promise
+  if (name === 'Riley') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Promise
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>Senior Marketing Operations Manager</p>
+
+            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+              "Lead our marketing operations function. Manage a team of 3. Own our platform strategy (Marketo, Salesforce, data infrastructure). Drive operational excellence and scale our processes as we grow."
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What You'll Do:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Lead marketing operations team (3 direct reports)</li>
+              <li>Own platform strategy and optimization</li>
+              <li>Drive process improvements and automation</li>
+              <li>Partner cross-functionally with sales, product, and analytics</li>
+              <li>Scale operations infrastructure for growth</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What You'll Need:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>8-10+ years marketing operations experience</li>
+              <li>Deep Marketo and Salesforce expertise</li>
+              <li>Team management experience</li>
+              <li>Proven track record optimizing complex martech stacks</li>
+              <li>Strategic thinker who can manage ambiguity</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>What We Offer:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Senior leadership role</li>
+              <li>$145K salary + equity</li>
+              <li>Lead transformation of marketing operations</li>
+              <li>High-impact, high-visibility work</li>
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              Interview Deep Dive:
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "Tell me about the three previous people in this role. What didn't work?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "The first person was too junior—got overwhelmed. The second person couldn't get cross-functional alignment. The third person spent all their time firefighting and never got to strategy."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What resources will I have?"
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "You'll have three people on your team: one MOps specialist, one analyst, one coordinator."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "And what's my top priority in the first 90 days?"
+            </p>
+            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Document what we have, identify quick wins, and start optimizing."
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+              Riley's 90-Day Plan (presented in interview):
+            </p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Month 1: Audit & Document</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Map all workflows, campaigns, and integrations</li>
+              <li>Document current state</li>
+              <li>Identify critical issues</li>
+              <li>Interview stakeholders</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Month 2: Prioritize & Quick Wins</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Categorize issues (quick wins vs long-term projects)</li>
+              <li>Fix highest-impact quick wins</li>
+              <li>Build roadmap for long-term fixes</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Month 3: Strategic Roadmap</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Present optimization roadmap</li>
+              <li>Get exec buy-in on priorities</li>
+              <li>Begin execution</li>
+            </ul>
+
+            <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>
+              <span style={{ fontWeight: '700' }}>VP's reaction:</span> "This is exactly what we need. You have the experience to handle this complexity."
+            </p>
+          </div>
+
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Offer Accepted:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
+              <li>Title: Senior Marketing Operations Manager</li>
+              <li>Salary: $145K</li>
+              <li>Team: 3 direct reports</li>
+              <li>Start: November 1, 2024</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Riley's thought: "This'll be hard, but I've inherited messes before."
             </p>
           </div>
         </div>
@@ -2571,6 +2777,144 @@ function PersonaRealitySection({ name, mobile }) {
     );
   }
 
+  // Riley - The Reality
+  if (name === 'Riley') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Reality
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Week 1 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>Week 1: The Audit Begins</p>
+
+            <p style={{ marginBottom: '10px' }}>Riley starts mapping workflows.</p>
+
+            <p style={{ marginBottom: '5px' }}>Marketo workflows discovered: 342</p>
+            <p style={{ marginBottom: '5px' }}>Workflows Riley understands: 0</p>
+            <p style={{ marginBottom: '5px' }}>Workflows the team understands: ~40</p>
+            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Workflows nobody understands: 302</p>
+          </div>
+
+          {/* Week 2 */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Week 2: The Documentation Gap</p>
+
+            <p style={{ marginBottom: '5px' }}>Riley: "Where's the documentation for these workflows?"</p>
+            <p style={{ marginBottom: '10px' }}>Team: "There isn't any. The previous managers didn't document."</p>
+
+            <p style={{ marginBottom: '5px' }}>Riley: "Okay, can I talk to them to understand what they built?"</p>
+            <p style={{ marginBottom: '10px' }}>Team: "They're all gone. No knowledge transfer."</p>
+
+            <p style={{ marginBottom: '5px' }}>Riley: "What about the one before that?"</p>
+            <p style={{ marginBottom: '10px' }}>Team: "Also gone."</p>
+
+            <p style={{ marginBottom: '5px' }}>Riley: "The one before *that*?"</p>
+            <p style={{ marginBottom: '20px' }}>Team: "You're Riley number 4. Riley 1, 2, and 3 are all at different companies now."</p>
+
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Riley's Realization: "I'm not inheriting a complex system. I'm inheriting archaeological layers of other people's workarounds that nobody documented before they quit."
+            </p>
+          </div>
+
+          {/* Week 4 Inventory */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Week 4: The Inheritance Inventory</p>
+
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Manual Workflows: 300 (team-wide)</li>
+              <li>Attribution Models: 5 (running simultaneously, none agree)</li>
+              <li>"Critical" Reports: 87 (42 are duplicates, 18 haven't been opened in 6 months)</li>
+              <li>Custom Fields: 428 (118 are unused, 76 are duplicates with different names)</li>
+              <li>Salesforce Campaigns: 2,847 (923 are from 2019, none archived)</li>
+              <li>Integrations: 14 (6 are "broken but nobody's complained so maybe they're not used?")</li>
+              <li>Documentation: One spreadsheet, 300 rows, maintained by previous Riley, abandoned when they quit</li>
+            </ul>
+          </div>
+
+          {/* Month 3 Dilemma */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.25)', border: `2px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: COLORS.yellow }}>
+              Month 3: The Choice
+            </p>
+
+            <p style={{ marginBottom: '20px' }}>Riley has documented ~40% of the infrastructure. It's taken 200 hours. There's another 300 hours to go.</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Riley's Dilemma:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 1: Finish Documenting (18 more months)</p>
+            <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Eventually understand everything | Con: Career sacrifice | Outcome: Maybe get to optimization by Month 24</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 2: Build on Top of the Mess</p>
+            <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Can start optimizing now | Con: Building on quicksand | Outcome: Become Riley 5's problem</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 3: Burn It Down and Rebuild</p>
+            <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Clean slate | Con: Political suicide | Outcome: Probably get fired</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 4: Quit</p>
+            <p style={{ marginBottom: '20px', fontSize: '0.95rem' }}>Pro: Preserve sanity | Con: Feels like failure | Outcome: Become another name in "Riley 1, 2, 3, 4..." list</p>
+
+            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Riley's Projection: Will choose Option 4 around Month 8</p>
+          </div>
+
+          {/* Month 6 Reality Check */}
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 6 Reality Check:</p>
+
+            <p style={{ marginBottom: '10px' }}>Conversation with team member:</p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "You know, Riley 3 tried to document everything too."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What happened?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Got about 40% done, got overwhelmed, quit."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "I'm at 40% now."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Yeah."
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              Riley (realizing): "This isn't a documentation problem. This is a technical debt problem that's unsolvable without executive support to pause and rebuild."
+            </p>
+
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "Did any of the Rileys ask for that support?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "All of them."
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "And?"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "All got the same answer: 'We can't pause operations. Just optimize as you go.'"
+            </p>
+            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "So this is a death loop."
+            </p>
+            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Welcome to the job."
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Month 6 Status:</p>
+            <p style={{ marginBottom: '5px' }}>Time spent understanding vs building: 80/20 split</p>
+            <p style={{ marginBottom: '5px' }}>Effective productivity: 20% of potential</p>
+            <p style={{ marginBottom: '5px' }}>Riley's LinkedIn profile: "Open to opportunities" (added this morning)</p>
+            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Projected tenure: 2 more months</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Placeholder for other personas
   return <PlaceholderSection title={`${name}: The Reality`} mobile={mobile} />;
 }
@@ -3151,6 +3495,137 @@ function PersonaCostSection({ name, mobile }) {
             <p style={{ marginBottom: '15px', fontWeight: '700' }}>Because the problem isn't the tools.</p>
             <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow, fontSize: '1.1rem' }}>
               It's that you'd rather spend $380K on platform migrations than $104K admitting the org chart needs data governance.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Riley - The Cost
+  if (name === 'Riley') {
+    return (
+      <section style={containerStyle}>
+        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+          The Cost
+        </h2>
+
+        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+          {/* Financial Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Financial Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Riley's Compensation:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Salary: $145K/year</li>
+              <li>Expected value: Senior strategic leadership</li>
+              <li>Actual value: 20% productivity (spent 80% trying to understand inherited chaos)</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Effective cost: ~$116K/year value loss</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', fontSize: '1.1rem' }}>Annual Cost of Technical Debt:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Maintenance: $540K/year (300 manual workflows, broken integrations)</li>
+              <li>Opportunity cost: ~$200K/year (strategic projects Riley can't build)</li>
+              <li>Recruiting churn: ~$40K/year (amortized)</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow, fontSize: '1.1rem' }}>Total: ~$780K/year</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', fontSize: '1.1rem' }}>4-Year Cost (Riley 1-4):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>Annual recurring: $780K × 4 = $3.12M</li>
+              <li>Consulting/migration waste: $475K</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow, fontSize: '1.2rem' }}>Total 4-year cost: $3.59M</li>
+            </ul>
+          </div>
+
+          {/* The Fix */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderLeft: `4px solid #22c55e` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: '#22c55e' }}>
+              What It Would Cost to Fix:
+            </p>
+
+            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Burn down and rebuild (with executive support):</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+              <li>6 months dedicated work (Riley + team + cross-functional partners)</li>
+              <li>Cost: ~$350K (team time + temporary backfill for firefighting)</li>
+              <li>Outcome: Clean system, documented, sustainable</li>
+              <li style={{ fontWeight: '700', color: '#22c55e' }}>ROI: Saves $780K/year ongoing, pays back in 6 months</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>But Nobody Will Approve It Because:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontStyle: 'italic' }}>
+              <li>"We can't pause operations for 6 months"</li>
+              <li>"That seems really expensive"</li>
+              <li>"Can't you just optimize as you go?"</li>
+            </ul>
+          </div>
+
+          {/* Human Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Human Cost:</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Riley's Sunday Night Routine:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px', fontSize: '0.95rem' }}>
+              <li>7:00 PM: Open laptop</li>
+              <li>7:30 PM: Review documentation progress: 5% more understood</li>
+              <li>8:00 PM: Read job postings</li>
+              <li>9:00 PM: Update resume</li>
+              <li>10:00 PM: Draft "I quit" email (don't send it, save in drafts)</li>
+              <li>11:00 PM: Close laptop</li>
+              <li>11:15 PM: Lie awake thinking "I can't spend 18 months doing archaeology"</li>
+              <li>1:00 AM: Finally sleep</li>
+            </ul>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Riley's Self-Talk Evolution:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontStyle: 'italic' }}>
+              <li>Month 2: "I can figure this out."</li>
+              <li>Month 4: "This is harder than I thought, but I've handled hard before."</li>
+              <li>Month 6: "This isn't hard. This is impossible without executive support."</li>
+              <li style={{ fontWeight: '700', color: COLORS.yellow }}>Month 8 (projected): "I'm out."</li>
+            </ul>
+          </div>
+
+          {/* Organizational Cost */}
+          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>The Organizational Cost:</p>
+
+            <p style={{ marginBottom: '15px' }}>Riley is the fourth person in four years.</p>
+            <p style={{ marginBottom: '15px' }}>Each person diagnosed the same problem: Unsustainable technical debt requires executive support to fix.</p>
+            <p style={{ marginBottom: '15px' }}>Each person was told: "Optimize as you go."</p>
+            <p style={{ marginBottom: '30px', fontWeight: '700' }}>Each person quit within 18 months.</p>
+
+            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Cost of This Pattern:</p>
+            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+              <li>Lost institutional knowledge: Massive (nobody transfers knowledge before quitting)</li>
+              <li>Compounding technical debt: $780K/year and growing</li>
+              <li>Team morale: Low (watching senior leaders quit repeatedly)</li>
+              <li>Cross-functional trust: Declining ("marketing ops is always broken")</li>
+            </ul>
+          </div>
+
+          {/* The Real Cost */}
+          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+              The Real Cost:
+            </p>
+
+            <p style={{ marginBottom: '15px' }}>You hired senior strategic talent.</p>
+            <p style={{ marginBottom: '15px' }}>You paid $145K for leadership and optimization.</p>
+            <p style={{ marginBottom: '15px' }}>You got 20% productivity because they spent 80% on archaeology.</p>
+            <p style={{ marginBottom: '15px' }}>You'll lose them in Month 8.</p>
+            <p style={{ marginBottom: '30px' }}>You'll hire Riley 5.</p>
+
+            <p style={{ marginBottom: '15px' }}>Riley 5 will discover the same problem.</p>
+            <p style={{ marginBottom: '15px' }}>You'll tell them to "optimize as you go."</p>
+            <p style={{ marginBottom: '30px' }}>They'll quit in 18 months.</p>
+
+            <p style={{ marginBottom: '15px', fontWeight: '700', fontSize: '1.1rem', color: COLORS.yellow }}>
+              Total Cost: $2.5M+/year recurring, because you won't approve a $350K fix.
+            </p>
+
+            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+              But at least you didn't "pause operations."
             </p>
           </div>
         </div>
