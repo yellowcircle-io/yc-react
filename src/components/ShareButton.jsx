@@ -17,16 +17,21 @@ import { COLORS, EFFECTS } from '../styles/constants';
 function ShareButton({ title, url, text }) {
   const [copied, setCopied] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 800);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Use current page URL if not provided
-  const shareUrl = url || window.location.href;
+  // Use current page URL if not provided (safe for SSR)
+  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
 
   // Default share text
   const shareText = text || `Why Your GTM Sucks: The Human Cost of Operations Theater - A @yellowCircle perspective on fixing marketing ops chaos`;
 
-  // Check if Web Share API is available
-  const canShare = typeof navigator.share !== 'undefined';
+  // Check if Web Share API is available (safe for SSR)
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share !== 'undefined';
+
+  // Initialize mobile state on mount
+  React.useEffect(() => {
+    setIsMobile(window.innerWidth <= 800);
+  }, []);
 
   const handleNativeShare = async () => {
     if (canShare) {
