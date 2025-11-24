@@ -287,7 +287,7 @@ function OwnYourStoryArticle1Page() {
             <WhatNowSectionPage3 />
 
             {/* Section 35: CTA / Closing */}
-            <CTASection />
+            <CTASection onPDFExport={handlePDFExport} />
           </div>
 
           {/* Scroll Progress Indicator */}
@@ -396,7 +396,7 @@ function OwnYourStoryArticle1Page() {
           <WhatNowSectionPage1 mobile />
           <WhatNowSectionPage2 mobile />
           <WhatNowSectionPage3 mobile />
-          <CTASection mobile />
+          <CTASection mobile onPDFExport={handlePDFExport} />
         </div>
       )}
       {/* Email Capture Modal */}
@@ -4402,7 +4402,7 @@ function WhatNowSectionPage3({ mobile }) {
 }
 
 // CTA Section with Email Capture
-function CTASection({ mobile }) {
+function CTASection({ mobile, onPDFExport }) {
   const containerStyle = mobile ? {
     padding: '60px 20px'
   } : {
@@ -4554,7 +4554,7 @@ function CTASection({ mobile }) {
           fontSize: '0.95rem'
         }}>
           <span
-            onClick={handlePDFExport}
+            onClick={onPDFExport}
             style={{
               color: COLORS.yellow,
               cursor: 'pointer',
