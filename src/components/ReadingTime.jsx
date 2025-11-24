@@ -22,32 +22,41 @@ function ReadingTime({ selector = '[data-article-content]', style }) {
   const [wordCount, setWordCount] = useState(0);
 
   useEffect(() => {
+    // Safety check for SSR
+    if (typeof document === 'undefined') {
+      return;
+    }
+
     const calculateReadingTime = () => {
-      const contentElement = document.querySelector(selector);
+      try {
+        const contentElement = document.querySelector(selector);
 
-      if (!contentElement) {
-        return;
+        if (!contentElement) {
+          return;
+        }
+
+        // Get text content and count words
+        const text = contentElement.textContent || '';
+        const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+        const count = words.length;
+
+        // Calculate reading time (200 words per minute average)
+        const wordsPerMinute = 200;
+        const minutes = Math.ceil(count / wordsPerMinute);
+
+        setWordCount(count);
+        setReadingTime(minutes);
+      } catch (error) {
+        console.error('ReadingTime calculation error:', error);
       }
-
-      // Get text content and count words
-      const text = contentElement.textContent || '';
-      const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-      const count = words.length;
-
-      // Calculate reading time (200 words per minute average)
-      const wordsPerMinute = 200;
-      const minutes = Math.ceil(count / wordsPerMinute);
-
-      setWordCount(count);
-      setReadingTime(minutes);
     };
 
-    // Initial calculation
-    calculateReadingTime();
+    // Delay initial calculation to ensure DOM is ready
+    const timer = setTimeout(calculateReadingTime, 100);
 
     // Recalculate if content changes (using MutationObserver)
     const contentElement = document.querySelector(selector);
-    if (contentElement) {
+    if (contentElement && typeof MutationObserver !== 'undefined') {
       const observer = new MutationObserver(calculateReadingTime);
       observer.observe(contentElement, {
         childList: true,
@@ -55,8 +64,13 @@ function ReadingTime({ selector = '[data-article-content]', style }) {
         characterData: true
       });
 
-      return () => observer.disconnect();
+      return () => {
+        clearTimeout(timer);
+        observer.disconnect();
+      };
     }
+
+    return () => clearTimeout(timer);
   }, [selector]);
 
   // Don't render until we have a reading time
