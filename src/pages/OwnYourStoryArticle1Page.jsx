@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, BUTTON, EFFECTS } from '../styles/constants';
+import EmailCaptureModal from '../components/article/EmailCaptureModal';
+import StatCard from '../components/article/StatCard';
+import ProgressBar from '../components/article/ProgressBar';
+import { exportArticleToPDF } from '../utils/pdfExport';
 
 /**
  * Own Your Story - Article 1
@@ -57,6 +61,10 @@ function OwnYourStoryArticle1Page() {
   const [isMobile, setIsMobile] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(true);
   const touchStartRef = useRef({ x: 0, y: 0 });
+
+  // Email capture modal state
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailModalType, setEmailModalType] = useState('consultation');
 
   // Detect viewport size
   useEffect(() => {
@@ -170,6 +178,26 @@ function OwnYourStoryArticle1Page() {
     };
   }, [updateScrollOffset, isMobile]);
 
+  // Handle email modal opening
+  const openEmailModal = (type) => {
+    setEmailModalType(type);
+    setEmailModalOpen(true);
+  };
+
+  // Handle email submission
+  const handleEmailSubmit = (data) => {
+    console.log('Email submitted:', data);
+    // TODO: Send to backend API or email service
+  };
+
+  // Handle PDF export
+  const handlePDFExport = () => {
+    exportArticleToPDF(
+      'Why Your GTM Sucks: The Human Cost of Operations Theater',
+      'why-your-gtm-sucks-yellowcircle'
+    );
+  };
+
   return (
     <Layout
       backgroundColor={COLORS.black}
@@ -190,6 +218,7 @@ function OwnYourStoryArticle1Page() {
           }}
         >
           <div
+            data-article-content
             style={{
               display: 'flex',
               height: '100%',
@@ -312,6 +341,7 @@ function OwnYourStoryArticle1Page() {
       {/* Mobile: Vertical Scroll Container */}
       {isMobile && (
         <div
+          data-article-content
           style={{
             width: '100%',
             backgroundColor: COLORS.black,
@@ -366,6 +396,13 @@ function OwnYourStoryArticle1Page() {
           <CTASection mobile />
         </div>
       )}
+      {/* Email Capture Modal */}
+      <EmailCaptureModal
+        isOpen={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        type={emailModalType}
+        onSubmit={handleEmailSubmit}
+      />
     </Layout>
   );
 }
@@ -4368,10 +4405,7 @@ function CTASection({ mobile }) {
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• What's the path to fix it?</li>
           </ul>
           <InteractiveButton
-            onClick={() => {
-              // TODO: Open email capture modal for consultation
-              console.log('Schedule Consultation clicked');
-            }}
+            onClick={() => openEmailModal('consultation')}
             style={{ width: '100%' }}
           >
             Schedule a Consultation
@@ -4415,10 +4449,7 @@ function CTASection({ mobile }) {
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Role clarity diagnostic</li>
           </ul>
           <InteractiveButton
-            onClick={() => {
-              // TODO: Open email capture modal for audit template
-              console.log('Get Audit Template clicked');
-            }}
+            onClick={() => openEmailModal('template')}
             style={{ width: '100%' }}
           >
             Get the Audit Template
@@ -4441,7 +4472,17 @@ function CTASection({ mobile }) {
           textAlign: 'center',
           fontSize: '0.95rem'
         }}>
-          <span style={{ color: COLORS.yellow, cursor: 'pointer', textDecoration: 'underline' }}>
+          <span
+            onClick={handlePDFExport}
+            style={{
+              color: COLORS.yellow,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              transition: 'opacity 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
             Download this article as PDF
           </span>
           {' '} | {' '}
