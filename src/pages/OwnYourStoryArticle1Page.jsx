@@ -287,7 +287,7 @@ function OwnYourStoryArticle1Page() {
             <WhatNowSectionPage3 />
 
             {/* Section 35: CTA / Closing */}
-            <CTASection onPDFExport={handlePDFExport} />
+            <CTASection onPDFExport={handlePDFExport} onEmailModalOpen={openEmailModal} />
           </div>
 
           {/* Scroll Progress Indicator */}
@@ -396,7 +396,7 @@ function OwnYourStoryArticle1Page() {
           <WhatNowSectionPage1 mobile />
           <WhatNowSectionPage2 mobile />
           <WhatNowSectionPage3 mobile />
-          <CTASection mobile onPDFExport={handlePDFExport} />
+          <CTASection mobile onPDFExport={handlePDFExport} onEmailModalOpen={openEmailModal} />
         </div>
       )}
       {/* Email Capture Modal */}
@@ -4402,7 +4402,7 @@ function WhatNowSectionPage3({ mobile }) {
 }
 
 // CTA Section with Email Capture
-function CTASection({ mobile, onPDFExport }) {
+function CTASection({ mobile, onPDFExport, onEmailModalOpen }) {
   const containerStyle = mobile ? {
     padding: '60px 20px'
   } : {
@@ -4486,7 +4486,7 @@ function CTASection({ mobile, onPDFExport }) {
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• What's the path to fix it?</li>
           </ul>
           <InteractiveButton
-            onClick={() => openEmailModal('consultation')}
+            onClick={() => onEmailModalOpen('consultation')}
             style={{ width: '100%' }}
           >
             Schedule a Consultation
@@ -4530,7 +4530,7 @@ function CTASection({ mobile, onPDFExport }) {
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Role clarity diagnostic</li>
           </ul>
           <InteractiveButton
-            onClick={() => openEmailModal('template')}
+            onClick={() => onEmailModalOpen('template')}
             style={{ width: '100%' }}
           >
             Get the Audit Template
