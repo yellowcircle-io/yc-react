@@ -16,9 +16,12 @@ import { COLORS, EFFECTS } from '../styles/constants';
 
 function BackToTop() {
   const [visible, setVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 800);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Initialize mobile state
+    setIsMobile(window.innerWidth <= 800);
+
     // Handle resize
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 800);
