@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { COLORS, EFFECTS } from '../styles/constants';
 
 /**
@@ -29,7 +29,7 @@ function ShareButton({ title, url, text }) {
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share !== 'undefined';
 
   // Initialize mobile state on mount
-  React.useEffect(() => {
+  useEffect(() => {
     setIsMobile(window.innerWidth <= 800);
   }, []);
 
