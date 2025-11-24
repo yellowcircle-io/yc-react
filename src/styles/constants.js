@@ -147,6 +147,31 @@ export const BUTTON = {
   }
 };
 
+// Spacing (consistent padding/margins)
+export const SPACING = {
+  xs: '8px',
+  sm: '12px',
+  md: '20px',
+  lg: '30px',
+  xl: '40px',
+  xxl: '60px',
+  section: '80px'
+};
+
+// Border styles (standardized)
+export const BORDERS = {
+  thin: '1px solid',
+  standard: '2px solid',
+  thick: '3px solid',
+  radius: {
+    sm: '4px',
+    md: '8px',
+    lg: '12px',
+    xl: '16px',
+    full: '9999px'
+  }
+};
+
 // Effects
 export const EFFECTS = {
   blur: {
@@ -156,6 +181,12 @@ export const EFFECTS = {
   blurLight: {
     backdropFilter: 'blur(1px)',
     WebkitBackdropFilter: 'blur(1px)'
+  },
+  shadow: {
+    sm: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    md: '0 4px 16px rgba(0, 0, 0, 0.2)',
+    lg: '0 8px 32px rgba(0, 0, 0, 0.3)',
+    yellow: '0 4px 20px rgba(251, 191, 36, 0.3)'
   }
 };
 
@@ -163,5 +194,7 @@ export default {
   COLORS,
   TYPOGRAPHY,
   BUTTON,
-  EFFECTS
+  EFFECTS,
+  SPACING,
+  BORDERS
 };

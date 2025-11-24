@@ -6,6 +6,9 @@ import { COLORS, TYPOGRAPHY, BUTTON, EFFECTS } from '../styles/constants';
 import EmailCaptureModal from '../components/article/EmailCaptureModal';
 import StatCard from '../components/article/StatCard';
 import ProgressBar from '../components/article/ProgressBar';
+import BackToTop from '../components/BackToTop';
+import ShareButton from '../components/ShareButton';
+import ReadingTime from '../components/ReadingTime';
 import { exportArticleToPDF } from '../utils/pdfExport';
 
 /**
@@ -403,6 +406,13 @@ function OwnYourStoryArticle1Page() {
         type={emailModalType}
         onSubmit={handleEmailSubmit}
       />
+
+      {/* Navigation Enhancements */}
+      <BackToTop />
+      <ShareButton
+        title="Why Your GTM Sucks: The Human Cost of Operations Theater"
+        text="Why Your GTM Sucks: The Human Cost of Operations Theater - A @yellowCircle perspective on fixing marketing ops chaos"
+      />
     </Layout>
   );
 }
@@ -446,6 +456,15 @@ function HeroSection({ mobile }) {
       }}>
         The Human Cost of Operations Theater
       </h2>
+
+      {/* Reading Time Indicator */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        marginTop: mobile ? '20px' : '30px'
+      }}>
+        <ReadingTime />
+      </div>
 
       {!mobile && (
         <p style={{
@@ -4166,26 +4185,88 @@ function WhatNowSectionPage3({ mobile }) {
           <h3 style={{ color: COLORS.yellow, fontSize: '1.3rem', marginBottom: '25px', fontWeight: 700 }}>
             The Industry Data:
           </h3>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
-              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>53%</strong> of organizations experience sales/marketing misalignment
-            </li>
-            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
-              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>Only 11%</strong> have successful cross-functional alignment
-            </li>
-            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
-              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>Only 37%</strong> of MOps professionals have a strategic voice in their organizations
-            </li>
-            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
-              Role clarity <strong style={{ color: '#ef4444' }}>down 9%</strong> year-over-year
-            </li>
-            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
-              Feeling valued <strong style={{ color: '#ef4444' }}>down 5%</strong> year-over-year
-            </li>
-            <li style={{ marginBottom: '15px', paddingLeft: '20px', borderLeft: `3px solid ${COLORS.yellow}` }}>
-              <strong style={{ color: COLORS.yellow, fontSize: '1.2rem' }}>20-40%</strong> of IT budgets consumed by technical debt
-            </li>
-          </ul>
+
+          {/* Visual Stats Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: mobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '20px',
+            marginBottom: '30px'
+          }}>
+            <StatCard
+              value="53%"
+              label="Misaligned"
+              trend="down"
+              color="error"
+              description="Sales & Marketing out of sync"
+            />
+            <StatCard
+              value="11%"
+              label="Aligned"
+              trend="up"
+              color="success"
+              description="Successfully cross-functional"
+            />
+            <StatCard
+              value="37%"
+              label="Strategic Voice"
+              color="warning"
+              description="MOps with leadership influence"
+            />
+          </div>
+
+          {/* Progress Bars for Detailed Breakdown */}
+          <div style={{ marginBottom: '20px' }}>
+            <ProgressBar
+              percentage={53}
+              label="Organizations with Sales/Marketing Misalignment"
+              color="error"
+            />
+            <ProgressBar
+              percentage={11}
+              label="Organizations with Successful Cross-Functional Alignment"
+              color="success"
+            />
+            <ProgressBar
+              percentage={37}
+              label="MOps Professionals with Strategic Voice"
+              color="warning"
+            />
+            <ProgressBar
+              percentage={30}
+              label="IT Budget Consumed by Technical Debt (avg)"
+              color="error"
+            />
+          </div>
+
+          {/* Additional Stats */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: mobile ? '1fr' : '1fr 1fr',
+            gap: '15px',
+            marginTop: '25px',
+            marginBottom: '25px'
+          }}>
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid #ef4444',
+              padding: '15px',
+              borderRadius: '6px'
+            }}>
+              <span style={{ color: '#ef4444', fontSize: '1.5rem', fontWeight: 700 }}>↓ 9%</span>
+              <p style={{ marginTop: '8px', fontSize: '0.95rem' }}>Role clarity (year-over-year)</p>
+            </div>
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid #ef4444',
+              padding: '15px',
+              borderRadius: '6px'
+            }}>
+              <span style={{ color: '#ef4444', fontSize: '1.5rem', fontWeight: 700 }}>↓ 5%</span>
+              <p style={{ marginTop: '8px', fontSize: '0.95rem' }}>Feeling valued (year-over-year)</p>
+            </div>
+          </div>
+
           <p style={{ marginTop: '25px', fontStyle: 'italic', color: COLORS.lightGrey }}>
             This isn't a "you" problem. This is an industry pattern.
           </p>
