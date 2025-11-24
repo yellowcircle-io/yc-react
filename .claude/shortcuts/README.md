@@ -41,7 +41,24 @@ Related:
 
 ## 🚀 Quick Start
 
-### Option 1: Manual Creation (RECOMMENDED - Full Features)
+### ⭐ RECOMMENDED: Hybrid Approach (Best of Both Worlds)
+
+**Combines iOS native menus + rollback protection**
+
+See **`HYBRID_SHORTCUT_SETUP.md`** for complete setup guide.
+
+**What you get:**
+- ✅ Main shortcut with native iOS Choose from Menu (System 1)
+- ✅ Dedicated rollback shortcut for emergencies (System 2)
+- ✅ All 18 commands accessible
+- ✅ Page management, global components, content updates
+- ✅ Rollback protection for all edits
+
+**Time:** 15 minutes one-time setup
+
+---
+
+### Option 1: Manual Creation (Original System 1)
 
 **On Mac - Shortcuts App (10 minutes):**
 
