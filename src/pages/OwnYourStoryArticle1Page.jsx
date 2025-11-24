@@ -93,8 +93,8 @@ function OwnYourStoryArticle1Page() {
     if (isMobile) return; // Mobile uses native vertical scroll
 
     setScrollOffset(prev => {
-      // Total sections: 35 sections = 3400vw total width (adjusted for accurate section count)
-      const maxScroll = 3400;
+      // Total sections: 36 sections = 3500vw total width (adjusted for accurate section count)
+      const maxScroll = 3500;
       return Math.max(0, Math.min(maxScroll, prev + delta));
     });
   }, [isMobile]);
@@ -238,12 +238,13 @@ function OwnYourStoryArticle1Page() {
             {/* Section 3: Table of Contents */}
             <TableOfContentsSection />
 
-            {/* Section 4-6: Why This Matters (3 pages) */}
+            {/* Section 4-7: Why This Matters (4 pages) */}
             <WhyThisMattersSectionPage1 />
             <WhyThisMattersSectionPage2 />
             <WhyThisMattersSectionPage3 />
+            <WhyThisMattersSectionPage4 />
 
-            {/* Section 7-11: The Big Picture (5 pages) */}
+            {/* Section 8-12: The Big Picture (5 pages) */}
             <BigPictureSectionPage1 />
             <BigPictureSectionPage2 />
             <BigPictureSectionPage3 />
@@ -361,6 +362,7 @@ function OwnYourStoryArticle1Page() {
           <WhyThisMattersSectionPage1 mobile />
           <WhyThisMattersSectionPage2 mobile />
           <WhyThisMattersSectionPage3 mobile />
+          <WhyThisMattersSectionPage4 mobile />
           <BigPictureSectionPage1 mobile />
           <BigPictureSectionPage2 mobile />
           <BigPictureSectionPage3 mobile />
@@ -433,7 +435,7 @@ function HeroSection({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
+    padding: '0 60px'
   };
 
   return (
@@ -493,7 +495,7 @@ function DataGridSection({ mobile }) {
   ];
 
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -502,7 +504,7 @@ function DataGridSection({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
+    padding: '0 60px'
   };
 
   return (
@@ -586,7 +588,7 @@ function TableOfContentsSection({ mobile }) {
   ];
 
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -595,7 +597,7 @@ function TableOfContentsSection({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
+    padding: '0 60px'
   };
 
   return (
@@ -645,7 +647,7 @@ function TableOfContentsSection({ mobile }) {
 // Section 4: Why This Matters - Page 1
 function WhyThisMattersSectionPage1({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -707,7 +709,7 @@ function WhyThisMattersSectionPage1({ mobile }) {
 // Section 5: Why This Matters - Page 2
 function WhyThisMattersSectionPage2({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -772,10 +774,10 @@ function WhyThisMattersSectionPage2({ mobile }) {
   );
 }
 
-// Section 6: Why This Matters - Page 3
+// Section 6: Why This Matters - Page 3 (Stages 1-3)
 function WhyThisMattersSectionPage3({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -784,12 +786,13 @@ function WhyThisMattersSectionPage3({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   const stageStyle = {
-    marginBottom: '30px',
+    marginBottom: mobile ? '20px' : '30px',
     padding: '20px',
     backgroundColor: 'rgba(251, 191, 36, 0.05)',
     borderLeft: `4px solid ${COLORS.yellow}`
@@ -800,13 +803,13 @@ function WhyThisMattersSectionPage3({ mobile }) {
       <h2 style={{
         ...TYPOGRAPHY.h2,
         color: COLORS.yellow,
-        marginBottom: mobile ? '20px' : '40px'
+        marginBottom: mobile ? '20px' : '30px'
       }}>
         The Pattern
       </h2>
 
       <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
-        <p style={{ marginBottom: '30px' }}>
+        <p style={{ marginBottom: mobile ? '20px' : '30px' }}>
           Here's what organizational failure looks like when you map it:
         </p>
 
@@ -846,7 +849,38 @@ function WhyThisMattersSectionPage3({ mobile }) {
             <li>Velocity drops 40%</li>
           </ul>
         </div>
+      </div>
+    </section>
+  );
+}
 
+// Section 7: Why This Matters - Page 4 (Stages 4-6)
+function WhyThisMattersSectionPage4({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  const stageStyle = {
+    marginBottom: mobile ? '20px' : '30px',
+    padding: '20px',
+    backgroundColor: 'rgba(251, 191, 36, 0.05)',
+    borderLeft: `4px solid ${COLORS.yellow}`
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
         <div style={stageStyle}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
             Stage 4: The Tool Theater (Month 6-12)
@@ -886,7 +920,7 @@ function WhyThisMattersSectionPage3({ mobile }) {
           </ul>
         </div>
 
-        <p style={{ marginTop: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+        <p style={{ marginTop: mobile ? '20px' : '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
           This happened in all five organizations. Not similar patterns. The same pattern. Different names, same story.
         </p>
       </div>
@@ -897,7 +931,7 @@ function WhyThisMattersSectionPage3({ mobile }) {
 // Section 7-11: Big Picture Pages
 function BigPictureSectionPage1({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1005,7 +1039,7 @@ function BigPictureSectionPage1({ mobile }) {
 
 function BigPictureSectionPage2({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1014,8 +1048,9 @@ function BigPictureSectionPage2({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   const attemptStyle = {
@@ -1084,7 +1119,7 @@ function BigPictureSectionPage2({ mobile }) {
 
 function BigPictureSectionPage3({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1093,8 +1128,9 @@ function BigPictureSectionPage3({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   return (
@@ -1142,7 +1178,7 @@ function BigPictureSectionPage3({ mobile }) {
 
 function BigPictureSectionPage4({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1151,8 +1187,9 @@ function BigPictureSectionPage4({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   const phaseStyle = {
@@ -1225,7 +1262,7 @@ function BigPictureSectionPage4({ mobile }) {
 // Big Picture Section Page 5: The Mobile Parallel
 function BigPictureSectionPage5({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1234,8 +1271,9 @@ function BigPictureSectionPage5({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   return (
@@ -1362,7 +1400,7 @@ function BigPictureSectionPage5({ mobile }) {
 // Persona Sections - Meet [Name]
 function PersonaMeetSection({ name, role, mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1371,8 +1409,9 @@ function PersonaMeetSection({ name, role, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   // Alex - Marketing Operations Manager
@@ -1762,7 +1801,7 @@ function PersonaMeetSection({ name, role, mobile }) {
 // Persona Sections - The Promise
 function PersonaPromiseSection({ name, mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -1771,8 +1810,9 @@ function PersonaPromiseSection({ name, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   // Alex - The Promise
@@ -2238,7 +2278,7 @@ function PersonaPromiseSection({ name, mobile }) {
 // Persona Sections - The Reality
 function PersonaRealitySection({ name, mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -2247,8 +2287,9 @@ function PersonaRealitySection({ name, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   // Alex - The Reality
@@ -3029,7 +3070,7 @@ function PersonaRealitySection({ name, mobile }) {
 // Persona Sections - The Cost
 function PersonaCostSection({ name, mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -3038,8 +3079,9 @@ function PersonaCostSection({ name, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   // Alex - The Cost
@@ -3745,7 +3787,7 @@ function PersonaCostSection({ name, mobile }) {
 // What Now Sections
 function WhatNowSectionPage1({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -3754,8 +3796,9 @@ function WhatNowSectionPage1({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   return (
@@ -3911,7 +3954,7 @@ function WhatNowSectionPage1({ mobile }) {
 
 function WhatNowSectionPage2({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -3920,8 +3963,9 @@ function WhatNowSectionPage2({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   return (
@@ -4114,7 +4158,7 @@ function WhatNowSectionPage2({ mobile }) {
 
 function WhatNowSectionPage3({ mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -4123,8 +4167,9 @@ function WhatNowSectionPage3({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
-    overflowY: 'auto'
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
   };
 
   return (
@@ -4679,7 +4724,7 @@ function CTASection({ mobile, onPDFExport, onEmailModalOpen }) {
 // Placeholder for content TK
 function PlaceholderSection({ title, mobile }) {
   const containerStyle = mobile ? {
-    padding: '40px 0',
+    padding: '40px 20px',
     marginBottom: '40px'
   } : {
     minWidth: '100vw',
@@ -4688,7 +4733,7 @@ function PlaceholderSection({ title, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
+    padding: '0 60px'
   };
 
   return (
