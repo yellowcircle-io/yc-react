@@ -433,7 +433,7 @@ function HeroSection({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 60px'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
@@ -502,7 +502,7 @@ function DataGridSection({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 60px'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
@@ -595,7 +595,7 @@ function TableOfContentsSection({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 60px'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
@@ -654,9 +654,7 @@ function WhyThisMattersSectionPage1({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
@@ -718,9 +716,7 @@ function WhyThisMattersSectionPage2({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
@@ -788,9 +784,7 @@ function WhyThisMattersSectionPage3({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -912,9 +906,7 @@ function BigPictureSectionPage1({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
@@ -1022,9 +1014,7 @@ function BigPictureSectionPage2({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -1103,9 +1093,7 @@ function BigPictureSectionPage3({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -1163,9 +1151,7 @@ function BigPictureSectionPage4({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -1248,9 +1234,7 @@ function BigPictureSectionPage5({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -1387,9 +1371,7 @@ function PersonaMeetSection({ name, role, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -1789,9 +1771,7 @@ function PersonaPromiseSection({ name, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -2267,9 +2247,7 @@ function PersonaRealitySection({ name, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -3060,9 +3038,7 @@ function PersonaCostSection({ name, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -3778,9 +3754,7 @@ function WhatNowSectionPage1({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -3946,9 +3920,7 @@ function WhatNowSectionPage2({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -4151,9 +4123,7 @@ function WhatNowSectionPage3({ mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    padding: '0 60px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))',
     overflowY: 'auto'
   };
 
@@ -4718,7 +4688,7 @@ function PlaceholderSection({ title, mobile }) {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '0 60px'
+    padding: '0 max(80px, calc((100vw - 1000px) / 2))'
   };
 
   return (
