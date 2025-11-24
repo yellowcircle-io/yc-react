@@ -16,6 +16,38 @@ import { COLORS, TYPOGRAPHY, BUTTON, EFFECTS } from '../styles/constants';
  * Created: November 22, 2025
  */
 
+// Interactive Button Component with Hover/Focus/Active States
+function InteractiveButton({ children, onClick, disabled, style }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const buttonStyle = {
+    ...BUTTON.primary,
+    ...(isHovered && BUTTON.primaryHover),
+    ...(isFocused && BUTTON.primaryFocus),
+    ...(isActive && BUTTON.primaryActive),
+    ...(disabled && BUTTON.primaryDisabled),
+    ...style
+  };
+
+  return (
+    <button
+      style={buttonStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => { setIsHovered(false); setIsActive(false); }}
+      onMouseDown={() => setIsActive(true)}
+      onMouseUp={() => setIsActive(false)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+}
+
 function OwnYourStoryArticle1Page() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
@@ -23,6 +55,7 @@ function OwnYourStoryArticle1Page() {
   // Horizontal scroll state (>800px)
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(true);
   const touchStartRef = useRef({ x: 0, y: 0 });
 
   // Detect viewport size
@@ -37,13 +70,20 @@ function OwnYourStoryArticle1Page() {
     return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
+  // Hide scroll hint after first interaction
+  useEffect(() => {
+    if (scrollOffset > 0 && showScrollHint) {
+      setShowScrollHint(false);
+    }
+  }, [scrollOffset, showScrollHint]);
+
   // Horizontal scroll mechanics (desktop only)
   const updateScrollOffset = useCallback((delta) => {
     if (isMobile) return; // Mobile uses native vertical scroll
 
     setScrollOffset(prev => {
-      // Total sections: ~35 sections = 3500vw total width
-      const maxScroll = 3500;
+      // Total sections: 35 sections = 3400vw total width (adjusted for accurate section count)
+      const maxScroll = 3400;
       return Math.max(0, Math.min(maxScroll, prev + delta));
     });
   }, [isMobile]);
@@ -154,7 +194,7 @@ function OwnYourStoryArticle1Page() {
               display: 'flex',
               height: '100%',
               transform: `translateX(-${scrollOffset}vw)`,
-              transition: 'transform 0.1s ease-out'
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
             {/* Section 1: Hero/Cover */}
@@ -225,17 +265,47 @@ function OwnYourStoryArticle1Page() {
               bottom: 20,
               left: '50%',
               transform: 'translateX(-50%)',
-              padding: '10px 20px',
-              backgroundColor: 'rgba(251, 191, 36, 0.9)',
+              padding: '12px 24px',
+              backgroundColor: 'rgba(251, 191, 36, 0.95)',
               color: COLORS.black,
-              borderRadius: '20px',
+              borderRadius: '24px',
               fontSize: '14px',
               fontWeight: '600',
-              zIndex: 1000
+              zIndex: 1000,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(10px)'
             }}
           >
             Section {Math.floor(scrollOffset / 100) + 1} of 35
           </div>
+
+          {/* Scroll Instructions Hint (fades after first scroll) */}
+          {showScrollHint && (
+            <div
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                color: COLORS.yellow,
+                padding: '30px 40px',
+                borderRadius: '16px',
+                border: `2px solid ${COLORS.yellow}`,
+                zIndex: 999,
+                textAlign: 'center',
+                animation: 'fadeInOut 4s ease-in-out',
+                boxShadow: '0 8px 32px rgba(251, 191, 36, 0.3)'
+              }}
+            >
+              <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
+                Scroll to Navigate →
+              </div>
+              <div style={{ fontSize: '14px', color: COLORS.textSecondaryOnDark }}>
+                Use mouse wheel, arrow keys, or swipe
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -245,8 +315,11 @@ function OwnYourStoryArticle1Page() {
           style={{
             width: '100%',
             backgroundColor: COLORS.black,
-            color: COLORS.white,
-            padding: '80px 20px 40px'
+            color: COLORS.textOnDark,
+            paddingTop: 'max(80px, env(safe-area-inset-top))',
+            paddingBottom: 'max(40px, env(safe-area-inset-bottom))',
+            paddingLeft: 'max(20px, env(safe-area-inset-left))',
+            paddingRight: 'max(20px, env(safe-area-inset-right))'
           }}
         >
           <HeroSection mobile />
@@ -4294,12 +4367,15 @@ function CTASection({ mobile }) {
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• What's it costing you?</li>
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• What's the path to fix it?</li>
           </ul>
-          <button style={{
-            ...BUTTON.primary,
-            width: '100%'
-          }}>
+          <InteractiveButton
+            onClick={() => {
+              // TODO: Open email capture modal for consultation
+              console.log('Schedule Consultation clicked');
+            }}
+            style={{ width: '100%' }}
+          >
             Schedule a Consultation
-          </button>
+          </InteractiveButton>
         </div>
 
         {/* Option 2 */}
@@ -4338,12 +4414,15 @@ function CTASection({ mobile }) {
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Technical debt cost calculator</li>
             <li style={{ marginBottom: '8px', paddingLeft: '15px' }}>• Role clarity diagnostic</li>
           </ul>
-          <button style={{
-            ...BUTTON.primary,
-            width: '100%'
-          }}>
+          <InteractiveButton
+            onClick={() => {
+              // TODO: Open email capture modal for audit template
+              console.log('Get Audit Template clicked');
+            }}
+            style={{ width: '100%' }}
+          >
             Get the Audit Template
-          </button>
+          </InteractiveButton>
         </div>
       </div>
 
