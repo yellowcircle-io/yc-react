@@ -93,8 +93,8 @@ function OwnYourStoryArticle1Page() {
     if (isMobile) return; // Mobile uses native vertical scroll
 
     setScrollOffset(prev => {
-      // Total sections: 41 sections = 4000vw total width (Alex +2, Jordan +1, Casey +2)
-      const maxScroll = 4000;
+      // Total sections: 46 sections = 4500vw (all persona realities split)
+      const maxScroll = 4500;
       return Math.max(0, Math.min(maxScroll, prev + delta));
     });
   }, [isMobile]);
@@ -275,16 +275,21 @@ function OwnYourStoryArticle1Page() {
             <PersonaCaseyRealityPart3 />
             <PersonaCostSection name="Casey" />
 
-            {/* Persona 4: Morgan */}
+            {/* Persona 4: Morgan (4 Reality pages) */}
             <PersonaMeetSection name="Morgan" role="Marketing Operations Lead" />
             <PersonaPromiseSection name="Morgan" />
-            <PersonaRealitySection name="Morgan" />
+            <PersonaMorganRealityPart1 />
+            <PersonaMorganRealityPart2 />
+            <PersonaMorganRealityPart3 />
+            <PersonaMorganRealityPart4 />
             <PersonaCostSection name="Morgan" />
 
-            {/* Persona 5: Riley */}
+            {/* Persona 5: Riley (3 Reality pages) */}
             <PersonaMeetSection name="Riley" role="Senior Marketing Operations Manager" />
             <PersonaPromiseSection name="Riley" />
-            <PersonaRealitySection name="Riley" />
+            <PersonaRileyRealityPart1 />
+            <PersonaRileyRealityPart2 />
+            <PersonaRileyRealityPart3 />
             <PersonaCostSection name="Riley" />
 
             {/* Section 32-34: What Now (3 pages) */}
@@ -314,7 +319,7 @@ function OwnYourStoryArticle1Page() {
               backdropFilter: 'blur(10px)'
             }}
           >
-            Section {Math.floor(scrollOffset / 100) + 1} of 35
+            Section {Math.floor(scrollOffset / 100) + 1} of 46
           </div>
 
           {/* Scroll Instructions Hint (fades after first scroll) */}
@@ -397,12 +402,17 @@ function OwnYourStoryArticle1Page() {
 
           <PersonaMeetSection name="Morgan" role="Marketing Operations Lead" mobile />
           <PersonaPromiseSection name="Morgan" mobile />
-          <PersonaRealitySection name="Morgan" mobile />
+          <PersonaMorganRealityPart1 mobile />
+          <PersonaMorganRealityPart2 mobile />
+          <PersonaMorganRealityPart3 mobile />
+          <PersonaMorganRealityPart4 mobile />
           <PersonaCostSection name="Morgan" mobile />
 
           <PersonaMeetSection name="Riley" role="Senior Marketing Operations Manager" mobile />
           <PersonaPromiseSection name="Riley" mobile />
-          <PersonaRealitySection name="Riley" mobile />
+          <PersonaRileyRealityPart1 mobile />
+          <PersonaRileyRealityPart2 mobile />
+          <PersonaRileyRealityPart3 mobile />
           <PersonaCostSection name="Riley" mobile />
 
           <WhatNowSectionPage1 mobile />
@@ -2748,8 +2758,8 @@ function PersonaCaseyRealityPart3({ mobile }) {
   );
 }
 
-// Persona Sections - The Reality (Morgan, Riley only now)
-function PersonaRealitySection({ name, mobile }) {
+// Morgan Reality - Split into 3 viewport-fitting sections
+function PersonaMorganRealityPart1({ mobile }) {
   const containerStyle = mobile ? {
     padding: '40px 20px',
     marginBottom: '40px'
@@ -2765,352 +2775,457 @@ function PersonaRealitySection({ name, mobile }) {
     margin: '0 auto'
   };
 
-  // Jordan now uses separate split functions
-  if (name === 'Jordan') {
-    return <PlaceholderSection title="Jordan: The Reality" mobile={mobile} />;
-  }
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        The Reality
+      </h2>
 
-  // Casey now uses separate split functions
-  if (name === 'Casey') {
-    return <PlaceholderSection title="Casey: The Reality" mobile={mobile} />;
-  }
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Month 1-2: Audit Discovery */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+            Month 1-2: The Audit Discovery
+          </p>
 
-  // Morgan - The Reality
-  if (name === 'Morgan') {
-    return (
-      <section style={containerStyle}>
-        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
-          The Reality
-        </h2>
+          <p style={{ marginBottom: '15px' }}>Morgan starts auditing HubSpot.</p>
 
-        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
-          {/* Month 1-2: Audit Discovery */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
-              Month 1-2: The Audit Discovery
-            </p>
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Findings:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+            <li>47,000 duplicate contacts (no merge strategy)</li>
+            <li>Custom fields: 312 (87 are unused, 43 are duplicates with different names)</li>
+            <li>Workflows: 156 (92 are inactive, 28 nobody understands)</li>
+            <li>Data definitions: Undocumented</li>
+            <li>Schema ownership: Nobody</li>
+          </ul>
 
-            <p style={{ marginBottom: '15px' }}>Morgan starts auditing HubSpot.</p>
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Morgan's Report to VP (Week 3):</p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>
+            "We need to clean this up before migration. If we move 47K duplicates into Marketo, they'll still be duplicates. Just in a more expensive platform."
+          </p>
 
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Findings:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
-              <li>47,000 duplicate contacts (no merge strategy)</li>
-              <li>Custom fields: 312 (87 are unused, 43 are duplicates with different names)</li>
-              <li>Workflows: 156 (92 are inactive, 28 nobody understands)</li>
-              <li>Data definitions: Undocumented</li>
-              <li>Schema ownership: Nobody</li>
-            </ul>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can the vendor handle that during migration?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "They can dedupe based on email, but the deeper issues—field definitions, schema design—we need to own that."
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "2-3 weeks if we prioritize it."
+          </p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We're already paying the vendor. Let's just move forward and clean it up in Marketo after."
+          </p>
 
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Morgan's Report to VP (Week 3):</p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic' }}>
-              "We need to clean this up before migration. If we move 47K duplicates into Marketo, they'll still be duplicates. Just in a more expensive platform."
-            </p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can the vendor handle that during migration?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "They can dedupe based on email, but the deeper issues—field definitions, schema design—we need to own that."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "2-3 weeks if we prioritize it."
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We're already paying the vendor. Let's just move forward and clean it up in Marketo after."
-            </p>
-
-            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Morgan's Alarm Bell: Now screaming</p>
-          </div>
-
-          {/* Month 3-6: The Migration */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 3-6: The Migration</p>
-
-            <p style={{ marginBottom: '15px' }}>Vendor migrates data from HubSpot to Marketo.</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Result:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
-              <li>47,000 duplicates successfully migrated (still duplicates)</li>
-              <li>312 custom fields recreated (still mostly useless)</li>
-              <li>Workflows rebuilt (still nobody knows what 28 of them do)</li>
-              <li>Cost: $180K</li>
-            </ul>
-
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 6: Go-Live</p>
-            <p style={{ marginBottom: '10px' }}>HubSpot sunset.</p>
-            <p style={{ marginBottom: '20px' }}>Marketo is now the system of record.</p>
-
-            <p style={{ fontWeight: '700', fontStyle: 'italic' }}>
-              Morgan's assessment: "We spent $180K to move the mess from one platform to another."
-            </p>
-          </div>
-
-          {/* Month 7: Reports Don't Match */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 7: The Reports Don't Match</p>
-
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px', fontSize: '0.95rem' }}>
-              <li>Sales reports opportunity data from Salesforce: "$2.3M closed-won from marketing this quarter"</li>
-              <li>Marketing reports opportunity data from Marketo: "$1.8M closed-won from marketing this quarter"</li>
-              <li>Finance reports: "$2.1M" (uses different attribution rules)</li>
-            </ul>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Meeting (Week 27):</p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Why don't these match?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Because we never defined data standards before migration. Salesforce, Marketo, and Finance are using different field definitions for 'marketing-sourced.'"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you fix it?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Yes, but we need to define schema standards and get cross-functional buy-in on definitions. That's what I proposed in Month 2."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "3-4 weeks if we prioritize it."
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "That seems complex. Is Marketo just harder to use than HubSpot?"
-            </p>
-
-            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Morgan's Internal Scream: Prolonged</p>
-          </div>
-
-          {/* Month 8: Governance Proposal Rejected */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.25)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 8: The Data Governance Proposal</p>
-
-            <p style={{ marginBottom: '15px' }}>Morgan writes a comprehensive proposal:</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Data Governance Framework</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
-              <li>Cost: $32K audit (external partner to document current state)</li>
-              <li>Ongoing: $6K/month data governance ownership (could be Morgan + data analyst time)</li>
-              <li>Timeline: 2 months to implement standards</li>
-              <li>Benefit: Reports that match, clean attribution, no more "which number is right?" meetings</li>
-            </ul>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP's reaction:</span> "This seems really complex. Isn't there a simpler solution?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "The simple solution was doing this before migration. Now we need to retrofit it."
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Let me think about it."
-            </p>
-
-            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Month 8 Status: Proposal tabled as "too complex"</p>
-          </div>
-
-          {/* Month 9-14: Firefighting */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.3)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 9-14: The Firefighting</p>
-
-            <p style={{ marginBottom: '10px' }}>Morgan spends 6 months firefighting reporting discrepancies.</p>
-
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem' }}>
-              <li>Every week: "Why do these numbers not match?"</li>
-              <li>Every week: Morgan explains that undefined data schema means numbers will never match</li>
-              <li>Every week: VP asks "Can't you just make them match?"</li>
-              <li>Every week: Morgan dies a little inside</li>
-            </ul>
-          </div>
-
-          {/* Month 15: The Unthinkable */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.35)', border: `2px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: COLORS.yellow }}>
-              Month 15: The Unthinkable Conversation
-            </p>
-
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP (in strategy meeting):</span> "You know, maybe Marketo just isn't right for us. I'm hearing Pardot is really good for Salesforce integration..."
-            </p>
-
-            <p style={{ marginBottom: '5px', fontWeight: '700' }}>Morgan (out loud): "..."</p>
-            <p style={{ marginBottom: '20px', fontWeight: '700', color: COLORS.yellow }}>
-              Morgan (internally): "WE SPENT $180K TO MIGRATE FROM HUBSPOT TO MARKETO BECAUSE OF 'SALESFORCE INTEGRATION' AND NOW YOU WANT TO MIGRATE AGAIN?!"
-            </p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Pardot won't fix the data schema issue."
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "But it's built by Salesforce, so the integration would be native..."
-            </p>
-
-            <p style={{ marginBottom: '15px', fontWeight: '700', color: COLORS.yellow }}>
-              Morgan (internally): "THE INTEGRATION ISN'T THE PROBLEM. THE ORG CHART IS THE PROBLEM."
-            </p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Let me update my proposal from Month 8. Data governance first, then we can evaluate platforms."
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Okay, send it over."
-            </p>
-          </div>
-
-          {/* Month 16 */}
-          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 16:</p>
-            <p style={{ marginBottom: '10px' }}>Morgan updates resume.</p>
-            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
-              Every Sunday night.
-            </p>
-          </div>
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>Morgan's Alarm Bell: Now screaming</p>
         </div>
-      </section>
-    );
-  }
+      </div>
+    </section>
+  );
+}
 
-  // Riley - The Reality
-  if (name === 'Riley') {
-    return (
-      <section style={containerStyle}>
-        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
-          The Reality
-        </h2>
+function PersonaMorganRealityPart2({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
 
-        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
-          {/* Week 1 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>Week 1: The Audit Begins</p>
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Month 3-6: The Migration */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 3-6: The Migration</p>
 
-            <p style={{ marginBottom: '10px' }}>Riley starts mapping workflows.</p>
+          <p style={{ marginBottom: '15px' }}>Vendor migrates data from HubSpot to Marketo.</p>
 
-            <p style={{ marginBottom: '5px' }}>Marketo workflows discovered: 342</p>
-            <p style={{ marginBottom: '5px' }}>Workflows Riley understands: 0</p>
-            <p style={{ marginBottom: '5px' }}>Workflows the team understands: ~40</p>
-            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Workflows nobody understands: 302</p>
-          </div>
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Result:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+            <li>47,000 duplicates successfully migrated (still duplicates)</li>
+            <li>312 custom fields recreated (still mostly useless)</li>
+            <li>Workflows rebuilt (still nobody knows what 28 of them do)</li>
+            <li>Cost: $180K</li>
+          </ul>
 
-          {/* Week 2 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Week 2: The Documentation Gap</p>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 6: Go-Live</p>
+          <p style={{ marginBottom: '10px' }}>HubSpot sunset.</p>
+          <p style={{ marginBottom: '20px' }}>Marketo is now the system of record.</p>
 
-            <p style={{ marginBottom: '5px' }}>Riley: "Where's the documentation for these workflows?"</p>
-            <p style={{ marginBottom: '10px' }}>Team: "There isn't any. The previous managers didn't document."</p>
-
-            <p style={{ marginBottom: '5px' }}>Riley: "Okay, can I talk to them to understand what they built?"</p>
-            <p style={{ marginBottom: '10px' }}>Team: "They're all gone. No knowledge transfer."</p>
-
-            <p style={{ marginBottom: '5px' }}>Riley: "What about the one before that?"</p>
-            <p style={{ marginBottom: '10px' }}>Team: "Also gone."</p>
-
-            <p style={{ marginBottom: '5px' }}>Riley: "The one before *that*?"</p>
-            <p style={{ marginBottom: '20px' }}>Team: "You're Riley number 4. Riley 1, 2, and 3 are all at different companies now."</p>
-
-            <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
-              Riley's Realization: "I'm not inheriting a complex system. I'm inheriting archaeological layers of other people's workarounds that nobody documented before they quit."
-            </p>
-          </div>
-
-          {/* Week 4 Inventory */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Week 4: The Inheritance Inventory</p>
-
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
-              <li>Manual Workflows: 300 (team-wide)</li>
-              <li>Attribution Models: 5 (running simultaneously, none agree)</li>
-              <li>"Critical" Reports: 87 (42 are duplicates, 18 haven't been opened in 6 months)</li>
-              <li>Custom Fields: 428 (118 are unused, 76 are duplicates with different names)</li>
-              <li>Salesforce Campaigns: 2,847 (923 are from 2019, none archived)</li>
-              <li>Integrations: 14 (6 are "broken but nobody's complained so maybe they're not used?")</li>
-              <li>Documentation: One spreadsheet, 300 rows, maintained by previous Riley, abandoned when they quit</li>
-            </ul>
-          </div>
-
-          {/* Month 3 Dilemma */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.25)', border: `2px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: COLORS.yellow }}>
-              Month 3: The Choice
-            </p>
-
-            <p style={{ marginBottom: '20px' }}>Riley has documented ~40% of the infrastructure. It's taken 200 hours. There's another 300 hours to go.</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Riley's Dilemma:</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 1: Finish Documenting (18 more months)</p>
-            <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Eventually understand everything | Con: Career sacrifice | Outcome: Maybe get to optimization by Month 24</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 2: Build on Top of the Mess</p>
-            <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Can start optimizing now | Con: Building on quicksand | Outcome: Become Riley 5's problem</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 3: Burn It Down and Rebuild</p>
-            <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Clean slate | Con: Political suicide | Outcome: Probably get fired</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 4: Quit</p>
-            <p style={{ marginBottom: '20px', fontSize: '0.95rem' }}>Pro: Preserve sanity | Con: Feels like failure | Outcome: Become another name in "Riley 1, 2, 3, 4..." list</p>
-
-            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Riley's Projection: Will choose Option 4 around Month 8</p>
-          </div>
-
-          {/* Month 6 Reality Check */}
-          <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 6 Reality Check:</p>
-
-            <p style={{ marginBottom: '10px' }}>Conversation with team member:</p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "You know, Riley 3 tried to document everything too."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What happened?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Got about 40% done, got overwhelmed, quit."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "I'm at 40% now."
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Yeah."
-            </p>
-
-            <p style={{ marginBottom: '10px', fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
-              Riley (realizing): "This isn't a documentation problem. This is a technical debt problem that's unsolvable without executive support to pause and rebuild."
-            </p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "Did any of the Rileys ask for that support?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "All of them."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "And?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "All got the same answer: 'We can't pause operations. Just optimize as you go.'"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "So this is a death loop."
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Welcome to the job."
-            </p>
-
-            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Month 6 Status:</p>
-            <p style={{ marginBottom: '5px' }}>Time spent understanding vs building: 80/20 split</p>
-            <p style={{ marginBottom: '5px' }}>Effective productivity: 20% of potential</p>
-            <p style={{ marginBottom: '5px' }}>Riley's LinkedIn profile: "Open to opportunities" (added this morning)</p>
-            <p style={{ fontWeight: '700', color: COLORS.yellow }}>Projected tenure: 2 more months</p>
-          </div>
+          <p style={{ fontWeight: '700', fontStyle: 'italic' }}>
+            Morgan's assessment: "We spent $180K to move the mess from one platform to another."
+          </p>
         </div>
-      </section>
-    );
-  }
 
-  // Placeholder for other personas
+        {/* Month 7: Reports Don't Match */}
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 7: The Reports Don't Match</p>
+
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px', fontSize: '0.95rem' }}>
+            <li>Sales reports opportunity data from Salesforce: "$2.3M closed-won from marketing this quarter"</li>
+            <li>Marketing reports opportunity data from Marketo: "$1.8M closed-won from marketing this quarter"</li>
+            <li>Finance reports: "$2.1M" (uses different attribution rules)</li>
+          </ul>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Meeting (Week 27):</p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Why don't these match?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Because we never defined data standards before migration. Salesforce, Marketo, and Finance are using different field definitions for 'marketing-sourced.'"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you fix it?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "Yes, but we need to define schema standards and get cross-functional buy-in on definitions. That's what I proposed in Month 2."
+          </p>
+
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>Morgan's Internal Scream: Prolonged</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaMorganRealityPart3({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Month 8: Governance Proposal Rejected */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.25)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 8: The Data Governance Proposal</p>
+
+          <p style={{ marginBottom: '15px' }}>Morgan writes a comprehensive proposal:</p>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow }}>Data Governance Framework</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
+            <li>Cost: $32K audit (external partner to document current state)</li>
+            <li>Ongoing: $6K/month data governance ownership (could be Morgan + data analyst time)</li>
+            <li>Timeline: 2 months to implement standards</li>
+            <li>Benefit: Reports that match, clean attribution, no more "which number is right?" meetings</li>
+          </ul>
+
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP's reaction:</span> "This seems really complex. Isn't there a simpler solution?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan:</span> "The simple solution was doing this before migration. Now we need to retrofit it."
+          </p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Let me think about it."
+          </p>
+
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>Month 8 Status: Proposal tabled as "too complex"</p>
+        </div>
+
+        {/* Month 9-14: Firefighting */}
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.3)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 9-14: The Firefighting</p>
+
+          <p style={{ marginBottom: '10px' }}>Morgan spends 6 months firefighting reporting discrepancies.</p>
+
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontStyle: 'italic', fontSize: '0.95rem' }}>
+            <li>Every week: "Why do these numbers not match?"</li>
+            <li>Every week: Morgan explains that undefined data schema means numbers will never match</li>
+            <li>Every week: VP asks "Can't you just make them match?"</li>
+            <li>Every week: Morgan dies a little inside</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaMorganRealityPart4({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Month 15: The Unthinkable */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.35)', border: `2px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: COLORS.yellow }}>
+            Month 15: The Unthinkable Conversation
+          </p>
+
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP (in strategy meeting):</span> "You know, maybe Marketo just isn't right for us. I'm hearing Pardot is really good for Salesforce integration..."
+          </p>
+
+          <p style={{ marginBottom: '5px', fontWeight: '700' }}>Morgan (out loud): "..."</p>
+          <p style={{ marginBottom: '20px', fontWeight: '700', color: COLORS.yellow }}>
+            Morgan (internally): "WE SPENT $180K TO MIGRATE FROM HUBSPOT TO MARKETO BECAUSE OF 'SALESFORCE INTEGRATION' AND NOW YOU WANT TO MIGRATE AGAIN?!"
+          </p>
+
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Pardot won't fix the data schema issue."
+          </p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "But it's built by Salesforce, so the integration would be native..."
+          </p>
+
+          <p style={{ marginBottom: '15px', fontWeight: '700', color: COLORS.yellow }}>
+            Morgan (internally): "THE INTEGRATION ISN'T THE PROBLEM. THE ORG CHART IS THE PROBLEM."
+          </p>
+
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Morgan (out loud):</span> "Let me update my proposal from Month 8. Data governance first, then we can evaluate platforms."
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Okay, send it over."
+          </p>
+        </div>
+
+        {/* Month 16 */}
+        <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 16:</p>
+          <p style={{ marginBottom: '10px' }}>Morgan updates resume.</p>
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            Every Sunday night.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Riley Reality - Split into 2 viewport-fitting sections
+function PersonaRileyRealityPart1({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        The Reality
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Week 1 */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)', border: `1px solid ${COLORS.yellow}` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>Week 1: The Audit Begins</p>
+
+          <p style={{ marginBottom: '10px' }}>Riley starts mapping workflows.</p>
+
+          <p style={{ marginBottom: '5px' }}>Marketo workflows discovered: 342</p>
+          <p style={{ marginBottom: '5px' }}>Workflows Riley understands: 0</p>
+          <p style={{ marginBottom: '5px' }}>Workflows the team understands: ~40</p>
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>Workflows nobody understands: 302</p>
+        </div>
+
+        {/* Week 2 */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Week 2: The Documentation Gap</p>
+
+          <p style={{ marginBottom: '5px' }}>Riley: "Where's the documentation for these workflows?"</p>
+          <p style={{ marginBottom: '10px' }}>Team: "There isn't any. The previous managers didn't document."</p>
+
+          <p style={{ marginBottom: '5px' }}>Riley: "Okay, can I talk to them to understand what they built?"</p>
+          <p style={{ marginBottom: '10px' }}>Team: "They're all gone. No knowledge transfer."</p>
+
+          <p style={{ marginBottom: '5px' }}>Riley: "What about the one before that?"</p>
+          <p style={{ marginBottom: '10px' }}>Team: "Also gone."</p>
+
+          <p style={{ marginBottom: '5px' }}>Riley: "The one before *that*?"</p>
+          <p style={{ marginBottom: '20px' }}>Team: "You're Riley number 4. Riley 1, 2, and 3 are all at different companies now."</p>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            Riley's Realization: "I'm not inheriting a complex system. I'm inheriting archaeological layers of other people's workarounds that nobody documented before they quit."
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaRileyRealityPart2({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Week 4 Inventory */}
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Week 4: The Inheritance Inventory</p>
+
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+            <li>Manual Workflows: 300 (team-wide)</li>
+            <li>Attribution Models: 5 (running simultaneously, none agree)</li>
+            <li>"Critical" Reports: 87 (42 are duplicates, 18 haven't been opened in 6 months)</li>
+            <li>Custom Fields: 428 (118 are unused, 76 are duplicates with different names)</li>
+            <li>Salesforce Campaigns: 2,847 (923 are from 2019, none archived)</li>
+            <li>Integrations: 14 (6 are "broken but nobody's complained so maybe they're not used?")</li>
+            <li>Documentation: One spreadsheet, 300 rows, maintained by previous Riley, abandoned when they quit</li>
+          </ul>
+        </div>
+
+        {/* Month 3 Dilemma */}
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.25)', border: `2px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem', color: COLORS.yellow }}>
+            Month 3: The Choice
+          </p>
+
+          <p style={{ marginBottom: '20px' }}>Riley has documented ~40% of the infrastructure. It's taken 200 hours. There's another 300 hours to go.</p>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Riley's Dilemma:</p>
+
+          <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 1: Finish Documenting (18 more months)</p>
+          <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Eventually understand everything | Con: Career sacrifice | Outcome: Maybe get to optimization by Month 24</p>
+
+          <p style={{ fontWeight: '700', marginBottom: '5px' }}>Option 2: Build on Top of the Mess</p>
+          <p style={{ marginBottom: '15px', fontSize: '0.95rem' }}>Pro: Can start optimizing now | Con: Building on quicksand | Outcome: Become Riley 5's problem</p>
+
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>Riley's Projection: Will choose Option 4 around Month 8</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaRileyRealityPart3({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        {/* Month 6 Reality Check */}
+        <div style={{ padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: `4px solid ${COLORS.yellow}` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1.1rem' }}>Month 6 Reality Check:</p>
+
+          <p style={{ marginBottom: '10px' }}>Conversation with team member:</p>
+
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "You know, Riley 3 tried to document everything too."
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "What happened?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Got about 40% done, got overwhelmed, quit."
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "I'm at 40% now."
+          </p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Yeah."
+          </p>
+
+          <p style={{ marginBottom: '10px', fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            Riley (realizing): "This isn't a documentation problem. This is a technical debt problem that's unsolvable without executive support to pause and rebuild."
+          </p>
+
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "Did any of the Rileys ask for that support?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "All of them."
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "And?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "All got the same answer: 'We can't pause operations. Just optimize as you go.'"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Riley:</span> "So this is a death loop."
+          </p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Team Member:</span> "Welcome to the job."
+          </p>
+
+          <p style={{ marginBottom: '10px', fontWeight: '700' }}>Month 6 Status:</p>
+          <p style={{ marginBottom: '5px' }}>Time spent understanding vs building: 80/20 split</p>
+          <p style={{ marginBottom: '5px' }}>Effective productivity: 20% of potential</p>
+          <p style={{ marginBottom: '5px' }}>Riley's LinkedIn profile: "Open to opportunities" (added this morning)</p>
+          <p style={{ fontWeight: '700', color: COLORS.yellow }}>Projected tenure: 2 more months</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Persona Sections - The Reality (legacy wrapper - now unused)
+function PersonaRealitySection({ name, mobile }) {
+  // All personas now use separate split functions
   return <PlaceholderSection title={`${name}: The Reality`} mobile={mobile} />;
 }
 
