@@ -14,6 +14,7 @@
 const { Client } = require('@notionhq/client');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 
 // Configuration
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
