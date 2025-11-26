@@ -118,12 +118,43 @@
 - `dev-context/CASE_STUDY_EXAMPLES_LIBRARY.md` - Case studies
 - `dev-context/03-professional_details/assessment/` - Rho materials
 
+### Cold Outreach Automation System (MacBook Air - Nov 26)
+
+**Location:** `rho-hubspot-deployment/cold-outreach-system/`
+
+**Based on:**
+- NextPlay.so cold email framework (3-part structure)
+- Rho Marketing Automation MVP infrastructure
+- AI content generation (Groq FREE / OpenAI)
+
+**Files Created:**
+- `README.md` - Complete system documentation
+- `config/brand-voice.js` - Consulting brand voice prompt
+- `config/templates.js` - Email template configurations
+- `lib/ai-generator.js` - AI content generation (Groq/OpenAI)
+- `scripts/generate-outreach.js` - Main generation script
+- `templates/initial-cold.md` - Initial email templates
+- `templates/follow-up-sequence.md` - Follow-up sequence
+- `data/targets.csv` - Sample prospect list
+
+**Quick Start:**
+```bash
+cd rho-hubspot-deployment/cold-outreach-system
+cp .env.example .env
+# Add GROQ_API_KEY (free at console.groq.com)
+npm install
+npm run generate -- --company "Acme" --contact "Jane" --email "jane@acme.com" --trigger "Series B"
+```
+
+**Cost:** $0/month (Groq FREE tier: 14,400 requests/day)
+
 ### Immediate Actions (This Week)
 
 | Day | Action | Owner |
 |-----|--------|-------|
 | Nov 26 (Today) | Strategic docs created ✅ | MacBook Air |
-| Nov 26-27 | Rho audit + portfolio materials | Mac Mini |
+| Nov 26 (Today) | Cold outreach automation system ✅ | MacBook Air |
+| Nov 26 (Today) | Rho audit + portfolio complete ✅ | Mac Mini |
 | Nov 27-28 | LinkedIn profile update + transition post | Manual |
 | Nov 28-29 | Network outreach (10 contacts) | Manual |
 | Nov 30-Dec 2 | First discovery calls scheduled | Manual |
