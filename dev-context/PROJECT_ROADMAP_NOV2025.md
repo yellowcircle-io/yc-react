@@ -1,11 +1,72 @@
 # Project Roadmap - November 2025
 
-**Date:** November 18, 2025
-**Status:** Rho Strategic Assessment Complete - Stealth Mode Strategy Established
+**Date:** November 26, 2025
+**Status:** 🔴 CRITICAL PIVOT - Post-Rho Immediate Revenue Strategy
 
 ---
 
-## 🎯 NOVEMBER 18, 2025 - STRATEGIC PIVOT TO STEALTH MODE
+## 🔴 NOVEMBER 26, 2025 - POST-RHO STRATEGIC PIVOT
+
+### Situation Change: Rho Employment Ended
+
+**Date:** November 25, 2025 (last day)
+**Severance:** $10,000 offered
+**New Focus:** Parallel path - immediate revenue + yellowCircle vision
+
+### 60-Day Revenue Plan (NEW PRIORITY)
+
+**Week 1-2: Foundation**
+- [ ] Package "GTM Strategic Audit" service ($4K-5K per engagement)
+- [ ] LinkedIn transition announcement + availability
+- [ ] Network activation (10 warmest contacts)
+- [ ] Share Article 1 across channels
+
+**Week 3-4: First Revenue ($4K-8K target)**
+- [ ] Schedule 3-5 discovery calls
+- [ ] Close 1-2 GTM Assessment engagements
+- [ ] Document process for repeatability
+
+**Week 5-8: Scale ($8K-12K additional)**
+- [ ] 2-3 additional clients
+- [ ] Explore retainer opportunities
+- [ ] Article 2 draft continuation
+
+**Realistic 60-Day Target:** $15K-20K + $10K severance = $25K-30K total
+
+### Revenue-Ready Assets (Immediate)
+
+| Asset | Status | Potential | Action |
+|-------|--------|-----------|--------|
+| Article 1 "Why Your GTM Sucks" | LIVE | Lead gen | Promote now |
+| GTM Assessment Framework | Ready | $4K-5K/client | Package this week |
+| Rho Case Studies (anonymized) | Documented | Credibility | Use in sales |
+| N8N Templates | Needs work | $500-1K/mo | Month 3+ |
+
+### Mac Mini Next Task: Extensive Audit
+
+**Assigned to Mac Mini (next session):**
+1. **Rho Career Trajectory Audit**
+   - Full assessment of Rho experience documentation
+   - Extract all repackageable expertise
+   - Anonymize case studies for consulting use
+   - Create consulting portfolio materials
+
+2. **Career Trajectory Analysis**
+   - Review job interview notes/transcripts
+   - Map skills to market demands
+   - Identify positioning opportunities
+   - Update resume/portfolio
+
+3. **60-Day Plan Execution Support**
+   - GTM Assessment service page content
+   - LinkedIn content calendar
+   - Outreach templates
+
+**Full Documentation:** `dev-context/STRATEGIC_PIVOT_POST_RHO.md`
+
+---
+
+## 🎯 NOVEMBER 18, 2025 - STEALTH MODE STRATEGY (SUPERSEDED)
 
 ### Major Strategic Documents Completed
 
