@@ -93,8 +93,8 @@ function OwnYourStoryArticle1Page() {
     if (isMobile) return; // Mobile uses native vertical scroll
 
     setScrollOffset(prev => {
-      // Total sections: 36 sections = 3500vw total width (adjusted for accurate section count)
-      const maxScroll = 3500;
+      // Total sections: 41 sections = 4000vw total width (Alex +2, Jordan +1, Casey +2)
+      const maxScroll = 4000;
       return Math.max(0, Math.min(maxScroll, prev + delta));
     });
   }, [isMobile]);
@@ -252,22 +252,27 @@ function OwnYourStoryArticle1Page() {
             <BigPictureSectionPage5 />
 
             {/* Section 12-31: The People - 5 Personas (4 pages each = 20 pages) */}
-            {/* Persona 1: Alex */}
+            {/* Persona 1: Alex (3 Reality pages) */}
             <PersonaMeetSection name="Alex" role="Marketing Operations Manager" />
             <PersonaPromiseSection name="Alex" />
-            <PersonaRealitySection name="Alex" />
+            <PersonaAlexRealityPart1 />
+            <PersonaAlexRealityPart2 />
+            <PersonaAlexRealityPart3 />
             <PersonaCostSection name="Alex" />
 
-            {/* Persona 2: Jordan */}
+            {/* Persona 2: Jordan (2 Reality pages) */}
             <PersonaMeetSection name="Jordan" role="Marketing Data Analyst" />
             <PersonaPromiseSection name="Jordan" />
-            <PersonaRealitySection name="Jordan" />
+            <PersonaJordanRealityPart1 />
+            <PersonaJordanRealityPart2 />
             <PersonaCostSection name="Jordan" />
 
-            {/* Persona 3: Casey */}
+            {/* Persona 3: Casey (3 Reality pages) */}
             <PersonaMeetSection name="Casey" role="Marketing Attribution Specialist" />
             <PersonaPromiseSection name="Casey" />
-            <PersonaRealitySection name="Casey" />
+            <PersonaCaseyRealityPart1 />
+            <PersonaCaseyRealityPart2 />
+            <PersonaCaseyRealityPart3 />
             <PersonaCostSection name="Casey" />
 
             {/* Persona 4: Morgan */}
@@ -372,17 +377,22 @@ function OwnYourStoryArticle1Page() {
           {/* Personas */}
           <PersonaMeetSection name="Alex" role="Marketing Operations Manager" mobile />
           <PersonaPromiseSection name="Alex" mobile />
-          <PersonaRealitySection name="Alex" mobile />
+          <PersonaAlexRealityPart1 mobile />
+          <PersonaAlexRealityPart2 mobile />
+          <PersonaAlexRealityPart3 mobile />
           <PersonaCostSection name="Alex" mobile />
 
           <PersonaMeetSection name="Jordan" role="Marketing Data Analyst" mobile />
           <PersonaPromiseSection name="Jordan" mobile />
-          <PersonaRealitySection name="Jordan" mobile />
+          <PersonaJordanRealityPart1 mobile />
+          <PersonaJordanRealityPart2 mobile />
           <PersonaCostSection name="Jordan" mobile />
 
           <PersonaMeetSection name="Casey" role="Marketing Attribution Specialist" mobile />
           <PersonaPromiseSection name="Casey" mobile />
-          <PersonaRealitySection name="Casey" mobile />
+          <PersonaCaseyRealityPart1 mobile />
+          <PersonaCaseyRealityPart2 mobile />
+          <PersonaCaseyRealityPart3 mobile />
           <PersonaCostSection name="Casey" mobile />
 
           <PersonaMeetSection name="Morgan" role="Marketing Operations Lead" mobile />
@@ -2275,7 +2285,470 @@ function PersonaPromiseSection({ name, mobile }) {
   return <PlaceholderSection title={`${name}: The Promise`} mobile={mobile} />;
 }
 
-// Persona Sections - The Reality
+// Persona Sections - Alex Reality (Split into 3 parts for viewport fitting)
+function PersonaAlexRealityPart1({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        Alex: The Reality
+      </h2>
+      <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
+        What the actual work became
+      </h3>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 1, Week 1:</p>
+          <p style={{ marginBottom: '10px' }}>First 1:1 with VP Marketing.</p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "So, we need to talk about MQL volume. We're tracking at 40% below target this quarter."
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Alex (internal monologue):</span> "Okay, maybe this is context before we dive into lifecycle strategy..."
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you pull a report of everyone who visited the pricing page in the last 30 days and push them to sales?"
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Sure, I can do that. Are we thinking of that as the top of a nurture sequence or...?"
+          </p>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "No, just send the list to sales. We need MQLs."
+          </p>
+        </div>
+
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 1, Week 4 - Alex's workload breakdown:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+            <li>45% | Manual list pulls for sales</li>
+            <li>25% | Firefighting form failures</li>
+            <li>15% | Explaining why attribution doesn't work</li>
+            <li>10% | Actual lifecycle optimization work</li>
+            <li>5% | Meetings about "why aren't we generating more MQLs?"</li>
+          </ul>
+          <p style={{ marginTop: '15px' }}>Campaigns shipped: 3 (all demand gen, not lifecycle) | Nurture programs built: 0</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaAlexRealityPart2({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 6:</p>
+          <p style={{ marginBottom: '10px' }}>Workarounds created: 43</p>
+          <p style={{ fontWeight: '700', marginBottom: '10px' }}>Manual processes Alex owns:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6', fontSize: '0.9rem' }}>
+            <li>Weekly list pull: pricing page visitors (30 min)</li>
+            <li>Daily list pull: demo requests (15 min)</li>
+            <li>Bi-weekly list pull: webinar attendees (45 min)</li>
+            <li>Manual lead score updates (2 hours/week)</li>
+            <li>Attribution reconciliation (3 hours/week)</li>
+            <li>Campaign performance reporting (2 hours/week)</li>
+            <li style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>... [36 more workarounds]</li>
+          </ul>
+        </div>
+
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 12:</p>
+          <p style={{ marginBottom: '10px' }}>Campaigns per month: 1.2 (down from 3) | Nurture programs built: Still 0 | Workarounds: 87</p>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px', marginTop: '20px' }}>Conversation with friend:</p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "How's the new job?"
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "I'm a glorified list puller. I was hired to build lifecycle programs. I pull lists for sales all day."
+          </p>
+          <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "Did you talk to your boss?"
+          </p>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Four times. He keeps saying 'we'll get to lifecycle stuff once we hit our MQL targets.' We're not hitting targets because I'm not building nurture programs. I'm just pulling lists."
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaAlexRealityPart3({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 18:</p>
+          <p style={{ marginBottom: '10px' }}>Campaigns per month: 0.7 | Workarounds maintained: 87 (personal), 300 (team-wide)</p>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px', marginTop: '20px' }}>Time allocation:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+            <li>67% | Maintaining workarounds</li>
+            <li>18% | Firefighting</li>
+            <li>10% | Meetings explaining why velocity is slow</li>
+            <li>5% | Actual strategic work</li>
+            <li>0% | Learning/development</li>
+          </ul>
+
+          <p style={{ marginTop: '20px', marginBottom: '5px' }}>Car crying frequency: Twice a month</p>
+          <p style={{ marginBottom: '5px' }}>Resume updates: Every Sunday night</p>
+          <p style={{ marginBottom: '5px' }}>Therapy topic: "I thought I forgot how to do my job"</p>
+        </div>
+
+        <p style={{ fontWeight: '700', color: COLORS.yellow, marginBottom: '10px' }}>
+          What Changed Between Month 1 and Month 18:
+        </p>
+        <p style={{ marginBottom: '10px' }}>
+          Not Alex's skill. Not Marketo's capability. Not budget.
+        </p>
+        <p style={{ fontStyle: 'italic' }}>
+          What changed: The gap between job title and actual work crushed Alex's capacity to build anything strategic.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// Persona Sections - Jordan Reality (Split into 2 parts)
+function PersonaJordanRealityPart1({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        Jordan: The Reality
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Week 1:</p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you pull a list of all opportunities created in the last 90 days with campaign touches? Sales needs it by EOD."
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Sure. Where's the schema documentation?"
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "The what?"
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px' }}>Week 2 - Jordan proposes data governance:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6', marginBottom: '15px', fontSize: '0.95rem' }}>
+            <li>2 weeks: audit data sources</li>
+            <li>2 weeks: document schema</li>
+            <li>1 week: stakeholder alignment</li>
+            <li>2 weeks: build automated reporting</li>
+          </ul>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can it wait until next quarter? We need you focused on pulling reports for the board meeting."
+          </p>
+        </div>
+
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 3 - Jordan's actual workload:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
+            <li>71% | "Can you pull this list?" requests (8/day)</li>
+            <li>12% | Reconciling mismatched reports</li>
+            <li>11% | Building dashboards on undefined data</li>
+            <li>6% | Actual data architecture work (after hours)</li>
+          </ul>
+          <p style={{ marginTop: '15px', fontWeight: '700', color: COLORS.yellow }}>
+            Time spent doing what they were hired for: 6%
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaJordanRealityPart2({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', border: `2px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+            The Data Lag Evolution:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+            <div style={{ flex: '1', minWidth: '200px' }}>
+              <p style={{ fontWeight: '700' }}>Month 1: 5 min</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey, fontSize: '0.9rem' }}>"Healthy system"</p>
+            </div>
+            <div style={{ flex: '1', minWidth: '200px' }}>
+              <p style={{ fontWeight: '700' }}>Month 6: 15 min</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey, fontSize: '0.9rem' }}>"Need optimization" → "Maybe next quarter"</p>
+            </div>
+            <div style={{ flex: '1', minWidth: '200px' }}>
+              <p style={{ fontWeight: '700' }}>Month 12: 30 min</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey, fontSize: '0.9rem' }}>"Sales has stale data" → "Run refresh more often"</p>
+            </div>
+            <div style={{ flex: '1', minWidth: '200px' }}>
+              <p style={{ fontWeight: '700' }}>Month 18: 45 min</p>
+              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey, fontSize: '0.9rem' }}>"Revenue impact" → "Use yesterday's data"</p>
+            </div>
+          </div>
+        </div>
+
+        <p style={{ marginBottom: '15px', fontWeight: '700' }}>
+          Why the Lag Kept Growing:
+        </p>
+        <p style={{ marginBottom: '15px' }}>
+          Not because the systems got slower. <span style={{ fontWeight: '700' }}>Because nobody owned the schema.</span>
+        </p>
+        <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+          Every new campaign added data. Every new integration added a source. Every new dashboard added a query. All built on undocumented, ungoverned mess.
+        </p>
+
+        <p style={{ marginBottom: '10px', fontWeight: '700', color: COLORS.yellow }}>Month 18 Reality:</p>
+        <p style={{ marginBottom: '10px' }}>Jordan spends 6% of time on data architecture. The other 94% is pulling lists and building dashboards on data nobody owns.</p>
+        <p style={{ marginBottom: '15px' }}>Jordan has proposed the solution 14 times. Nobody will prioritize it.</p>
+        <p style={{ fontWeight: '700', color: COLORS.yellow }}>
+          Meanwhile, the 45-minute lag means sales calls prospects after they've already talked to a competitor.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// Persona Sections - Casey Reality (Split into 3 parts)
+function PersonaCaseyRealityPart1({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
+        Casey: The Reality
+      </h2>
+
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ marginBottom: '25px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+            Attempt 1: The Solo Build (Months 1-4)
+          </p>
+          <p style={{ marginBottom: '10px' }}>Casey starts with an audit. Marketo and Salesforce are connected—but nobody documented how.</p>
+          <p style={{ marginBottom: '10px', fontWeight: '700' }}>Three people, three MQL definitions:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6', marginBottom: '15px', fontSize: '0.95rem' }}>
+            <li>Demand Gen: "100 lead score points"</li>
+            <li>Sales Ops: "Someone who requests a demo"</li>
+            <li>VP Marketing: "When they hit a lifecycle stage"</li>
+          </ul>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>All three exist in the data. None used consistently.</p>
+        </div>
+
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 4 - Attempt 1 Launch:</p>
+          <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+            Result: Data fill rate: 8%
+          </p>
+          <p style={{ marginBottom: '15px', fontStyle: 'italic', fontSize: '0.95rem' }}>
+            92% of the time, the model can't attribute revenue because the data is too messy
+          </p>
+          <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "I need cross-functional alignment to define standards..."
+          </p>
+          <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We don't have 2 months. The board wants attribution next quarter."
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaCaseyRealityPart2({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
+            Attempt 2: The Consultant Band-Aid (Months 5-10)
+          </p>
+          <p style={{ marginBottom: '15px', fontWeight: '700' }}>Consultant cost: $175K for 6 months</p>
+          <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+            Consultant's diagnosis (Week 1): "Your data governance is a mess. You need to define standards, get cross-functional alignment..."
+          </p>
+          <p style={{ marginBottom: '25px', fontWeight: '700', color: COLORS.yellow }}>
+            Casey (internally): "I SAID THAT IN MONTH 1."
+          </p>
+
+          <p style={{ marginBottom: '10px', fontWeight: '700' }}>Months 5-10 Progress:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6', marginBottom: '20px' }}>
+            <li>Got marketing and sales in a room (finally)</li>
+            <li>Defined MQL (chose one definition)</li>
+            <li>Documented campaign taxonomy</li>
+            <li>Rebuilt attribution model</li>
+          </ul>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow, fontSize: '1.2rem' }}>
+            Result: Data fill rate: 42%
+          </p>
+          <p style={{ fontStyle: 'italic' }}>
+            Casey's assessment: "We spent $175K to go from 'doesn't work' to 'kind of works sometimes.'"
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PersonaCaseyRealityPart3({ mobile }) {
+  const containerStyle = mobile ? {
+    padding: '40px 20px',
+    marginBottom: '40px'
+  } : {
+    minWidth: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '0 60px',
+    maxWidth: '900px',
+    margin: '0 auto'
+  };
+
+  return (
+    <section style={containerStyle}>
+      <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
+        <div style={{ padding: '20px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderLeft: `4px solid #22c55e` }}>
+          <p style={{ fontWeight: '700', marginBottom: '15px', color: '#22c55e', fontSize: '1.1rem' }}>
+            Attempt 3: The Org Chart Fix (Months 11-14)
+          </p>
+          <p style={{ marginBottom: '15px' }}>New VP Marketing starts.</p>
+          <p style={{ marginBottom: '15px', fontStyle: 'italic', color: COLORS.lightGrey }}>
+            <span style={{ fontWeight: '700', color: COLORS.white }}>New VP:</span> "Why is our attribution at 42%?"
+            <br /><span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Because we never solved data governance..."
+            <br /><span style={{ fontWeight: '700', color: COLORS.white }}>New VP:</span> "Show me your proposal."
+          </p>
+
+          <p style={{ marginBottom: '10px', fontWeight: '700', color: '#22c55e' }}>What Changed:</p>
+          <ul style={{ marginLeft: '20px', lineHeight: '1.6', marginBottom: '20px' }}>
+            <li>Data engineer assigned to partner with Casey</li>
+            <li>Casey given schema ownership authority</li>
+            <li>Data governance made Q1 priority</li>
+          </ul>
+
+          <p style={{ fontWeight: '700', marginBottom: '10px', color: '#22c55e', fontSize: '1.2rem' }}>
+            Result: Data fill rate: 85%
+          </p>
+          <p style={{ marginBottom: '10px' }}>Cost: $40K | Timeline: 4 months</p>
+          <p style={{ marginBottom: '15px' }}>Attribution insight: $1.2M going to 2% conversion campaigns → Budget reallocation → $2.8M projected lift</p>
+
+          <p style={{ fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
+            Casey: "I could have built this in Month 4 if someone had just given me schema ownership from day one."
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Persona Sections - The Reality (Morgan, Riley only now)
 function PersonaRealitySection({ name, mobile }) {
   const containerStyle = mobile ? {
     padding: '40px 20px',
@@ -2292,440 +2765,14 @@ function PersonaRealitySection({ name, mobile }) {
     margin: '0 auto'
   };
 
-  // Alex - The Reality
-  if (name === 'Alex') {
-    return (
-      <section style={containerStyle}>
-        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
-          The Reality
-        </h2>
-        <h3 style={{ fontSize: '1.1rem', fontStyle: 'italic', color: COLORS.lightGrey, marginBottom: mobile ? '20px' : '30px' }}>
-          What the actual work became
-        </h3>
-
-        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
-          {/* Month 1 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Month 1, Week 1:</p>
-            <p style={{ marginBottom: '10px' }}>First 1:1 with VP Marketing.</p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "So, we need to talk about MQL volume. We're tracking at 40% below target this quarter."
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex (internal monologue):</span> "Okay, maybe this is context before we dive into lifecycle strategy..."
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you pull a report of everyone who visited the pricing page in the last 30 days and push them to sales?"
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Sure, I can do that. Are we thinking of that as the top of a nurture sequence or...?"
-            </p>
-            <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "No, just send the list to sales. We need MQLs."
-            </p>
-          </div>
-
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 1, Week 4 - Alex's workload breakdown (actual time logged):</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
-              <li>45% | Manual list pulls for sales ("pricing page visitors," "webinar attendees," "content downloaders")</li>
-              <li>25% | Firefighting form failures (webhook broke, nobody's fixing it)</li>
-              <li>15% | Explaining why attribution doesn't work (spoiler: 8% fill rate)</li>
-              <li>10% | Actual lifecycle optimization work</li>
-              <li>5% | Meetings about "why aren't we generating more MQLs?"</li>
-            </ul>
-            <p style={{ marginTop: '15px' }}>Campaigns shipped: 3 (all demand gen, not lifecycle)</p>
-            <p>Nurture programs built: 0</p>
-            <p>Excitement level: Dropping</p>
-          </div>
-
-          {/* Month 6 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 6:</p>
-            <p style={{ marginBottom: '10px' }}>Workarounds created: 43</p>
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Manual processes Alex owns:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', fontSize: '0.9rem' }}>
-              <li>Weekly list pull: pricing page visitors (30 min)</li>
-              <li>Daily list pull: demo requests (15 min)</li>
-              <li>Bi-weekly list pull: webinar attendees (45 min)</li>
-              <li>Manual lead score updates (webhook still broken) (2 hours/week)</li>
-              <li>Attribution reconciliation (systems don't match) (3 hours/week)</li>
-              <li>Campaign performance reporting (dashboard broke, unfixed) (2 hours/week)</li>
-              <li>Form failure triage (ongoing issue, no root cause fix) (1 hour/week)</li>
-              <li style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>... [36 more workarounds]</li>
-            </ul>
-          </div>
-
-          {/* Month 12 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 12:</p>
-            <p style={{ marginBottom: '10px' }}>Campaigns per month: 1.2 (down from 3)</p>
-            <p style={{ marginBottom: '10px' }}>Nurture programs built: Still 0</p>
-            <p style={{ marginBottom: '20px' }}>Workarounds: 87</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Conversation with friend (text exchange):</p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "How's the new job?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "I'm a glorified list puller."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "What?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "I was hired to build lifecycle programs. I pull lists for sales all day."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "Did you talk to your boss?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "Four times. He keeps saying 'we'll get to lifecycle stuff once we hit our MQL targets.'"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Friend:</span> "Are you hitting targets?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Alex:</span> "No. Because I'm not building the nurture programs that would actually convert people. I'm just pulling lists."
-            </p>
-          </div>
-
-          {/* Month 18 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 18:</p>
-            <p style={{ marginBottom: '10px' }}>Campaigns per month: 0.7</p>
-            <p style={{ marginBottom: '15px' }}>Workarounds maintained: 87 (personal), 300 (team-wide)</p>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px' }}>Time allocation:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
-              <li>67% | Maintaining workarounds</li>
-              <li>18% | Firefighting</li>
-              <li>10% | Meetings explaining why velocity is slow</li>
-              <li>5% | Actual strategic work</li>
-              <li>0% | Learning/development</li>
-            </ul>
-
-            <p style={{ marginTop: '15px', marginBottom: '5px' }}>Car crying frequency: Twice a month (parking lot after particularly bad 1:1s)</p>
-            <p style={{ marginBottom: '5px' }}>Resume updates: Every Sunday night</p>
-            <p style={{ marginBottom: '5px' }}>Therapy topic: "I thought I forgot how to do my job"</p>
-            <p style={{ marginBottom: '5px' }}>LinkedIn activity: None (down from daily)</p>
-          </div>
-
-          <p style={{ fontWeight: '700', color: COLORS.yellow }}>
-            What Changed Between Month 1 and Month 18:
-          </p>
-          <p style={{ marginTop: '10px' }}>
-            Not Alex's skill. Not Marketo's capability. Not budget.
-          </p>
-          <p style={{ marginTop: '10px', fontStyle: 'italic' }}>
-            What changed: The gap between job title and actual work crushed Alex's capacity to build anything strategic.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  // Jordan - The Reality
+  // Jordan now uses separate split functions
   if (name === 'Jordan') {
-    return (
-      <section style={containerStyle}>
-        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
-          The Reality
-        </h2>
-
-        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow }}>Week 1:</p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP in first 1:1:</span> "Hey, can you pull a list of all opportunities created in the last 90 days with associated campaign touches? Sales needs it by EOD."
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan:</span> "Sure. Where's the schema documentation?"
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "The what?"
-            </p>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Jordan (internally):</span> "Okay, so step one is documenting the schema. I'll do this list pull, then propose the documentation project."
-            </p>
-          </div>
-
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Week 2 - Jordan proposes data governance project:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px', fontSize: '0.95rem' }}>
-              <li>2 weeks to audit current data sources</li>
-              <li>2 weeks to document schema</li>
-              <li>1 week to get stakeholder alignment on definitions</li>
-              <li>2 weeks to build automated reporting on clean foundation</li>
-            </ul>
-            <p style={{ marginBottom: '10px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "That sounds great, but can it wait until next quarter? Right now we need you focused on pulling reports for the board meeting."
-            </p>
-          </div>
-
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 3 - Jordan's actual workload:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8' }}>
-              <li>71% | "Can you pull this list?" requests (averaging 8 per day)</li>
-              <li>12% | Reconciling why two reports don't match</li>
-              <li>11% | Building dashboards on undefined data (knowing they'll be wrong)</li>
-              <li>6% | Actual data architecture work (done after hours)</li>
-            </ul>
-            <p style={{ marginTop: '15px', fontWeight: '700', color: COLORS.yellow }}>
-              Time spent doing what they were hired for: 6%
-            </p>
-          </div>
-
-          {/* Data Lag Evolution */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', border: `2px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
-              The Data Lag Evolution:
-            </p>
-            <p style={{ marginBottom: '15px', fontSize: '0.9rem', fontStyle: 'italic' }}>
-              Jordan tracked it obsessively because it was the canary in the coal mine:
-            </p>
-
-            <div style={{ marginBottom: '15px' }}>
-              <p style={{ fontWeight: '700' }}>Month 1:</p>
-              <p>Data refresh lag: 5 minutes</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "Healthy system"</p>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <p style={{ fontWeight: '700' }}>Month 6:</p>
-              <p>Data refresh lag: 15 minutes</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "Systems under stress, need optimization"</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Response: "Maybe next quarter"</p>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <p style={{ fontWeight: '700' }}>Month 12:</p>
-              <p>Data refresh lag: 30 minutes</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "This is a problem. Sales is working with stale data."</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Response: "Can you just run the refresh more frequently?"</p>
-            </div>
-
-            <div>
-              <p style={{ fontWeight: '700' }}>Month 18:</p>
-              <p style={{ marginBottom: '10px' }}>Data refresh lag: 45 minutes</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Jordan's diagnosis: "This is now causing revenue impact"</p>
-              <p style={{ fontStyle: 'italic', color: COLORS.lightGrey }}>Response: "Just use yesterday's data if it's not refreshed yet"</p>
-            </div>
-          </div>
-
-          <p style={{ marginBottom: '20px', fontWeight: '700' }}>
-            Why the Lag Kept Growing:
-          </p>
-          <p style={{ marginBottom: '20px' }}>
-            Not because the systems got slower. Because nobody owned the schema.
-          </p>
-          <p style={{ marginBottom: '30px', fontStyle: 'italic' }}>
-            Every new campaign added data. Every new integration added a source. Every new dashboard added a query. All built on top of an undocumented, ungoverned mess.
-          </p>
-          <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-            It's like building a skyscraper on quicksand and being confused when it sinks.
-          </p>
-
-          <p style={{ marginBottom: '10px', fontWeight: '700', color: COLORS.yellow }}>Month 18 Reality:</p>
-          <p style={{ marginBottom: '10px' }}>Jordan spends 6% of time on data architecture.</p>
-          <p style={{ marginBottom: '10px' }}>The other 94% is spent pulling lists and building dashboards on top of data that nobody owns, nobody documents, and nobody will fix.</p>
-          <p style={{ marginBottom: '20px' }}>Jordan can see the solution. Jordan has proposed the solution 14 times.</p>
-          <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
-            Nobody will prioritize it because "we need to hit this quarter's numbers first."
-          </p>
-          <p style={{ fontWeight: '700', color: COLORS.yellow }}>
-            Meanwhile, the 45-minute data lag means sales is calling prospects after they've already talked to a competitor.
-          </p>
-        </div>
-      </section>
-    );
+    return <PlaceholderSection title="Jordan: The Reality" mobile={mobile} />;
   }
 
-  // Casey - The Reality
+  // Casey now uses separate split functions
   if (name === 'Casey') {
-    return (
-      <section style={containerStyle}>
-        <h2 style={{ ...TYPOGRAPHY.h2, color: COLORS.yellow, marginBottom: '10px' }}>
-          The Reality
-        </h2>
-
-        <div style={{ ...TYPOGRAPHY.body, color: COLORS.white }}>
-          {/* Attempt 1 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
-              Attempt 1: The Solo Build (Months 1-4)
-            </p>
-
-            <p style={{ marginBottom: '15px' }}>Casey starts with an audit.</p>
-            <p style={{ marginBottom: '10px' }}>Good news: Marketo and Salesforce are connected.</p>
-            <p style={{ marginBottom: '20px' }}>Bad news: Nobody documented how. Or what fields mean. Or which data is source of truth.</p>
-
-            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Example discovery:</p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "What's the definition of an MQL?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Demand Gen Manager:</span> "Someone who hits 100 lead score points."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Sales Ops:</span> "Someone who requests a demo."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP Marketing:</span> "I thought it was when they hit a lifecycle stage?"
-            </p>
-
-            <p style={{ marginTop: '15px', marginBottom: '10px' }}>All three definitions exist in the data. None are consistently used.</p>
-            <p style={{ marginBottom: '10px' }}>Casey documents this: "We have three MQL definitions operating simultaneously."</p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Interesting. Can you just use the Salesforce one for now and we'll align on definitions later?"
-            </p>
-          </div>
-
-          {/* Month 4 Result */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.15)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px' }}>Month 4 - Attempt 1 Launch:</p>
-            <p style={{ marginBottom: '10px' }}>Casey builds the best attribution model possible with:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
-              <li>Undefined MQL definitions</li>
-              <li>Undocumented campaign taxonomies</li>
-              <li>Inconsistent tracking (some campaigns tracked, some not, nobody knows which)</li>
-              <li>No cross-functional agreement on what "conversion" means</li>
-            </ul>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow, fontSize: '1.2rem' }}>
-              Result: Data fill rate: 8%
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', fontSize: '0.95rem' }}>
-              Meaning: 92% of the time, the model can't attribute revenue to campaigns because the data is too messy
-            </p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "8%? Why so low?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Because nobody owns the data definitions. We have three different MQL definitions, campaign tracking is inconsistent, and—"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "Can you fix it?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Yes, but I need cross-functional alignment to define standards and—"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "How long will that take?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "Probably 2 months if we get everyone in a room and—"
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "We don't have 2 months. The board wants attribution next quarter."
-            </p>
-
-            <p style={{ marginTop: '15px', fontStyle: 'italic' }}>
-              Casey's internal dialogue: "I built an 89% fill rate model at my last company. What's different here? ...Oh. There, I had schema ownership and cross-functional alignment. Here, I have neither."
-            </p>
-          </div>
-
-          {/* Attempt 2 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderLeft: `4px solid #ef4444` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: COLORS.yellow, fontSize: '1.1rem' }}>
-              Attempt 2: The Consultant Band-Aid (Months 5-10)
-            </p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "I'm bringing in a consultant to help. They specialize in attribution."
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey:</span> "The problem isn't attribution expertise. It's data governance. We need to—"
-            </p>
-            <p style={{ marginBottom: '20px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>VP:</span> "They're starting Monday."
-            </p>
-
-            <p style={{ marginBottom: '15px', fontWeight: '700' }}>Consultant cost: $175K for 6 months</p>
-
-            <p style={{ marginBottom: '20px', fontStyle: 'italic' }}>
-              Consultant's first diagnosis (Week 1): "Your data governance is a mess. You need to define standards, get cross-functional alignment, and—"
-            </p>
-            <p style={{ marginBottom: '30px', fontWeight: '700', color: COLORS.yellow }}>
-              Casey (internally): "I SAID THAT IN MONTH 1."
-            </p>
-
-            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Months 5-10 Progress:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
-              <li>Got marketing and sales in a room (finally)</li>
-              <li>Defined MQL (chose one definition, deprecated the others)</li>
-              <li>Documented campaign taxonomy</li>
-              <li>Rebuilt attribution model on cleaner foundation</li>
-            </ul>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px', color: COLORS.yellow, fontSize: '1.2rem' }}>
-              Result: Data fill rate: 42%
-            </p>
-            <p style={{ marginBottom: '10px' }}>Consultant leaves (contract complete)</p>
-            <p style={{ marginBottom: '20px' }}>Casey inherits maintenance of 42% model</p>
-
-            <p style={{ marginTop: '15px', fontStyle: 'italic' }}>
-              Casey's assessment: "42% is better than 8%, but it's still useless for real decision-making. We spent $175K to go from 'doesn't work' to 'kind of works sometimes.'"
-            </p>
-          </div>
-
-          {/* Attempt 3 */}
-          <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderLeft: `4px solid #22c55e` }}>
-            <p style={{ fontWeight: '700', marginBottom: '15px', color: '#22c55e', fontSize: '1.1rem' }}>
-              Attempt 3: The Org Chart Fix (Months 11-14)
-            </p>
-
-            <p style={{ marginBottom: '15px' }}>New VP Marketing starts (previous VP moved to another company).</p>
-
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>New VP's first question:</span> "Why is our attribution at 42%?"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey (prepared):</span> "Because we never fully solved the data governance problem. The consultant got us partway there, but we need ongoing schema ownership and—"
-            </p>
-            <p style={{ marginBottom: '5px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>New VP:</span> "Show me your proposal."
-            </p>
-            <p style={{ marginBottom: '30px', fontStyle: 'italic', color: COLORS.lightGrey }}>
-              <span style={{ fontWeight: '700', color: COLORS.white }}>Casey (shocked):</span> "Really?"
-            </p>
-
-            <p style={{ marginBottom: '10px', fontWeight: '700', color: '#22c55e' }}>What Changed:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '20px' }}>
-              <li>New VP assigned a data engineer to partner with Casey</li>
-              <li>Gave Casey actual schema ownership authority</li>
-              <li>Made data governance a Q1 priority (not "next quarter")</li>
-              <li>Funded cross-functional working group</li>
-            </ul>
-
-            <p style={{ marginBottom: '10px', fontWeight: '700' }}>Months 11-14:</p>
-            <p style={{ marginBottom: '10px' }}>Casey + data engineer partner:</p>
-            <ul style={{ marginLeft: '20px', lineHeight: '1.8', marginBottom: '15px' }}>
-              <li>Finished governance work consultant started</li>
-              <li>Cleaned up remaining schema issues</li>
-              <li>Automated tracking for all campaigns</li>
-              <li>Got finance, sales, and marketing aligned on revenue definitions</li>
-            </ul>
-
-            <p style={{ fontWeight: '700', marginBottom: '10px', color: '#22c55e', fontSize: '1.2rem' }}>
-              Result: Data fill rate: 85%
-            </p>
-            <p style={{ marginBottom: '10px' }}>Cost: $40K (data engineer's time + Casey's time)</p>
-            <p style={{ marginBottom: '30px' }}>Timeline: 4 months</p>
-
-            <p style={{ marginBottom: '15px', fontWeight: '700', color: '#22c55e' }}>Attribution Finally Works:</p>
-            <p style={{ marginBottom: '10px' }}>Insight from attribution: $1.2M in budget was going to campaigns with 2% conversion rates, while high-performing campaigns were underfunded.</p>
-            <p style={{ marginBottom: '10px' }}>Budget reallocation: $800K moved to high-performers.</p>
-            <p style={{ marginBottom: '20px' }}>Projected revenue impact: $2.8M lift.</p>
-
-            <p style={{ marginTop: '15px', fontWeight: '700', fontStyle: 'italic', color: COLORS.yellow }}>
-              Casey's reaction: "I could have built this in Month 4 if someone had just given me schema ownership from day one."
-            </p>
-          </div>
-        </div>
-      </section>
-    );
+    return <PlaceholderSection title="Casey: The Reality" mobile={mobile} />;
   }
 
   // Morgan - The Reality
