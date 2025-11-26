@@ -1,0 +1,32 @@
+{
+  "name": "yellowcircle-outreach",
+  "version": "1.0.0",
+  "description": "AI-powered cold outreach automation for GTM consulting",
+  "main": "scripts/generate.js",
+  "scripts": {
+    "generate": "node scripts/generate.js",
+    "generate:batch": "node scripts/generate.js --batch data/targets.csv",
+    "send": "node scripts/send.js",
+    "send:preview": "node scripts/send.js --preview",
+    "track": "node scripts/track.js",
+    "test": "node scripts/test-connection.js",
+    "preview": "open components/preview.html"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.2",
+    "dotenv": "^16.3.1",
+    "groq-sdk": "^0.3.2",
+    "node-fetch": "^2.7.0",
+    "openai": "^4.20.1",
+    "resend": "^2.0.0"
+  },
+  "keywords": [
+    "cold-outreach",
+    "email-automation",
+    "ai-content",
+    "gtm-consulting",
+    "yellowcircle"
+  ],
+  "author": "Christopher Cooper <chris@yellowcircle.co>",
+  "license": "MIT"
+}

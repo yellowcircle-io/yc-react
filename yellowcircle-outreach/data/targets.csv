@@ -1,0 +1,6 @@
+company,first_name,last_name,email,title,industry,trigger,trigger_details
+Example Corp,Jane,Doe,jane@example.com,VP Marketing,B2B SaaS,funding,Series B - $25M announced last week
+Acme Inc,John,Smith,john@acme.com,Director Marketing Ops,Fintech,hiring,Hiring marketing ops manager - LinkedIn
+TechStart,Sarah,Johnson,sarah@techstart.io,Head of Growth,B2B SaaS,news,Launched new product line
+DataFlow,Mike,Chen,mike@dataflow.com,CMO,Analytics,content,Posted about attribution challenges
+ScaleUp Labs,Emily,Williams,emily@scaleuplabs.com,VP Revenue Ops,B2B SaaS,funding,Series A - scaling team

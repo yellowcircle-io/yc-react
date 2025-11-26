@@ -1,0 +1,21 @@
+# Environment
+.env
+.env.local
+
+# Dependencies
+node_modules/
+
+# Output (generated emails contain PII)
+output/*.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
