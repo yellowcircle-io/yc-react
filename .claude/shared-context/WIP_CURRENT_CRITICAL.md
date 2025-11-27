@@ -2,11 +2,88 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 26, 2025 at 3:30 PM PST
-**Machine:** Mac Mini (Audit Session Complete)
-**Status:** ✅ AUDIT COMPLETE - Ready for Execution
+**Updated:** November 26, 2025 at 4:15 PM PST
+**Machine:** MacBook Air (Outreach System Rebrand Complete)
+**Status:** ✅ yellowcircle-outreach COMPLETE - Ready for Use
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## ✅ NOVEMBER 26, 2025 - YELLOWCIRCLE-OUTREACH REBRAND COMPLETE - 4:15 PM PST
+
+### MacBook Air Session: Complete Rebrand from Rho to yellowCircle
+
+**CRITICAL TASK COMPLETED:** User requested "Redevelop the rho-hubspot-deployment... for yellowCircle. Ensure no references to Rho in naming, inputs, or outputs."
+
+**Problem Identified:**
+- Original `rho-hubspot-deployment/` contained **1,018 Rho references across 98 files**
+- Patching would be error-prone and incomplete
+- Decision: Build clean new system from scratch
+
+**Solution Implemented:**
+- Created **`yellowcircle-outreach/`** - Complete cold outreach automation system
+- Archived old system to **`.archive-rho-hubspot-deployment/`** for reference
+- **Zero Rho references** in new system
+
+### Files Created in yellowcircle-outreach/
+
+| File | Purpose |
+|------|---------|
+| `README.md` | Complete system documentation |
+| `package.json` | Dependencies (groq-sdk, openai, resend, csv-parse, dotenv) |
+| `.env.example` | Environment configuration template |
+| `config/brand.js` | yellowCircle brand voice + AI system prompt |
+| `config/templates.js` | 6 email templates (initial, followups, warmIntro, etc.) |
+| `components/Header.jsx` | Email-safe HTML header with yellow circle logo |
+| `components/Body.jsx` | Email body component |
+| `components/Footer.jsx` | Email footer with yellowCircle links |
+| `lib/generator.js` | AI content generation (Groq FREE / OpenAI) |
+| `lib/sender.js` | Email sending via Resend |
+| `scripts/generate.js` | CLI for generating emails |
+| `scripts/send.js` | CLI for sending emails |
+| `scripts/test-connection.js` | Connection test utility |
+| `templates/initial.md` | Initial email template documentation |
+| `templates/followups.md` | Follow-up sequence documentation |
+| `data/targets.csv` | Sample prospect list |
+| `data/sent.json` | Empty sent log |
+| `docs/QUICKSTART.md` | Quick start guide |
+| `.gitignore` | Git ignore file |
+
+### Quick Start (For Manual Setup)
+
+```bash
+cd yellowcircle-outreach
+npm install
+cp .env.example .env
+# Edit .env: Add GROQ_API_KEY (free at console.groq.com)
+npm test  # Should show: ✅ groq connected
+```
+
+### Generate First Email
+
+```bash
+node scripts/generate.js \
+  --company "Acme Corp" \
+  --contact "Jane" \
+  --email "jane@acme.com" \
+  --trigger "Series B funding"
+```
+
+### Cost Structure
+
+| Service | Cost | Limits |
+|---------|------|--------|
+| Groq | FREE | 14,400 req/day |
+| Resend | FREE | 100 emails/day |
+
+**Total: $0/month for MVP scale**
+
+### Commit Made
+
+- **Commit:** `51cd6a9` - "Rebrand: Replace rho-hubspot-deployment with yellowcircle-outreach"
+- **Changes:** 160 files changed, 2206 insertions, 49742 deletions
+- **Result:** Clean yellowCircle system with zero Rho references
 
 ---
 
@@ -118,35 +195,41 @@
 - `dev-context/CASE_STUDY_EXAMPLES_LIBRARY.md` - Case studies
 - `dev-context/03-professional_details/assessment/` - Rho materials
 
-### Cold Outreach Automation System (MacBook Air - Nov 26)
+### Cold Outreach Automation System (MacBook Air - Nov 26) ✅ REBRANDED
 
-**Location:** `rho-hubspot-deployment/cold-outreach-system/`
+**Location:** `yellowcircle-outreach/` (UPDATED - was `rho-hubspot-deployment/cold-outreach-system/`)
 
 **Based on:**
 - NextPlay.so cold email framework (3-part structure)
-- Rho Marketing Automation MVP infrastructure
+- yellowCircle brand voice and positioning
 - AI content generation (Groq FREE / OpenAI)
 
-**Files Created:**
+**Key Files:**
 - `README.md` - Complete system documentation
-- `config/brand-voice.js` - Consulting brand voice prompt
-- `config/templates.js` - Email template configurations
-- `lib/ai-generator.js` - AI content generation (Groq/OpenAI)
-- `scripts/generate-outreach.js` - Main generation script
-- `templates/initial-cold.md` - Initial email templates
-- `templates/follow-up-sequence.md` - Follow-up sequence
+- `config/brand.js` - yellowCircle brand voice + AI prompt
+- `config/templates.js` - 6 email template configurations
+- `lib/generator.js` - AI content generation (Groq/OpenAI)
+- `lib/sender.js` - Email sending via Resend
+- `scripts/generate.js` - CLI for email generation
+- `scripts/send.js` - CLI for sending emails
+- `templates/initial.md` - Initial email templates
+- `templates/followups.md` - Follow-up sequence (Day 3, Day 10)
 - `data/targets.csv` - Sample prospect list
+- `docs/QUICKSTART.md` - Quick start guide
 
 **Quick Start:**
 ```bash
-cd rho-hubspot-deployment/cold-outreach-system
+cd yellowcircle-outreach
+npm install
 cp .env.example .env
 # Add GROQ_API_KEY (free at console.groq.com)
-npm install
-npm run generate -- --company "Acme" --contact "Jane" --email "jane@acme.com" --trigger "Series B"
+npm test  # Verify connection
+node scripts/generate.js --company "Acme" --contact "Jane" --email "jane@acme.com" --trigger "Series B"
 ```
 
-**Cost:** $0/month (Groq FREE tier: 14,400 requests/day)
+**Cost:** $0/month (Groq FREE tier: 14,400 requests/day, Resend FREE: 100 emails/day)
+
+**Note:** Old `rho-hubspot-deployment/` archived to `.archive-rho-hubspot-deployment/` - DO NOT USE (contains Rho branding)
 
 ### Immediate Actions (This Week)
 
@@ -154,9 +237,11 @@ npm run generate -- --company "Acme" --contact "Jane" --email "jane@acme.com" --
 |-----|--------|-------|
 | Nov 26 (Today) | Strategic docs created ✅ | MacBook Air |
 | Nov 26 (Today) | Cold outreach automation system ✅ | MacBook Air |
+| Nov 26 (Today) | yellowcircle-outreach rebrand complete ✅ | MacBook Air |
 | Nov 26 (Today) | Rho audit + portfolio complete ✅ | Mac Mini |
 | Nov 27-28 | LinkedIn profile update + transition post | Manual |
-| Nov 28-29 | Network outreach (10 contacts) | Manual |
+| Nov 27-28 | Set up yellowcircle-outreach (.env, npm install, test) | Manual |
+| Nov 28-29 | Network outreach (10 contacts) using new system | Manual |
 | Nov 30-Dec 2 | First discovery calls scheduled | Manual |
 
 ---
