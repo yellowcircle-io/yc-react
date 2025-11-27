@@ -21,6 +21,7 @@ import GoldenUnknownPage from './pages/experiments/GoldenUnknownPage';
 import BeingRhymePage from './pages/experiments/BeingRhymePage';
 import Cath3dralPage from './pages/experiments/Cath3dralPage';
 import ComponentLibraryPage from './pages/experiments/ComponentLibraryPage';
+import OutreachGeneratorPage from './pages/experiments/OutreachGeneratorPage';
 
 // Thoughts sub-routes
 import BlogPage from './pages/thoughts/BlogPage';
@@ -48,6 +49,7 @@ function RouterApp() {
         <Route path="/experiments/being-rhyme" element={<BeingRhymePage />} />
         <Route path="/experiments/cath3dral" element={<Cath3dralPage />} />
         <Route path="/experiments/component-library" element={<ComponentLibraryPage />} />
+        <Route path="/experiments/outreach-generator" element={<OutreachGeneratorPage />} />
         
         {/* Thoughts Sub-routes */}
         <Route path="/thoughts/blog" element={<BlogPage />} />

@@ -42,27 +42,87 @@
 | Rho Case Studies (anonymized) | Documented | Credibility | Use in sales |
 | N8N Templates | Needs work | $500-1K/mo | Month 3+ |
 
-### Mac Mini Next Task: Extensive Audit
+### Mac Mini Audit Task: ✅ COMPLETE (Nov 26, 2025)
 
-**Assigned to Mac Mini (next session):**
-1. **Rho Career Trajectory Audit**
-   - Full assessment of Rho experience documentation
-   - Extract all repackageable expertise
-   - Anonymize case studies for consulting use
-   - Create consulting portfolio materials
-
-2. **Career Trajectory Analysis**
-   - Review job interview notes/transcripts
-   - Map skills to market demands
-   - Identify positioning opportunities
-   - Update resume/portfolio
-
-3. **60-Day Plan Execution Support**
-   - GTM Assessment service page content
-   - LinkedIn content calendar
-   - Outreach templates
+**All deliverables created:**
+1. ✅ **Rho Career Trajectory Audit** - Complete
+2. ✅ **Career Trajectory Analysis** - Complete
+3. ✅ **60-Day Plan Execution Support** - Complete
 
 **Full Documentation:** `dev-context/STRATEGIC_PIVOT_POST_RHO.md`
+
+---
+
+## 🔴 P0 AUDIT DELIVERABLES [Due: Dec 1, 2025]
+
+**Created:** November 26, 2025
+**Status:** ✅ Complete
+**Priority:** P0
+
+### 1. Consulting Portfolio Audit [P0] ✅
+**Created:** Nov 26, 2025 | **Due:** Dec 1, 2025 | **Status:** Complete
+
+Complete expertise extraction from Rho experience:
+- [x] 5 anonymized case studies ready
+- [x] $2.5M technical debt quantification
+- [x] Signature frameworks documented
+- [x] Benchmark data compiled
+- [x] Quotable insights for LinkedIn
+
+**File:** `dev-context/CONSULTING_PORTFOLIO_AUDIT.md`
+
+### 2. GTM Assessment Service Page [P0] ✅
+**Created:** Nov 26, 2025 | **Due:** Dec 1, 2025 | **Status:** Complete
+
+Ready-to-use service copy for GTM Strategic Audit ($4K-5K):
+- [x] Headlines and descriptions (long/short form)
+- [x] Value propositions by audience
+- [x] Objection handling scripts
+- [x] Proof points and credibility
+- [x] FAQs
+
+**File:** `dev-context/GTM_ASSESSMENT_SERVICE_PAGE.md`
+
+### 3. LinkedIn Content Calendar [P0] ✅
+**Created:** Nov 26, 2025 | **Due:** Dec 1, 2025 | **Status:** Complete
+
+8-week LinkedIn posting plan (2-3 posts/week):
+- [x] Week 1: Transition announcement + Article share
+- [x] Week 2: Credibility building posts
+- [x] Week 3: Problem awareness posts
+- [x] Week 4: Solution positioning + service launch
+- [x] Week 5-8: Ongoing content themes
+- [x] Hashtag strategy and engagement metrics
+
+**File:** `dev-context/LINKEDIN_CONTENT_CALENDAR.md`
+
+### 4. Outreach Templates [P0] ✅
+**Created:** Nov 26, 2025 | **Due:** Dec 1, 2025 | **Status:** Complete
+
+Complete outreach template library:
+- [x] Warm outreach (2 templates)
+- [x] Cold outreach (3 templates)
+- [x] LinkedIn connection requests (3 templates)
+- [x] Follow-up sequences
+- [x] Proposal follow-ups
+- [x] Response handling scripts
+
+**File:** `dev-context/OUTREACH_TEMPLATES.md`
+
+---
+
+## 🟡 P2 CONTENT ITEMS
+
+### Article 2 Draft - "Why Your MAP Is a Mess" [P2]
+**Created:** Nov 18, 2025 | **Due:** Jan 15, 2026 | **Status:** Not Started
+
+Continuation of "Own Your Story" series:
+- [ ] Research common MAP failures
+- [ ] Draft content with case study examples
+- [ ] Create supporting visuals
+- [ ] Review and refine
+
+**Dependent on:** Article 1 performance metrics and feedback
 
 ---
 
@@ -367,7 +427,8 @@ All pages now follow unified structure:
 
 ## 🔑 Key Cross-Cutting Projects
 
-### **A. 2nd Brain App Development**
+### **A. 2nd Brain App Development** [P3]
+**Created:** Nov 8, 2025 | **Due:** TBD | **Status:** Not Started
 
 #### Context Added:
 You mentioned additional context for "2nd Brain" app as **Visual Note App**.
@@ -384,7 +445,8 @@ You mentioned additional context for "2nd Brain" app as **Visual Note App**.
 
 ---
 
-### **B. Multi-Machine Context System**
+### **B. Multi-Machine Context System** [P2]
+**Created:** Nov 8, 2025 | **Due:** Dec 31, 2025 | **Status:** In Progress
 
 **Current Status:**
 - `.claude/shared-context/WIP_CURRENT_CRITICAL.md` - Active
@@ -400,7 +462,8 @@ You mentioned additional context for "2nd Brain" app as **Visual Note App**.
 
 ---
 
-### **C. Claude Web → Claude Code Integration**
+### **C. Claude Web → Claude Code Integration** [P2]
+**Created:** Nov 8, 2025 | **Due:** Dec 31, 2025 | **Status:** Not Started
 
 **Goal:** Connect Claude web to Claude Code for additions to dev repositories
 
@@ -500,8 +563,8 @@ Phase 4: Documentation (1-2 hrs)
 - Update resume/portfolio based on findings
 ```
 
-#### 4. yellowCircle - "Own Your Story Series" Scoping (11-18 hours)
-**Status:** Scoping phase
+#### 4. yellowCircle - "Own Your Story Series" Scoping (11-18 hours) [P1]
+**Created:** Nov 18, 2025 | **Due:** Dec 15, 2025 | **Status:** In Progress
 **Timeline:** Free time over next week
 
 ```
@@ -599,7 +662,8 @@ Option B: Rho Integration Components (30-51 hours remaining)
 - Allows monitoring Skydog outcomes before committing to Rho work
 ```
 
-### Priority 4: yellowCircle Homepage (Deferred to Month 2-3)
+### Priority 4: yellowCircle Homepage (Deferred to Month 2-3) [P2]
+**Created:** Nov 8, 2025 | **Due:** Jan 1, 2026 | **Status:** Not Started
 ```
 Originally Priority 1, now deferred based on stealth mode time allocation:
 - 12-17 hours estimated

@@ -143,6 +143,13 @@ function ExperimentsPage() {
           {/* Work Cards */}
           {[
             {
+              title: 'OUTREACH GENERATOR',
+              description: 'AI-powered cold email generation using the NextPlay.so framework. Create personalized outreach sequences in seconds.',
+              tags: ['AI', 'Email', 'Automation'],
+              path: '/experiments/outreach-generator',
+              featured: true
+            },
+            {
               title: 'GOLDEN UNKNOWN',
               description: 'An immersive exploration of identity and transformation through interactive digital media.',
               tags: ['Interactive', 'Identity', 'Digital Art'],

@@ -46,6 +46,8 @@ function parseRoadmapFile(filePath) {
   const hoursPattern = /(\d+(?:-\d+)?)\s*(?:hours?|hrs?)/i;
   const statusPattern = /Status:\s*(.+?)$/m;
   const checkboxPattern = /^- \[([ x✅])\]\s+(.+)$/gm;
+  const createdPattern = /\*\*Created[:\*]*\*?\s*:?\s*((?:Nov|Dec|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct)\s+\d{1,2},?\s*\d{4}|\d{4}-\d{2}-\d{2})/i;
+  const duePattern = /(?:\*\*Due[:\*]*\*?\s*:?\s*|Due:\s*|\[Due:\s*)((?:Nov|Dec|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct)\s+\d{1,2},?\s*\d{4}|\d{4}-\d{2}-\d{2})/i;
 
   let currentSection = null;
   let currentPriority = 'P2';
@@ -96,12 +98,20 @@ function parseRoadmapFile(filePath) {
         status = 'Complete';
       }
 
+      // Extract dates
+      const createdMatch = nextLines.match(createdPattern);
+      const dueMatch = nextLines.match(duePattern) || title.match(duePattern);
+      const createdDate = createdMatch ? parseDate(createdMatch[1]) : null;
+      const dueDate = dueMatch ? parseDate(dueMatch[1]) : null;
+
       currentSection = {
         title: cleanTitle(title),
         priority: currentPriority,
         category: currentCategory,
         status: status,
         estimatedHours: estimatedHours,
+        createdDate: createdDate,
+        dueDate: dueDate,
         description: '',
         subtasks: [],
       };
@@ -156,6 +166,39 @@ function parseHours(hoursText) {
 }
 
 /**
+ * Parse date strings to ISO format for Notion
+ * Handles: "Nov 26, 2025", "December 1, 2025", "2025-11-26"
+ */
+function parseDate(dateText) {
+  if (!dateText) return null;
+
+  // Already ISO format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+    return dateText;
+  }
+
+  // Parse "Nov 26, 2025" or "November 26, 2025" format
+  const months = {
+    'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+    'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+    'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+  };
+
+  const match = dateText.match(/([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})/);
+  if (match) {
+    const monthKey = match[1].toLowerCase().substring(0, 3);
+    const month = months[monthKey];
+    const day = match[2].padStart(2, '0');
+    const year = match[3];
+    if (month) {
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Create or update Notion page for task
  */
 async function syncTaskToNotion(task) {
@@ -203,6 +246,24 @@ async function syncTaskToNotion(task) {
   if (task.estimatedHours) {
     pageProperties['Estimated Hours'] = {
       number: task.estimatedHours,
+    };
+  }
+
+  // Add created date if exists
+  if (task.createdDate) {
+    pageProperties['Created Date'] = {
+      date: {
+        start: task.createdDate,
+      },
+    };
+  }
+
+  // Add due date if exists
+  if (task.dueDate) {
+    pageProperties['Due Date'] = {
+      date: {
+        start: task.dueDate,
+      },
     };
   }
 
@@ -295,7 +356,7 @@ async function setupDatabaseSchema() {
     });
 
     const existingProps = Object.keys(database.properties);
-    const requiredProps = ['Feature', 'Status', 'Priority', 'Category', 'Description', 'Estimated Hours'];
+    const requiredProps = ['Feature', 'Status', 'Priority', 'Category', 'Description', 'Estimated Hours', 'Created Date', 'Due Date'];
     const missingProps = requiredProps.filter(prop => !existingProps.includes(prop));
 
     if (missingProps.length === 0) {
@@ -362,6 +423,18 @@ async function setupDatabaseSchema() {
         number: {
           format: 'number',
         },
+      };
+    }
+
+    if (missingProps.includes('Created Date')) {
+      newProperties['Created Date'] = {
+        date: {},
+      };
+    }
+
+    if (missingProps.includes('Due Date')) {
+      newProperties['Due Date'] = {
+        date: {},
       };
     }
 
