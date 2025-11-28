@@ -14,6 +14,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import SitemapPage from './pages/SitemapPage';
 import DirectoryPage from './pages/DirectoryPage';
 import UnityNotesPage from './pages/UnityNotesPage';
+import UnityNotePlusPage from './pages/UnityNotePlusPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Experiment sub-routes
@@ -74,6 +75,7 @@ function RouterApp() {
 
         {/* Unity Notes - Second Brain App */}
         <Route path="/unity-notes" element={<UnityNotesPage />} />
+        <Route path="/unity-note-plus" element={<UnityNotePlusPage />} />
 
         {/* Placeholder routes for future sub-pages */}
         <Route path="/about/timeline" element={<AboutPage />} />
