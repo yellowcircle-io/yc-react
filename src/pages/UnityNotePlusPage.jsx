@@ -49,106 +49,7 @@ const CARD_TYPES = {
   video: { label: 'Video', icon: '📹', color: '#EF4444' },
 };
 
-// Quick Add Panel Component
-const QuickAddPanel = ({ onAdd, theme }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const isDark = theme === 'dark';
-
-  return (
-    <div style={{
-      position: 'fixed',
-      bottom: '100px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 100,
-    }}>
-      {/* Expanded menu */}
-      {isOpen && (
-        <div style={{
-          position: 'absolute',
-          bottom: '70px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '8px',
-          padding: '12px',
-          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.98)' : 'rgba(255, 255, 255, 0.98)',
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-          backdropFilter: 'blur(8px)',
-        }}>
-          {Object.entries(CARD_TYPES).map(([type, config]) => (
-            <button
-              key={type}
-              onClick={() => {
-                onAdd(type);
-                setIsOpen(false);
-              }}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '12px 16px',
-                backgroundColor: 'transparent',
-                border: `2px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = config.color;
-                e.currentTarget.style.backgroundColor = `${config.color}15`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = isDark ? '#374151' : '#e5e7eb';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <span style={{ fontSize: '24px' }}>{config.icon}</span>
-              <span style={{
-                fontSize: '10px',
-                fontWeight: '600',
-                color: isDark ? '#d1d5db' : '#4b5563',
-                letterSpacing: '0.05em',
-              }}>{config.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Main toggle button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: '#EECF00',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: '28px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(238, 207, 0, 0.4)',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1.05)' : 'scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 6px 24px rgba(238, 207, 0, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = isOpen ? 'rotate(45deg)' : 'rotate(0)';
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(238, 207, 0, 0.4)';
-        }}
-      >
-        +
-      </button>
-    </div>
-  );
-};
+// Card types removed - using unified context menu like Unity Notes
 
 // Theme Toggle Component
 const ThemeToggle = ({ theme, onToggle }) => {
@@ -587,8 +488,56 @@ const UnityNotePlusFlow = ({
         </ReactFlow>
       </div>
 
-      {/* Quick Add Panel */}
-      <QuickAddPanel onAdd={handleAddCard} theme={theme} />
+      {/* Circle Nav - Bottom Center (same as Unity Notes) */}
+      <div
+        onClick={() => setIsUploadModalOpen(true)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setShowContextMenu(!showContextMenu);
+        }}
+        data-context-menu
+        style={{
+          position: 'fixed',
+          bottom: '40px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '78px',
+          height: '78px',
+          cursor: 'pointer',
+          zIndex: 80,
+          transition: 'transform 0.2s ease'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1)'}
+        title="Add Note (Right-click for more options)"
+      >
+        <img
+          src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494537/NavCircle_ioqlsr.png"
+          alt="Add Note"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: 'rotate(0deg)',
+            transition: 'transform 0.3s ease-out',
+            pointerEvents: 'none'
+          }}
+        />
+        {/* Plus Symbol */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '32px',
+          fontWeight: '300',
+          color: 'black',
+          pointerEvents: 'none',
+          lineHeight: '1'
+        }}>
+          +
+        </div>
+      </div>
 
       {/* Zoom Controls */}
       <div style={{
@@ -673,21 +622,46 @@ const UnityNotePlusFlow = ({
         >⊙</button>
       </div>
 
-      {/* Context Menu */}
+      {/* Context Menu - Center aligned, same as Unity Notes */}
       {showContextMenu && (
         <div style={{
           position: 'fixed',
-          bottom: '180px',
+          bottom: '130px',
           left: '50%',
           transform: 'translateX(-50%)',
-          backgroundColor: isDark ? 'rgba(31, 41, 55, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+          backgroundColor: 'rgba(255, 255, 255, 0.98)',
           backdropFilter: 'blur(8px)',
           padding: '8px',
           borderRadius: '4px',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
           zIndex: 200,
-          minWidth: '160px'
+          minWidth: '180px'
         }}>
+          <button
+            onClick={() => {
+              setIsUploadModalOpen(true);
+              setShowContextMenu(false);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              backgroundColor: '#EECF00',
+              color: 'black',
+              border: 'none',
+              borderRadius: '0',
+              cursor: 'pointer',
+              fontSize: '10px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              marginBottom: '4px',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#fbbf24'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#EECF00'}
+          >
+            + ADD NOTE
+          </button>
+
           <button
             onClick={() => { handleExportJSON(); setShowContextMenu(false); }}
             style={{
@@ -696,13 +670,19 @@ const UnityNotePlusFlow = ({
               backgroundColor: '#3b82f6',
               color: 'white',
               border: 'none',
+              borderRadius: '0',
               cursor: 'pointer',
               fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
               marginBottom: '4px',
+              transition: 'background-color 0.2s'
             }}
-          >EXPORT</button>
+            onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+          >
+            EXPORT
+          </button>
 
           <button
             onClick={handleClearAll}
@@ -712,12 +692,46 @@ const UnityNotePlusFlow = ({
               backgroundColor: '#dc2626',
               color: 'white',
               border: 'none',
+              borderRadius: '0',
               cursor: 'pointer',
               fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
+              marginBottom: '8px',
+              transition: 'background-color 0.2s'
             }}
-          >CLEAR ALL</button>
+            onMouseOver={(e) => e.target.style.backgroundColor = '#b91c1c'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#dc2626'}
+          >
+            CLEAR
+          </button>
+
+          {/* Separator */}
+          <div style={{ height: '1px', backgroundColor: '#e5e5e5', margin: '4px 0' }} />
+
+          <button
+            onClick={() => {
+              onFooterToggle();
+              setShowContextMenu(false);
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0',
+              cursor: 'pointer',
+              fontSize: '9px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#4b5563'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#6b7280'}
+          >
+            FOOTER
+          </button>
         </div>
       )}
 
@@ -778,11 +792,13 @@ const UnityNotePlusFlow = ({
         </div>
       )}
 
-      {/* Upload Modal */}
+      {/* Upload Modal - With card types for Plus version */}
       <PhotoUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handlePhotoUpload}
+        cardTypes={CARD_TYPES}
+        onAddCard={handleAddCard}
       />
 
       {/* Share Modal */}
@@ -844,7 +860,7 @@ function UnityNotePlusPage() {
       itemKey: "labs",
       subItems: [
         { label: "Unity Notes", key: "unity-notes" },
-        { label: "Unity Notes+", key: "unity-note-plus" },
+        { label: "Unity Notes+", key: "unity-notes-plus" },
         { label: "UK-Memories", key: "uk-memories" },
       ]
     },

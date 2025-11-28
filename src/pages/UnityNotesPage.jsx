@@ -684,7 +684,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </button>
       </div>
 
-      {/* Context Menu */}
+      {/* Context Menu - Center aligned */}
       {showContextMenu && (
         <div style={{
           position: 'fixed',
@@ -895,7 +895,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             marginBottom: '12px',
             lineHeight: '1.4'
           }}>
-            Click the yellow circle below to add your first note.
+            Click the yellow circle to add your first note.
           </p>
           <div style={{ fontSize: '11px', color: 'rgba(0, 0, 0, 0.5)', lineHeight: '1.6' }}>
             <p>✨ Drag notes to organize</p>
@@ -1025,11 +1025,11 @@ function UnityNotesPage() {
       }}
       onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)'}
       onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1)'}
-      title="Add Notes (Right-click for options)"
+      title="Add Note (Right-click for options)"
     >
       <img
         src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494537/NavCircle_ioqlsr.png"
-        alt="Add Notes"
+        alt="Add Note"
         style={{
           width: '100%',
           height: '100%',
