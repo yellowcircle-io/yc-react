@@ -34,19 +34,21 @@ const globalContent = {
       title: 'CONTACT',
       links: [
         {
-          text: 'EMAIL@YELLOWCIRCLE.IO',
-          url: '#',
+          text: 'info@yellowcircle.io',
+          url: 'mailto:info@yellowcircle.io',
           type: 'email'
         },
         {
           text: 'LINKEDIN',
-          url: '#',
-          type: 'social'
+          url: 'https://www.linkedin.com/in/crcooper1/',
+          type: 'social',
+          icon: 'linkedin'
         },
         {
-          text: 'TWITTER',
-          url: '#',
-          type: 'social'
+          text: 'INSTAGRAM',
+          url: 'https://www.instagram.com/labs.yellowcircle.io/',
+          type: 'social',
+          icon: 'instagram'
         }
       ],
       colors: {

@@ -101,6 +101,7 @@ function Layout({
       {/* Sidebar */}
       <Sidebar
         onHomeClick={onHomeClick}
+        onFooterToggle={onFooterToggle}
         navigationItems={navigationItems}
         scrollOffset={scrollOffset}
         pageLabel={pageLabel}
@@ -117,6 +118,8 @@ function Layout({
         <NavigationCircle
           onClick={circleNavBehavior || onFooterToggle}
           rotation={navCircleRotation}
+          onMenuToggle={onMenuToggle}
+          onContactClick={onFooterToggle}
         />
       )}
 
