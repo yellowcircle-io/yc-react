@@ -75,7 +75,7 @@ function RouterApp() {
 
         {/* Unity Notes - Second Brain App */}
         <Route path="/unity-notes" element={<UnityNotesPage />} />
-        <Route path="/unity-note-plus" element={<UnityNotePlusPage />} />
+        <Route path="/unity-notes-plus" element={<UnityNotePlusPage />} />
 
         {/* Placeholder routes for future sub-pages */}
         <Route path="/about/timeline" element={<AboutPage />} />

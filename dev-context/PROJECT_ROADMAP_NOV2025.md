@@ -5,12 +5,52 @@
 
 ---
 
-## 🟢 NOVEMBER 28, 2025 - UNITY NOTE PLUS V2 COMPLETE
+## 🟢 NOVEMBER 28, 2025 - UNITY NOTES UI REFINEMENT
 
-### Unity Note Plus - Multi-Card Canvas Workspace
+### Unity Notes + Unity Notes Plus - UI Consistency Update
 
-**Route:** `/unity-note-plus`
-**Status:** ✅ Foundation Complete - Ready for Phase 2 Enhancement
+**Routes:**
+- `/unity-notes` - Original 2nd Brain canvas
+- `/unity-notes-plus` - Multi-card enhanced version
+
+**Session Work Completed (5:45 PM):**
+
+**1. HamburgerMenu Slide-Over Styling:**
+- ✅ Updated slide-over to match yellow theme (from dark background)
+- ✅ Typography aligned: `clamp(2rem, 5vh, 3.5rem)`, fontWeight 900, letterSpacing 0.3em
+- ✅ X close button replaced with proper hamburger-style bars
+- ✅ Z-index layering fixed (270 for slide-over panel)
+
+**2. Circle Nav Positioning:**
+- ✅ Reverted to center bottom viewport (consistent across both pages)
+- ✅ Right-click context menu centered to match
+
+**3. PhotoUploadModal Card Types:**
+- ✅ Extended with optional `cardTypes` and `onAddCard` props
+- ✅ Photo upload methods remain PRIMARY
+- ✅ Card types (Photo, Note, Link, AI, Video) appear as SECONDARY
+- ✅ Only displayed in Unity Notes Plus version
+
+**4. Menu Navigation:**
+- ✅ Added Unity Notes+ to LABS submenu
+- ✅ Fixed route from `/unity-note-plus` to `/unity-notes-plus`
+- ✅ Consistent naming: "unity-notes" throughout
+
+**5. Delete Functionality:**
+- ✅ Verified working via Select → EDIT → DELETE flow
+
+**Files Modified:**
+- `src/components/global/HamburgerMenu.jsx` - Yellow slide-over styling
+- `src/pages/UnityNotesPage.jsx` - Circle Nav centered
+- `src/pages/UnityNotePlusPage.jsx` - Circle Nav centered, card types in dialog
+- `src/components/travel/PhotoUploadModal.jsx` - cardTypes/onAddCard props
+- `src/RouterApp.jsx` - Route `/unity-notes-plus`
+
+---
+
+### Unity Notes Plus - Multi-Card Canvas Workspace (Previous Session)
+
+**Status:** ✅ Foundation Complete + UI Refined
 
 **ThreadDeck-Inspired Features Implemented:**
 - ✅ Multiple card types architecture (Photo, Text Note, Link, AI, Video placeholders)
@@ -24,7 +64,7 @@
 - `src/components/unity-plus/TextNoteNode.jsx` (180 lines)
 - `dev-context/UNITY_NOTE_PLUS_ANALYSIS.md` (comprehensive analysis)
 
-**Next Phase (Unity Note Plus v2.1):**
+**Next Phase (Unity Notes Plus v2.1):**
 - [ ] LinkNode component with URL metadata fetching
 - [ ] VideoNode component with YouTube embed
 - [ ] AIChatNode component with Groq/OpenAI integration

@@ -31,6 +31,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
       subItems: [
         { label: 'UK-Memories', route: '/uk-memories' },
         { label: 'Unity Notes', route: '/unity-notes' },
+        { label: 'Unity Notes+', route: '/unity-notes-plus' },
         { label: 'Component Library', route: '/experiments/component-library' }
       ]
     },
@@ -309,66 +310,89 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
             })}
           </div>
 
-          {/* Slide-over panel for sub-items */}
+          {/* Slide-over panel for sub-items - Yellow theme matching main overlay */}
           {slideOverOpen && (
             <div style={{
               position: 'fixed',
               top: 0,
               right: 0,
-              width: 'min(400px, 80vw)',
+              width: 'min(500px, 85vw)',
               height: '100vh',
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              zIndex: 260,
+              backgroundColor: '#EECF00',
+              zIndex: 270,
               display: 'flex',
               flexDirection: 'column',
               animation: 'slideInRight 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.3)'
+              boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.15)'
             }}>
-              {/* Back button header */}
+              {/* Header with title and close button */}
               <div style={{
-                padding: '24px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                padding: '20px 24px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px'
+                justifyContent: 'space-between',
+                minHeight: '80px'
               }}>
+                {/* Title - matching main menu typography */}
+                <span style={{
+                  fontSize: 'clamp(2rem, 5vh, 3.5rem)',
+                  fontWeight: '900',
+                  fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                  color: 'black',
+                  letterSpacing: '0.3em'
+                }}>{slideOverTitle}</span>
+
+                {/* Close button - X */}
                 <button
-                  onClick={handleCloseSlideOver}
+                  onClick={() => {
+                    handleCloseSlideOver();
+                    if (onMenuToggle) onMenuToggle();
+                  }}
                   style={{
+                    width: '50px',
+                    height: '50px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
+                    justifyContent: 'center',
                     backgroundColor: 'transparent',
+                    border: 'none',
                     cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    letterSpacing: '0.1em',
-                    transition: 'all 0.2s ease'
+                    padding: 0,
+                    transition: 'transform 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
-                    e.currentTarget.style.color = '#EECF00';
+                    e.currentTarget.style.transform = 'scale(1.1)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                    e.currentTarget.style.transform = 'scale(1)';
                   }}
                 >
-                  <span style={{ fontSize: '18px' }}>←</span>
-                  <span>BACK</span>
+                  {/* X icon matching hamburger style */}
+                  <div style={{
+                    position: 'relative',
+                    width: '28px',
+                    height: '28px'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: '28px',
+                      height: '3px',
+                      backgroundColor: 'black',
+                      transform: 'translate(-50%, -50%) rotate(45deg)'
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: '28px',
+                      height: '3px',
+                      backgroundColor: 'black',
+                      transform: 'translate(-50%, -50%) rotate(-45deg)'
+                    }} />
+                  </div>
                 </button>
-                <span style={{
-                  fontSize: '18px',
-                  fontWeight: '800',
-                  color: '#EECF00',
-                  letterSpacing: '0.2em'
-                }}>{slideOverTitle}</span>
               </div>
 
               {/* Sub-items list */}
@@ -393,31 +417,32 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                       justifyContent: 'space-between',
                       width: '100%',
                       padding: '18px 20px',
-                      borderRadius: '10px',
+                      borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.06)',
                       cursor: 'pointer',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: 'white',
+                      fontSize: '18px',
+                      fontWeight: '700',
+                      fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                      color: 'black',
                       letterSpacing: '0.1em',
                       textAlign: 'left',
                       transition: 'all 0.2s ease',
                       animation: `slideInMenuItem 0.3s ease-out ${idx * 0.08}s both`
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.15)';
+                      e.currentTarget.style.backgroundColor = 'black';
                       e.currentTarget.style.color = '#EECF00';
                       e.currentTarget.style.transform = 'translateX(-8px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                      e.currentTarget.style.color = 'white';
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
+                      e.currentTarget.style.color = 'black';
                       e.currentTarget.style.transform = 'translateX(0)';
                     }}
                   >
                     <span>{subItem.label}</span>
-                    <span style={{ opacity: 0.5, fontSize: '14px' }}>→</span>
+                    <span style={{ opacity: 0.4, fontSize: '14px' }}>→</span>
                   </button>
                 ))}
               </div>

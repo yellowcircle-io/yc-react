@@ -2,11 +2,53 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 28, 2025 at 3:30 PM PST
-**Machine:** MacBook Air (Global Components + Unity Note Plus)
-**Status:** ✅ Global Component Updates + Unity Note Plus v2 COMPLETE
+**Updated:** November 28, 2025 at 5:45 PM PST
+**Machine:** MacBook Air (Unity Notes UI Refinement)
+**Status:** ✅ Unity Notes + Unity Notes Plus UI Refinement COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## ✅ NOVEMBER 28, 2025 - UNITY NOTES UI REFINEMENT - 5:45 PM PST
+
+### MacBook Air Session: Unity Notes UI Updates
+
+**TASKS COMPLETED:**
+
+### 1. Circle Nav & Context Menu
+- Circle Nav: Centered at bottom (reverted from right)
+- Context menu: Centered below Circle Nav
+- Text: "ADD NOTE" instead of "ADD PHOTO"
+
+### 2. Unity Notes Plus - Card Types in Dialog
+- Photo upload dialog now shows card type buttons as secondary options
+- PhotoUploadModal extended with optional `cardTypes` and `onAddCard` props
+- Card types (Photo, Note, Link, AI, Video) shown below photo upload methods
+- Context menu simplified (card types moved to dialog)
+
+### 3. Menu Styling Updates
+- HamburgerMenu slide-over: Yellow background matching main overlay
+- Typography: Large bold titles with letter-spacing
+- Single X close button (removed duplicate)
+- Consistent naming: `/unity-notes-plus` route
+
+### 4. Rho Secrets Removed
+- `rho-hubspot-deployment/` removed from git history
+- `.archive-rho-hubspot-deployment/` removed from git history
+- Force pushed to GitHub successfully
+
+### 5. Delete Note Functionality
+- Works via: Select node → Click EDIT → Click DELETE in modal
+- `handleDeleteMemory` removes node from array and edges
+
+**Files Modified:**
+- `src/pages/UnityNotesPage.jsx` - Circle Nav centered, context menu centered
+- `src/pages/UnityNotePlusPage.jsx` - Circle Nav centered, card types to dialog
+- `src/components/travel/PhotoUploadModal.jsx` - Added cardTypes support
+- `src/components/global/HamburgerMenu.jsx` - Yellow theme slide-over
+
+**Deployed:** ✅ Firebase hosting at https://yellowcircle-app.web.app
 
 ---
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { isCloudinaryConfigured } from '../../utils/cloudinaryUpload';
 
-const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
+const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) => {
   const [step, setStep] = useState('method');
   const [uploadMethod, setUploadMethod] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -361,6 +361,68 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload }) => {
                     }}>.env.example</code> for setup.
                   </p>
                 </div>
+              )}
+
+              {/* Card Types Section - Only shown when cardTypes prop is provided (Plus version) */}
+              {cardTypes && onAddCard && (
+                <>
+                  <div style={{
+                    marginTop: '24px',
+                    marginBottom: '16px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+                    paddingTop: '24px'
+                  }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      letterSpacing: '0.1em',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      margin: '0 0 12px 0'
+                    }}>
+                      OR ADD OTHER CARD TYPES
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {Object.entries(cardTypes).map(([type, config]) => (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          onAddCard(type);
+                          onClose();
+                        }}
+                        style={{
+                          flex: '1 1 calc(50% - 4px)',
+                          minWidth: '140px',
+                          padding: '14px 16px',
+                          backgroundColor: config.color,
+                          color: type === 'photo' ? 'black' : 'white',
+                          border: 'none',
+                          borderRadius: '0',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          letterSpacing: '0.05em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.opacity = '0.85';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.opacity = '1';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        <span style={{ fontSize: '18px' }}>{config.icon}</span>
+                        <span>{config.label.toUpperCase()}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
