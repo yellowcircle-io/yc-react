@@ -2,11 +2,86 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 26, 2025 at 4:15 PM PST
-**Machine:** MacBook Air (Outreach System Rebrand Complete)
-**Status:** ✅ yellowcircle-outreach COMPLETE - Ready for Use
+**Updated:** November 28, 2025 at 11:45 AM PST
+**Machine:** MacBook Air (Outreach Security Framework Complete)
+**Status:** ✅ Outreach Pro Security Updates COMPLETE - API keys encrypted, public tool customizable
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## ✅ NOVEMBER 28, 2025 - OUTREACH SECURITY FRAMEWORK COMPLETE - 11:45 AM PST
+
+### MacBook Air Session: Security Hardening for Outreach Tools
+
+**CRITICAL TASK COMPLETED:** User requested security framework for yellowCircle (business) and external party (public) tools, ensuring passwords, API keys encrypted for this phase.
+
+**Problem Identified:**
+- OutreachBusinessPage had **hardcoded API keys in source code** (Groq, Resend)
+- Settings stored in **plain text localStorage**
+- Public OutreachGeneratorPage had **no customization options**
+- Users could not personalize brand/sender info
+
+**Solution Implemented:**
+
+### 1. Security Hardening - OutreachBusinessPage
+
+| Before | After |
+|--------|-------|
+| API keys hardcoded in source | Empty defaults - user must enter |
+| Plain text localStorage | AES-256-GCM encryption with PBKDF2 key derivation |
+| Single password prompt | Re-auth required for settings decryption |
+| Settings in `_v3` key | Migrated to encrypted `_v4` key |
+
+**Encryption Implementation:**
+```javascript
+// PBKDF2 key derivation (100,000 iterations, SHA-256)
+async function deriveEncryptionKey(password) { ... }
+
+// AES-GCM encryption with random IV
+async function encryptSettings(data, password) { ... }
+
+// Decryption with validation
+async function decryptSettings(encryptedObj, password) { ... }
+```
+
+**Security Notice Added:**
+- Yellow banner in settings panel explaining encryption
+- "🔐 Secure Storage: API keys are encrypted with AES-256"
+
+### 2. User Customization - OutreachGeneratorPage (Public)
+
+| Feature | Implementation |
+|---------|---------------|
+| Brand Settings Panel | Collapsible UI for customization |
+| Company Name | Editable, saved to localStorage |
+| Sender Info | Name, title, email all customizable |
+| Credentials | Multi-line textarea for experience bullets |
+| System Prompt | Dynamic generation from brand config |
+| Auto-save | Changes persist immediately |
+| Reset to Default | One-click restore to yellowCircle defaults |
+
+**Files Modified:**
+- `src/pages/experiments/OutreachBusinessPage.jsx` - +710 lines (encryption + re-auth flow)
+- `src/pages/experiments/OutreachGeneratorPage.jsx` - +120 lines (brand customization)
+
+### Commit Made
+
+- **Commit:** `0d26e3f` - "Security: Remove hardcoded API keys, add AES-256 encryption for settings"
+- **Changes:** 2 files changed, 1431 insertions, 721 deletions
+
+### Security Framework Summary
+
+| Tool | Access Level | Key Storage | Encryption |
+|------|--------------|-------------|------------|
+| OutreachBusinessPage | Password-protected | User-entered, encrypted localStorage | AES-256-GCM |
+| OutreachGeneratorPage | Public | User's own Groq key, plain localStorage | None (user's key) |
+| Firebase Function | Backend | Passed at runtime, not stored | HTTPS transit |
+
+**Phase 1 Complete. Future enhancements:**
+- [ ] Move API keys fully server-side (Firebase environment config)
+- [ ] Add Firebase Auth for business users
+- [ ] Audit logging for sends
 
 ---
 
