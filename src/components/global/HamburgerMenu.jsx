@@ -5,20 +5,66 @@ import { useLayout } from '../../contexts/LayoutContext';
 /**
  * HamburgerMenu - Three-line button and full-screen menu overlay
  * Inspired by canals-amsterdam.com - right-aligned with slide-in animation
+ * Updated with slide-over pattern for subitems with indicators
  */
 function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { menuOpen } = useLayout();
   const [hoveredItem, setHoveredItem] = React.useState(null);
+  const [slideOverOpen, setSlideOverOpen] = React.useState(false);
+  const [slideOverItems, setSlideOverItems] = React.useState([]);
+  const [slideOverTitle, setSlideOverTitle] = React.useState('');
 
-  // Close menu on location change
+  // Menu items configuration with sub-items
+  const menuConfig = {
+    HOME: { hasSubItems: false },
+    STORIES: {
+      hasSubItems: true,
+      subItems: [
+        { label: 'Thoughts', route: '/thoughts' },
+        { label: 'Case Studies', route: '/thoughts' }
+      ]
+    },
+    LABS: {
+      hasSubItems: true,
+      subItems: [
+        { label: 'UK-Memories', route: '/uk-memories' },
+        { label: 'Unity Notes', route: '/unity-notes' },
+        { label: 'Component Library', route: '/experiments/component-library' }
+      ]
+    },
+    WORKS: { hasSubItems: false, isButton: true },
+    CONTACT: { hasSubItems: false, isButton: true }
+  };
+
+  const handleOpenSlideOver = (title, items) => {
+    setSlideOverTitle(title);
+    setSlideOverItems(items);
+    setSlideOverOpen(true);
+  };
+
+  const handleCloseSlideOver = () => {
+    setSlideOverOpen(false);
+    setSlideOverItems([]);
+    setSlideOverTitle('');
+  };
+
+  // Close menu and slide-over on location change
   React.useEffect(() => {
     if (menuOpen && onMenuToggle) {
       onMenuToggle();
     }
+    handleCloseSlideOver();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
+
+  // Reset slide-over when menu closes
+  React.useEffect(() => {
+    if (!menuOpen) {
+      handleCloseSlideOver();
+    }
+  }, [menuOpen]);
 
   // Inject keyframe animations
   React.useEffect(() => {
@@ -141,9 +187,9 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
             gap: '5px'
           }}>
             {['HOME', 'STORIES', 'LABS', 'WORKS', 'CONTACT'].map((item, index) => {
-              const isIndented = item.startsWith('>');
-              const displayText = isIndented ? item.substring(1) : item;
-              const isButton = item === 'WORKS' || item === 'CONTACT';
+              const config = menuConfig[item];
+              const isButton = config?.isButton;
+              const hasSubItems = config?.hasSubItems;
 
               if (isButton) {
                 return (
@@ -187,7 +233,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
                       letterSpacing: '0.3em',
                       transition: 'color 0.3s ease-in-out'
-                    }}>{displayText}</span>
+                    }}>{item}</span>
                   </div>
                 );
               }
@@ -201,140 +247,25 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'flex-end',
-                    gap: '20px'
-                  }}
-                  onMouseEnter={() => {
-                    if (item === 'LABS') setHoveredItem('LABS');
-                  }}
-                  onMouseLeave={() => {
-                    if (item === 'LABS') setHoveredItem(null);
+                    gap: '12px'
                   }}
                 >
-                  {/* Show Labs sub-items to the LEFT of LABS when hovering */}
-                  {item === 'LABS' && hoveredItem === 'LABS' && (
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-end',
-                      gap: '8px',
-                      marginRight: '20px'
-                    }}>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate('/uk-memories');
-                        }}
-                        style={{
-                          textDecoration: 'none',
-                          color: 'black',
-                          fontSize: 'clamp(1rem, 2.5vh, 2rem)',
-                          fontWeight: '700',
-                          fontFamily: 'Helvetica, Arial, sans-serif',
-                          letterSpacing: '0.2em',
-                          padding: '8px 0px',
-                          borderRadius: '4px',
-                          textAlign: 'right',
-                          display: 'block',
-                          opacity: 0.8,
-                          transition: 'all 0.3s ease-in-out',
-                          animation: 'slideInMenuItem 0.3s ease-in-out',
-                          whiteSpace: 'nowrap',
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.color = 'white';
-                          e.target.style.opacity = 1;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.color = 'black';
-                          e.target.style.opacity = 0.8;
-                        }}
-                      >
-                        UK-Memories &gt;
-                      </a>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate('/unity-notes');
-                        }}
-                        style={{
-                          textDecoration: 'none',
-                          color: 'black',
-                          fontSize: 'clamp(1rem, 2.5vh, 2rem)',
-                          fontWeight: '700',
-                          fontFamily: 'Helvetica, Arial, sans-serif',
-                          letterSpacing: '0.2em',
-                          padding: '8px 0px',
-                          borderRadius: '4px',
-                          textAlign: 'right',
-                          display: 'block',
-                          opacity: 0.8,
-                          transition: 'all 0.3s ease-in-out',
-                          animation: 'slideInMenuItem 0.35s ease-in-out',
-                          whiteSpace: 'nowrap',
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.color = 'white';
-                          e.target.style.opacity = 1;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.color = 'black';
-                          e.target.style.opacity = 0.8;
-                        }}
-                      >
-                        Unity Notes &gt;
-                      </a>
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate('/experiments/component-library');
-                        }}
-                        style={{
-                          textDecoration: 'none',
-                          color: 'black',
-                          fontSize: 'clamp(1rem, 2.5vh, 2rem)',
-                          fontWeight: '700',
-                          fontFamily: 'Helvetica, Arial, sans-serif',
-                          letterSpacing: '0.2em',
-                          padding: '8px 0px',
-                          borderRadius: '4px',
-                          textAlign: 'right',
-                          display: 'block',
-                          opacity: 0.8,
-                          transition: 'all 0.3s ease-in-out',
-                          animation: 'slideInMenuItem 0.4s ease-in-out',
-                          whiteSpace: 'nowrap',
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.color = 'white';
-                          e.target.style.opacity = 1;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.color = 'black';
-                          e.target.style.opacity = 0.8;
-                        }}
-                      >
-                        Component Library &gt;
-                      </a>
-                    </div>
-                  )}
-
                   <a
                     href="#"
-                    onClick={
-                      item === 'HOME' ? handleHomeClick :
-                      item === 'STORIES' ? undefined :
-                      item === 'LABS' ? () => navigate('/experiments') :
-                      undefined
-                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (item === 'HOME') {
+                        handleHomeClick(e);
+                      } else if (hasSubItems) {
+                        handleOpenSlideOver(item, config.subItems);
+                      } else if (item === 'LABS') {
+                        navigate('/experiments');
+                      }
+                    }}
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       if (item === 'HOME') handleHomeClick(e);
+                      else if (hasSubItems) handleOpenSlideOver(item, config.subItems);
                       else if (item === 'LABS') navigate('/experiments');
                     }}
                     className={`menu-item-${index + 1} menu-link`}
@@ -346,28 +277,152 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
                       letterSpacing: '0.3em',
                       padding: '10px 20px',
-                      paddingRight: isIndented ? '60px' : '20px',
                       borderRadius: '4px',
                       WebkitTapHighlightColor: 'transparent',
                       userSelect: 'none',
                       animation: `slideInMenuItem 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${index * 0.12}s both`,
                       textAlign: 'right',
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
                       transition: 'color 0.3s ease-in-out'
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.color = 'white';
+                      e.currentTarget.style.color = 'white';
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.color = 'black';
+                      e.currentTarget.style.color = 'black';
                     }}
                   >
-                    {displayText}
+                    {item}
+                    {/* Sub-items indicator */}
+                    {hasSubItems && (
+                      <span style={{
+                        fontSize: 'clamp(1rem, 2vh, 1.5rem)',
+                        opacity: 0.6,
+                        transition: 'opacity 0.2s ease'
+                      }}>→</span>
+                    )}
                   </a>
                 </div>
               );
             })}
           </div>
+
+          {/* Slide-over panel for sub-items */}
+          {slideOverOpen && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              width: 'min(400px, 80vw)',
+              height: '100vh',
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              zIndex: 260,
+              display: 'flex',
+              flexDirection: 'column',
+              animation: 'slideInRight 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.3)'
+            }}>
+              {/* Back button header */}
+              <div style={{
+                padding: '24px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px'
+              }}>
+                <button
+                  onClick={handleCloseSlideOver}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    letterSpacing: '0.1em',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+                    e.currentTarget.style.color = '#EECF00';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>←</span>
+                  <span>BACK</span>
+                </button>
+                <span style={{
+                  fontSize: '18px',
+                  fontWeight: '800',
+                  color: '#EECF00',
+                  letterSpacing: '0.2em'
+                }}>{slideOverTitle}</span>
+              </div>
+
+              {/* Sub-items list */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                {slideOverItems.map((subItem, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      navigate(subItem.route);
+                      handleCloseSlideOver();
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '18px 20px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: 'white',
+                      letterSpacing: '0.1em',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                      animation: `slideInMenuItem 0.3s ease-out ${idx * 0.08}s both`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.15)';
+                      e.currentTarget.style.color = '#EECF00';
+                      e.currentTarget.style.transform = 'translateX(-8px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.color = 'white';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }}
+                  >
+                    <span>{subItem.label}</span>
+                    <span style={{ opacity: 0.5, fontSize: '14px' }}>→</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

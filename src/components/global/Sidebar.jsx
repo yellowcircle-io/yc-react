@@ -1,17 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
+import Lottie from 'lottie-react';
+
+// Import Lottie animations
+import scrollAnimation from '../../assets/lottie/scroll.json';
+import testTubeAnimation from '../../assets/lottie/testTube.json';
+import waveAnimation from '../../assets/lottie/wave.json';
+
+// Map of icon keys to Lottie animations
+const LOTTIE_ICONS = {
+  stories: scrollAnimation,
+  labs: testTubeAnimation,
+  about: waveAnimation
+};
 
 /**
- * Sidebar - Three-section collapsible sidebar with accordion navigation
- * Matches HomePage.jsx lines 982-1159 exactly
- * Includes NavigationItem sub-component (lines 364-652)
+ * Sidebar - Three-section collapsible sidebar with in-place accordion navigation
+ *
+ * Features:
+ * - In-place accordion expansion for sub-items
+ * - Lottie animated icons with hover control
+ * - Font sizes reduced by 15%
+ * - Firefox compatibility for animations
  *
  * Variants:
  * - "standard": 80px when closed (default)
  * - "hidden": 0px when closed (Unity Notes variant)
  */
-function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabel = "HOME", variant = "standard" }) {
+function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffset = 0, pageLabel = "HOME", variant = "standard" }) {
   const navigate = useNavigate();
   const {
     sidebarOpen,
@@ -30,20 +47,30 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
     if (onHomeClick) onHomeClick(e);
   };
 
-  // Navigation Item Component - Natural flex flow with accordion functionality
+  // Navigation Item Component - In-place accordion with Lottie icons
+  // Font sizes reduced by 15%: 15px→13px, 14px→12px, 12px→10px, 10px→8.5px
+  // Firefox compatibility: debounced hover, CSS fallbacks
   const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
     const isExpanded = expandedSection === itemKey && sidebarOpen;
     const [isHovered, setIsHovered] = useState(false);
+    const lottieRef = useRef(null);
+    const hoverTimeoutRef = useRef(null);
+
+    // Get Lottie animation data if available
+    const lottieData = LOTTIE_ICONS[itemKey];
 
     const handleClick = () => {
       if (!sidebarOpen) {
-        // First click: open sidebar and expand this section
+        // First click: open sidebar and expand section
         setSidebarOpen(true);
         setExpandedSection(itemKey);
       } else {
-        // Subsequent clicks: toggle accordion or navigate
-        if (expandedSection === itemKey) {
-          // If already expanded, navigate to the page
+        // Toggle expansion or navigate
+        if (subItems && subItems.length > 0) {
+          // Toggle accordion
+          setExpandedSection(expandedSection === itemKey ? null : itemKey);
+        } else {
+          // Navigate directly for items without sub-items
           if (itemKey === 'labs') {
             navigate('/experiments');
           } else if (itemKey === 'about') {
@@ -51,12 +78,44 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
           } else if (itemKey === 'stories') {
             navigate('/thoughts');
           }
-          // Keep section expanded after navigation
-        } else {
-          setExpandedSection(itemKey);
-          setExpandedSubSection(null); // Reset sub-section when changing sections
         }
       }
+    };
+
+    // Play Lottie on hover - debounced for Firefox stability
+    const handleMouseEnter = () => {
+      // Clear any pending leave timeout
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      setIsHovered(true);
+      // Use requestAnimationFrame to ensure DOM is stable before playing
+      requestAnimationFrame(() => {
+        try {
+          if (lottieRef.current && typeof lottieRef.current.play === 'function') {
+            lottieRef.current.play();
+          }
+        } catch (e) {
+          // Firefox fallback - ignore animation errors
+          console.debug('Lottie play error:', e);
+        }
+      });
+    };
+
+    const handleMouseLeave = () => {
+      // Debounce the leave to prevent flickering
+      hoverTimeoutRef.current = setTimeout(() => {
+        setIsHovered(false);
+        try {
+          if (lottieRef.current && typeof lottieRef.current.stop === 'function') {
+            lottieRef.current.stop();
+          }
+        } catch (e) {
+          // Firefox fallback - ignore animation errors
+          console.debug('Lottie stop error:', e);
+        }
+      }, 50);
     };
 
     return (
@@ -73,8 +132,8 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
             e.stopPropagation();
             handleClick();
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -83,9 +142,9 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
             minHeight: '48px',
             width: '100%',
             borderRadius: '6px',
-            backgroundColor: isHovered && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
+            backgroundColor: (isHovered || isExpanded) && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
             cursor: 'pointer',
-            transition: 'background-color 0.2s ease-out',
+            transition: 'background-color 0.15s ease-out',
             WebkitTapHighlightColor: 'transparent',
             border: 'none',
             outline: 'none',
@@ -94,231 +153,161 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
           }}
         >
 
-          {/* Icon - Always centered relative to closed sidebar width */}
+          {/* Icon - Lottie animation or fallback img */}
           <div style={{
             position: 'absolute',
-            left: '40px', // Center of 80px closed sidebar width
+            left: '40px',
             top: '50%',
             transform: isExpanded
               ? 'translate(-50%, -50%) scale(1.05)'
               : isHovered
                 ? 'translate(-50%, -50%) scale(1.03)'
                 : 'translate(-50%, -50%) scale(1)',
-            width: '24px',
-            height: '24px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2,
             pointerEvents: 'none',
-            WebkitTransition: 'transform 0.2s ease-out',
-            MozTransition: 'transform 0.2s ease-out',
-            transition: 'transform 0.2s ease-out'
+            transition: 'transform 0.15s ease-out'
           }}>
-            <img
-              src={icon}
-              alt={label}
-              width="24"
-              height="24"
-              style={{
-                display: 'block',
-                filter: isExpanded ? 'brightness(1.2) saturate(1.1)' : 'brightness(1)',
-                WebkitTransition: 'filter 0.2s ease-out',
-                MozTransition: 'filter 0.2s ease-out',
-                transition: 'filter 0.2s ease-out'
-              }}
-            />
+            {lottieData ? (
+              <Lottie
+                lottieRef={lottieRef}
+                animationData={lottieData}
+                loop={true}
+                autoplay={false}
+                renderer="svg"
+                rendererSettings={{
+                  preserveAspectRatio: 'xMidYMid slice',
+                  progressiveLoad: true,
+                  hideOnTransparent: true
+                }}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  display: 'block'
+                }}
+              />
+            ) : (
+              <img
+                src={icon}
+                alt={label}
+                width="24"
+                height="24"
+                style={{
+                  display: 'block',
+                  filter: isExpanded ? 'brightness(1.2) saturate(1.1)' : 'brightness(1)',
+                  transition: 'filter 0.15s ease-out'
+                }}
+              />
+            )}
           </div>
 
-          {/* Label - appears to the RIGHT of the centered icon when sidebar opens */}
+          {/* Label - reduced font size (15px → 13px) */}
           <span style={{
             position: 'absolute',
             left: '60px',
             top: '50%',
             color: isExpanded ? '#EECF00' : 'black',
-            fontSize: '15px',
+            fontSize: '13px',
             fontWeight: isExpanded ? '700' : '600',
             letterSpacing: '0.2em',
             opacity: sidebarOpen ? 1 : 0,
             transform: sidebarOpen ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-10px)',
-            transition: 'color 0.3s ease-out, font-weight 0.3s ease-out, opacity 0.4s ease-out 0.1s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s',
+            transition: 'color 0.15s ease-out, font-weight 0.15s ease-out, opacity 0.3s ease-out 0.1s, transform 0.3s ease-out 0.1s',
             whiteSpace: 'nowrap',
             pointerEvents: 'none'
           }}>{label}</span>
+
+          {/* Sub-items indicator arrow - rotates when expanded */}
+          {subItems && subItems.length > 0 && sidebarOpen && (
+            <span style={{
+              position: 'absolute',
+              right: '16px',
+              top: '50%',
+              transform: isExpanded ? 'translateY(-50%) rotate(90deg)' : 'translateY(-50%) rotate(0deg)',
+              fontSize: '10px',
+              color: isExpanded ? '#EECF00' : 'rgba(0,0,0,0.4)',
+              opacity: sidebarOpen ? 1 : 0,
+              transition: 'transform 0.2s ease-out, color 0.15s ease-out, opacity 0.2s ease-out'
+            }}>→</span>
+          )}
         </button>
 
-        {/* Sub-items - accordion style with nested support */}
-        <div style={{
-          marginLeft: '60px',
-          marginTop: '-5px',
-          maxHeight: sidebarOpen && isExpanded ? '600px' : '0px',
-          overflow: 'hidden',
-          opacity: sidebarOpen && isExpanded ? 1 : 0,
-          transition: 'max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out 0.1s'
-        }}>
-          {subItems && (
-            <div style={{ paddingTop: '0px', paddingBottom: '0px' }}>
+        {/* Sub-items - In-place accordion expansion */}
+        {subItems && subItems.length > 0 && (
+          <div style={{
+            marginLeft: '60px',
+            marginTop: '-4px',
+            maxHeight: isExpanded ? `${subItems.length * 36 + 10}px` : '0px',
+            overflow: 'hidden',
+            opacity: isExpanded ? 1 : 0,
+            transition: 'max-height 0.3s ease-out, opacity 0.2s ease-out'
+          }}>
+            <div style={{ paddingTop: '4px', paddingBottom: '4px' }}>
               {subItems.map((item, idx) => {
-                // Handle both string items and object items with nested subItems
                 const itemLabel = typeof item === 'string' ? item : item.label;
-                const itemKey = typeof item === 'string' ? item : item.key;
-                const hasNestedItems = typeof item === 'object' && item.subItems;
-
-                const isSubExpanded = expandedSubSection === itemKey;
+                const itemKeyVal = typeof item === 'string' ? item : item.key;
 
                 return (
-                  <div key={idx} style={{ marginBottom: '2px' }}>
-                    <button
-                      type="button"
-                      className="clickable-element"
-                      onClick={(e) => {
-                        e.stopPropagation();
-
-                        if (hasNestedItems) {
-                          // Toggle third-level accordion
-                          setExpandedSubSection(isSubExpanded ? null : itemKey);
-                        } else {
-                          // Navigate for non-nested items
-                          if (itemKey === 'home-17') {
-                            navigate('/home-17');
-                          } else if (itemKey === 'uk-memories') {
-                            navigate('/uk-memories');
-                          } else if (itemKey === 'component-library') {
-                            navigate('/experiments/component-library');
-                          } else if (itemKey === 'golden-unknown') {
-                            navigate('/experiments/golden-unknown');
-                          } else if (itemKey === 'thoughts') {
-                            navigate('/thoughts');
-                          }
-                        }
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        color: hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        letterSpacing: '0.03em',
-                        textDecoration: 'none',
-                        padding: '7px 6px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        backgroundColor: 'transparent',
-                        whiteSpace: 'nowrap',
-                        overflow: 'visible',
-                        width: '100%',
-                        border: 'none',
-                        outline: 'none',
-                        textAlign: 'left',
-                        font: 'inherit',
-                        opacity: isExpanded ? 1 : 0,
-                        transform: isExpanded ? 'translateX(0) translateZ(0)' : 'translateX(-8px) translateZ(0)',
-                        transitionDelay: isExpanded ? `${idx * 0.06}s` : '0s',
-                        willChange: 'transform, opacity',
-                        backfaceVisibility: 'hidden',
-                        WebkitBackfaceVisibility: 'hidden',
-                        WebkitTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.25s ease, padding-left 0.2s ease, opacity 0.3s ease',
-                        MozTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.25s ease, padding-left 0.2s ease, opacity 0.3s ease',
-                        transition: 'color 0.2s ease, background-color 0.2s ease, transform 0.25s ease, padding-left 0.2s ease, opacity 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#EECF00';
-                        e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
-                        e.currentTarget.style.transform = 'translateX(2px)';
-                        e.currentTarget.style.paddingLeft = '8px';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = hasNestedItems && isSubExpanded ? '#EECF00' : 'rgba(0,0,0,0.7)';
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.transform = 'translateX(0)';
-                        e.currentTarget.style.paddingLeft = '6px';
-                      }}
-                    >
-                      <span>{itemLabel}</span>
-                      {hasNestedItems && (
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: '400',
-                          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          transform: isSubExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                          display: 'inline-block'
-                        }}>▼</span>
-                      )}
-                    </button>
-
-                    {/* Render nested sub-items with accordion */}
-                    {hasNestedItems && (
-                      <div style={{
-                        marginLeft: '12px',
-                        marginTop: '2px',
-                        maxHeight: isSubExpanded ? '300px' : '0px',
-                        overflow: 'hidden',
-                        opacity: isSubExpanded ? 1 : 0,
-                        transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out 0.1s'
-                      }}>
-                        {item.subItems.map((nestedItem, nestedIdx) => (
-                          <button
-                            type="button"
-                            key={nestedIdx}
-                            className="clickable-element"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Add nested navigation logic here as needed
-                            }}
-                            style={{
-                              display: 'block',
-                              color: 'rgba(0,0,0,0.6)',
-                              fontSize: '10px',
-                              fontWeight: '400',
-                              letterSpacing: '0.02em',
-                              textDecoration: 'none',
-                              padding: '6px 6px',
-                              marginBottom: '1px',
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              backgroundColor: 'transparent',
-                              whiteSpace: 'nowrap',
-                              overflow: 'visible',
-                              width: '100%',
-                              border: 'none',
-                              outline: 'none',
-                              textAlign: 'left',
-                              font: 'inherit',
-                              opacity: isSubExpanded ? 1 : 0,
-                              transform: isSubExpanded ? 'translateX(0) translateZ(0)' : 'translateX(-6px) translateZ(0)',
-                              transitionDelay: isSubExpanded ? `${nestedIdx * 0.05}s` : '0s',
-                              willChange: 'transform, opacity',
-                              backfaceVisibility: 'hidden',
-                              WebkitBackfaceVisibility: 'hidden',
-                              WebkitTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease, opacity 0.3s ease',
-                              MozTransition: 'color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease, opacity 0.3s ease',
-                              transition: 'color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, padding-left 0.2s ease, opacity 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = '#EECF00';
-                              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.08)';
-                              e.currentTarget.style.transform = 'translateX(2px)';
-                              e.currentTarget.style.paddingLeft = '8px';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                              e.currentTarget.style.transform = 'translateX(0)';
-                              e.currentTarget.style.paddingLeft = '6px';
-                            }}
-                          >
-                            {nestedItem}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={idx}
+                    type="button"
+                    className="clickable-element"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Navigation logic
+                      if (itemKeyVal === 'home-17') {
+                        navigate('/home-17');
+                      } else if (itemKeyVal === 'uk-memories') {
+                        navigate('/uk-memories');
+                      } else if (itemKeyVal === 'component-library') {
+                        navigate('/experiments/component-library');
+                      } else if (itemKeyVal === 'golden-unknown') {
+                        navigate('/experiments/golden-unknown');
+                      } else if (itemKeyVal === 'thoughts') {
+                        navigate('/thoughts');
+                      }
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 10px',
+                      marginBottom: '2px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                      fontWeight: '500',
+                      color: 'rgba(0,0,0,0.7)',
+                      letterSpacing: '0.03em',
+                      textAlign: 'left',
+                      transition: 'background-color 0.15s ease, color 0.15s ease, transform 0.15s ease',
+                      opacity: isExpanded ? 1 : 0,
+                      transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                      transitionDelay: isExpanded ? `${idx * 0.04}s` : '0s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.15)';
+                      e.currentTarget.style.color = '#EECF00';
+                      e.currentTarget.style.transform = 'translateX(4px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = 'rgba(0,0,0,0.7)';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }}
+                  >
+                    {itemLabel}
+                  </button>
                 );
               })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -412,7 +401,12 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
           }}
           onClick={(e) => {
             e.preventDefault();
-            handleHomeClick(e);
+            // Engage footer on logo click
+            if (onFooterToggle) {
+              onFooterToggle();
+            } else {
+              handleHomeClick(e);
+            }
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.15) rotate(5deg)';
@@ -487,7 +481,7 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
               color: scrollOffset === 0 ? '#EECF00' : 'black',
               fontWeight: scrollOffset === 0 ? '700' : '600',
               letterSpacing: '0.1em',
-              fontSize: '14px',
+              fontSize: '12px',
               transition: 'color 0.2s ease-out, font-weight 0.2s ease-out'
             }}>{pageLabel}</span>
           </div>
@@ -545,7 +539,12 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
               }}
               onClick={(e) => {
                 e.preventDefault();
-                handleHomeClick(e);
+                // Engage footer on logo click
+                if (onFooterToggle) {
+                  onFooterToggle();
+                } else {
+                  handleHomeClick(e);
+                }
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.15) rotate(5deg)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1) rotate(0deg)'}
@@ -558,6 +557,37 @@ function Sidebar({ onHomeClick, navigationItems = [], scrollOffset = 0, pageLabe
             </div>
           </div>
         )}
+
+        {/* Firefox-compatible CSS hover fallback styles */}
+        <style>{`
+          /* Firefox-specific hover fixes */
+          @-moz-document url-prefix() {
+            .nav-item-button:hover {
+              background-color: rgba(238, 207, 0, 0.12) !important;
+            }
+            .sub-item-button:hover {
+              background-color: rgba(238, 207, 0, 0.15) !important;
+              color: #EECF00 !important;
+            }
+          }
+
+          /* General hover stability */
+          .clickable-element {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+          }
+
+          /* Prevent hover flicker on nested elements */
+          .clickable-element * {
+            pointer-events: none;
+          }
+          .clickable-element button,
+          .clickable-element a {
+            pointer-events: auto;
+          }
+        `}</style>
       </div>
     </>
   );
