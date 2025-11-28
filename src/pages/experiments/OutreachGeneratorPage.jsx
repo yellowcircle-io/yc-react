@@ -4,8 +4,8 @@ import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 
-// Brand configuration for yellowCircle
-const BRAND = {
+// Default brand configuration (can be customized by user)
+const DEFAULT_BRAND = {
   name: 'yellowCircle',
   sender: {
     name: 'Chris Cooper',
@@ -16,8 +16,11 @@ const BRAND = {
     calendar: 'https://calendly.com/christophercooper',
     article: 'https://yellowcircle-app.web.app/thoughts/why-your-gtm-sucks',
     website: 'https://yellowcircle-app.web.app'
-  },
-  systemPrompt: `You are writing cold outreach emails for Christopher Cooper, a GTM and Marketing Operations consultant at yellowCircle.
+  }
+};
+
+// Generate system prompt based on user's brand config
+const generateSystemPrompt = (brand) => `You are writing cold outreach emails for ${brand.sender.name}, ${brand.sender.title}${brand.name ? ` at ${brand.name}` : ''}.
 
 **VOICE:**
 - Direct, no fluff
@@ -26,10 +29,7 @@ const BRAND = {
 - Under 150 words for initial, under 100 for follow-ups
 
 **CREDENTIALS (use sparingly):**
-- 10+ years in marketing operations across B2B SaaS, fintech, and agencies
-- Identified $2.5M/year in hidden operational costs at previous organization
-- Reduced attribution setup time by 60%
-- Built GTM alignment frameworks adopted by multiple teams
+${brand.credentials || '- Experienced professional in their field'}
 
 **FRAMEWORK (NextPlay.so 3-part structure):**
 1. Who you are (1 sentence)
@@ -41,8 +41,7 @@ const BRAND = {
 - No corporate jargon
 - One clear CTA
 - Reference specific trigger when provided
-- Sign off as "— Chris"`
-};
+- Sign off as "— ${brand.sender.name.split(' ')[0]}"`;
 
 function OutreachGeneratorPage() {
   const navigate = useNavigate();
@@ -67,9 +66,13 @@ function OutreachGeneratorPage() {
   const [error, setError] = useState(null);
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [showBrandSettings, setShowBrandSettings] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
 
-  // Load API key from localStorage
+  // Brand customization state
+  const [brand, setBrand] = useState(DEFAULT_BRAND);
+
+  // Load API key and brand from localStorage
   useEffect(() => {
     const savedKey = localStorage.getItem('groq_api_key');
     if (savedKey) {
@@ -77,7 +80,21 @@ function OutreachGeneratorPage() {
     } else {
       setShowApiKeyInput(true);
     }
+
+    const savedBrand = localStorage.getItem('outreach_brand_config');
+    if (savedBrand) {
+      try {
+        setBrand(JSON.parse(savedBrand));
+      } catch (e) {
+        console.error('Failed to parse saved brand config');
+      }
+    }
   }, []);
+
+  // Save brand to localStorage when changed
+  useEffect(() => {
+    localStorage.setItem('outreach_brand_config', JSON.stringify(brand));
+  }, [brand]);
 
   // Inject animations
   useEffect(() => {
@@ -135,7 +152,7 @@ function OutreachGeneratorPage() {
       followup2: `Write final follow-up (Day 10). Acknowledge this is the last touch, offer resources, leave door open. Under 80 words.`
     };
 
-    const prompt = `${BRAND.systemPrompt}
+    const prompt = `${generateSystemPrompt(brand)}
 
 PROSPECT:
 - Company: ${prospect.company}
@@ -219,7 +236,7 @@ Return ONLY a JSON object with this exact format:
       prospect: formData,
       emails: generatedEmails,
       generatedAt: new Date().toISOString(),
-      brand: BRAND.name
+      brand: brand.name
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -346,6 +363,22 @@ Return ONLY a JSON object with this exact format:
             </p>
           </div>
 
+          {/* Settings Toggle */}
+          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+              style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}
+            >
+              🔑 API Key {showApiKeyInput ? '▲' : '▼'}
+            </button>
+            <button
+              onClick={() => setShowBrandSettings(!showBrandSettings)}
+              style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}
+            >
+              ⚙️ Brand Settings {showBrandSettings ? '▲' : '▼'}
+            </button>
+          </div>
+
           {/* API Key Input */}
           {showApiKeyInput && (
             <div style={{ ...cardStyle, borderColor: COLORS.yellow, animation: 'fadeInUp 0.4s ease-out' }}>
@@ -367,6 +400,90 @@ Return ONLY a JSON object with this exact format:
                 <button onClick={saveApiKey} style={primaryButtonStyle}>
                   Save
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Brand Settings */}
+          {showBrandSettings && (
+            <div style={{ ...cardStyle, borderColor: COLORS.yellow, animation: 'fadeInUp 0.4s ease-out' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
+                Customize Your Brand
+              </h3>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                Personalize the outreach emails with your own brand and sender information.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={labelStyle}>Company Name</label>
+                  <input
+                    type="text"
+                    value={brand.name}
+                    onChange={(e) => setBrand(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Your Company"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Your Name</label>
+                  <input
+                    type="text"
+                    value={brand.sender.name}
+                    onChange={(e) => setBrand(prev => ({ ...prev, sender: { ...prev.sender, name: e.target.value } }))}
+                    placeholder="Jane Smith"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={labelStyle}>Your Title</label>
+                  <input
+                    type="text"
+                    value={brand.sender.title}
+                    onChange={(e) => setBrand(prev => ({ ...prev, sender: { ...prev.sender, title: e.target.value } }))}
+                    placeholder="VP of Sales"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Your Email</label>
+                  <input
+                    type="email"
+                    value={brand.sender.email}
+                    onChange={(e) => setBrand(prev => ({ ...prev, sender: { ...prev.sender, email: e.target.value } }))}
+                    placeholder="jane@company.com"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Credentials (one per line)</label>
+                <textarea
+                  value={brand.credentials || ''}
+                  onChange={(e) => setBrand(prev => ({ ...prev, credentials: e.target.value }))}
+                  placeholder="- 10+ years in sales&#10;- Closed $5M in deals last year&#10;- Former [Company] employee"
+                  style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+                />
+                <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                  These will be used sparingly in email generation
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  onClick={() => setBrand(DEFAULT_BRAND)}
+                  style={{ ...secondaryButtonStyle, padding: '8px 14px', fontSize: '12px' }}
+                >
+                  Reset to Default
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#10b981' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                  Auto-saved
+                </div>
               </div>
             </div>
           )}
