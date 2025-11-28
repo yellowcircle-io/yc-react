@@ -2,11 +2,63 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 28, 2025 at 11:45 AM PST
-**Machine:** MacBook Air (Outreach Security Framework Complete)
-**Status:** ✅ Outreach Pro Security Updates COMPLETE - API keys encrypted, public tool customizable
+**Updated:** November 28, 2025 at 3:30 PM PST
+**Machine:** MacBook Air (Global Components + Unity Note Plus)
+**Status:** ✅ Global Component Updates + Unity Note Plus v2 COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## ✅ NOVEMBER 28, 2025 - GLOBAL COMPONENTS + UNITY NOTE PLUS - 3:30 PM PST
+
+### MacBook Air Session: Global Components Update + Unity Note Plus v2
+
+**TASKS COMPLETED:**
+
+### 1. Global Components Refactoring
+
+| Component | Changes |
+|-----------|---------|
+| **Sidebar** | Replaced slide-over with in-place accordion expansion |
+| **NavigationCircle** | 20% bigger icons, smooth wave↔arrow crossfade |
+| **Footer** | Added LinkedIn/Instagram with SVG icons |
+| **Firefox Fixes** | Debounced hover, Lottie renderer settings, CSS fallbacks |
+
+**Files Modified:**
+- `src/components/global/Sidebar.jsx` - In-place accordion
+- `src/components/global/NavigationCircle.jsx` - Bigger icons + crossfade
+- `src/components/global/Footer.jsx` - Social icons
+- `src/config/globalContent.js` - LinkedIn/Instagram links
+
+**Commits:**
+- `4ddc614` - Global components refactoring
+
+### 2. Unity Note Plus v2 - Multi-Card Canvas Workspace
+
+**Route:** `/unity-note-plus`
+
+**ThreadDeck-Inspired Features Implemented:**
+- ✅ Multiple card types: Photo, Text Note (Link, AI, Video placeholders)
+- ✅ Dark/Light theme toggle
+- ✅ Quick add floating panel with card type selector
+- ✅ TextNoteNode component with inline editing
+- ✅ Theme-aware UI throughout
+
+**Files Created:**
+- `src/pages/UnityNotePlusPage.jsx` (680 lines)
+- `src/components/unity-plus/TextNoteNode.jsx` (180 lines)
+- `dev-context/UNITY_NOTE_PLUS_ANALYSIS.md` (ThreadDeck analysis)
+
+**Commits:**
+- `8a3a273` - Unity Note Plus v2
+
+### 3. Deployment Status
+
+**Git Push:** Blocked by GitHub secret scanning (rho-hubspot-deployment has old API keys in history)
+**Firebase:** Needs re-authentication (`firebase login --reauth`)
+
+**Local Build:** ✅ Successful (2.08 MB bundle)
 
 ---
 
