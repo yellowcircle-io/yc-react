@@ -1,63 +1,101 @@
-# Project Roadmap Checklist - November 8, 2025
+# Project Roadmap Checklist - November 2025
 
-**Status:** Ready to proceed with yellowCircle homepage redesign
-**Next Review:** November 15, 2025
+**Status:** 🔴 POST-RHO PIVOT - Consulting revenue + yellowCircle development
+**Last Updated:** November 28, 2025
+**Next Review:** December 5, 2025
 
 ---
 
-## 🎯 IMMEDIATE PRIORITIES (This Week)
+## ✅ COMPLETED THIS WEEK (Nov 22-28, 2025)
 
-### 1. yellowCircle Homepage Redesign 🔴 **START HERE**
+### Major Milestones Achieved:
+
+#### 1. ✅ Article 1: "Why Your GTM Sucks" - COMPLETE & DEPLOYED
+- **Route:** `/thoughts/why-your-gtm-sucks`
+- **Live at:** https://yellowcircle-app.web.app/thoughts/why-your-gtm-sucks
+- **Sections:** 35 complete (Hero, Data Grid, TOC, 5 Personas × 4 pages, What Now, CTA)
+- **Word Count:** ~15,500 words
+- **Features:** Horizontal scroll, data viz, email capture, PDF export, sharing
+- **Commits:** 15+ commits from Nov 22-24
+
+#### 2. ✅ yellowcircle-outreach System - COMPLETE
+- **CLI Tool:** `yellowcircle-outreach/` with Groq AI + Resend email
+- **Rebrand:** Zero Rho references (archived old system)
+- **Cost:** $0/month (Groq FREE + Resend FREE tiers)
+
+#### 3. ✅ Outreach Pro Web UI - COMPLETE
+- **Public:** `/experiments/outreach-generator` - AI email generation
+- **Business:** `/outreach` (password-protected) - 6-step workflow with sending
+- **Firebase Function:** CORS proxy for Resend API
+- **Security:** AES-256 encryption for API keys in localStorage
+
+#### 4. ✅ Global Components Refactor - COMPLETE
+- **Sidebar:** In-place accordion expansion (replaced slide-over)
+- **NavigationCircle:** 20% bigger icons, wave↔arrow crossfade
+- **Footer:** LinkedIn/Instagram social icons
+- **Firefox Fixes:** Debounced hover, Lottie renderer, CSS fallbacks
+
+#### 5. ✅ Unity Notes Plus v2 - COMPLETE
+- **Route:** `/unity-notes-plus`
+- **Features:** Multi-card canvas, dark/light theme, card types in dialog
+- **Components:** PhotoUploadModal extended, TextNoteNode
+
+#### 6. ✅ Security Framework - COMPLETE
+- **Removed:** Hardcoded API keys from source code
+- **Added:** PBKDF2 + AES-GCM encryption for settings
+- **Added:** Re-authentication flow for decryption
+- **Added:** Brand customization for public tool
+
+---
+
+## 🎯 CURRENT PRIORITIES (Week of Dec 2-6, 2025)
+
+### 1. 🔴 60-Day Revenue Plan - EXECUTE NOW
+
+**Goal:** Generate $15K-20K consulting revenue + $10K severance = $25K-30K
+
+#### Week 1-2 (Nov 27 - Dec 10): Foundation
+- [ ] Package "GTM Strategic Audit" service ($4K-5K per engagement)
+- [ ] LinkedIn transition announcement + availability post
+- [ ] Network activation (10 warmest contacts)
+- [ ] Share Article 1 across channels
+- [ ] First 3-5 discovery calls scheduled
+
+#### Week 3-4 (Dec 11-24): First Revenue
+- [ ] Close 1-2 GTM Assessment engagements
+- [ ] Document engagement process for repeatability
+- [ ] Collect testimonials/case studies
+
+**Reference Files:**
+- `dev-context/STRATEGIC_PIVOT_POST_RHO.md`
+- `dev-context/CONSULTING_PORTFOLIO_AUDIT.md`
+- `dev-context/GTM_ASSESSMENT_SERVICE_PAGE.md`
+- `dev-context/LINKEDIN_CONTENT_CALENDAR.md`
+- `dev-context/OUTREACH_TEMPLATES.md`
+
+---
+
+### 2. ⏳ yellowCircle Homepage Redesign (PARTIALLY COMPLETE)
 
 **Goal:** Improve UX, simplify language, update typography
 
-#### Phase 1: Design & Planning (1-2 hours)
-- [ ] Review current homepage (`src/App.jsx`) and identify sections to update
-- [ ] Audit current sidebar navigation structure
-- [ ] List all language/copy that needs simplification
-- [ ] Document current iconography for replacement
+**✅ COMPLETED:**
+- ✅ Sidebar UX - In-place accordion (replaced slide-over)
+- ✅ Iconography - 20% bigger icons, wave↔arrow crossfade
+- ✅ Footer - Social icons added
+- ✅ Firefox compatibility fixes
 
-#### Phase 2: Typography Implementation (2-3 hours)
-- [ ] Implement new H1 "Your Circle" header with specs:
-  ```css
-  font-family: "Helvetica Neue"
-  font-weight: 900
-  font-size: clamp(1.17rem, 22.52vw, 20.98rem)
-  color: rgba(244, 244, 204, 0.3) !important
-  backdrop-filter: blur(3px)
-  line-height: 0.82
-  margin: 7rem 0px
-  padding: 2px 6px
-  ```
+**⏳ REMAINING:**
+#### Typography Implementation (2-3 hours)
+- [ ] Implement new H1 "Your Circle" header with blur effect
 - [ ] Test responsive behavior across viewport sizes
-- [ ] Verify blur effect renders properly on all browsers
 
-#### Phase 3: Sidebar UX Improvements (3-4 hours)
-- [ ] Redesign sidebar accordion interaction patterns
-- [ ] Improve vertical positioning and transitions
-- [ ] Add better visual feedback for hover states
-- [ ] Ensure smooth expansion/collapse animations
-
-#### Phase 4: Language Simplification (1-2 hours)
+#### Language Simplification (1-2 hours)
 - [ ] Simplify "Your Circle For" sections
 - [ ] Update call-to-action copy
-- [ ] Review and simplify footer contact text
 - [ ] Ensure consistent voice throughout
 
-#### Phase 5: Iconography Update (2-3 hours)
-- [ ] Replace current navigation icons with updated designs
-- [ ] Ensure icons are responsive and accessible
-- [ ] Test icon hover states and animations
-- [ ] Verify SVG optimization
-
-#### Phase 6: Testing & Refinement (2-3 hours)
-- [ ] Run `npm run lint` and fix any issues
-- [ ] Test across devices (desktop, tablet, mobile)
-- [ ] Verify all animations are smooth (60fps)
-- [ ] Check accessibility (keyboard navigation, screen readers)
-- [ ] Get user feedback on changes
-
-**Total Estimated Time:** 12-17 hours (1.5-2 working days)
+**Total Remaining:** 3-5 hours
 
 ---
 
@@ -87,161 +125,98 @@
 
 ---
 
-## 📋 PROJECT PHASE 1: yellowCircle / Rho (EOY 2025)
+## 📋 PROJECT STATUS: yellowCircle (EOY 2025)
 
-### 3. Rho - Lifecycle Manager Interview Analysis & Solution Comparison 🔴 NEW - NOV 18
+### ✅ Rho Employment - ENDED (Nov 25, 2025)
 
-**Status:** 🔴 P0 PRIORITY - Ready to start (awaiting documents)
+**Status:** No longer applicable - pivoted to consulting
 
-**Goal:** Analyze new Lifecycle Manager interview, evaluate third-party solutions (Conversion.AI, Default), and compare against Unity MAP stealth solution
-
-#### Phase 1: Interview Analysis (2-3 hours)
-- [ ] Review Lifecycle Manager interview notes/transcript (pending attachment)
-- [ ] Extract key insights about HubSpot pain points
-- [ ] Identify technical debt and sprawl issues mentioned
-- [ ] Document Salesforce sync challenges
-- [ ] Map problems to Unity MAP solution capabilities
-
-#### Phase 2: Conversion.AI Evaluation (2-3 hours)
-- [ ] Research Conversion.AI (conversion.ai) capabilities
-- [ ] Analyze feature set vs. Rho's needs
-- [ ] Assess integration complexity with existing HubSpot/Salesforce
-- [ ] Evaluate pricing and implementation timeline
-- [ ] Document pros/cons for Rho use case
-
-#### Phase 3: Default Evaluation (2-3 hours)
-- [ ] Research Default (default.com) capabilities
-- [ ] Analyze feature set vs. Rho's needs
-- [ ] Assess integration complexity with existing stack
-- [ ] Evaluate pricing and implementation timeline
-- [ ] Document pros/cons for Rho use case
-
-#### Phase 4: Comparative Analysis (2-3 hours)
-- [ ] Create comparison matrix: Unity MAP vs. Conversion.AI vs. Default
-- [ ] Analyze against existing HubSpot sprawl issues
-- [ ] Analyze against technical debt concerns
-- [ ] Analyze against Salesforce sync problems
-- [ ] Cost-benefit analysis (build vs. buy)
-
-#### Phase 5: Recommendation (1-2 hours)
-- [ ] Document findings in analysis report
-- [ ] Create executive summary with recommendations
-- [ ] Include implementation timeline estimates
-- [ ] Flag risks and dependencies
-- [ ] Prepare for Rho stakeholder discussion
-
-**Total Estimated Time:** 9-14 hours (1-2 days)
-**Priority:** P0 - Work hours (daytime)
-**Dependencies:** Interview documents (to be attached)
+**Assets Extracted:**
+- GTM Assessment Framework ($4K-5K service)
+- 5 anonymized case studies
+- $2.5M technical debt quantification
+- Interview analysis materials
 
 ---
 
-### 3b. Rho - Events Upload Process
+### 3. Unity Notes Plus - NEXT PHASE
 
-**Status:** Deferred (lower priority than Lifecycle Manager analysis)
+**Status:** ✅ v2 Foundation Complete
 
-#### Planning (1-2 hours)
-- [ ] Review current Rho infrastructure
-- [ ] Define event data structure (date, title, description, media, etc.)
-- [ ] Determine upload method (manual form vs. CSV import vs. API)
-- [ ] Plan storage solution (Firebase, Cloudinary, etc.)
+**✅ COMPLETED:**
+- Multi-card canvas workspace
+- Dark/Light theme toggle
+- Card types architecture (Photo, Text, Link, AI, Video)
+- TextNoteNode with inline editing
+- PhotoUploadModal card type integration
 
-#### Implementation (5-8 hours)
-- [ ] Create event upload form UI
-- [ ] Implement file upload for event images/media
-- [ ] Add validation for required fields
-- [ ] Connect to backend/database
-- [ ] Build preview functionality before publish
+**⏳ NEXT (v2.1):**
+- [ ] LinkNode component with URL metadata fetching
+- [ ] VideoNode component with YouTube embed
+- [ ] AIChatNode component with Groq/OpenAI integration
+- [ ] Enhanced canvas collaboration features
 
-#### Testing (2-3 hours)
-- [ ] Test with sample events
-- [ ] Verify media uploads work correctly
-- [ ] Check mobile responsiveness
-- [ ] Ensure data persists correctly
-
-**Total Estimated Time:** 8-13 hours (1-1.5 days)
+**Priority:** P2 - After revenue priorities
 
 ---
 
 ### 4. Global Components Standardization
 
-**Goal:** Use updated homepage as template for all pages
+**Status:** ✅ COMPLETE (Nov 27, 2025)
 
-**Status:** Starts after homepage redesign complete
+**✅ COMPLETED:**
+- ✅ Sidebar - In-place accordion expansion
+- ✅ NavigationCircle - 20% bigger icons, crossfade animation
+- ✅ Footer - Social icons (LinkedIn, Instagram)
+- ✅ HamburgerMenu - Yellow theme slide-over
+- ✅ Firefox compatibility fixes
+- ✅ Global config system (`src/config/globalContent.js`)
+- ✅ Global editor CLI (`.claude/automation/global-manager.js`)
 
-#### Audit Phase (2-3 hours)
-- [ ] List all pages currently in yellowCircle site
-- [ ] Document which components are used on each page
-- [ ] Identify inconsistencies in component usage
-- [ ] Map homepage components to other pages
-
-#### Implementation Phase (8-12 hours)
-- [ ] Extract reusable components from homepage redesign
-- [ ] Create component library/documentation
-- [ ] Update existing pages to use standardized components
-- [ ] Ensure consistent styling across all pages
-- [ ] Test navigation flow between pages
-
-#### CMS Integration Research (3-5 hours)
-- [ ] Research Storyblok integration options
-- [ ] Evaluate alternative CMS solutions
-- [ ] Assess ClaudeCode integration possibilities
-- [ ] Document pros/cons of each approach
-- [ ] Make CMS recommendation
-
-**Total Estimated Time:** 13-20 hours (1.5-2.5 days)
+**Files:**
+- `src/components/global/Sidebar.jsx`
+- `src/components/global/NavigationCircle.jsx`
+- `src/components/global/Footer.jsx`
+- `src/components/global/HamburgerMenu.jsx`
+- `src/config/globalContent.js`
 
 ---
 
-### 5. yellowCircle - "Own Your Story Series" 📝 NEW - NOV 18
+### 5. yellowCircle - "Own Your Story Series"
 
-**Status:** 🔴 P1 PRIORITY - Scoping phase (free time/after work)
+**Status:** ✅ ARTICLE 1 COMPLETE & DEPLOYED (Nov 22-24, 2025)
 
-**Goal:** Create playbooks/reports/whitepapers series showcasing business failures and proper solutions
+#### ✅ Article 1: "Why Your GTM Sucks" - LIVE
+- **Route:** `/thoughts/why-your-gtm-sucks`
+- **URL:** https://yellowcircle-app.web.app/thoughts/why-your-gtm-sucks
+- **Sections:** 35 complete
+- **Word Count:** ~15,500 words
+- **Reading Time:** ~78 minutes
+- **Features:**
+  - Horizontal scroll (desktop) / vertical scroll (mobile)
+  - 5 persona narratives (Alex, Jordan, Casey, Morgan, Riley)
+  - Data visualizations (StatCards, ProgressBars)
+  - Email capture modals
+  - PDF export
+  - Share buttons (Twitter, LinkedIn, Copy)
+  - Reading time indicator
+  - Back to top button
 
-**Strategic Value:**
-- Leverage existing case studies and documented expertise
-- Establish thought leadership in GTM and Marketing Ops
-- Drive traffic and leads to yellowCircle
-- Eventually live under: Stories > Projects > Thoughts
+**Files:**
+- `src/pages/OwnYourStoryArticle1Page.jsx` (4,530 lines)
+- `src/components/BackToTop.jsx`
+- `src/components/ShareButton.jsx`
+- `src/components/ReadingTime.jsx`
 
-#### Phase 1: Series Definition (2-3 hours)
-- [ ] Define "Own Your Story Series" brand identity
-- [ ] Establish content format and structure
-- [ ] Create style guide (tone, length, visual elements)
-- [ ] Plan publication cadence and distribution strategy
-- [ ] Outline first 5-10 topics in the series
+#### ⏳ Article 2: "Why Your MAP Is a Mess" - PLANNED
+- **Status:** Outline phase
+- **Target:** January 2026
+- **Focus:** Marketing automation failures
 
-#### Phase 2: Case Study Inventory (1-2 hours)
-- [ ] Review existing case studies in repository
-- [ ] Catalog documented expertise and insights
-- [ ] Identify reusable patterns and examples
-- [ ] Map case studies to potential topics
-
-#### Phase 3: First Piece - "Why Your GTM Sucks" (5-8 hours)
-- [ ] Research common GTM failures
-- [ ] Outline article structure
-- [ ] Draft content with case study examples
-- [ ] Create supporting visuals/diagrams
-- [ ] Edit and refine
-- [ ] Working title: "[H3] Own Your Story: [H1] Why Your GTM Sucks"
-
-#### Phase 4: Additional Topics Scoping (2-3 hours)
-- [ ] "Why Your MAP Is a Mess" - Marketing automation failures
-- [ ] "Why Your Sales and Marketing Are Divorced" - Alignment issues
-- [ ] "Why Your Data Is Lying to You" - Attribution and analytics
-- [ ] "Why Your Content Strategy Is Backwards" - Execution vs. planning
-- [ ] Map topics to existing case studies
-
-#### Phase 5: Integration Planning (1-2 hours)
-- [ ] Plan placement in yellowCircle navigation
-- [ ] Design Stories > Projects > Thoughts hierarchy
-- [ ] Create landing page for series
-- [ ] Plan SEO and distribution strategy
-
-**Total Estimated Time:** 11-18 hours (initial scoping + first piece)
-**Priority:** P1 - Free time/after work
-**First Deliverable:** "Why Your GTM Sucks" draft
+#### Future Topics (Mapped to Case Studies):
+- [ ] "Why Your Sales and Marketing Are Divorced"
+- [ ] "Why Your Data Is Lying to You"
+- [ ] "Why Your Content Strategy Is Backwards"
 
 ---
 
