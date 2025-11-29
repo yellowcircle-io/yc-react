@@ -2,17 +2,39 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 28, 2025 at 5:45 PM PST
-**Machine:** MacBook Air (Unity Notes UI Refinement)
-**Status:** ✅ Unity Notes + Unity Notes Plus UI Refinement COMPLETE
+**Updated:** November 28, 2025 at 7:00 PM PST
+**Machine:** Mac Mini (Documentation Update)
+**Status:** ✅ Unity Notes UI Refinement + CI Fix COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
 ---
 
-## ✅ NOVEMBER 28, 2025 - UNITY NOTES UI REFINEMENT - 5:45 PM PST
+## ✅ NOVEMBER 28, 2025 - UNITY NOTES UI REFINEMENT + CI FIX - 7:00 PM PST
 
-### MacBook Air Session: Unity Notes UI Updates
+### Mac Mini Session: Final Documentation + CI Fix
+
+**FINAL SESSION TASKS:**
+
+### 6. CI Build Fix
+- GitHub Actions build was failing: `lottie-react` import in Sidebar.jsx not in committed package.json
+- Fixed: Added lottie-react to package.json and committed
+- Commit: `3a6136f` - "Fix: Add lottie-react dependency to package.json"
+- CI should now pass
+
+### 7. Documentation Updates
+- PROJECT_ROADMAP_NOV2025.md updated with Nov 28 session details
+- WIP_CURRENT_CRITICAL.md updated (this file)
+- INSTANCE_LOG_MacMini.md updated with session 8
+
+**Git Status:**
+- Commit `ece6c2a`: Unity Notes UI refinement (pushed)
+- Commit `3a6136f`: CI fix for lottie-react (pushed)
+- All changes pushed to origin/main
+
+---
+
+### MacBook Air Session (Earlier): Unity Notes UI Updates
 
 **TASKS COMPLETED:**
 
@@ -47,8 +69,10 @@
 - `src/pages/UnityNotePlusPage.jsx` - Circle Nav centered, card types to dialog
 - `src/components/travel/PhotoUploadModal.jsx` - Added cardTypes support
 - `src/components/global/HamburgerMenu.jsx` - Yellow theme slide-over
+- `package.json` - Added lottie-react dependency
 
 **Deployed:** ✅ Firebase hosting at https://yellowcircle-app.web.app
+**CI Status:** ✅ Fixed (lottie-react dependency added)
 
 ---
 
