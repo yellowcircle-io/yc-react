@@ -3,16 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
+import { API_KEYS as LOCAL_KEYS } from '../../config/api-keys.local.js';
 
 // Password for access (simple client-side protection)
 const ACCESS_PASSWORD = 'yc2025outreach';
 
-// API keys - must be entered by user (not stored in source code for security)
-// Keys are encrypted in localStorage after first entry
+// API keys - loaded from local config file (gitignored via *.local pattern)
+// If deploying without local keys, create api-keys.local.js with empty values
 const DEFAULT_KEYS = {
-  groq: '',
-  resend: '',
-  perplexity: ''
+  groq: LOCAL_KEYS?.groq || '',
+  resend: LOCAL_KEYS?.resend || '',
+  perplexity: LOCAL_KEYS?.perplexity || ''
 };
 
 // ============================================================================

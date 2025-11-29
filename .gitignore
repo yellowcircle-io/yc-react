@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+**/*.local.js
+src/config/api-keys.local.js
+
+# Local API keys documentation (contains sensitive keys)
+dev-context/API_KEYS_LOCAL.md
 
 # Editor directories and files
 .vscode/*
