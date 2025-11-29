@@ -9,8 +9,9 @@ import { useLayout } from '../../contexts/LayoutContext';
  * - Scroll indicator SVG that rotates based on page state
  * - State 1 (rotation -90): Scroll hint (wave/chevron down)
  * - State 2 (rotation 0): Arrow pointing right (scroll complete)
- * - Left-click: Primary action
- * - Right-click: Context menu (desktop) / Long-press (mobile)
+ * - Click: Opens context menu (unified for desktop/mobile)
+ * - Long-press (mobile): Opens context menu
+ * - Right-click (desktop): Opens context menu
  */
 
 // Scroll Indicator Circle Component
@@ -206,8 +207,10 @@ function NavigationCircle({
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showContextMenu]);
 
+  // Click now opens context menu directly (no footer toggle)
   const handleClick = (e) => {
-    if (onClick) onClick(e);
+    e.preventDefault();
+    setShowContextMenu(!showContextMenu);
   };
 
   const handleContextMenu = (e) => {
@@ -215,24 +218,35 @@ function NavigationCircle({
     setShowContextMenu(!showContextMenu);
   };
 
-  const handleTouchEnd = (e) => {
-    e.preventDefault();
-    handleClick(e);
-  };
-
   // Handle long press for mobile context menu
   const longPressTimer = useRef(null);
+  const longPressTriggered = useRef(false);
 
   const handleTouchStart = () => {
+    longPressTriggered.current = false;
     longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
       setShowContextMenu(true);
-    }, 500);
+    }, 400); // 400ms for long press
   };
 
-  const handleTouchEndOrMove = () => {
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
+    // If long press didn't trigger, treat as normal tap (open menu)
+    if (!longPressTriggered.current) {
+      setShowContextMenu(!showContextMenu);
+    }
+    longPressTriggered.current = false;
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+    longPressTriggered.current = false;
   };
 
   // Menu action handlers
@@ -267,11 +281,8 @@ function NavigationCircle({
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         onTouchStart={handleTouchStart}
-        onTouchEnd={(e) => {
-          handleTouchEndOrMove();
-          handleTouchEnd(e);
-        }}
-        onTouchMove={handleTouchEndOrMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
@@ -286,7 +297,7 @@ function NavigationCircle({
           transition: 'transform 0.5s ease-out',
           WebkitTapHighlightColor: 'transparent'
         }}
-        title="Click to toggle footer | Right-click for more options"
+        title="Click for menu | Right-click or long-press for options"
       >
         <ScrollIndicatorCircle size={78} isHovered={isHovered} rotation={rotation} />
       </div>

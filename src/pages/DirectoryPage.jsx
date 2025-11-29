@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
+import { PAGES_CONFIG } from '../config/pagesConfig';
 
 function DirectoryPage() {
   const navigate = useNavigate();
@@ -19,18 +20,9 @@ function DirectoryPage() {
       label: "STORIES",
       itemKey: "stories",
       subItems: [
-        {
-          label: "Projects",
-          key: "projects",
-          subItems: ["Brand Development", "Marketing Architecture", "Email Development"]
-        },
-        { label: "Golden Unknown", key: "golden-unknown" },
-        {
-          label: "Cath3dral",
-          key: "cath3dral",
-          subItems: ["Being + Rhyme"]
-        },
-        { label: "Thoughts", key: "thoughts" }
+        { label: "Thoughts", key: "thoughts", route: "/thoughts" },
+        { label: "Golden Unknown", key: "golden-unknown", route: "/experiments/golden-unknown" },
+        { label: "Cath3dral", key: "cath3dral", route: "/experiments/cath3dral" }
       ]
     },
     {
@@ -38,10 +30,10 @@ function DirectoryPage() {
       label: "LABS",
       itemKey: "labs",
       subItems: [
-        { label: "UK-Memories", key: "uk-memories" },
-        { label: "Home-17", key: "home-17" },
-        { label: "Visual Noteboard", key: "visual-noteboard" },
-        { label: "Component Library", key: "component-library" }
+        { label: "UK-Memories", key: "uk-memories", route: "/uk-memories" },
+        { label: "Unity Notes", key: "unity-notes", route: "/unity-notes" },
+        { label: "Unity Notes+", key: "unity-notes-plus", route: "/unity-notes-plus" },
+        { label: "Component Library", key: "component-library", route: "/experiments/component-library" }
       ]
     },
     {
@@ -52,25 +44,8 @@ function DirectoryPage() {
     }
   ];
 
-  const pages = [
-    { name: 'Home', path: '/', status: 'migrated' },
-    { name: 'About', path: '/about', status: 'migrated' },
-    { name: 'Works', path: '/works', status: 'migrated' },
-    { name: 'Hands', path: '/hands', status: 'migrated' },
-    { name: 'Thoughts', path: '/thoughts', status: 'migrated' },
-    { name: 'Experiments', path: '/experiments', status: 'migrated' },
-    { name: 'Golden Unknown', path: '/experiments/golden-unknown', status: 'migrated' },
-    { name: 'Being + Rhyme', path: '/experiments/being-rhyme', status: 'migrated' },
-    { name: 'Cath3dral', path: '/experiments/cath3dral', status: 'migrated' },
-    { name: 'Component Library', path: '/experiments/component-library', status: 'excluded' },
-    { name: 'Blog', path: '/thoughts/blog', status: 'migrated' },
-    { name: 'UK-Memories', path: '/uk-memories', status: 'excluded' },
-    { name: 'Unity Notes', path: '/unity-notes', status: 'migrated' },
-    { name: 'Home-17', path: '/home-17', status: 'needs-migration' },
-    { name: 'Feedback', path: '/feedback', status: 'migrated' },
-    { name: 'Sitemap', path: '/sitemap', status: 'migrated' },
-    { name: '404', path: '/nonexistent', status: 'migrated' }
-  ];
+  // Use shared pages config
+  const pages = PAGES_CONFIG;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -138,16 +113,22 @@ function DirectoryPage() {
             All live pages for navigation & testing
           </p>
 
-          {/* Page list */}
+          {/* Page list - use anchor tags for right-click support */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '12px'
           }}>
             {pages.map((page, index) => (
-              <div
+              <a
                 key={index}
-                onClick={() => navigate(page.path)}
+                href={page.path}
+                onClick={(e) => {
+                  // Allow middle-click and ctrl/cmd-click to open in new tab
+                  if (e.button === 1 || e.ctrlKey || e.metaKey) return;
+                  e.preventDefault();
+                  navigate(page.path);
+                }}
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.6)',
                   backdropFilter: 'blur(8px)',
@@ -159,7 +140,8 @@ function DirectoryPage() {
                   transition: 'all 0.3s ease-in-out',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  textDecoration: 'none'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateX(10px)';
@@ -178,7 +160,7 @@ function DirectoryPage() {
                     marginBottom: '4px',
                     fontFamily: 'Helvetica, Arial, sans-serif'
                   }}>
-                    {page.name}
+                    {page.icon} {page.name}
                   </h3>
                   <p style={{
                     fontSize: 'clamp(0.8rem, 1.5vw, 1rem)',
@@ -188,6 +170,16 @@ function DirectoryPage() {
                   }}>
                     {page.path}
                   </p>
+                  {page.description && (
+                    <p style={{
+                      fontSize: 'clamp(0.7rem, 1.2vw, 0.85rem)',
+                      color: 'rgba(0,0,0,0.5)',
+                      marginTop: '4px',
+                      fontFamily: 'Helvetica, Arial, sans-serif'
+                    }}>
+                      {page.description}
+                    </p>
+                  )}
                 </div>
                 <span style={{
                   fontSize: 'clamp(0.7rem, 1.2vw, 0.9rem)',
@@ -200,7 +192,7 @@ function DirectoryPage() {
                 }}>
                   {getStatusLabel(page.status)}
                 </span>
-              </div>
+              </a>
             ))}
           </div>
 
