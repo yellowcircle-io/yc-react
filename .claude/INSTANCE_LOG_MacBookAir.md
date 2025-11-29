@@ -3,7 +3,7 @@
 **Machine:** MacBook Air
 **Instance ID:** macbook-air-secondary
 **Created:** November 2, 2025
-**Last Updated:** November 22, 2025 at 1:15 AM PST
+**Last Updated:** November 28, 2025 at 8:00 PM PST
 
 ---
 
@@ -138,6 +138,193 @@ node shortcut-router.js edit-theme --field=primary --value="#FF0000"
 - [ ] Homepage typography improvements (next session)
 - [ ] Sidebar UX enhancements (next session)
 - [ ] Unity Notes optimizations (next session)
+
+---
+
+### Session 3: Post-Rho Strategic Pivot & Outreach System
+**Date:** November 25-26, 2025
+**Context:** Rho employment ended Nov 25; pivoting to consulting revenue
+
+**Work Completed:**
+
+1. **Strategic Planning Documents**
+   - Created `dev-context/STRATEGIC_PIVOT_POST_RHO.md` - 60-day revenue plan
+   - Created `dev-context/CONSULTING_PORTFOLIO_AUDIT.md` - Complete expertise extraction
+   - Created `dev-context/GTM_ASSESSMENT_SERVICE_PAGE.md` - Service copy
+   - Created `dev-context/LINKEDIN_CONTENT_CALENDAR.md` - 8-week posting plan
+   - Created `dev-context/OUTREACH_TEMPLATES.md` - Warm/cold message templates
+
+2. **yellowcircle-outreach System (Complete Rebrand)**
+   - Archived old `rho-hubspot-deployment/` to `.archive-rho-hubspot-deployment/`
+   - Created new `yellowcircle-outreach/` with zero Rho references
+   - Includes: CLI email generator, Resend integration, Groq AI content
+   - Files: README.md, package.json, config/, lib/, scripts/, templates/
+
+**Commits:**
+- `d9d8c81` - Add: Post-Rho strategic pivot and 60-day revenue plan
+- `9a3bc99` - Add: Complete consulting portfolio audit and execution materials
+- `710418d` - Add: Cold outreach automation system for GTM consulting
+- `6f2d929` - Rebrand: Replace rho-hubspot-deployment with yellowcircle-outreach
+
+**Key Metrics Extracted (from Rho assessments):**
+- $2.5M/year technical debt identified
+- 300+ → 30 workflow reduction (90%)
+- 45-60 min data lag (should be <5)
+- 15% sync error rate
+- 3+ failed hiring cycles
+
+**Session Status:** ✅ Complete
+
+---
+
+### Session 4: Outreach Pro UI + Firebase Functions
+**Date:** November 26, 2025
+**Context:** Building web UI for outreach system with email sending capability
+
+**Work Completed:**
+
+1. **OutreachGeneratorPage.jsx** (Public Tool)
+   - Route: `/experiments/outreach-generator`
+   - AI-powered email generation using Groq
+   - NextPlay.so 3-part framework
+   - 3-step wizard: Prospect Info → Generate → Review & Copy
+
+2. **OutreachBusinessPage.jsx** (Password-Protected)
+   - Route: `/outreach` (password: `yc2025outreach`)
+   - 6-step workflow: Send Type → Recipient → Generate → Edit → Refine → Send
+   - Motion-specific templates (Sales: plain text, Brand: HTML)
+   - Perplexity LLM refinement integration
+   - Component library slide panel
+
+3. **Firebase Cloud Function** (CORS Proxy)
+   - Created `functions/index.js` - sendEmail endpoint
+   - Bypasses browser CORS restrictions for Resend API
+   - Deployed to: `https://us-central1-yellowcircle-app.cloudfunctions.net/sendEmail`
+
+**Commits:**
+- `e3478b7` - Add: Outreach Generator UI at /experiments/outreach-generator
+- `3645212` - Add: Password-protected business outreach tool at /outreach
+
+**Files Created:**
+- `src/pages/experiments/OutreachGeneratorPage.jsx`
+- `src/pages/experiments/OutreachBusinessPage.jsx`
+- `functions/index.js`
+- `functions/package.json`
+
+**Session Status:** ✅ Complete
+
+---
+
+### Session 5: Global Components Refactor + Unity Note Plus v2
+**Date:** November 27, 2025
+**Context:** Sidebar accordion, CircleNav icons, Footer social links, Unity Note Plus
+
+**Work Completed:**
+
+1. **Global Components Refactoring**
+   | Component | Changes |
+   |-----------|---------|
+   | **Sidebar** | Replaced slide-over with in-place accordion expansion |
+   | **NavigationCircle** | 20% bigger icons, smooth wave↔arrow crossfade |
+   | **Footer** | Added LinkedIn/Instagram with SVG icons |
+   | **Firefox Fixes** | Debounced hover, Lottie renderer settings, CSS fallbacks |
+
+2. **Unity Note Plus v2** (Multi-Card Canvas)
+   - Route: `/unity-notes-plus`
+   - ThreadDeck-inspired workspace
+   - Multiple card types: Photo, Text Note, Link, AI, Video
+   - Dark/Light theme toggle
+   - Quick add floating panel
+   - TextNoteNode component with inline editing
+
+**Commits:**
+- `678a80f` - Refactor: Global components - Sidebar accordion, CircleNav icons, Footer social links
+- `fcd6030` - Add: Unity Note Plus v2 - Multi-card canvas workspace
+
+**Files Modified/Created:**
+- `src/components/global/Sidebar.jsx` - In-place accordion
+- `src/components/global/NavigationCircle.jsx` - Bigger icons + crossfade
+- `src/components/global/Footer.jsx` - Social icons
+- `src/pages/UnityNotePlusPage.jsx` (680 lines)
+- `src/components/unity-plus/TextNoteNode.jsx` (180 lines)
+
+**Session Status:** ✅ Complete
+
+---
+
+### Session 6: Security Framework Implementation
+**Date:** November 28, 2025 at 11:30 AM PST
+**Context:** User requested security hardening for Outreach tools
+
+**Work Completed:**
+
+1. **OutreachBusinessPage Security Hardening**
+   - Removed hardcoded API keys from source code (Groq, Resend)
+   - Added PBKDF2 key derivation (100K iterations, SHA-256)
+   - Added AES-256-GCM encryption for localStorage settings
+   - Implemented re-authentication flow for settings decryption
+   - Migrated settings from `_v3` to encrypted `_v4` storage key
+   - Added security notice banner in settings panel
+
+2. **OutreachGeneratorPage User Customization**
+   - Added Brand Settings collapsible panel
+   - User can customize: company name, sender info, credentials
+   - Dynamic system prompt generation from brand config
+   - Auto-save to localStorage
+   - Reset to Default functionality
+
+**Commits:**
+- `0d26e3f` - Security: Remove hardcoded API keys, add AES-256 encryption for settings
+- `3d6cbb6` - Update: WIP documentation - Outreach security framework complete
+
+**Security Summary:**
+| Tool | Access | Key Storage | Encryption |
+|------|--------|-------------|------------|
+| OutreachBusinessPage | Password | User-entered, encrypted localStorage | AES-256-GCM |
+| OutreachGeneratorPage | Public | User's own key, plain localStorage | None (user's key) |
+| Firebase Function | Backend | Passed at runtime | HTTPS transit |
+
+**Session Status:** ✅ Complete
+
+---
+
+### Session 7: Unity Notes UI Refinement
+**Date:** November 28, 2025 (Afternoon)
+**Context:** UI consistency updates for Unity Notes pages
+
+**Work Completed:**
+
+1. **Circle Nav & Context Menu**
+   - Circle Nav: Centered at bottom (reverted from right)
+   - Context menu: Centered below Circle Nav
+   - Text: "ADD NOTE" instead of "ADD PHOTO"
+
+2. **Unity Notes Plus - Card Types in Dialog**
+   - PhotoUploadModal extended with `cardTypes` and `onAddCard` props
+   - Card types (Photo, Note, Link, AI, Video) shown below photo upload methods
+   - Context menu simplified (card types moved to dialog)
+
+3. **Menu Styling Updates**
+   - HamburgerMenu slide-over: Yellow background matching main overlay
+   - Typography: Large bold titles with letter-spacing
+   - Single X close button (removed duplicate)
+   - Consistent naming: `/unity-notes-plus` route
+
+4. **Rho Secrets Cleanup**
+   - `rho-hubspot-deployment/` removed from git history
+   - `.archive-rho-hubspot-deployment/` removed from git history
+   - Force pushed to GitHub
+
+**Commits:**
+- `ece6c2a` - Refactor: Unity Notes UI refinement - Circle Nav centered, card types in dialog
+
+**Files Modified:**
+- `src/pages/UnityNotesPage.jsx` - Circle Nav centered
+- `src/pages/UnityNotePlusPage.jsx` - Circle Nav centered, card types to dialog
+- `src/components/travel/PhotoUploadModal.jsx` - cardTypes support
+- `src/components/global/HamburgerMenu.jsx` - Yellow theme slide-over
+
+**Session Status:** ✅ Complete (continued by Mac Mini for CI fix)
 
 ---
 
