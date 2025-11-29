@@ -1003,58 +1003,10 @@ function UnityNotesPage() {
     }
   ];
 
-  // Custom Circle Nav - Bottom Center
-  const CustomCircleNav = (
-    <div
-      onClick={() => setIsUploadModalOpen(true)}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setShowContextMenu(!showContextMenu);
-      }}
-      data-context-menu
-      style={{
-        position: 'fixed',
-        bottom: '40px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '78px',
-        height: '78px',
-        cursor: 'pointer',
-        zIndex: 80,
-        transition: 'transform 0.2s ease'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)'}
-      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1)'}
-      title="Add Note (Right-click for options)"
-    >
-      <img
-        src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494537/NavCircle_ioqlsr.png"
-        alt="Add Note"
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          transform: 'rotate(0deg)',
-          transition: 'transform 0.3s ease-out',
-          pointerEvents: 'none'
-        }}
-      />
-      {/* Plus Symbol */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontSize: '32px',
-        fontWeight: '300',
-        color: 'black',
-        pointerEvents: 'none',
-        lineHeight: '1'
-      }}>
-        +
-      </div>
-    </div>
-  );
+  // Handle circle nav click - opens upload modal for Unity Notes
+  const handleCircleNavClick = () => {
+    setIsUploadModalOpen(true);
+  };
 
   return (
     <ErrorBoundary>
@@ -1065,7 +1017,7 @@ function UnityNotesPage() {
         navigationItems={navigationItems}
         pageLabel="UNITY NOTES"
         sidebarVariant="hidden"
-        customCircleNav={CustomCircleNav}
+        circleNavBehavior={handleCircleNavClick}
       >
         <ReactFlowProvider>
           <UnityNotesFlow

@@ -847,6 +847,11 @@ function UnityNotePlusPage() {
     navigate('/');
   };
 
+  // Handle circle nav click - opens upload modal for Unity Notes+
+  const handleCircleNavClick = () => {
+    setIsUploadModalOpen(true);
+  };
+
   const navigationItems = [
     {
       icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
@@ -881,6 +886,7 @@ function UnityNotePlusPage() {
         navigationItems={navigationItems}
         pageLabel="UNITY NOTES+"
         sidebarVariant="hidden"
+        circleNavBehavior={handleCircleNavClick}
       >
         <ReactFlowProvider>
           <UnityNotePlusFlow

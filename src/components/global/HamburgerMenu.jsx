@@ -322,129 +322,95 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
               zIndex: 270,
               display: 'flex',
               flexDirection: 'column',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              paddingRight: 'max(50px, 5vw)',
               animation: 'slideInRight 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.15)'
             }}>
-              {/* Header with title and close button */}
-              <div style={{
-                padding: '20px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                minHeight: '80px'
-              }}>
-                {/* Title - matching main menu typography */}
-                <span style={{
-                  fontSize: 'clamp(2rem, 5vh, 3.5rem)',
-                  fontWeight: '900',
-                  fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
-                  color: 'black',
-                  letterSpacing: '0.3em'
-                }}>{slideOverTitle}</span>
+              {/* Section title - matching parent category typography */}
+              <span style={{
+                fontSize: 'clamp(2rem, 5vh, 4rem)',
+                fontWeight: '900',
+                fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                color: 'black',
+                letterSpacing: '0.3em',
+                marginBottom: '20px',
+                animation: 'slideInMenuItem 0.3s ease-out both'
+              }}>{slideOverTitle}</span>
 
-                {/* Close button - X */}
-                <button
-                  onClick={() => {
-                    handleCloseSlideOver();
-                    if (onMenuToggle) onMenuToggle();
-                  }}
-                  style={{
-                    width: '50px',
-                    height: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    transition: 'transform 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  {/* X icon matching hamburger style */}
-                  <div style={{
-                    position: 'relative',
-                    width: '28px',
-                    height: '28px'
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      width: '28px',
-                      height: '3px',
-                      backgroundColor: 'black',
-                      transform: 'translate(-50%, -50%) rotate(45deg)'
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      width: '28px',
-                      height: '3px',
-                      backgroundColor: 'black',
-                      transform: 'translate(-50%, -50%) rotate(-45deg)'
-                    }} />
-                  </div>
-                </button>
-              </div>
-
-              {/* Sub-items list */}
+              {/* Sub-items list - matching parent category typography */}
               <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '8px'
+                alignItems: 'flex-end',
+                gap: '5px'
               }}>
                 {slideOverItems.map((subItem, idx) => (
-                  <button
+                  <a
                     key={idx}
-                    onClick={() => {
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
                       navigate(subItem.route);
                       handleCloseSlideOver();
                     }}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '18px 20px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: 'rgba(0, 0, 0, 0.06)',
-                      cursor: 'pointer',
-                      fontSize: '18px',
-                      fontWeight: '700',
-                      fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                      textDecoration: 'none',
                       color: 'black',
-                      letterSpacing: '0.1em',
-                      textAlign: 'left',
-                      transition: 'all 0.2s ease',
-                      animation: `slideInMenuItem 0.3s ease-out ${idx * 0.08}s both`
+                      fontSize: 'clamp(1.5rem, 4vh, 3rem)',
+                      fontWeight: '900',
+                      fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                      letterSpacing: '0.2em',
+                      padding: '10px 20px',
+                      borderRadius: '4px',
+                      WebkitTapHighlightColor: 'transparent',
+                      userSelect: 'none',
+                      textAlign: 'right',
+                      transition: 'color 0.3s ease-in-out',
+                      animation: `slideInMenuItem 0.3s ease-out ${(idx + 1) * 0.08}s both`
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'black';
-                      e.currentTarget.style.color = '#EECF00';
-                      e.currentTarget.style.transform = 'translateX(-8px)';
+                      e.currentTarget.style.color = 'white';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
                       e.currentTarget.style.color = 'black';
-                      e.currentTarget.style.transform = 'translateX(0)';
                     }}
                   >
-                    <span>{subItem.label}</span>
-                    <span style={{ opacity: 0.4, fontSize: '14px' }}>→</span>
-                  </button>
+                    {subItem.label}
+                  </a>
                 ))}
+
+                {/* Back button - under last item */}
+                <button
+                  onClick={handleCloseSlideOver}
+                  style={{
+                    marginTop: '30px',
+                    padding: '10px 20px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: 'clamp(1rem, 2vh, 1.5rem)',
+                    fontWeight: '700',
+                    fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                    color: 'rgba(0,0,0,0.5)',
+                    letterSpacing: '0.2em',
+                    transition: 'color 0.3s ease',
+                    animation: `slideInMenuItem 0.3s ease-out ${(slideOverItems.length + 1) * 0.08}s both`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'rgba(0,0,0,0.5)';
+                  }}
+                >
+                  <span>←</span>
+                  <span>BACK</span>
+                </button>
               </div>
             </div>
           )}

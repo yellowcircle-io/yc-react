@@ -1,28 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
-import Lottie from 'lottie-react';
-
-// Import Lottie animations
-import scrollAnimation from '../../assets/lottie/scroll.json';
-import testTubeAnimation from '../../assets/lottie/testTube.json';
-import waveAnimation from '../../assets/lottie/wave.json';
-
-// Map of icon keys to Lottie animations
-const LOTTIE_ICONS = {
-  stories: scrollAnimation,
-  labs: testTubeAnimation,
-  about: waveAnimation
-};
 
 /**
- * Sidebar - Three-section collapsible sidebar with in-place accordion navigation
+ * Sidebar - Three-section collapsible sidebar with slide-over navigation
  *
  * Features:
- * - In-place accordion expansion for sub-items
- * - Lottie animated icons with hover control
+ * - Slide-over panel for sub-items (not accordion)
+ * - Static image icons from Cloudinary
  * - Font sizes reduced by 15%
- * - Firefox compatibility for animations
+ * - Firefox compatibility
  *
  * Variants:
  * - "standard": 80px when closed (default)
@@ -30,14 +17,18 @@ const LOTTIE_ICONS = {
  */
 function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffset = 0, pageLabel = "HOME", variant = "standard" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     sidebarOpen,
     setSidebarOpen,
     expandedSection,
-    setExpandedSection,
-    expandedSubSection,
-    setExpandedSubSection
+    setExpandedSection
   } = useLayout();
+
+  // Slide-over state
+  const [slideOverOpen, setSlideOverOpen] = useState(false);
+  const [slideOverItems, setSlideOverItems] = useState([]);
+  const [slideOverTitle, setSlideOverTitle] = useState('');
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -47,28 +38,84 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
     if (onHomeClick) onHomeClick(e);
   };
 
-  // Navigation Item Component - In-place accordion with Lottie icons
-  // Font sizes reduced by 15%: 15px→13px, 14px→12px, 12px→10px, 10px→8.5px
-  // Firefox compatibility: debounced hover, CSS fallbacks
-  const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
-    const isExpanded = expandedSection === itemKey && sidebarOpen;
-    const [isHovered, setIsHovered] = useState(false);
-    const lottieRef = useRef(null);
-    const hoverTimeoutRef = useRef(null);
+  // Open slide-over panel with sub-items
+  const handleOpenSlideOver = (title, items) => {
+    setSlideOverTitle(title);
+    setSlideOverItems(items);
+    setSlideOverOpen(true);
+  };
 
-    // Get Lottie animation data if available
-    const lottieData = LOTTIE_ICONS[itemKey];
+  // Close slide-over panel (back to main nav)
+  const handleCloseSlideOver = () => {
+    setSlideOverOpen(false);
+    setSlideOverItems([]);
+    setSlideOverTitle('');
+  };
+
+  // Close slide-over on navigation
+  useEffect(() => {
+    handleCloseSlideOver();
+  }, [location.pathname]);
+
+  // Close slide-over when sidebar closes
+  useEffect(() => {
+    if (!sidebarOpen) {
+      handleCloseSlideOver();
+    }
+  }, [sidebarOpen]);
+
+  // Inject keyframe animations
+  useEffect(() => {
+    const styleId = 'sidebar-slide-over-animations';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes slideOverFromLeft {
+          from {
+            transform: translateX(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        @keyframes slideOverItem {
+          from {
+            transform: translateX(-20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
+  // Navigation Item Component - with slide-over trigger
+  const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const hoverTimeoutRef = useRef(null);
+    const hasSubItems = subItems && subItems.length > 0;
 
     const handleClick = () => {
       if (!sidebarOpen) {
-        // First click: open sidebar and expand section
+        // First click: open sidebar
         setSidebarOpen(true);
-        setExpandedSection(itemKey);
+        if (hasSubItems) {
+          // Show slide-over after sidebar opens
+          setTimeout(() => {
+            handleOpenSlideOver(label, subItems);
+          }, 300);
+        }
       } else {
-        // Toggle expansion or navigate
-        if (subItems && subItems.length > 0) {
-          // Toggle accordion
-          setExpandedSection(expandedSection === itemKey ? null : itemKey);
+        if (hasSubItems) {
+          // Open slide-over panel
+          handleOpenSlideOver(label, subItems);
         } else {
           // Navigate directly for items without sub-items
           if (itemKey === 'labs') {
@@ -82,39 +129,18 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       }
     };
 
-    // Play Lottie on hover - debounced for Firefox stability
+    // Hover handlers - debounced for stability
     const handleMouseEnter = () => {
-      // Clear any pending leave timeout
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
       }
       setIsHovered(true);
-      // Use requestAnimationFrame to ensure DOM is stable before playing
-      requestAnimationFrame(() => {
-        try {
-          if (lottieRef.current && typeof lottieRef.current.play === 'function') {
-            lottieRef.current.play();
-          }
-        } catch (e) {
-          // Firefox fallback - ignore animation errors
-          console.debug('Lottie play error:', e);
-        }
-      });
     };
 
     const handleMouseLeave = () => {
-      // Debounce the leave to prevent flickering
       hoverTimeoutRef.current = setTimeout(() => {
         setIsHovered(false);
-        try {
-          if (lottieRef.current && typeof lottieRef.current.stop === 'function') {
-            lottieRef.current.stop();
-          }
-        } catch (e) {
-          // Firefox fallback - ignore animation errors
-          console.debug('Lottie stop error:', e);
-        }
       }, 50);
     };
 
@@ -124,7 +150,6 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
         width: '100%',
         flexShrink: 0
       }}>
-        {/* Main navigation item container */}
         <button
           type="button"
           className="clickable-element"
@@ -142,7 +167,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             minHeight: '48px',
             width: '100%',
             borderRadius: '6px',
-            backgroundColor: (isHovered || isExpanded) && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
+            backgroundColor: isHovered && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
             cursor: 'pointer',
             transition: 'background-color 0.15s ease-out',
             WebkitTapHighlightColor: 'transparent',
@@ -152,17 +177,14 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             font: 'inherit'
           }}
         >
-
-          {/* Icon - Lottie animation or fallback img */}
+          {/* Icon - Static image with hover effects */}
           <div style={{
             position: 'absolute',
             left: '40px',
             top: '50%',
-            transform: isExpanded
+            transform: isHovered
               ? 'translate(-50%, -50%) scale(1.05)'
-              : isHovered
-                ? 'translate(-50%, -50%) scale(1.03)'
-                : 'translate(-50%, -50%) scale(1)',
+              : 'translate(-50%, -50%) scale(1)',
             width: '28px',
             height: '28px',
             display: 'flex',
@@ -170,158 +192,88 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             justifyContent: 'center',
             zIndex: 2,
             pointerEvents: 'none',
-            transition: 'transform 0.15s ease-out'
+            transition: 'transform 0.2s ease-out'
           }}>
-            {lottieData ? (
-              <Lottie
-                lottieRef={lottieRef}
-                animationData={lottieData}
-                loop={true}
-                autoplay={false}
-                renderer="svg"
-                rendererSettings={{
-                  preserveAspectRatio: 'xMidYMid slice',
-                  progressiveLoad: true,
-                  hideOnTransparent: true
-                }}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  display: 'block'
-                }}
-              />
-            ) : (
-              <img
-                src={icon}
-                alt={label}
-                width="24"
-                height="24"
-                style={{
-                  display: 'block',
-                  filter: isExpanded ? 'brightness(1.2) saturate(1.1)' : 'brightness(1)',
-                  transition: 'filter 0.15s ease-out'
-                }}
-              />
-            )}
+            <img
+              src={icon}
+              alt={label}
+              width="28"
+              height="28"
+              style={{
+                display: 'block',
+                objectFit: 'contain',
+                transition: 'filter 0.15s ease-out'
+              }}
+            />
           </div>
 
-          {/* Label - reduced font size (15px → 13px) */}
+          {/* Label */}
           <span style={{
             position: 'absolute',
             left: '60px',
             top: '50%',
-            color: isExpanded ? '#EECF00' : 'black',
+            color: 'black',
             fontSize: '13px',
-            fontWeight: isExpanded ? '700' : '600',
+            fontWeight: '600',
             letterSpacing: '0.2em',
             opacity: sidebarOpen ? 1 : 0,
             transform: sidebarOpen ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-10px)',
-            transition: 'color 0.15s ease-out, font-weight 0.15s ease-out, opacity 0.3s ease-out 0.1s, transform 0.3s ease-out 0.1s',
+            transition: 'opacity 0.3s ease-out 0.1s, transform 0.3s ease-out 0.1s',
             whiteSpace: 'nowrap',
             pointerEvents: 'none'
           }}>{label}</span>
 
-          {/* Sub-items indicator arrow - rotates when expanded */}
-          {subItems && subItems.length > 0 && sidebarOpen && (
+          {/* Sub-items indicator arrow */}
+          {hasSubItems && sidebarOpen && (
             <span style={{
               position: 'absolute',
               right: '16px',
               top: '50%',
-              transform: isExpanded ? 'translateY(-50%) rotate(90deg)' : 'translateY(-50%) rotate(0deg)',
+              transform: 'translateY(-50%)',
               fontSize: '10px',
-              color: isExpanded ? '#EECF00' : 'rgba(0,0,0,0.4)',
+              color: 'rgba(0,0,0,0.4)',
               opacity: sidebarOpen ? 1 : 0,
-              transition: 'transform 0.2s ease-out, color 0.15s ease-out, opacity 0.2s ease-out'
+              transition: 'opacity 0.2s ease-out'
             }}>→</span>
           )}
         </button>
-
-        {/* Sub-items - In-place accordion expansion */}
-        {subItems && subItems.length > 0 && (
-          <div style={{
-            marginLeft: '60px',
-            marginTop: '-4px',
-            maxHeight: isExpanded ? `${subItems.length * 36 + 10}px` : '0px',
-            overflow: 'hidden',
-            opacity: isExpanded ? 1 : 0,
-            transition: 'max-height 0.3s ease-out, opacity 0.2s ease-out'
-          }}>
-            <div style={{ paddingTop: '4px', paddingBottom: '4px' }}>
-              {subItems.map((item, idx) => {
-                const itemLabel = typeof item === 'string' ? item : item.label;
-                const itemKeyVal = typeof item === 'string' ? item : item.key;
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="clickable-element"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Navigation logic
-                      if (itemKeyVal === 'home-17') {
-                        navigate('/home-17');
-                      } else if (itemKeyVal === 'uk-memories') {
-                        navigate('/uk-memories');
-                      } else if (itemKeyVal === 'component-library') {
-                        navigate('/experiments/component-library');
-                      } else if (itemKeyVal === 'golden-unknown') {
-                        navigate('/experiments/golden-unknown');
-                      } else if (itemKeyVal === 'thoughts') {
-                        navigate('/thoughts');
-                      }
-                    }}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '8px 10px',
-                      marginBottom: '2px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                      fontSize: '10px',
-                      fontWeight: '500',
-                      color: 'rgba(0,0,0,0.7)',
-                      letterSpacing: '0.03em',
-                      textAlign: 'left',
-                      transition: 'background-color 0.15s ease, color 0.15s ease, transform 0.15s ease',
-                      opacity: isExpanded ? 1 : 0,
-                      transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
-                      transitionDelay: isExpanded ? `${idx * 0.04}s` : '0s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.15)';
-                      e.currentTarget.style.color = '#EECF00';
-                      e.currentTarget.style.transform = 'translateX(4px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = 'rgba(0,0,0,0.7)';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }}
-                  >
-                    {itemLabel}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     );
   };
 
   const closedWidth = variant === "hidden" ? '0px' : '80px';
-
-  // For "hidden" variant, determine if background/icons should be visible
   const showBackground = variant === "hidden" ? sidebarOpen : true;
   const togglePosition = variant === "hidden" ? 'fixed' : 'absolute';
   const toggleLeft = variant === "hidden" ? '20px' : '40px';
 
+  // Helper function for sub-item navigation
+  const handleSubItemClick = (item) => {
+    const itemKeyVal = typeof item === 'string' ? item : item.key;
+    const itemRoute = typeof item === 'object' && item.route ? item.route : null;
+
+    if (itemRoute) {
+      navigate(itemRoute);
+    } else if (itemKeyVal === 'home-17') {
+      navigate('/home-17');
+    } else if (itemKeyVal === 'uk-memories') {
+      navigate('/uk-memories');
+    } else if (itemKeyVal === 'component-library') {
+      navigate('/experiments/component-library');
+    } else if (itemKeyVal === 'golden-unknown') {
+      navigate('/experiments/golden-unknown');
+    } else if (itemKeyVal === 'thoughts') {
+      navigate('/thoughts');
+    } else if (itemKeyVal === 'unity-notes') {
+      navigate('/unity-notes');
+    } else if (itemKeyVal === 'unity-notes-plus') {
+      navigate('/unity-notes-plus');
+    }
+    handleCloseSlideOver();
+  };
+
   return (
     <>
-      {/* Sidebar Toggle Button - Fixed position for "hidden" variant */}
+      {/* Sidebar Toggle Button */}
       <div
         className="clickable-element"
         onClick={handleSidebarToggle}
@@ -401,7 +353,6 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           }}
           onClick={(e) => {
             e.preventDefault();
-            // Engage footer on logo click
             if (onFooterToggle) {
               onFooterToggle();
             } else {
@@ -423,7 +374,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
         </div>
       )}
 
-      {/* Sidebar container with background and navigation */}
+      {/* Sidebar container */}
       <div style={{
         position: 'fixed',
         left: 0,
@@ -454,7 +405,6 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           opacity: showBackground ? 1 : 0,
           transition: 'opacity 0.3s ease-out'
         }}>
-          {/* HOME Label - Breadcrumb indicator */}
           <div
             className="clickable-element"
             onClick={handleHomeClick}
@@ -487,7 +437,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           </div>
         </div>
 
-        {/* NAVIGATION SECTION - Scrollable flex container */}
+        {/* NAVIGATION SECTION - Main nav items (hidden when slide-over is open) */}
         <nav
           className="navigation-items-container"
           style={{
@@ -500,8 +450,10 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             gap: '8px',
             padding: '20px 0',
             minHeight: 0,
-            opacity: showBackground ? 1 : 0,
-            transition: 'opacity 0.3s ease-out'
+            opacity: showBackground && !slideOverOpen ? 1 : 0,
+            transform: slideOverOpen ? 'translateX(-20px)' : 'translateX(0)',
+            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+            pointerEvents: slideOverOpen ? 'none' : 'auto'
           }}
         >
           {navigationItems.map((item, index) => (
@@ -512,6 +464,115 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             />
           ))}
         </nav>
+
+        {/* SLIDE-OVER PANEL - Sub-items */}
+        {slideOverOpen && (
+          <div style={{
+            position: 'absolute',
+            top: '100px',
+            left: 0,
+            right: 0,
+            bottom: variant === "standard" ? '85px' : '0',
+            backgroundColor: 'transparent',
+            zIndex: 60,
+            display: 'flex',
+            flexDirection: 'column',
+            animation: 'slideOverFromLeft 0.3s ease-out',
+            padding: '0 20px'
+          }}>
+            {/* Back button */}
+            <button
+              onClick={handleCloseSlideOver}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 0',
+                marginBottom: '16px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: 'rgba(0,0,0,0.6)',
+                letterSpacing: '0.1em',
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#EECF00';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>←</span>
+              <span>BACK</span>
+            </button>
+
+            {/* Section title */}
+            <h3 style={{
+              fontSize: '13px',
+              fontWeight: '700',
+              color: '#EECF00',
+              letterSpacing: '0.2em',
+              marginBottom: '16px',
+              paddingLeft: '8px'
+            }}>
+              {slideOverTitle}
+            </h3>
+
+            {/* Sub-items list */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              flex: 1,
+              overflowY: 'auto'
+            }}>
+              {slideOverItems.map((item, idx) => {
+                const itemLabel = typeof item === 'string' ? item : item.label;
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleSubItemClick(item)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: 'black',
+                      letterSpacing: '0.05em',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                      animation: `slideOverItem 0.25s ease-out ${idx * 0.05}s both`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+                      e.currentTarget.style.color = '#EECF00';
+                      e.currentTarget.style.transform = 'translateX(4px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                      e.currentTarget.style.color = 'black';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }}
+                  >
+                    <span>{itemLabel}</span>
+                    <span style={{ opacity: 0.4, fontSize: '12px' }}>→</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* FOOTER SECTION - YC Logo (only for standard variant) */}
         {variant === "standard" && (
@@ -539,7 +600,6 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
               }}
               onClick={(e) => {
                 e.preventDefault();
-                // Engage footer on logo click
                 if (onFooterToggle) {
                   onFooterToggle();
                 } else {
@@ -558,7 +618,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           </div>
         )}
 
-        {/* Firefox-compatible CSS hover fallback styles */}
+        {/* CSS styles */}
         <style>{`
           /* Firefox-specific hover fixes */
           @-moz-document url-prefix() {
