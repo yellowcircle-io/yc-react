@@ -3,7 +3,7 @@
 **Machine:** Mac Mini
 **Instance ID:** mac-mini-primary
 **Created:** November 2, 2025
-**Last Updated:** November 18, 2025
+**Last Updated:** November 28, 2025
 
 ---
 
@@ -739,6 +739,35 @@ Location: `.claude/shared-context/`
 **Next Scheduled Cleanup:** December 1, 2025
 
 **Machine Note:** This maintenance system is Mac Mini specific due to different storage patterns on MacBook Air.
+
+---
+
+### Session 8: Unity Notes UI Refinement + CI Fix
+**Date:** November 28, 2025 at 7:00 PM PST
+**Context:** Documentation update and CI build fix
+
+**Tasks Completed:**
+
+1. **CI Build Fix** ✅
+   - GitHub Actions build was failing: `lottie-react` import in Sidebar.jsx not in committed package.json
+   - Added lottie-react to package.json and committed
+   - Commit: `3a6136f` - "Fix: Add lottie-react dependency to package.json"
+   - CI should now pass
+
+2. **Documentation Updates** ✅
+   - Updated PROJECT_ROADMAP_NOV2025.md with Nov 28 session details
+   - Updated WIP_CURRENT_CRITICAL.md with final session status
+   - Updated INSTANCE_LOG_MacMini.md (this file) with Session 8
+
+**Commits Made:**
+- `ece6c2a` - Unity Notes UI refinement (pushed by MacBook Air earlier)
+- `3a6136f` - CI fix for lottie-react (pushed)
+
+**Session Summary:**
+- Continued work from MacBook Air session (Unity Notes UI refinement)
+- Fixed CI build failure caused by missing lottie-react dependency
+- Updated all cross-machine documentation for sync
+- All changes pushed to origin/main
 
 ---
 

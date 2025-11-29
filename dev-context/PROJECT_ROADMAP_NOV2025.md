@@ -45,6 +45,12 @@
 - `src/pages/UnityNotePlusPage.jsx` - Circle Nav centered, card types in dialog
 - `src/components/travel/PhotoUploadModal.jsx` - cardTypes/onAddCard props
 - `src/RouterApp.jsx` - Route `/unity-notes-plus`
+- `package.json` - Added lottie-react dependency (CI fix)
+
+**CI Fix (7:00 PM):**
+- GitHub Actions build was failing: `lottie-react` not in committed package.json
+- Commit `3a6136f`: Added lottie-react dependency
+- CI now passing
 
 ---
 
