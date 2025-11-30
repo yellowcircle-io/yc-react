@@ -29,9 +29,10 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
     LABS: {
       hasSubItems: true,
       subItems: [
-        { label: 'UK-Memories', route: '/uk-memories' },
         { label: 'Unity Notes', route: '/unity-notes' },
-        { label: 'Unity Notes+', route: '/unity-notes-plus' },
+        { label: 'Outreach', route: '/experiments/outreach' },
+        { label: 'Home-17', route: '/home-17' },
+        { label: 'Visual Noteboard', route: '/experiments/visual-noteboard' },
         { label: 'Component Library', route: '/experiments/component-library' }
       ]
     },

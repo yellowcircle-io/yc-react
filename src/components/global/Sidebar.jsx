@@ -313,6 +313,10 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       navigate('/unity-notes');
     } else if (itemKeyVal === 'unity-notes-plus') {
       navigate('/unity-notes-plus');
+    } else if (itemKeyVal === 'outreach') {
+      navigate('/experiments/outreach');
+    } else if (itemKeyVal === 'visual-noteboard') {
+      navigate('/experiments/visual-noteboard');
     }
     handleCloseSlideOver();
   };

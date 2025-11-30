@@ -51,7 +51,7 @@ const PlusIconCircle = ({ size = 78, isHovered = false }) => {
   );
 };
 
-// Settings Gear Button
+// Settings Gear Button - Small, overlapping circle, bottom-right
 const SettingsGear = ({ onClick, isHovered, onHover }) => {
   return (
     <button
@@ -59,22 +59,26 @@ const SettingsGear = ({ onClick, isHovered, onHover }) => {
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       style={{
-        width: '36px',
-        height: '36px',
+        position: 'absolute',
+        bottom: '-4px',
+        right: '-4px',
+        width: '28px',
+        height: '28px',
         borderRadius: '50%',
-        backgroundColor: isHovered ? 'rgba(107, 114, 128, 0.9)' : 'rgba(107, 114, 128, 0.7)',
-        border: 'none',
+        backgroundColor: isHovered ? 'rgba(75, 85, 99, 0.95)' : 'rgba(107, 114, 128, 0.85)',
+        border: '2px solid white',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.2s ease',
-        transform: isHovered ? 'scale(1.1)' : 'scale(1)',
-        boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.2)'
+        transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+        boxShadow: isHovered ? '0 3px 10px rgba(0,0,0,0.4)' : '0 2px 6px rgba(0,0,0,0.25)',
+        zIndex: 10
       }}
       title="Options"
     >
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="white">
         <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1c0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
       </svg>
     </button>
@@ -271,7 +275,7 @@ function UnityCircleNav({
 
   return (
     <div ref={containerRef}>
-      {/* Main Circle + Gear Container */}
+      {/* Main Circle + Gear Container - Centered */}
       <div
         style={{
           position: 'fixed',
@@ -281,37 +285,42 @@ function UnityCircleNav({
             ? 'translateX(-50%) translateY(-300px)'
             : 'translateX(-50%)',
           zIndex: 350,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
           transition: 'transform 0.5s ease-out'
         }}
       >
-        {/* Main Plus Circle */}
+        {/* Circle with overlapping gear wrapper */}
         <div
-          className="clickable-element"
-          onClick={handleCircleClick}
-          onContextMenu={handleContextMenu}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchMove={handleTouchMove}
-          onMouseEnter={() => setIsCircleHovered(true)}
-          onMouseLeave={() => setIsCircleHovered(false)}
           style={{
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent'
+            position: 'relative',
+            display: 'inline-block'
           }}
-          title="Add Note (right-click for options)"
         >
-          <PlusIconCircle size={78} isHovered={isCircleHovered} />
-        </div>
+          {/* Main Plus Circle */}
+          <div
+            className="clickable-element"
+            onClick={handleCircleClick}
+            onContextMenu={handleContextMenu}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+            onMouseEnter={() => setIsCircleHovered(true)}
+            onMouseLeave={() => setIsCircleHovered(false)}
+            style={{
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+            title="Add Note (right-click for options)"
+          >
+            <PlusIconCircle size={78} isHovered={isCircleHovered} />
+          </div>
 
-        {/* Settings Gear */}
-        <SettingsGear
-          onClick={handleGearClick}
-          isHovered={isGearHovered}
-          onHover={setIsGearHovered}
-        />
+          {/* Settings Gear - Overlapping bottom-right */}
+          <SettingsGear
+            onClick={handleGearClick}
+            isHovered={isGearHovered}
+            onHover={setIsGearHovered}
+          />
+        </div>
       </div>
 
       {/* Options Menu */}
