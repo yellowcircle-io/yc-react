@@ -341,6 +341,38 @@ function CompanyDetailPage() {
               </p>
             ))}
           </div>
+
+          {/* Dormant Case Study CTA - Placeholder for future */}
+          <div style={{
+            margin: '30px 0 0 0',
+            animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
+          }}>
+            <button
+              disabled
+              style={{
+                padding: '14px 28px',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                color: 'rgba(0, 0, 0, 0.3)',
+                border: '1px dashed rgba(0, 0, 0, 0.2)',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                cursor: 'not-allowed'
+              }}
+              title="Case study coming soon"
+            >
+              VIEW FULL CASE STUDY
+            </button>
+            <p style={{
+              ...TYPOGRAPHY.small,
+              color: 'rgba(0, 0, 0, 0.3)',
+              marginTop: '8px',
+              fontStyle: 'italic'
+            }}>
+              Coming soon
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

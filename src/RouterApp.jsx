@@ -16,6 +16,7 @@ const ThoughtsPage = lazy(() => import('./pages/ThoughtsPage'));
 const HandsPage = lazy(() => import('./pages/HandsPage'));
 const AssessmentPage = lazy(() => import('./pages/AssessmentPage'));
 const CompanyDetailPage = lazy(() => import('./pages/works/CompanyDetailPage'));
+const ServiceDetailPage = lazy(() => import('./pages/services/ServiceDetailPage'));
 const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
 const CapsuleViewPage = lazy(() => import('./pages/CapsuleViewPage'));
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
@@ -122,6 +123,9 @@ function RouterApp() {
 
             {/* Works Company Detail Pages */}
             <Route path="/works/:companyId" element={<CompanyDetailPage />} />
+
+            {/* Services Detail Pages */}
+            <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />

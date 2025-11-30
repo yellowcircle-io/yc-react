@@ -17,6 +17,8 @@ import aboutAnimation from '../assets/lottie/wave.json';
 /**
  * Standard navigation items for all pages
  * Uses Lottie animations for icons
+ *
+ * IMPORTANT: Keep in sync with HamburgerMenu.jsx menuConfig
  */
 export const navigationItems = [
   {
@@ -24,12 +26,13 @@ export const navigationItems = [
     label: "SERVICES",
     itemKey: "services",
     subItems: [
-      { label: "GTM STRATEGIC AUDIT", key: "gtm-audit", route: "/services" },
-      { label: "MARKETING SYSTEMS", key: "marketing-systems", route: "/services" },
-      { label: "TECHNICAL DEBT", key: "technical-debt", route: "/services" },
-      { label: "DATA ARCHITECTURE", key: "data-architecture", route: "/services" },
-      { label: "CREATIVE + OPERATIONS", key: "creative-operations", route: "/services" },
-      { label: "EMAIL DEVELOPMENT", key: "email-development", route: "/services" }
+      { label: "GTM STRATEGIC AUDIT", key: "gtm-audit", route: "/services/gtm-audit" },
+      { label: "MARKETING SYSTEMS", key: "marketing-systems", route: "/services/marketing-systems" },
+      { label: "TECHNICAL DEBT", key: "technical-debt", route: "/services/technical-debt" },
+      { label: "ATTRIBUTION AUDIT", key: "attribution-audit", route: "/services/attribution-audit" },
+      { label: "DATA ARCHITECTURE", key: "data-architecture", route: "/services/data-architecture" },
+      { label: "CREATIVE + OPERATIONS", key: "creative-operations", route: "/services/creative-operations" },
+      { label: "EMAIL DEVELOPMENT", key: "email-development", route: "/services/email-development" }
     ]
   },
   {
@@ -56,6 +59,8 @@ export const navigationItems = [
     label: "LABS",
     itemKey: "labs",
     subItems: [
+      { label: "GTM HEALTH ASSESSMENT", key: "assessment", route: "/assessment" },
+      { label: "OUTREACH GENERATOR", key: "outreach-generator", route: "/experiments/outreach-generator" },
       { label: "UNITY NOTES", key: "unity-notes", route: "/unity-notes" },
       { label: "OUTREACH", key: "outreach", route: "/outreach" }
     ]

@@ -19,17 +19,19 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
   const [slideOverTitle, setSlideOverTitle] = React.useState('');
 
   // Menu items configuration with sub-items
+  // IMPORTANT: Keep in sync with navigationItems.js
   const menuConfig = {
     HOME: { hasSubItems: false },
     SERVICES: {
       hasSubItems: true,
       subItems: [
-        { label: 'GTM STRATEGIC AUDIT', route: '/services' },
-        { label: 'MARKETING SYSTEMS', route: '/services' },
-        { label: 'TECHNICAL DEBT', route: '/services' },
-        { label: 'DATA ARCHITECTURE', route: '/services' },
-        { label: 'CREATIVE + OPERATIONS', route: '/services' },
-        { label: 'EMAIL DEVELOPMENT', route: '/services' }
+        { label: 'GTM STRATEGIC AUDIT', route: '/services/gtm-audit' },
+        { label: 'MARKETING SYSTEMS', route: '/services/marketing-systems' },
+        { label: 'TECHNICAL DEBT', route: '/services/technical-debt' },
+        { label: 'ATTRIBUTION AUDIT', route: '/services/attribution-audit' },
+        { label: 'DATA ARCHITECTURE', route: '/services/data-architecture' },
+        { label: 'CREATIVE + OPERATIONS', route: '/services/creative-operations' },
+        { label: 'EMAIL DEVELOPMENT', route: '/services/email-development' }
       ]
     },
     STORIES: {
@@ -43,6 +45,8 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
     LABS: {
       hasSubItems: true,
       subItems: [
+        { label: 'GTM HEALTH ASSESSMENT', route: '/assessment' },
+        { label: 'OUTREACH GENERATOR', route: '/experiments/outreach-generator' },
         { label: 'UNITY NOTES', route: '/unity-notes' },
         { label: 'OUTREACH', route: '/outreach' }
       ]
@@ -195,7 +199,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
             alignItems: 'flex-end',
             gap: '5px'
           }}>
-            {['HOME', 'STORIES', 'LABS', 'WORKS', 'CONTACT'].map((item, index) => {
+            {['HOME', 'SERVICES', 'STORIES', 'LABS', 'WORKS', 'CONTACT'].map((item, index) => {
               const config = menuConfig[item];
               const isButton = config?.isButton;
               const hasSubItems = config?.hasSubItems;
