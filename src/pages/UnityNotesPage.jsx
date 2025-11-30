@@ -141,7 +141,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     console.log('✅ Note updated successfully');
   }, [editingNodeId, setNodes]);
 
-  // Handle delete memory
+  // Handle delete memory (from edit modal)
   const handleDeleteMemory = useCallback(() => {
     console.log('🗑️ Deleting note:', editingNodeId);
 
@@ -152,6 +152,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     console.log('✅ Note deleted successfully');
   }, [editingNodeId, setNodes, setEdges]);
+
+  // Handle direct delete from node (for text/non-photo nodes)
+  const handleDeleteNode = useCallback((nodeId) => {
+    console.log('🗑️ Direct deleting node:', nodeId);
+
+    if (confirm('⚠️ Delete this note?\n\nThis cannot be undone.')) {
+      setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+      setEdges((eds) => eds.filter((edge) =>
+        edge.source !== nodeId && edge.target !== nodeId
+      ));
+      console.log('✅ Node deleted successfully');
+    }
+  }, [setNodes, setEdges]);
 
   // Handle node updates (for text nodes)
   const handleNodeUpdate = useCallback((nodeId, updates) => {
@@ -200,6 +213,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           color: CARD_TYPES.note.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
         }
       };
     } else if (type === 'link') {
@@ -216,6 +230,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           color: CARD_TYPES.link.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
         }
       };
     } else if (type === 'ai') {
@@ -232,6 +247,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           color: CARD_TYPES.ai.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
         }
       };
     } else if (type === 'video') {
@@ -248,6 +264,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           color: CARD_TYPES.video.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
         }
       };
     }
@@ -258,7 +275,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         fitView({ duration: 400, padding: 0.2 });
       }, 100);
     }
-  }, [nodes.length, handleNodeUpdate, setNodes, fitView, setIsUploadModalOpen]);
+  }, [nodes.length, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen]);
 
   // Ensure all nodes have callbacks
   useEffect(() => {
@@ -273,10 +290,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           onLightbox: handleLightbox,
           onEdit: handleEdit,
           onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
         }
       }))
     );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, setNodes]);
 
   // Save to localStorage
   useEffect(() => {

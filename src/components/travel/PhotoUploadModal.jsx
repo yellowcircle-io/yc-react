@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { isCloudinaryConfigured } from '../../utils/cloudinaryUpload';
 
 const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) => {
@@ -12,6 +12,9 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
     description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0); // 0 = upload methods, 1 = card types
+  const touchStartX = useRef(0);
+  const hasCardTypes = cardTypes && onAddCard;
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -50,7 +53,28 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
       date: new Date().toISOString().split('T')[0],
       description: ''
     });
+    setCurrentPage(0);
     onClose();
+  };
+
+  // Swipe handlers for pagination
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!hasCardTypes || step !== 'method') return;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    if (Math.abs(diff) > 50) { // Minimum swipe distance
+      if (diff > 0 && currentPage === 0) {
+        setCurrentPage(1); // Swipe left -> go to card types
+      } else if (diff < 0 && currentPage === 1) {
+        setCurrentPage(0); // Swipe right -> go to upload methods
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -174,7 +198,9 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
               color: 'white',
               margin: 0
             }}>
-              {step === 'method' ? 'ADD NOTE' : 'NOTE DETAILS'}
+              {step === 'method'
+                ? (currentPage === 0 ? 'ADD NOTE' : 'CARD TYPES')
+                : 'NOTE DETAILS'}
             </h3>
           </div>
           <button
@@ -198,238 +224,375 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
         </div>
 
         {/* Scrollable Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
-          {/* Method Selection Step */}
+        <div
+          style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Method Selection Step - With Pagination */}
           {step === 'method' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{
-                fontSize: '14px',
-                fontWeight: '500',
-                letterSpacing: '0.05em',
-                color: 'rgba(255, 255, 255, 0.7)',
-                margin: '0 0 8px 0'
+            <div style={{ position: 'relative', minHeight: '100%' }}>
+              {/* Page Container - Slides horizontally */}
+              <div style={{
+                display: 'flex',
+                transition: 'transform 0.3s ease-out',
+                transform: `translateX(-${currentPage * 100}%)`
               }}>
-                Choose your upload method:
-              </p>
-
-              {/* Cloudinary Upload (if configured) */}
-              {isCloudinaryConfigured() && (
-                <button
-                  onClick={() => handleMethodSelect('cloudinary')}
-                  style={{
-                    width: '100%',
-                    padding: '20px',
-                    border: '1px solid #EECF00',
-                    backgroundColor: 'rgba(238, 207, 0, 0.1)',
-                    borderRadius: '0',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
-                    e.currentTarget.style.borderColor = '#EECF00';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
-                    e.currentTarget.style.borderColor = '#EECF00';
-                  }}
-                >
-                  <h4 style={{
-                    fontWeight: '600',
-                    fontSize: '14px',
-                    letterSpacing: '0.1em',
-                    color: 'white',
-                    margin: '0 0 8px 0'
-                  }}>
-                    ☁️ CLOUD STORAGE
-                  </h4>
-                  <p style={{
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    letterSpacing: '0.02em',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0
-                  }}>
-                    Permanent storage on Cloudinary (Recommended)
-                  </p>
-                </button>
-              )}
-
-              <button
-                onClick={() => handleMethodSelect('file')}
-                style={{
-                  width: '100%',
-                  padding: '20px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '0',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.borderColor = 'white';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                }}
-              >
-                <h4 style={{
-                  fontWeight: '600',
-                  fontSize: '14px',
-                  letterSpacing: '0.1em',
-                  color: 'white',
-                  margin: '0 0 8px 0'
-                }}>
-                  📱 FROM DEVICE
-                </h4>
-                <p style={{
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  letterSpacing: '0.02em',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  margin: 0
-                }}>
-                  Select photos from your phone or computer
-                </p>
-              </button>
-
-              <button
-                onClick={() => handleMethodSelect('url')}
-                style={{
-                  width: '100%',
-                  padding: '20px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '0',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.borderColor = 'white';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                }}
-              >
-                <h4 style={{
-                  fontWeight: '600',
-                  fontSize: '14px',
-                  letterSpacing: '0.1em',
-                  color: 'white',
-                  margin: '0 0 8px 0'
-                }}>
-                  🔗 FROM URL
-                </h4>
-                <p style={{
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  letterSpacing: '0.02em',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  margin: 0
-                }}>
-                  Add image from web link
-                </p>
-              </button>
-
-              {!isCloudinaryConfigured() && (
+                {/* Page 0: Upload Methods */}
                 <div style={{
-                  marginTop: '12px',
-                  padding: '16px',
-                  backgroundColor: 'rgba(238, 207, 0, 0.1)',
-                  border: '1px solid rgba(238, 207, 0, 0.3)',
-                  borderRadius: '0',
-                  fontSize: '13px'
+                  minWidth: '100%',
+                  padding: '32px',
+                  boxSizing: 'border-box'
                 }}>
-                  <p style={{
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontWeight: '500',
-                    letterSpacing: '0.02em',
-                    margin: 0
-                  }}>
-                    💡 <strong>Tip:</strong> Configure Cloudinary for permanent cloud storage.
-                    See <code style={{
-                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                      padding: '2px 6px',
-                      borderRadius: '2px'
-                    }}>.env.example</code> for setup.
-                  </p>
-                </div>
-              )}
-
-              {/* Card Types Section - Only shown when cardTypes prop is provided (Plus version) */}
-              {cardTypes && onAddCard && (
-                <>
-                  <div style={{
-                    marginTop: '24px',
-                    marginBottom: '16px',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-                    paddingTop: '24px'
-                  }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <p style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      letterSpacing: '0.1em',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      margin: '0 0 12px 0'
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      letterSpacing: '0.05em',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      margin: '0 0 8px 0'
                     }}>
-                      OR ADD OTHER CARD TYPES
+                      Choose your upload method:
                     </p>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {Object.entries(cardTypes).map(([type, config]) => (
+
+                    {/* Cloudinary Upload (if configured) */}
+                    {isCloudinaryConfigured() && (
                       <button
-                        key={type}
-                        onClick={() => {
-                          onAddCard(type);
-                          onClose();
-                        }}
+                        onClick={() => handleMethodSelect('cloudinary')}
                         style={{
-                          flex: '1 1 calc(50% - 4px)',
-                          minWidth: '140px',
-                          padding: '14px 16px',
-                          backgroundColor: config.color,
-                          color: type === 'photo' ? 'black' : 'white',
-                          border: 'none',
+                          width: '100%',
+                          padding: '20px',
+                          border: '1px solid #EECF00',
+                          backgroundColor: 'rgba(238, 207, 0, 0.1)',
                           borderRadius: '0',
                           cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          letterSpacing: '0.05em',
+                          textAlign: 'left',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+                          e.currentTarget.style.borderColor = '#EECF00';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+                          e.currentTarget.style.borderColor = '#EECF00';
+                        }}
+                      >
+                        <h4 style={{
+                          fontWeight: '600',
+                          fontSize: '14px',
+                          letterSpacing: '0.1em',
+                          color: 'white',
+                          margin: '0 0 8px 0'
+                        }}>
+                          ☁️ CLOUD STORAGE
+                        </h4>
+                        <p style={{
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          letterSpacing: '0.02em',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          margin: 0
+                        }}>
+                          Permanent storage on Cloudinary (Recommended)
+                        </p>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleMethodSelect('file')}
+                      style={{
+                        width: '100%',
+                        padding: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'white';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                      }}
+                    >
+                      <h4 style={{
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        letterSpacing: '0.1em',
+                        color: 'white',
+                        margin: '0 0 8px 0'
+                      }}>
+                        📱 FROM DEVICE
+                      </h4>
+                      <p style={{
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        letterSpacing: '0.02em',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        margin: 0
+                      }}>
+                        Select photos from your phone or computer
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleMethodSelect('url')}
+                      style={{
+                        width: '100%',
+                        padding: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: '0',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'white';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                      }}
+                    >
+                      <h4 style={{
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        letterSpacing: '0.1em',
+                        color: 'white',
+                        margin: '0 0 8px 0'
+                      }}>
+                        🔗 FROM URL
+                      </h4>
+                      <p style={{
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        letterSpacing: '0.02em',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        margin: 0
+                      }}>
+                        Add image from web link
+                      </p>
+                    </button>
+
+                    {!isCloudinaryConfigured() && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '16px',
+                        backgroundColor: 'rgba(238, 207, 0, 0.1)',
+                        border: '1px solid rgba(238, 207, 0, 0.3)',
+                        borderRadius: '0',
+                        fontSize: '13px'
+                      }}>
+                        <p style={{
+                          color: 'rgba(255, 255, 255, 0.8)',
+                          fontWeight: '500',
+                          letterSpacing: '0.02em',
+                          margin: 0
+                        }}>
+                          💡 <strong>Tip:</strong> Configure Cloudinary for permanent cloud storage.
+                          See <code style={{
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            padding: '2px 6px',
+                            borderRadius: '2px'
+                          }}>.env.example</code> for setup.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* More Options Button - Navigate to Card Types */}
+                    {hasCardTypes && (
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        style={{
+                          width: '100%',
+                          marginTop: '16px',
+                          padding: '14px 20px',
+                          border: '1px dashed rgba(255, 255, 255, 0.3)',
+                          backgroundColor: 'transparent',
+                          borderRadius: '0',
+                          cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '8px',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.3s ease'
                         }}
                         onMouseOver={(e) => {
-                          e.currentTarget.style.opacity = '0.85';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.borderColor = '#EECF00';
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
                         }}
                         onMouseOut={(e) => {
-                          e.currentTarget.style.opacity = '1';
-                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                          e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
-                        <span style={{ fontSize: '18px' }}>{config.icon}</span>
-                        <span>{config.label.toUpperCase()}</span>
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          letterSpacing: '0.1em',
+                          color: 'rgba(255, 255, 255, 0.7)'
+                        }}>
+                          MORE OPTIONS
+                        </span>
+                        <span style={{
+                          fontSize: '16px',
+                          color: '#EECF00'
+                        }}>
+                          →
+                        </span>
                       </button>
-                    ))}
+                    )}
                   </div>
-                </>
+                </div>
+
+                {/* Page 1: Card Types (only if cardTypes provided) */}
+                {hasCardTypes && (
+                  <div style={{
+                    minWidth: '100%',
+                    padding: '32px',
+                    boxSizing: 'border-box'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Back Button */}
+                      <button
+                        onClick={() => setCurrentPage(0)}
+                        style={{
+                          alignSelf: 'flex-start',
+                          padding: '8px 16px',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          backgroundColor: 'transparent',
+                          borderRadius: '0',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.3s ease',
+                          marginBottom: '8px'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.borderColor = '#EECF00';
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <span style={{
+                          fontSize: '14px',
+                          color: '#EECF00'
+                        }}>
+                          ←
+                        </span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          letterSpacing: '0.1em',
+                          color: 'rgba(255, 255, 255, 0.7)'
+                        }}>
+                          BACK
+                        </span>
+                      </button>
+
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        letterSpacing: '0.05em',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        margin: '0 0 8px 0'
+                      }}>
+                        Select a card type:
+                      </p>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {Object.entries(cardTypes).map(([type, config]) => (
+                          <button
+                            key={type}
+                            onClick={() => {
+                              onAddCard(type);
+                              handleClose();
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '20px',
+                              backgroundColor: config.color,
+                              color: type === 'photo' ? 'black' : 'white',
+                              border: 'none',
+                              borderRadius: '0',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              letterSpacing: '0.1em',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              transition: 'all 0.2s ease',
+                              textAlign: 'left'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.opacity = '0.9';
+                              e.currentTarget.style.transform = 'translateX(4px)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.opacity = '1';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                            }}
+                          >
+                            <span style={{ fontSize: '24px' }}>{config.icon}</span>
+                            <span>{config.label.toUpperCase()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination Dots (only if cardTypes exist) */}
+              {hasCardTypes && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  borderRadius: '20px'
+                }}>
+                  {[0, 1].map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      style={{
+                        width: currentPage === page ? '24px' : '8px',
+                        height: '8px',
+                        borderRadius: '4px',
+                        backgroundColor: currentPage === page ? '#EECF00' : 'rgba(255, 255, 255, 0.4)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        transition: 'all 0.3s ease'
+                      }}
+                      title={page === 0 ? 'Upload Methods' : 'Card Types'}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
 
           {/* Details Form Step */}
           {step === 'details' && (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '32px' }}>
               {/* File Upload (Local or Cloudinary) */}
               {(uploadMethod === 'file' || uploadMethod === 'cloudinary') && (
                 <div>
