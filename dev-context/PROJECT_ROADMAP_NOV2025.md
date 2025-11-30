@@ -5,9 +5,19 @@
 
 ---
 
-## 🟢 NOVEMBER 29, 2025 - UNITY NOTES REDESIGN + HOMEPAGE UPDATE
+## 🟢 NOVEMBER 29, 2025 - UNITY NOTES QUICK EDITS
 
-### Unity Notes CircleNav Redesign
+### Unity Notes UI Refinements (4:50 PM Session)
+- ✅ Fixed gear button to perfect circle (32px) with Lottie animation
+- ✅ Added pagination in Add Note dialog for card types
+- ✅ "MORE OPTIONS →" button navigates to card types page
+- ✅ Swipe gesture + pagination dots for mobile
+- ✅ Edit/Delete buttons on TextNoteNode when selected
+- ✅ Direct node deletion with confirmation dialog
+
+**Commit:** `52fffef` - "Feature: Unity Notes quick edits - Gear button, pagination, deletion"
+
+### Unity Notes CircleNav Redesign (Earlier Session)
 - ✅ Created new `UnityCircleNav.jsx` component with "+" icon and gear
 - ✅ Click opens Add Note dialog, right-click/long-press opens options menu
 - ✅ Mobile-friendly long-press (500ms) support
