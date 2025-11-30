@@ -6,6 +6,11 @@
  *
  * Usage from iPhone:
  *   cd .claude/automation && node global-manager.js --component=footer --section=contact --field=email --value="newemail@yellowcircle.io"
+ *
+ * YELLOW COLOR OPTIONS:
+ * - Primary (current): rgb(251, 191, 36) / #fbbf24 - Warmer amber yellow
+ * - Legacy:            rgb(238, 207, 0)  / #EECF00 - Original bright yellow
+ * To switch back to legacy yellow, replace 'rgb(251, 191, 36)' with '#EECF00'
  */
 
 const globalContent = {
@@ -89,7 +94,7 @@ const globalContent = {
         }
       ],
       colors: {
-        backgroundColor: '#EECF00',
+        backgroundColor: 'rgb(251, 191, 36)',
         titleColor: 'black',
         linkColor: 'rgba(0,0,0,0.8)',
         linkHoverColor: 'black',
@@ -101,9 +106,9 @@ const globalContent = {
   // Theme Configuration
   theme: {
     colors: {
-      primary: '#EECF00',         // Yellow
-      primaryDark: '#d4b800',
-      secondary: '#fbbf24',       // Amber
+      primary: 'rgb(251, 191, 36)',   // Yellow (was #EECF00)
+      primaryDark: '#d4a000',
+      secondary: '#fbbf24',           // Amber
       accent: '#f59e0b',
       background: 'black',
       text: 'white',

@@ -15,6 +15,8 @@ export function LayoutProvider({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [footerOpen, setFooterOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactModalEmail, setContactModalEmail] = useState('');
   const [expandedSection, setExpandedSection] = useState(null);
   const [expandedSubSection, setExpandedSubSection] = useState(null);
 
@@ -127,6 +129,20 @@ export function LayoutProvider({ children }) {
     setMenuOpen(prev => !prev);
   }, []);
 
+  const handleContactModalToggle = useCallback(() => {
+    setContactModalOpen(prev => !prev);
+  }, []);
+
+  const openContactModal = useCallback((prefillEmail = '') => {
+    setContactModalEmail(prefillEmail);
+    setContactModalOpen(true);
+  }, []);
+
+  const closeContactModal = useCallback(() => {
+    setContactModalOpen(false);
+    setContactModalEmail('');
+  }, []);
+
   const value = {
     // State
     sidebarOpen,
@@ -135,6 +151,10 @@ export function LayoutProvider({ children }) {
     setFooterOpen,
     menuOpen,
     setMenuOpen,
+    contactModalOpen,
+    setContactModalOpen,
+    contactModalEmail,
+    setContactModalEmail,
     expandedSection,
     setExpandedSection,
     expandedSubSection,
@@ -148,7 +168,10 @@ export function LayoutProvider({ children }) {
     // Handlers
     handleSidebarToggle,
     handleFooterToggle,
-    handleMenuToggle
+    handleMenuToggle,
+    handleContactModalToggle,
+    openContactModal,
+    closeContactModal
   };
 
   return (

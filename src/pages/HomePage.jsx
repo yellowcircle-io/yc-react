@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
+import { navigationItems } from '../config/navigationItems';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -201,50 +202,29 @@ function HomePage() {
     }
   };
 
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "STORIES",
-      itemKey: "stories",
-      subItems: [
-        {
-          label: "Projects",
-          key: "projects",
-          subItems: ["Brand Development", "Marketing Architecture", "Email Development"]
-        },
-        { label: "Golden Unknown", key: "golden-unknown" },
-        {
-          label: "Cath3dral",
-          key: "cath3dral",
-          subItems: ["Being + Rhyme"]
-        },
-        { label: "Thoughts", key: "thoughts" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: [
-        { label: "UK-Memories", key: "uk-memories" },
-        { label: "Home-17", key: "home-17" },
-        { label: "Visual Noteboard", key: "visual-noteboard" },
-        { label: "Component Library", key: "component-library" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
-      label: "ABOUT",
-      itemKey: "about",
-      subItems: []
+  // Handle scroll jump to next page (NEXT button in CircleNav menu)
+  const handleScrollNext = () => {
+    if (scrollOffset >= 200) {
+      // Already at end, open footer
+      handleFooterToggle();
+    } else if (scrollOffset >= 100) {
+      // Jump from page 2 to page 3
+      setScrollOffset(200);
+      setNavCircleRotation(0);
+    } else {
+      // Jump from page 1 to page 2
+      setScrollOffset(100);
+      const rotationProgress = (100 / 200) * 90;
+      setNavCircleRotation(-90 + rotationProgress);
     }
-  ];
+  };
 
   return (
     <Layout
       onHomeClick={handleHomeClick}
-      onFooterToggle={handleNavCircleClick}
+      onFooterToggle={handleFooterToggle}
       onMenuToggle={handleMenuToggle}
+      onScrollNext={handleScrollNext}
       navigationItems={navigationItems}
       navCircleRotation={navCircleRotation}
       scrollOffset={scrollOffset}
@@ -257,7 +237,7 @@ function HomePage() {
         left: scrollOffset <= 100 ? `-${scrollOffset}vw` : '-100vw',
         width: '100vw',
         height: '100vh',
-        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/background_f7cdue.png)',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1764457813/Gemini_Generated_Image_jpswjujpswjujpsw_hi7ltv)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -274,7 +254,7 @@ function HomePage() {
         left: scrollOffset <= 100 ? `${100 - scrollOffset}vw` : '0vw',
         width: '100vw',
         height: '100vh',
-        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756513503/Group_34_tfqn6y.png)',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1764457814/Gemini_Generated_Image_7mrn897mrn897mrn_hzgvsb)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -291,7 +271,7 @@ function HomePage() {
         left: scrollOffset > 100 ? `${200 - scrollOffset}vw` : '100vw',
         width: '100vw',
         height: '100vh',
-        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1756512745/bg-3_xbayq3.png)',
+        backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1764457815/Gemini_Generated_Image_i20pegi20pegi20p_pa7t5w)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -347,7 +327,7 @@ function HomePage() {
             lineHeight: '0.82',
             fontFamily: 'Helvetica, Arial, sans-serif',
             letterSpacing: '-5px',
-            color: 'rgba(238, 207, 2, 0.7)',
+            color: 'rgba(251, 191, 36, 0.7)',
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
           }}>
             YOUR STORY

@@ -17,10 +17,11 @@ function ParallaxCircle() {
       height: '300px',
       backgroundColor: '#fbbf24',
       borderRadius: '50%',
-      zIndex: 1,
+      zIndex: 15,
       mixBlendMode: 'multiply',
       transition: 'all 0.1s ease-out',
-      boxShadow: '0 20px 60px rgba(251,191,36,0.2)'
+      boxShadow: '0 20px 60px rgba(251,191,36,0.2)',
+      pointerEvents: 'none'
     }}></div>
   );
 }

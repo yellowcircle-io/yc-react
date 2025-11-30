@@ -2,11 +2,63 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 28, 2025 at 7:00 PM PST
-**Machine:** Mac Mini (Documentation Update)
-**Status:** ✅ Unity Notes UI Refinement + CI Fix COMPLETE
+**Updated:** November 29, 2025 at 4:15 PM PST
+**Machine:** MacBook Air
+**Status:** ✅ Unity Notes Redesign + Homepage Images Update COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## ✅ NOVEMBER 29, 2025 - UNITY NOTES REDESIGN + HOMEPAGE IMAGES - 4:15 PM PST
+
+### MacBook Air Session: Unity Notes CircleNav Redesign + Homepage Background Update
+
+**TASKS COMPLETED:**
+
+### 1. Unity Notes CircleNav Redesign
+- ✅ Created new `UnityCircleNav.jsx` component with:
+  - Yellow circle with "+" icon (replaces wave/arrow)
+  - Settings gear icon to the right
+  - Click → Opens Add Note dialog directly
+  - Right-click → Opens options menu (desktop)
+  - Long-press (500ms) → Opens options menu (mobile)
+  - Options menu: ADD NOTE, EXPORT, IMPORT, SHARE, CLEAR, FOOTER
+
+### 2. Layout Component Updates
+- ✅ Added `hideCircleNav` prop to Layout component
+- ✅ Removed unused `circleNavBehavior` prop
+- ✅ Unity Notes page now uses custom CircleNav (hides default)
+
+### 3. "Memory" → "Note" Rename
+- ✅ PhotoUploadModal: "ADD MEMORY" → "ADD NOTE"
+- ✅ EditMemoryModal: "EDIT MEMORY" → "EDIT NOTE"
+- ✅ All placeholder text and confirmation dialogs updated
+
+### 4. Homepage Background Images Updated
+- ✅ Replaced all 3 background images with new Gemini-generated images
+- Image 1: `Gemini_Generated_Image_jpswjujpswjujpsw_hi7ltv`
+- Image 2: `Gemini_Generated_Image_7mrn897mrn897mrn_hzgvsb`
+- Image 3: `Gemini_Generated_Image_i20pegi20pegi20p_pa7t5w`
+
+### 5. Global Navigation Items Centralized
+- ✅ Created `src/config/navigationItems.js` with canonical nav config
+- ✅ All pages now use centralized navigation with Lottie animations
+- ✅ Fixed sidebar inconsistencies across pages
+
+**Files Created:**
+- `src/components/unity/UnityCircleNav.jsx`
+- `src/config/navigationItems.js`
+
+**Files Modified:**
+- `src/components/global/Layout.jsx` - hideCircleNav prop
+- `src/pages/UnityNotesPage.jsx` - UnityCircleNav integration
+- `src/components/travel/PhotoUploadModal.jsx` - Memory→Note
+- `src/components/travel/EditMemoryModal.jsx` - Memory→Note
+- `src/pages/HomePage.jsx` - New background images
+- 15+ pages - Updated to use centralized navigationItems
+
+**Deployed:** ✅ Firebase hosting at https://yellowcircle-app.web.app
 
 ---
 

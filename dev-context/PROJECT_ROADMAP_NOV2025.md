@@ -1,7 +1,31 @@
 # Project Roadmap - November 2025
 
-**Date:** November 28, 2025
+**Date:** November 29, 2025
 **Status:** 🔴 CRITICAL PIVOT - Post-Rho Immediate Revenue Strategy
+
+---
+
+## 🟢 NOVEMBER 29, 2025 - UNITY NOTES REDESIGN + HOMEPAGE UPDATE
+
+### Unity Notes CircleNav Redesign
+- ✅ Created new `UnityCircleNav.jsx` component with "+" icon and gear
+- ✅ Click opens Add Note dialog, right-click/long-press opens options menu
+- ✅ Mobile-friendly long-press (500ms) support
+- ✅ Options menu: ADD NOTE, EXPORT, IMPORT, SHARE, CLEAR, FOOTER
+
+### Layout Updates
+- ✅ Added `hideCircleNav` prop for pages with custom navigation
+- ✅ Renamed all "Memory" references to "Note" in modals
+
+### Homepage Background Images
+- ✅ Updated all 3 background images with new Gemini-generated art
+- Image 1: `Gemini_Generated_Image_jpswjujpswjujpsw_hi7ltv`
+- Image 2: `Gemini_Generated_Image_7mrn897mrn897mrn_hzgvsb`
+- Image 3: `Gemini_Generated_Image_i20pegi20pegi20p_pa7t5w`
+
+### Global Navigation Centralization
+- ✅ Created `src/config/navigationItems.js` with canonical nav config
+- ✅ All 15+ pages now use centralized navigation with Lottie animations
 
 ---
 

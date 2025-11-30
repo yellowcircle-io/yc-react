@@ -35,7 +35,7 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave, onDelete }) => {
   };
 
   const handleDelete = () => {
-    const confirmed = confirm('⚠️ Delete this memory?\n\nThis cannot be undone.\n\nClick OK to delete.');
+    const confirmed = confirm('⚠️ Delete this note?\n\nThis cannot be undone.\n\nClick OK to delete.');
     if (confirmed && onDelete) {
       console.log('🗑️ Deleting memory');
       onDelete();
@@ -93,7 +93,7 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave, onDelete }) => {
             color: 'white',
             margin: 0
           }}>
-            EDIT MEMORY
+            EDIT NOTE
           </h3>
           <button
             onClick={onClose}
@@ -133,7 +133,7 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave, onDelete }) => {
               }}>
                 <img
                   src={memory.imageUrl}
-                  alt="Memory preview"
+                  alt="Note preview"
                   crossOrigin="anonymous"
                   style={{
                     width: '100%',
@@ -237,7 +237,7 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave, onDelete }) => {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tell the story behind this memory..."
+                placeholder="Tell the story behind this note..."
                 rows={3}
                 style={{
                   width: '100%',
@@ -376,7 +376,7 @@ const EditMemoryModal = ({ isOpen, onClose, memory, onSave, onDelete }) => {
                     e.target.style.boxShadow = '0 2px 8px rgba(220, 38, 38, 0.3)';
                   }}
                 >
-                  DELETE MEMORY
+                  DELETE NOTE
                 </button>
               )}
             </div>

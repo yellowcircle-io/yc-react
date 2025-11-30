@@ -1,69 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
-import { PAGES_CONFIG } from '../config/pagesConfig';
+import { PAGES_CONFIG, STATUS_CONFIG, formatDate } from '../config/pagesConfig';
+import { navigationItems } from '../config/navigationItems';
+
+// Status order for cycling
+const STATUS_ORDER = ['live', 'in-progress', 'draft', 'issue'];
 
 function DirectoryPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+
+  // Load saved statuses from localStorage, fallback to config defaults
+  const [pageStatuses, setPageStatuses] = useState(() => {
+    const saved = localStorage.getItem('yc-directory-statuses');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    // Initialize from config
+    const initial = {};
+    PAGES_CONFIG.forEach(page => {
+      initial[page.path] = page.status;
+    });
+    return initial;
+  });
+
+  // Save to localStorage when statuses change
+  useEffect(() => {
+    localStorage.setItem('yc-directory-statuses', JSON.stringify(pageStatuses));
+  }, [pageStatuses]);
 
   const handleHomeClick = (e) => {
     e.preventDefault();
     navigate('/');
   };
 
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "STORIES",
-      itemKey: "stories",
-      subItems: [
-        { label: "Thoughts", key: "thoughts", route: "/thoughts" },
-        { label: "Golden Unknown", key: "golden-unknown", route: "/experiments/golden-unknown" },
-        { label: "Cath3dral", key: "cath3dral", route: "/experiments/cath3dral" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: [
-        { label: "UK-Memories", key: "uk-memories", route: "/uk-memories" },
-        { label: "Unity Notes", key: "unity-notes", route: "/unity-notes" },
-        { label: "Unity Notes+", key: "unity-notes-plus", route: "/unity-notes-plus" },
-        { label: "Component Library", key: "component-library", route: "/experiments/component-library" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
-      label: "ABOUT",
-      itemKey: "about",
-      subItems: []
-    }
-  ];
+  // Cycle status on click
+  const handleStatusClick = (e, path) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  // Use shared pages config
+    const currentStatus = pageStatuses[path] || 'draft';
+    const currentIndex = STATUS_ORDER.indexOf(currentStatus);
+    const nextIndex = (currentIndex + 1) % STATUS_ORDER.length;
+    const nextStatus = STATUS_ORDER[nextIndex];
+
+    setPageStatuses(prev => ({
+      ...prev,
+      [path]: nextStatus
+    }));
+  };
+
+  // Reset all to config defaults
+  const handleReset = () => {
+    const initial = {};
+    PAGES_CONFIG.forEach(page => {
+      initial[page.path] = page.status;
+    });
+    setPageStatuses(initial);
+  };
+
+  // Export current state for updating pagesConfig.js
+  const handleExport = () => {
+    const updates = PAGES_CONFIG.map(page => ({
+      ...page,
+      status: pageStatuses[page.path] || page.status
+    }));
+    console.log('Updated PAGES_CONFIG:', JSON.stringify(updates, null, 2));
+
+    // Copy to clipboard
+    const text = updates.map(p => `  { path: '${p.path}', status: '${pageStatuses[p.path] || p.status}' }`).join(',\n');
+    navigator.clipboard.writeText(text);
+    alert('Status updates copied to clipboard!\nCheck console for full config.');
+  };
+
   const pages = PAGES_CONFIG;
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'migrated': return '#22c55e';
-      case 'needs-migration': return '#f59e0b';
-      case 'excluded': return '#6b7280';
-      default: return COLORS.black;
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'migrated': return '✓ Global Layout';
-      case 'needs-migration': return '⚠ Needs Migration';
-      case 'excluded': return '○ Excluded';
-      default: return '';
-    }
-  };
 
   return (
     <Layout
@@ -73,13 +86,12 @@ function DirectoryPage() {
       navigationItems={navigationItems}
       pageLabel="DIRECTORY"
     >
-      {/* Scrollable content area */}
       <div style={{
         position: 'fixed',
         top: '100px',
         bottom: footerOpen ? '400px' : '40px',
         left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        right: '100px',
+        right: '40px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -88,145 +100,264 @@ function DirectoryPage() {
       }}>
         <div style={{
           ...TYPOGRAPHY.container,
-          maxWidth: '900px'
+          maxWidth: '1100px'
         }}>
-          {/* Page title */}
-          <h1 style={{
-            ...TYPOGRAPHY.h1Scaled,
-            color: COLORS.yellow,
-            ...EFFECTS.blurLight,
-            display: 'inline-block',
-            marginBottom: '30px'
-          }}>
-            DIRECTORY
-          </h1>
-
-          <p style={{
-            ...TYPOGRAPHY.h2,
-            color: COLORS.black,
-            backgroundColor: COLORS.backgroundLight,
-            ...EFFECTS.blur,
-            display: 'inline-block',
-            padding: '2px 6px',
-            marginBottom: '40px'
-          }}>
-            All live pages for navigation & testing
-          </p>
-
-          {/* Page list - use anchor tags for right-click support */}
+          {/* Header */}
           <div style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            gap: '16px'
           }}>
-            {pages.map((page, index) => (
-              <a
-                key={index}
-                href={page.path}
-                onClick={(e) => {
-                  // Allow middle-click and ctrl/cmd-click to open in new tab
-                  if (e.button === 1 || e.ctrlKey || e.metaKey) return;
-                  e.preventDefault();
-                  navigate(page.path);
-                }}
+            <div>
+              <h1 style={{
+                ...TYPOGRAPHY.h1Scaled,
+                color: COLORS.yellow,
+                ...EFFECTS.blurLight,
+                display: 'inline-block',
+                marginBottom: '8px'
+              }}>
+                DIRECTORY
+              </h1>
+              <p style={{
+                fontSize: '0.85rem',
+                color: '#6b7280'
+              }}>
+                Click status to toggle • Changes save locally
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleReset}
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  padding: '16px 20px',
-                  borderRadius: '8px',
-                  border: `2px solid ${getStatusColor(page.status)}`,
+                  padding: '8px 16px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  color: '#6b7280',
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease-in-out',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  textDecoration: 'none'
+                  transition: 'all 0.2s'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateX(10px)';
-                  e.currentTarget.style.boxShadow = `0 4px 12px ${getStatusColor(page.status)}40`;
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateX(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)';
                 }}
               >
-                <div>
-                  <h3 style={{
-                    fontSize: 'clamp(1rem, 2vw, 1.5rem)',
-                    fontWeight: '700',
-                    color: COLORS.black,
-                    marginBottom: '4px',
-                    fontFamily: 'Helvetica, Arial, sans-serif'
-                  }}>
-                    {page.icon} {page.name}
-                  </h3>
-                  <p style={{
-                    fontSize: 'clamp(0.8rem, 1.5vw, 1rem)',
-                    color: COLORS.lightGrey,
-                    fontFamily: 'monospace',
-                    letterSpacing: '0.05em'
-                  }}>
-                    {page.path}
-                  </p>
-                  {page.description && (
-                    <p style={{
-                      fontSize: 'clamp(0.7rem, 1.2vw, 0.85rem)',
-                      color: 'rgba(0,0,0,0.5)',
-                      marginTop: '4px',
-                      fontFamily: 'Helvetica, Arial, sans-serif'
-                    }}>
-                      {page.description}
-                    </p>
-                  )}
-                </div>
-                <span style={{
-                  fontSize: 'clamp(0.7rem, 1.2vw, 0.9rem)',
+                Reset
+              </button>
+              <button
+                onClick={handleExport}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '0.75rem',
                   fontWeight: '600',
-                  color: getStatusColor(page.status),
-                  backgroundColor: `${getStatusColor(page.status)}20`,
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {getStatusLabel(page.status)}
-                </span>
-              </a>
-            ))}
+                  color: '#fff',
+                  backgroundColor: COLORS.yellow,
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#d4b800';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = COLORS.yellow;
+                }}
+              >
+                Export
+              </button>
+            </div>
           </div>
 
           {/* Legend */}
           <div style={{
-            marginTop: '40px',
-            padding: '20px',
-            backgroundColor: COLORS.backgroundLight,
-            ...EFFECTS.blur,
-            borderRadius: '8px',
-            display: 'inline-block'
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '16px',
+            marginBottom: '24px',
+            padding: '12px 16px',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: '8px'
           }}>
-            <h4 style={{
-              fontSize: 'clamp(0.9rem, 1.5vw, 1.1rem)',
-              fontWeight: '700',
-              color: COLORS.black,
-              marginBottom: '12px'
-            }}>
-              Legend:
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontSize: 'clamp(0.8rem, 1.2vw, 1rem)' }}>
-                <span style={{ color: '#22c55e', fontWeight: '700' }}>✓ Global Layout</span> - Migrated to global components
+            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+              <div key={key} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.8rem'
+              }}>
+                <span style={{ color: config.color, fontWeight: '700' }}>{config.icon}</span>
+                <span style={{ color: '#4b5563' }}>{config.label}</span>
               </div>
-              <div style={{ fontSize: 'clamp(0.8rem, 1.2vw, 1rem)' }}>
-                <span style={{ color: '#f59e0b', fontWeight: '700' }}>⚠ Needs Migration</span> - Still using old components
-              </div>
-              <div style={{ fontSize: 'clamp(0.8rem, 1.2vw, 1rem)' }}>
-                <span style={{ color: '#6b7280', fontWeight: '700' }}>○ Excluded</span> - Not using global layout
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div style={{ height: '100px' }}></div>
+          {/* Two-Column Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '12px'
+          }}>
+            {pages.map((page, index) => {
+              const currentStatus = pageStatuses[page.path] || page.status;
+              const statusConfig = STATUS_CONFIG[currentStatus] || STATUS_CONFIG['draft'];
+
+              return (
+                <a
+                  key={index}
+                  href={page.path}
+                  onClick={(e) => {
+                    if (e.button === 1 || e.ctrlKey || e.metaKey) return;
+                    e.preventDefault();
+                    navigate(page.path);
+                  }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '14px 16px',
+                    borderRadius: '8px',
+                    border: `1px solid ${statusConfig.color}25`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out',
+                    textDecoration: 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${statusConfig.color}20`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Row 1: Icon + Name */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    <span style={{ fontSize: '1.3rem' }}>{page.icon}</span>
+                    <span style={{
+                      fontSize: '0.95rem',
+                      fontWeight: '600',
+                      color: COLORS.black,
+                      flex: 1
+                    }}>
+                      {page.name}
+                    </span>
+                  </div>
+
+                  {/* Row 2: Path */}
+                  <div style={{
+                    fontSize: '0.7rem',
+                    color: '#9ca3af',
+                    fontFamily: 'monospace'
+                  }}>
+                    {page.path}
+                  </div>
+
+                  {/* Row 3: Date + Status */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '4px'
+                  }}>
+                    {/* Date */}
+                    <span style={{
+                      fontSize: '0.75rem',
+                      color: '#6b7280'
+                    }}>
+                      {formatDate(page.lastUpdated)}
+                    </span>
+
+                    {/* Toggleable Status */}
+                    <button
+                      onClick={(e) => handleStatusClick(e, page.path)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.7rem',
+                        fontWeight: '600',
+                        color: statusConfig.color,
+                        backgroundColor: `${statusConfig.color}12`,
+                        padding: '4px 10px',
+                        borderRadius: '10px',
+                        border: `1px solid ${statusConfig.color}30`,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = `${statusConfig.color}25`;
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = `${statusConfig.color}12`;
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      title="Click to change status"
+                    >
+                      <span>{statusConfig.icon}</span>
+                      <span style={{ textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                        {statusConfig.label}
+                      </span>
+                    </button>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+
+          {/* Summary Stats */}
+          <div style={{
+            marginTop: '24px',
+            padding: '16px',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: '8px',
+            display: 'flex',
+            justifyContent: 'space-around',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+              const count = Object.values(pageStatuses).filter(s => s === key).length;
+              return (
+                <div key={key} style={{ textAlign: 'center' }}>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: config.color
+                  }}>
+                    {count}
+                  </div>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    color: '#6b7280',
+                    textTransform: 'uppercase'
+                  }}>
+                    {config.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ height: '80px' }}></div>
         </div>
       </div>
     </Layout>

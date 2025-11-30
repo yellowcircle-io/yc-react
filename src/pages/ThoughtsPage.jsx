@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
+import { navigationItems } from '../config/navigationItems';
 
 function ThoughtsPage() {
   const navigate = useNavigate();
@@ -34,45 +35,6 @@ function ThoughtsPage() {
     e.preventDefault();
     navigate('/');
   };
-
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "STORIES",
-      itemKey: "stories",
-      subItems: [
-        {
-          label: "Projects",
-          key: "projects",
-          subItems: ["Brand Development", "Marketing Architecture", "Email Development"]
-        },
-        { label: "Golden Unknown", key: "golden-unknown" },
-        {
-          label: "Cath3dral",
-          key: "cath3dral",
-          subItems: ["Being + Rhyme"]
-        },
-        { label: "Thoughts", key: "thoughts" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: [
-        { label: "UK-Memories", key: "uk-memories" },
-        { label: "Home-17", key: "home-17" },
-        { label: "Visual Noteboard", key: "visual-noteboard" },
-        { label: "Component Library", key: "component-library" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
-      label: "ABOUT",
-      itemKey: "about",
-      subItems: []
-    }
-  ];
 
   return (
     <Layout

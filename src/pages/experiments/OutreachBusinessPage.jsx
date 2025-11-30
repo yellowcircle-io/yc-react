@@ -4,6 +4,7 @@ import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { API_KEYS as LOCAL_KEYS } from '../../config/api-keys.local.js';
+import { navigationItems } from '../../config/navigationItems';
 
 // Password for access (simple client-side protection)
 const ACCESS_PASSWORD = 'yc2025outreach';
@@ -257,79 +258,244 @@ const BRAND = {
 
 // Plain text signature for sales emails
 const SALES_SIGNATURE = `
-—
-Christopher Cooper
-yellowCircle.io
-Email: christopher@yellowcircle.io
-Phone: 914/241-5524`;
 
-// Generate HTML email template for brand/marcom
-const generateBrandEmailHTML = (subject, body, preheader = '') => {
-  return `<!DOCTYPE html>
-<html>
+Best,
+
+Christopher Cooper
+GTM & Marketing Operations Consultant
+yellowCircle
+
+christopher@yellowcircle.io
+914-241-5524
+yellowcircle.io`;
+
+// Email section defaults for toggles
+const DEFAULT_EMAIL_SECTIONS = {
+  showLogo: true,
+  showHeroImage: true,
+  showHeadline: true,
+  showBody: true,
+  showCta: true,
+  showInterstitial: true,
+  showUpsellCards: true,
+  showSocialBar: true,
+  showFooter: true,
+  showUnsubscribe: true
+};
+
+// Generate HTML email template for brand/marcom - Based on Tunecore-style template
+const generateBrandEmailHTML = (subject, body, preheader = '', sections = DEFAULT_EMAIL_SECTIONS, customContent = {}) => {
+  // Get random image from picsum (more reliable than Unsplash)
+  const heroImageUrl = customContent.heroImage || 'https://picsum.photos/360/240?random=' + Date.now();
+  const primaryColor = BRAND.colors.yellow;
+  const secondaryColor = '#000000'; // Changed from blue to black
+  const accentColor = '#666666'; // Changed from green to grey
+  const ctaText = customContent.ctaText || 'GET IN TOUCH';
+  const ctaUrl = customContent.ctaUrl || BRAND.links.calendar;
+  const interstitialHeadline = customContent.interstitialHeadline || 'Here are some other<br><strong>Services</strong><br>that you may like';
+  const upsellCards = customContent.upsellCards || [
+    { title: 'GTM<br>Strategy', description: '[Placeholder: GTM strategy service description]', cta: 'LEARN MORE' },
+    { title: 'Marketing<br>Ops', description: '[Placeholder: Marketing operations service description]', cta: 'LEARN MORE' },
+    { title: 'Tech<br>Stack', description: '[Placeholder: Tech stack service description]', cta: 'LEARN MORE' }
+  ];
+
+  // Convert body text to proper HTML paragraphs - split on double newlines OR sentences ending with period followed by space
+  const formattedBody = body
+    .split(/\n\n|\. (?=[A-Z])/)
+    .filter(p => p.trim())
+    .map((p, i, arr) => {
+      // Add period back if it was used as split point (except for last segment)
+      const text = p.trim();
+      const needsPeriod = i < arr.length - 1 && !text.endsWith('.') && !text.endsWith('?') && !text.endsWith('!');
+      return `<p style="margin:0 0 16px 0;font-size:16px;font-weight:300;line-height:1.6;color:#0a0a0a;">${text}${needsPeriod ? '.' : ''}</p>`;
+    })
+    .join('');
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en" style="background:#fff!important">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${subject}</title>
+  <style>
+    @media only screen and (max-width: 480px) {
+      .mobile-hide { display: none !important; }
+      .mobile-break { display: block !important; }
+      .button { width: 100% !important; }
+    }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  ${preheader ? `<div style="display:none;font-size:1px;color:#f4f4f4;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>` : ''}
-  <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;background-color:#f4f4f4;margin:0;padding:0;">
+<body style="margin:0;padding:0;background:#fff!important;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:100;line-height:1.3;">
+  ${preheader ? `<div style="display:none;font-size:1px;color:#fff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>` : ''}
+
+  <table style="width:100%;background:#fff;border-collapse:collapse;margin:0;padding:0;">
     <tr>
-      <td align="center" style="padding:40px 20px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;">
-          <!-- Header -->
+      <td align="center" style="padding:0;">
+        <table style="width:100%;max-width:600px;margin:0 auto;background:#fff;border-collapse:collapse;">
           <tr>
-            <td align="center" style="padding:30px 40px;background-color:#ffffff;">
-              <a href="${BRAND.links.website}" target="_blank" style="text-decoration:none;">
-                <img src="${BRAND.logo}" alt="yellowCircle" style="display:block;max-height:100px;width:auto;">
-              </a>
-            </td>
-          </tr>
-          <!-- Hero -->
-          <tr>
-            <td style="padding:40px;background-color:${BRAND.colors.yellow};">
-              <h1 style="margin:0;font-size:32px;font-weight:700;line-height:1.2;color:${BRAND.colors.black};">${subject}</h1>
-            </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding:40px;background-color:#ffffff;">
-              <div style="font-size:16px;line-height:1.7;color:#333333;white-space:pre-wrap;">${body}</div>
-            </td>
-          </tr>
-          <!-- CTA -->
-          <tr>
-            <td align="center" style="padding:0 40px 40px;">
-              <table role="presentation" cellpadding="0" cellspacing="0">
+            <td style="padding:0;">
+
+              ${sections.showLogo ? `
+              <!-- LOGO HEADER - yellowCircle wordmark left-aligned -->
+              <table style="width:100%;border-collapse:collapse;">
                 <tr>
-                  <td style="background-color:${BRAND.colors.yellow};border-radius:4px;">
-                    <a href="${BRAND.links.article}" target="_blank" style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:${BRAND.colors.black};text-decoration:none;">Read More</a>
+                  <td style="padding:24px 32px;">
+                    <a href="${BRAND.links.website}" style="background-color:#000;padding:10px 20px;text-decoration:none;display:inline-block;">
+                      <span style="font-size:16px;font-weight:600;letter-spacing:0.2em;margin:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+                        <span style="color:#EECF00;font-style:italic;">yellow</span><span style="color:#fff;">CIRCLE</span>
+                      </span>
+                    </a>
                   </td>
                 </tr>
               </table>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="padding:30px 40px;background-color:${BRAND.colors.black};">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
+              ` : ''}
+
+              <!-- MAIN CONTENT -->
+              <table style="width:100%;border-collapse:collapse;background:#fff;">
                 <tr>
-                  <td align="center" style="padding-bottom:20px;">
-                    <a href="${BRAND.links.website}/works" style="color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.1em;margin:0 15px;">BROWSE</a>
-                    <a href="${BRAND.links.website}/experiments" style="color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.1em;margin:0 15px;">LABS</a>
-                    <a href="${BRAND.links.website}/about" style="color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.1em;margin:0 15px;">CONTACT</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-top:20px;border-top:1px solid #333;">
-                    <p style="margin:0;font-size:11px;color:#999999;">© ${new Date().getFullYear()} yellowCircle. All rights reserved.</p>
-                    <p style="margin:8px 0 0;font-size:11px;color:#999999;">
-                      <a href="#" style="color:#999999;text-decoration:underline;">Unsubscribe</a> | <a href="#" style="color:#999999;text-decoration:underline;">View in browser</a>
+                  <td style="padding:0 32px;">
+
+                    ${sections.showHeadline ? `
+                    <!-- CATEGORY LABEL -->
+                    <p style="margin:0 0 10px 0;color:${accentColor};font-size:13px;font-weight:200;text-transform:uppercase;letter-spacing:0.05em;">
+                      <span style="color:${primaryColor};font-weight:bold;" data-placeholder="categoryLabel">[CATEGORY LABEL]</span>
+                      <br><span data-placeholder="subCategory">[SUBCATEGORY]</span>
                     </p>
+
+                    ${sections.showHeroImage ? `
+                    <!-- HERO IMAGE -->
+                    <img src="${heroImageUrl}" alt="" width="360" style="max-width:360px;width:100%;height:auto;display:block;margin-bottom:20px;border:0;">
+                    ` : ''}
+
+                    <!-- HEADLINE -->
+                    <h2 style="margin:0 0 20px 0;color:${secondaryColor};font-size:28px;font-weight:700;line-height:1.3;text-transform:uppercase;">
+                      <span data-placeholder="headline">${subject}</span>
+                    </h2>
+                    ` : ''}
+
+                    ${sections.showBody ? `
+                    <!-- BODY COPY -->
+                    <div data-placeholder="bodyText">${formattedBody}</div>
+                    ` : ''}
+
+                    ${sections.showCta ? `
+                    <!-- CTA BUTTON -->
+                    <table style="margin:20px 0 30px 0;border-collapse:collapse;">
+                      <tr>
+                        <td style="background:${primaryColor};border-radius:3px;">
+                          <a href="${ctaUrl}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:900;color:#000;text-decoration:none;letter-spacing:0.05em;" data-placeholder="ctaText">${ctaText}</a>
+                        </td>
+                      </tr>
+                    </table>
+                    ` : ''}
+
                   </td>
                 </tr>
               </table>
+
+              ${sections.showInterstitial ? `
+              <!-- INTERSTITIAL BAR -->
+              <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="background:${primaryColor};padding:30px 32px;" align="center">
+                    <h3 style="margin:0;color:#000;font-size:24px;font-weight:lighter;line-height:1.3;text-align:center;" data-placeholder="interstitialText">${interstitialHeadline}</h3>
+                  </td>
+                  <td class="mobile-hide" style="background:${secondaryColor};background-image:url('https://picsum.photos/300/300?random=${Date.now() + 1}');background-size:cover;width:150px;"></td>
+                </tr>
+              </table>
+              ` : ''}
+
+              ${sections.showUpsellCards ? `
+              <!-- UPSELL CARDS -->
+              <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                  ${upsellCards.map((card, i) => {
+                    const cardColors = ['rgb(251, 191, 36)', 'rgb(217, 164, 32)', 'rgb(183, 138, 28)'];
+                    return `
+                  <td style="background:${cardColors[i % 3]};border-right:2px solid #fff;border-top:2px solid #fff;padding:20px;width:33.33%;vertical-align:top;">
+                    <h3 style="margin:0 0 12px 0;padding-top:20px;color:#000;font-size:22px;font-weight:100;line-height:1.2;" data-placeholder="cardTitle${i+1}">${card.title}</h3>
+                    <p style="margin:0 0 12px 0;color:#000;font-size:12px;font-weight:200;line-height:1.4;" data-placeholder="cardDesc${i+1}">${card.description}</p>
+                    <table style="margin:0;border-collapse:collapse;">
+                      <tr>
+                        <td style="border:2px solid #000;border-radius:3px;padding:6px 12px;">
+                          <a href="${BRAND.links.calendar}" style="color:#000;font-size:11px;font-weight:600;text-decoration:none;letter-spacing:0.05em;" data-placeholder="cardCta${i+1}">${card.cta}</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>`;
+                  }).join('')}
+                </tr>
+              </table>
+              ` : ''}
+
+              ${sections.showFooter ? `
+              <!-- FOOTER - Website Style -->
+              <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <!-- Left Column - Contact -->
+                  <td style="background:#000;padding:30px 32px;width:50%;vertical-align:top;">
+                    <h4 style="margin:0 0 16px 0;color:#fff;font-size:14px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;border-bottom:2px solid ${primaryColor};padding-bottom:12px;">CONTACT</h4>
+                    <p style="margin:0 0 8px 0;color:#fff;font-size:13px;font-weight:300;">info@yellowcircle.io</p>
+                    <p style="margin:0 0 8px 0;">
+                      <a href="https://linkedin.com/company/yellowcircle-io" style="color:#fff;text-decoration:none;font-size:13px;font-weight:300;">
+                        <span style="display:inline-block;width:16px;font-weight:bold;margin-right:6px;">in</span>LINKEDIN
+                      </a>
+                    </p>
+                    <p style="margin:0 0 16px 0;">
+                      <a href="https://instagram.com/yellowcircle.io" style="color:#fff;text-decoration:none;font-size:13px;font-weight:300;">
+                        <span style="display:inline-block;width:16px;margin-right:6px;">📷</span>INSTAGRAM
+                      </a>
+                    </p>
+                    <table style="margin:16px 0 0 0;border-collapse:collapse;">
+                      <tr>
+                        <td style="background:${primaryColor};border-radius:3px;">
+                          <a href="${BRAND.links.calendar}" style="display:inline-block;padding:10px 20px;font-size:12px;font-weight:900;color:#000;text-decoration:none;letter-spacing:0.05em;">GET IN TOUCH</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <!-- Right Column - Projects -->
+                  <td style="background:${primaryColor};padding:30px 32px;width:50%;vertical-align:top;">
+                    <h4 style="margin:0 0 16px 0;color:#000;font-size:14px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:12px;">PROJECTS</h4>
+                    <p style="margin:0 0 8px 0;"><a href="${BRAND.links.website}/experiments/golden-unknown" style="color:#000;text-decoration:none;font-size:13px;font-weight:400;letter-spacing:0.05em;">GOLDEN UNKNOWN</a></p>
+                    <p style="margin:0 0 8px 0;"><a href="${BRAND.links.website}/experiments/being-rhyme" style="color:#000;text-decoration:none;font-size:13px;font-weight:400;letter-spacing:0.05em;">BEING + RHYME</a></p>
+                    <p style="margin:0 0 8px 0;"><a href="${BRAND.links.website}/experiments/cath3dral" style="color:#000;text-decoration:none;font-size:13px;font-weight:400;letter-spacing:0.05em;">CATH3DRAL</a></p>
+                    <p style="margin:0 0 8px 0;"><a href="${BRAND.links.website}/about" style="color:#000;text-decoration:none;font-size:13px;font-weight:400;letter-spacing:0.05em;">RHO CONSULTING</a></p>
+                    <p style="margin:0 0 8px 0;"><a href="${BRAND.links.website}/uk-memories" style="color:#000;text-decoration:none;font-size:13px;font-weight:400;letter-spacing:0.05em;">TRAVEL MEMORIES</a></p>
+                  </td>
+                </tr>
+              </table>
+              <!-- Copyright & Unsubscribe -->
+              <table style="width:100%;border-collapse:collapse;background:#fff;">
+                <tr>
+                  <td style="padding:20px 32px;">
+                    <table style="width:100%;border-collapse:collapse;">
+                      <tr>
+                        <td style="width:40px;vertical-align:middle;">
+                          <img src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png" alt="YC" width="32" height="32" style="display:block;border-radius:50%;">
+                        </td>
+                        <td style="vertical-align:middle;padding-left:12px;">
+                          <p style="margin:0;color:#666;font-size:11px;line-height:1.5;">
+                            © ${new Date().getFullYear()} yellowCircle. All rights reserved.
+                          </p>
+                        </td>
+                        <td style="text-align:right;vertical-align:middle;">
+                          ${sections.showUnsubscribe ? `
+                          <p style="margin:0;color:#999;font-size:11px;">
+                            <a href="#" style="color:#999;text-decoration:underline;">unsubscribe</a> |
+                            <a href="#" style="color:#999;text-decoration:underline;">update preferences</a> |
+                            <a href="#" style="color:#999;text-decoration:underline;">view in browser</a>
+                          </p>
+                          ` : ''}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
             </td>
           </tr>
         </table>
@@ -399,6 +565,10 @@ function OutreachBusinessPage() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [copiedIndex, setCopiedIndex] = useState(null);
 
+  // Email section toggles
+  const [emailSections, setEmailSections] = useState(DEFAULT_EMAIL_SECTIONS);
+  const [showToggles, setShowToggles] = useState(false);
+
   // Track password for encryption/decryption
   const [sessionPassword, setSessionPassword] = useState('');
 
@@ -414,19 +584,45 @@ function OutreachBusinessPage() {
   }, []);
 
   // Load encrypted settings after authentication
+  // Prefer DEFAULT_KEYS (from local config) over empty localStorage values
   useEffect(() => {
     if (isAuthenticated && sessionPassword) {
       const loadEncryptedSettings = async () => {
+        // If DEFAULT_KEYS are available, clear old settings that have empty keys
+        const hasDefaultKeys = DEFAULT_KEYS.groq || DEFAULT_KEYS.resend || DEFAULT_KEYS.perplexity;
+
         const savedSettings = localStorage.getItem('outreach_business_settings_v4');
         if (savedSettings) {
           try {
             const parsed = JSON.parse(savedSettings);
             const decrypted = await decryptSettings(parsed, sessionPassword);
             if (decrypted) {
-              setSettings(prev => ({ ...prev, ...decrypted }));
+              // Check if saved settings have empty API keys while defaults have values
+              const savedHasEmptyKeys = !decrypted.groqApiKey && !decrypted.resendApiKey && !decrypted.perplexityApiKey;
+
+              if (hasDefaultKeys && savedHasEmptyKeys) {
+                // Clear old settings and use defaults
+                console.log('Clearing old empty settings, using DEFAULT_KEYS');
+                localStorage.removeItem('outreach_business_settings_v4');
+                return; // Keep using initial state with DEFAULT_KEYS
+              }
+
+              // Merge but prefer DEFAULT_KEYS for API keys if localStorage has empty values
+              setSettings(prev => ({
+                ...prev,
+                ...decrypted,
+                // Use DEFAULT_KEYS if they have values and localStorage doesn't
+                groqApiKey: decrypted.groqApiKey || DEFAULT_KEYS.groq || prev.groqApiKey,
+                resendApiKey: decrypted.resendApiKey || DEFAULT_KEYS.resend || prev.resendApiKey,
+                perplexityApiKey: decrypted.perplexityApiKey || DEFAULT_KEYS.perplexity || prev.perplexityApiKey
+              }));
             }
           } catch (e) {
             console.error('Failed to load encrypted settings');
+            // If decryption fails and we have DEFAULT_KEYS, clear and use defaults
+            if (hasDefaultKeys) {
+              localStorage.removeItem('outreach_business_settings_v4');
+            }
           }
         }
       };
@@ -727,7 +923,7 @@ Provide an improved version. Return ONLY a JSON object:
     };
 
     if (motion.templateType === 'designed') {
-      emailPayload.html = generateBrandEmailHTML(emailData.subject, emailData.body);
+      emailPayload.html = generateBrandEmailHTML(emailData.subject, emailData.body, '', emailSections);
       emailPayload.text = emailData.body;
     } else {
       emailPayload.text = emailData.body;
@@ -764,7 +960,7 @@ Provide an improved version. Return ONLY a JSON object:
   const handleCopyHTML = async () => {
     const stages = ['initial', 'followup1', 'followup2'];
     const stage = stages[selectedEmailIndex];
-    const html = generateBrandEmailHTML(editedEmails[stage].subject, editedEmails[stage].body);
+    const html = generateBrandEmailHTML(editedEmails[stage].subject, editedEmails[stage].body, '', emailSections);
 
     try {
       await navigator.clipboard.writeText(html);
@@ -795,7 +991,7 @@ Provide an improved version. Return ONLY a JSON object:
 
     // Use HTML template for brand, plain text for sales
     if (motion.templateType === 'designed') {
-      payload.html = generateBrandEmailHTML(emailData.subject, emailData.body);
+      payload.html = generateBrandEmailHTML(emailData.subject, emailData.body, '', emailSections);
       payload.text = emailData.body;
     } else {
       payload.text = emailData.body;
@@ -892,7 +1088,6 @@ Provide an improved version. Return ONLY a JSON object:
     });
   };
 
-  const navigationItems = [];
 
   // Styles
   const cardStyle = {
@@ -945,7 +1140,7 @@ Provide an improved version. Return ONLY a JSON object:
   const primaryButtonStyle = { ...buttonStyle, backgroundColor: COLORS.yellow, color: '#000' };
   const secondaryButtonStyle = { ...buttonStyle, backgroundColor: 'transparent', border: `2px solid ${COLORS.yellow}`, color: '#000' };
   const dangerButtonStyle = { ...buttonStyle, backgroundColor: '#ef4444', color: '#fff' };
-  const successButtonStyle = { ...buttonStyle, backgroundColor: '#10b981', color: '#fff' };
+  const successButtonStyle = { ...buttonStyle, backgroundColor: COLORS.yellow, color: '#000', fontWeight: '700' };
 
   const disabledStyle = (isDisabled) => ({
     opacity: isDisabled ? 0.5 : 1,
@@ -968,7 +1163,7 @@ Provide an improved version. Return ONLY a JSON object:
     };
 
     return (
-      <Layout onHomeClick={handleHomeClick} onFooterToggle={handleFooterToggle} onMenuToggle={handleMenuToggle} navigationItems={navigationItems} pageLabel="OUTREACH">
+      <Layout onHomeClick={handleHomeClick} onFooterToggle={handleFooterToggle} onMenuToggle={handleMenuToggle} navigationItems={navigationItems} pageLabel="OUTREACH" hideParallaxCircle>
         <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100 }}>
           <div style={{ ...cardStyle, width: '400px', maxWidth: '90vw', textAlign: 'center', animation: 'fadeInUp 0.5s ease-out' }}>
             <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: COLORS.yellow, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>{isReauth ? '🔓' : '🔐'}</div>
@@ -994,36 +1189,68 @@ Provide an improved version. Return ONLY a JSON object:
   const stepLabels = ['Send Type', 'Recipient', 'Generate', 'Review & Edit', 'Refine', 'Send'];
 
   return (
-    <Layout onHomeClick={handleHomeClick} onFooterToggle={handleFooterToggle} onMenuToggle={handleMenuToggle} navigationItems={navigationItems} pageLabel="OUTREACH">
-      <div style={{
+    <Layout onHomeClick={handleHomeClick} onFooterToggle={handleFooterToggle} onMenuToggle={handleMenuToggle} navigationItems={navigationItems} pageLabel="OUTREACH" hideParallaxCircle>
+      <div className="outreach-scroll" style={{
         position: 'fixed',
-        top: '80px',
+        top: '100px',
         bottom: footerOpen ? '400px' : '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(80px, 6vw)',
-        right: '80px',
+        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
+        right: '100px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
         transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
-        paddingRight: '20px'
+        paddingRight: '20px',
+        // Custom scrollbar styling - 10px yellow
+        scrollbarWidth: 'thin',
+        scrollbarColor: `${COLORS.yellow} #e5e7eb`
       }}>
+        <style>{`
+          .outreach-scroll::-webkit-scrollbar {
+            width: 10px;
+          }
+          .outreach-scroll::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 5px;
+          }
+          .outreach-scroll::-webkit-scrollbar-thumb {
+            background: ${COLORS.yellow};
+            border-radius: 5px;
+          }
+          .outreach-scroll::-webkit-scrollbar-thumb:hover {
+            background: #d4b800;
+          }
+          @media (max-width: 768px) {
+            .outreach-scroll {
+              left: max(100px, 8vw) !important;
+              right: 20px !important;
+            }
+          }
+          .email-preview-frame::-webkit-scrollbar {
+            display: none;
+          }
+          .email-preview-frame {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
           {/* Header */}
           <div style={{ marginBottom: '20px', animation: 'fadeInUp 0.6s ease-out' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h1 style={{ ...TYPOGRAPHY.h1Scaled, color: COLORS.yellow, ...EFFECTS.blurLight, display: 'inline-block', margin: 0 }}>OUTREACH PRO</h1>
-              <button onClick={handleLogout} style={{ ...buttonStyle, padding: '8px 14px', fontSize: '12px', backgroundColor: '#f3f4f6', color: '#6b7280' }}>Logout</button>
             </div>
             <p style={{ fontSize: '14px', color: '#4b5563', backgroundColor: 'rgba(255, 255, 255, 0.8)', display: 'inline-block', padding: '4px 8px', borderRadius: '4px', marginBottom: '12px' }}>
               AI-powered outreach with templates and direct sending
             </p>
-            <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+              <button onClick={handleLogout} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px', backgroundColor: '#f3f4f6', color: '#6b7280' }}>Logout</button>
               <button onClick={() => setShowSettings(!showSettings)} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
                 ⚙️ Settings {showSettings ? '▲' : '▼'}
               </button>
               {currentStep > 0 && (
-                <button onClick={resetWorkflow} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px', marginLeft: '12px' }}>
+                <button onClick={resetWorkflow} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
                   ↺ Start Over
                 </button>
               )}
@@ -1110,27 +1337,85 @@ Provide an improved version. Return ONLY a JSON object:
             </div>
           )}
 
-          {/* Progress Indicator */}
-          {currentStep > 0 && (
-            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', animation: 'fadeInUp 0.5s ease-out' }}>
+          {/* Vertical Progress Indicator with Yellow Bar - Responsive to sidebar */}
+          {currentStep > 0 && window.innerWidth > 900 && (
+            <div style={{
+              position: 'fixed',
+              left: sidebarOpen ? 'calc(min(35vw, 472px) + 20px)' : '100px',
+              top: '100px',
+              bottom: footerOpen ? '420px' : '60px',
+              width: '4px',
+              backgroundColor: '#e5e7eb',
+              borderRadius: '2px',
+              zIndex: 62,
+              transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
+              overflow: 'hidden'
+            }}>
+              {/* Yellow progress fill */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: `${((currentStep) / (stepLabels.length - 1)) * 100}%`,
+                backgroundColor: COLORS.yellow,
+                borderRadius: '2px',
+                transition: 'height 0.5s ease-out'
+              }} />
+              {/* Step markers */}
               {stepLabels.map((label, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', flex: idx < stepLabels.length - 1 ? 1 : 'none' }}>
-                  <div style={{
-                    width: '28px', height: '28px', borderRadius: '50%',
-                    backgroundColor: currentStep > idx ? '#10b981' : currentStep === idx ? COLORS.yellow : '#e5e7eb',
+                <div
+                  key={idx}
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: `${(idx / (stepLabels.length - 1)) * 100}%`,
+                    transform: 'translate(-50%, -50%)',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: currentStep > idx ? COLORS.yellow : currentStep === idx ? COLORS.yellow : '#fff',
+                    border: `2px solid ${currentStep >= idx ? COLORS.yellow : '#e5e7eb'}`,
+                    cursor: 'pointer',
+                    zIndex: 1,
+                    transition: 'all 0.3s'
+                  }}
+                  title={label}
+                />
+              ))}
+            </div>
+          )}
+          {/* Vertical step labels - Responsive to sidebar */}
+          {currentStep > 0 && window.innerWidth > 900 && (
+            <div style={{
+              position: 'fixed',
+              left: sidebarOpen ? 'calc(min(35vw, 472px) + 32px)' : '112px',
+              top: '100px',
+              bottom: footerOpen ? '420px' : '60px',
+              width: '60px',
+              zIndex: 62,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
+            }}>
+              {stepLabels.map((label, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    fontSize: '8px',
+                    fontWeight: currentStep === idx ? '700' : '400',
                     color: currentStep >= idx ? '#000' : '#9ca3af',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: '600', fontSize: '12px', transition: 'all 0.3s'
-                  }}>
-                    {currentStep > idx ? '✓' : idx + 1}
-                  </div>
-                  <span style={{ marginLeft: '8px', fontSize: '11px', fontWeight: currentStep === idx ? '600' : '400', color: currentStep === idx ? '#000' : '#6b7280', display: idx > 2 && window.innerWidth < 900 ? 'none' : 'inline' }}>
-                    {label}
-                  </span>
-                  {idx < stepLabels.length - 1 && (
-                    <div style={{ flex: 1, height: '2px', backgroundColor: currentStep > idx ? '#10b981' : '#e5e7eb', margin: '0 12px', transition: 'background-color 0.3s' }} />
-                  )}
-                </div>
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase',
+                    transform: 'translateY(-50%)',
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer',
+                    transition: 'color 0.3s'
+                  }}
+                >
+                  {currentStep > idx ? '✓ ' : ''}{label}
+                </span>
               ))}
             </div>
           )}
@@ -1357,13 +1642,17 @@ Provide an improved version. Return ONLY a JSON object:
                     key={idx}
                     onClick={() => setSelectedEmailIndex(idx)}
                     style={{
-                      flex: 1, padding: '16px', border: 'none', background: selectedEmailIndex === idx ? COLORS.yellow : 'white',
-                      fontWeight: '600', fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
-                      borderBottom: selectedEmailIndex === idx ? 'none' : '2px solid #e5e7eb'
+                      flex: 1, padding: '16px', border: 'none',
+                      background: selectedEmailIndex === idx ? COLORS.yellow : '#f9fafb',
+                      color: '#111827',
+                      fontWeight: selectedEmailIndex === idx ? '700' : '500',
+                      fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
+                      borderBottom: selectedEmailIndex === idx ? 'none' : '2px solid #e5e7eb',
+                      borderRight: idx < 2 ? '1px solid #e5e7eb' : 'none'
                     }}
                   >
                     {label}
-                    <span style={{ display: 'block', fontSize: '11px', fontWeight: '400', color: '#6b7280', marginTop: '2px' }}>
+                    <span style={{ display: 'block', fontSize: '11px', fontWeight: '400', color: selectedEmailIndex === idx ? '#000' : '#6b7280', marginTop: '2px' }}>
                       Day {selectedMotion === 'sales' ? [0, 3, 10][idx] : [0, 7, 14][idx]}
                     </span>
                   </button>
@@ -1372,21 +1661,21 @@ Provide an improved version. Return ONLY a JSON object:
 
               {/* Email Editor */}
               <div style={{ ...cardStyle }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Edit Email</h3>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => setPreviewMode('text')} style={{ ...buttonStyle, padding: '6px 12px', fontSize: '11px', backgroundColor: previewMode === 'text' ? COLORS.yellow : '#f3f4f6', color: '#111827' }}>Edit</button>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', margin: 0 }}>Edit Email</h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    <button onClick={() => setPreviewMode('text')} style={{ ...buttonStyle, padding: '5px 10px', fontSize: '10px', backgroundColor: previewMode === 'text' ? COLORS.yellow : '#f3f4f6', color: '#111827' }}>Edit</button>
                     {OUTREACH_MOTIONS[selectedMotion].templateType === 'designed' && (
                       <>
-                        <button onClick={() => setPreviewMode('html')} style={{ ...buttonStyle, padding: '6px 12px', fontSize: '11px', backgroundColor: previewMode === 'html' ? COLORS.yellow : '#f3f4f6', color: '#111827' }}>Preview</button>
-                        <button onClick={() => setShowComponentLibrary(true)} style={{ ...buttonStyle, padding: '6px 12px', fontSize: '11px', backgroundColor: '#f3f4f6', color: '#111827' }}>📚 Components</button>
+                        <button onClick={() => setPreviewMode('html')} style={{ ...buttonStyle, padding: '5px 10px', fontSize: '10px', backgroundColor: previewMode === 'html' ? COLORS.yellow : '#f3f4f6', color: '#111827' }}>Preview</button>
+                        <button onClick={() => setShowComponentLibrary(true)} style={{ ...buttonStyle, padding: '5px 10px', fontSize: '10px', backgroundColor: '#f3f4f6', color: '#111827' }}>📚</button>
                       </>
                     )}
-                    <button onClick={() => copyToClipboard(`Subject: ${editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject}\n\n${editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].body}`, 0)} style={{ ...secondaryButtonStyle, padding: '6px 12px', fontSize: '11px' }}>
-                      {copiedIndex === 0 ? '✓ Copied' : 'Copy'}
+                    <button onClick={() => copyToClipboard(`Subject: ${editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject}\n\n${editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].body}`, 0)} style={{ ...secondaryButtonStyle, padding: '5px 10px', fontSize: '10px' }}>
+                      {copiedIndex === 0 ? '✓' : 'Copy'}
                     </button>
                     {OUTREACH_MOTIONS[selectedMotion].templateType === 'designed' && (
-                      <button onClick={handleCopyHTML} style={{ ...secondaryButtonStyle, padding: '6px 12px', fontSize: '11px' }}>Copy HTML</button>
+                      <button onClick={handleCopyHTML} style={{ ...secondaryButtonStyle, padding: '5px 10px', fontSize: '10px' }}>HTML</button>
                     )}
                   </div>
                 </div>
@@ -1412,16 +1701,109 @@ Provide an improved version. Return ONLY a JSON object:
                     </div>
                   </>
                 ) : (
-                  <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
-                    <iframe
-                      ref={previewRef}
-                      srcDoc={generateBrandEmailHTML(
-                        editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject,
-                        editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].body
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Collapsible Section Toggles Panel */}
+                    <div style={{ backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                      <button
+                        onClick={() => setShowToggles(!showToggles)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 14px',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em'
+                        }}
+                      >
+                        <span>⚙️ Section Toggles</span>
+                        <span>{showToggles ? '▲' : '▼'}</span>
+                      </button>
+                      {showToggles && (
+                        <div style={{ padding: '0 14px 14px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {[
+                            { key: 'showLogo', label: 'Logo' },
+                            { key: 'showHeroImage', label: 'Hero' },
+                            { key: 'showHeadline', label: 'Headline' },
+                            { key: 'showBody', label: 'Body' },
+                            { key: 'showCta', label: 'CTA' },
+                            { key: 'showInterstitial', label: 'Interstitial' },
+                            { key: 'showUpsellCards', label: 'Upsell' },
+                            { key: 'showFooter', label: 'Footer' },
+                            { key: 'showUnsubscribe', label: 'Unsub' }
+                          ].map(({ key, label }) => (
+                            <button
+                              key={key}
+                              onClick={() => setEmailSections(prev => ({ ...prev, [key]: !prev[key] }))}
+                              style={{
+                                padding: '4px 10px',
+                                fontSize: '10px',
+                                fontWeight: emailSections[key] ? '600' : '400',
+                                backgroundColor: emailSections[key] ? COLORS.yellow : '#fff',
+                                color: emailSections[key] ? '#000' : '#9ca3af',
+                                border: `1px solid ${emailSections[key] ? COLORS.yellow : '#e5e7eb'}`,
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {emailSections[key] ? '✓ ' : ''}{label}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setEmailSections(DEFAULT_EMAIL_SECTIONS)}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '10px',
+                              backgroundColor: '#fff',
+                              color: '#6b7280',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Reset
+                          </button>
+                        </div>
                       )}
-                      style={{ width: '100%', height: '600px', border: 'none' }}
-                      title="Email Preview"
-                    />
+                    </div>
+                    {/* Email Preview - Scrollable but hidden scrollbar with yellow circle background */}
+                    <div style={{ flex: 1, position: 'relative' }}>
+                      {/* Yellow circle background */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '400px',
+                        height: '400px',
+                        backgroundColor: 'rgb(251, 191, 36)',
+                        borderRadius: '50%',
+                        opacity: 0.15,
+                        pointerEvents: 'none',
+                        zIndex: 0
+                      }} />
+                      <div style={{ position: 'relative', zIndex: 1, border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                        <iframe
+                          ref={previewRef}
+                          className="email-preview-frame"
+                          srcDoc={generateBrandEmailHTML(
+                            editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject,
+                            editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].body,
+                            '',
+                            emailSections
+                          )}
+                          style={{ width: '100%', height: '700px', border: 'none' }}
+                          title="Email Preview"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1501,7 +1883,7 @@ Provide an improved version. Return ONLY a JSON object:
 
           {/* Step 5: Send */}
           {currentStep === 5 && editedEmails && (
-            <div style={{ ...cardStyle, animation: 'fadeInUp 0.5s ease-out' }}>
+            <div style={{ ...cardStyle, backgroundColor: 'rgba(251, 191, 36, 0.15)', border: `2px solid ${COLORS.yellow}`, animation: 'fadeInUp 0.5s ease-out' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: '#111827' }}>Test & Send</h2>
 
               {/* Email Summary */}
@@ -1525,16 +1907,16 @@ Provide an improved version. Return ONLY a JSON object:
               {/* Email Selector */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Select Email to Send</label>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {['Initial', 'Follow-up #1', 'Follow-up #2'].map((label, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedEmailIndex(idx)}
                       style={{
-                        flex: 1, padding: '12px', borderRadius: '8px', cursor: 'pointer',
+                        flex: '1 1 auto', minWidth: '100px', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
                         border: `2px solid ${selectedEmailIndex === idx ? COLORS.yellow : '#e5e7eb'}`,
                         backgroundColor: selectedEmailIndex === idx ? 'rgba(238, 207, 0, 0.1)' : 'white',
-                        fontWeight: '600', fontSize: '13px', color: '#111827'
+                        fontWeight: '600', fontSize: '12px', color: '#111827'
                       }}
                     >
                       {label}
@@ -1554,20 +1936,20 @@ Provide an improved version. Return ONLY a JSON object:
               </div>
 
               {/* Actions */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button onClick={() => setCurrentStep(4)} style={secondaryButtonStyle}>← Back</button>
-                  <button onClick={downloadAsJson} style={secondaryButtonStyle}>📥 JSON</button>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <button onClick={() => setCurrentStep(4)} style={{ ...secondaryButtonStyle, padding: '8px 12px', fontSize: '12px' }}>← Back</button>
+                  <button onClick={downloadAsJson} style={{ ...secondaryButtonStyle, padding: '8px 12px', fontSize: '12px' }}>📥 JSON</button>
                   {OUTREACH_MOTIONS[selectedMotion].templateType === 'designed' && (
-                    <button onClick={handleCopyHTML} style={secondaryButtonStyle}>📋 HTML</button>
+                    <button onClick={handleCopyHTML} style={{ ...secondaryButtonStyle, padding: '8px 12px', fontSize: '12px' }}>📋 HTML</button>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button onClick={handleSendTest} disabled={isSending || !settings.resendApiKey} style={{ ...secondaryButtonStyle, ...disabledStyle(isSending || !settings.resendApiKey) }}>
-                    {isSending ? 'Sending...' : '🧪 Send Test'}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <button onClick={handleSendTest} disabled={isSending || !settings.resendApiKey} style={{ ...secondaryButtonStyle, padding: '8px 12px', fontSize: '12px', ...disabledStyle(isSending || !settings.resendApiKey) }}>
+                    {isSending ? '...' : '🧪 Send Test'}
                   </button>
-                  <button onClick={handleSendLive} disabled={isSending || !settings.resendApiKey} style={{ ...successButtonStyle, ...disabledStyle(isSending || !settings.resendApiKey) }}>
-                    {isSending ? 'Sending...' : '🚀 Send Live'}
+                  <button onClick={handleSendLive} disabled={isSending || !settings.resendApiKey} style={{ ...successButtonStyle, padding: '8px 12px', fontSize: '12px', ...disabledStyle(isSending || !settings.resendApiKey) }}>
+                    {isSending ? '...' : '🚀 Send Live'}
                   </button>
                 </div>
               </div>

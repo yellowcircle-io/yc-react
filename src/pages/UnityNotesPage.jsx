@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ReactFlow,
@@ -13,12 +13,14 @@ import '@xyflow/react/dist/style.css';
 
 import Layout from '../components/global/Layout';
 import { useLayout } from '../contexts/LayoutContext';
+import { navigationItems } from '../config/navigationItems';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
 import ShareModal from '../components/travel/ShareModal';
 import LightboxModal from '../components/travel/LightboxModal';
 import EditMemoryModal from '../components/travel/EditMemoryModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
+import UnityCircleNav from '../components/unity/UnityCircleNav';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 
@@ -28,9 +30,8 @@ const nodeTypes = {
 
 const STORAGE_KEY = 'unity-notes-data';
 
-const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showContextMenu, setShowContextMenu }) => {
-  const navigate = useNavigate();
-  const { fitView, zoomIn, zoomOut, getZoom, setViewport } = useReactFlow();
+const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle }) => {
+  const { fitView, zoomIn, zoomOut, getZoom } = useReactFlow();
   const { sidebarOpen } = useLayout();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -511,9 +512,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setNodes([]);
       setEdges([]);
       localStorage.removeItem(STORAGE_KEY);
-      setShowContextMenu(false);
       console.log('🗑️ All notes cleared');
     }
+  };
+
+  // Open Add Note dialog
+  const handleAddNote = () => {
+    setIsUploadModalOpen(true);
   };
 
   return (
@@ -684,185 +689,17 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </button>
       </div>
 
-      {/* Context Menu - Center aligned */}
-      {showContextMenu && (
-        <div style={{
-          position: 'fixed',
-          bottom: '130px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.98)',
-          backdropFilter: 'blur(8px)',
-          padding: '8px',
-          borderRadius: '4px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-          zIndex: 200,
-          minWidth: '180px'
-        }}>
-          <button
-            onClick={() => {
-              setIsUploadModalOpen(true);
-              setShowContextMenu(false);
-            }}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              backgroundColor: '#EECF00',
-              color: 'black',
-              border: 'none',
-              borderRadius: '0',
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#fbbf24'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#EECF00'}
-          >
-            + ADD NOTE
-          </button>
-
-          <button
-            onClick={() => {
-              handleExportJSON();
-              setShowContextMenu(false);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0',
-              cursor: 'pointer',
-              fontSize: '9px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
-          >
-            EXPORT
-          </button>
-
-          <button
-            onClick={() => {
-              handleImportJSON();
-              setShowContextMenu(false);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              backgroundColor: '#8b5cf6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0',
-              cursor: 'pointer',
-              fontSize: '9px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#7c3aed'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#8b5cf6'}
-          >
-            IMPORT
-          </button>
-
-          <button
-            onClick={() => {
-              handleSaveAndShare();
-              setShowContextMenu(false);
-            }}
-            disabled={isSaving || nodes.length === 0}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              backgroundColor: nodes.length === 0 ? 'rgba(16, 185, 129, 0.3)' : '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0',
-              cursor: isSaving ? 'wait' : (nodes.length === 0 ? 'not-allowed' : 'pointer'),
-              fontSize: '9px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-              opacity: nodes.length === 0 ? 0.5 : 1,
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => {
-              if (nodes.length > 0 && !isSaving) {
-                e.target.style.backgroundColor = '#059669';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (nodes.length > 0) {
-                e.target.style.backgroundColor = '#10b981';
-              }
-            }}
-          >
-            {isSaving ? 'SAVING...' : 'SHARE'}
-          </button>
-
-          <button
-            onClick={handleClearAll}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              backgroundColor: '#dc2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0',
-              cursor: 'pointer',
-              fontSize: '9px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              marginBottom: '8px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#b91c1c'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#dc2626'}
-          >
-            CLEAR
-          </button>
-
-          {/* Separator */}
-          <div style={{
-            height: '1px',
-            backgroundColor: '#e5e5e5',
-            margin: '4px 0'
-          }} />
-
-          <button
-            onClick={() => {
-              onFooterToggle();
-              setShowContextMenu(false);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0',
-              cursor: 'pointer',
-              fontSize: '9px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#4b5563'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#6b7280'}
-          >
-            FOOTER
-          </button>
-        </div>
-      )}
+      {/* Unity Circle Nav - Custom Add Note + Options Menu */}
+      <UnityCircleNav
+        onAddNote={handleAddNote}
+        onExport={handleExportJSON}
+        onImport={handleImportJSON}
+        onShare={handleSaveAndShare}
+        onClear={handleClearAll}
+        onFooter={onFooterToggle}
+        isSaving={isSaving}
+        hasNotes={nodes.length > 0}
+      />
 
       {/* Empty State */}
       {nodes.length === 0 && (
@@ -951,61 +788,10 @@ function UnityNotesPage() {
   const navigate = useNavigate();
   const { handleFooterToggle, handleMenuToggle } = useLayout();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [showContextMenu, setShowContextMenu] = useState(false);
 
   const handleHomeClick = (e) => {
     e.preventDefault();
     navigate('/');
-  };
-
-  // Close context menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (showContextMenu && !e.target.closest('[data-context-menu]')) {
-        setShowContextMenu(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [showContextMenu]);
-
-  // Navigation items - Three categories matching global structure
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "STORIES",
-      itemKey: "stories",
-      subItems: [
-        { label: "Projects", key: "projects", subItems: ["Brand Development", "Marketing Architecture", "Email Development"] },
-        { label: "Golden Unknown", key: "golden-unknown" },
-        { label: "Cath3dral", key: "cath3dral", subItems: ["Being + Rhyme"] },
-        { label: "Thoughts", key: "thoughts" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: [
-        { label: "UK-Memories", key: "uk-memories" },
-        { label: "Unity Notes", key: "unity-notes" },
-        { label: "Home-17", key: "home-17" },
-        { label: "Visual Noteboard", key: "visual-noteboard" },
-        { label: "Component Library", key: "component-library" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
-      label: "ABOUT",
-      itemKey: "about",
-      subItems: []
-    }
-  ];
-
-  // Handle circle nav click - opens upload modal for Unity Notes
-  const handleCircleNavClick = () => {
-    setIsUploadModalOpen(true);
   };
 
   return (
@@ -1017,15 +803,13 @@ function UnityNotesPage() {
         navigationItems={navigationItems}
         pageLabel="UNITY NOTES"
         sidebarVariant="hidden"
-        circleNavBehavior={handleCircleNavClick}
+        hideCircleNav={true}
       >
         <ReactFlowProvider>
           <UnityNotesFlow
             isUploadModalOpen={isUploadModalOpen}
             setIsUploadModalOpen={setIsUploadModalOpen}
             onFooterToggle={handleFooterToggle}
-            showContextMenu={showContextMenu}
-            setShowContextMenu={setShowContextMenu}
           />
         </ReactFlowProvider>
       </Layout>

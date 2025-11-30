@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
+import { navigationItems } from '../../config/navigationItems';
 
 // Default brand configuration (can be customized by user)
 const DEFAULT_BRAND = {
@@ -248,15 +249,6 @@ Return ONLY a JSON object with this exact format:
     URL.revokeObjectURL(url);
   };
 
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: []
-    }
-  ];
-
   // Styles
   const cardStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -328,10 +320,10 @@ Return ONLY a JSON object with this exact format:
     >
       <div style={{
         position: 'fixed',
-        top: '80px',
+        top: '100px',
         bottom: footerOpen ? '400px' : '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(80px, 6vw)',
-        right: '80px',
+        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
+        right: '100px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
