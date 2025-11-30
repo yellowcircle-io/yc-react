@@ -102,15 +102,15 @@ const CircleContextMenu = ({
 }) => {
   if (!isOpen) return null;
 
-  // Top row: HOME and WORKS in two columns
+  // Top row: HOME and FORWARD in two columns
   const topRowItems = [
     { label: 'HOME', action: onHome, color: 'rgb(251, 191, 36)', hoverColor: '#d4a000' },
-    { label: 'WORKS', action: onWorks, color: 'rgb(217, 164, 32)', hoverColor: 'rgb(251, 191, 36)' }
+    { label: 'FORWARD >', action: onScrollNext, color: 'rgb(217, 164, 32)', hoverColor: 'rgb(251, 191, 36)' }
   ];
 
-  // Bottom grid: 2x2 layout for NEXT, MENU, CONTACT, FOOTER
+  // Bottom grid: 2x2 layout for WORKS, MENU, CONTACT, FOOTER
   const gridItems = [
-    { label: 'FORWARD >', action: onScrollNext, color: 'rgb(183, 138, 28)', hoverColor: 'rgb(217, 164, 32)' },
+    { label: 'WORKS', action: onWorks, color: 'rgb(183, 138, 28)', hoverColor: 'rgb(217, 164, 32)' },
     { label: 'MENU', action: onMenu, color: 'rgb(150, 113, 23)', hoverColor: 'rgb(183, 138, 28)' },
     { label: 'CONTACT', action: onContact, color: '#4b5563', hoverColor: '#374151' },
     { label: 'FOOTER', action: onFooter, color: '#374151', hoverColor: '#1f2937' }

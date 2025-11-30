@@ -4,6 +4,7 @@ import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
+import { CALENDAR_ENABLED, openCalendarBooking } from '../config/calendarConfig';
 
 /**
  * ServicesPage - Consulting services offerings
@@ -443,7 +444,7 @@ function ServicesPage() {
               Book a free 30-minute discovery call to discuss your challenges.
             </p>
             <button
-              onClick={() => openContactModal('', 'Discovery Call Request')}
+              onClick={() => openCalendarBooking(() => openContactModal('', 'Discovery Call Request'))}
               style={{
                 padding: '14px 32px',
                 backgroundColor: COLORS.yellow,
@@ -465,7 +466,7 @@ function ServicesPage() {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              SCHEDULE A CALL
+              {CALENDAR_ENABLED ? 'BOOK A CALL' : 'SCHEDULE A CALL'}
             </button>
           </div>
         </div>
