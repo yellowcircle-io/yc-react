@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import Lottie from 'lottie-react';
 import { useLayout } from '../../contexts/LayoutContext';
 
 /**
@@ -7,7 +8,7 @@ import { useLayout } from '../../contexts/LayoutContext';
  *
  * Features:
  * - Slide-over panel for sub-items (not accordion)
- * - Static image icons from Cloudinary
+ * - Lottie animation icons (pass lottieData prop) or static images (pass icon URL)
  * - Font sizes reduced by 15%
  * - Firefox compatibility
  *
@@ -97,7 +98,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
   }, []);
 
   // Navigation Item Component - with slide-over trigger
-  const NavigationItem = ({ icon, label, subItems, itemKey, index }) => {
+  // Supports both Lottie animations (lottieData) and static images (icon URL)
+  const NavigationItem = ({ icon, lottieData, label, subItems, itemKey, index }) => {
     const [isHovered, setIsHovered] = useState(false);
     const hoverTimeoutRef = useRef(null);
     const hasSubItems = subItems && subItems.length > 0;
@@ -144,32 +146,63 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       }, 50);
     };
 
+    // Touch handlers for mobile hover simulation
+    const handleTouchStart = (e) => {
+      // Trigger hover state on touch
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      setIsHovered(true);
+    };
+
+    const handleTouchEnd = () => {
+      // Keep hover active briefly after touch ends for visual feedback
+      hoverTimeoutRef.current = setTimeout(() => {
+        setIsHovered(false);
+      }, 300);
+    };
+
     return (
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        flexShrink: 0
-      }}>
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          flexShrink: 0
+        }}
+        // Firefox fix: attach hover to container when sidebar closed
+        onMouseEnter={!sidebarOpen ? handleMouseEnter : undefined}
+        onMouseLeave={!sidebarOpen ? handleMouseLeave : undefined}
+        // Touch events for mobile hover simulation
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <button
           type="button"
-          className="clickable-element"
+          className="clickable-element nav-item-button"
           onClick={(e) => {
             e.stopPropagation();
             handleClick();
           }}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          onMouseEnter={sidebarOpen ? handleMouseEnter : undefined}
+          onMouseLeave={sidebarOpen ? handleMouseLeave : undefined}
           style={{
             display: 'flex',
             alignItems: 'center',
-            padding: '10px 8px 10px 0',
+            padding: sidebarOpen ? '12px 16px' : '10px 8px 10px 0',
             position: 'relative',
             minHeight: '48px',
-            width: '100%',
+            // Firefox fix: ensure button covers icon area when closed
+            minWidth: sidebarOpen ? 'auto' : '80px',
+            width: sidebarOpen ? 'calc(100% - 40px)' : '100%',
+            marginLeft: sidebarOpen ? '20px' : '0',
+            marginRight: sidebarOpen ? '20px' : '0',
             borderRadius: '6px',
-            backgroundColor: isHovered && sidebarOpen ? 'rgba(238, 207, 0, 0.12)' : 'transparent',
+            backgroundColor: sidebarOpen
+              ? (isHovered ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.5)')
+              : (isHovered ? 'rgba(251, 191, 36, 0.12)' : 'transparent'),
             cursor: 'pointer',
-            transition: 'background-color 0.15s ease-out',
+            transition: 'all 0.2s ease-out',
             WebkitTapHighlightColor: 'transparent',
             border: 'none',
             outline: 'none',
@@ -177,14 +210,15 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             font: 'inherit'
           }}
         >
-          {/* Icon - Static image with hover effects */}
+          {/* Icon - Lottie animation or static image */}
+          {/* Greyscale when not hovered, animate only on hover */}
           <div style={{
-            position: 'absolute',
-            left: '40px',
-            top: '50%',
+            position: sidebarOpen ? 'relative' : 'absolute',
+            left: sidebarOpen ? '0' : '40px',
+            top: sidebarOpen ? 'auto' : '50%',
             transform: isHovered
-              ? 'translate(-50%, -50%) scale(1.05)'
-              : 'translate(-50%, -50%) scale(1)',
+              ? (sidebarOpen ? 'scale(1.05)' : 'translate(-50%, -50%) scale(1.05)')
+              : (sidebarOpen ? 'scale(1)' : 'translate(-50%, -50%) scale(1)'),
             width: '28px',
             height: '28px',
             display: 'flex',
@@ -192,47 +226,59 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             justifyContent: 'center',
             zIndex: 2,
             pointerEvents: 'none',
-            transition: 'transform 0.2s ease-out'
+            transition: 'transform 0.2s ease-out, filter 0.3s ease-out',
+            filter: isHovered ? 'grayscale(0)' : 'grayscale(1)',
+            flexShrink: 0
           }}>
-            <img
-              src={icon}
-              alt={label}
-              width="28"
-              height="28"
-              style={{
-                display: 'block',
-                objectFit: 'contain',
-                transition: 'filter 0.15s ease-out'
-              }}
-            />
+            {lottieData ? (
+              <Lottie
+                key={`${itemKey}-${isHovered ? 'playing' : 'stopped'}`}
+                animationData={lottieData}
+                loop={isHovered}
+                autoplay={isHovered}
+                style={{
+                  width: 28,
+                  height: 28
+                }}
+              />
+            ) : (
+              <img
+                src={icon}
+                alt={label}
+                width="28"
+                height="28"
+                style={{
+                  display: 'block',
+                  objectFit: 'contain'
+                }}
+              />
+            )}
           </div>
 
           {/* Label */}
           <span style={{
-            position: 'absolute',
-            left: '60px',
-            top: '50%',
+            position: sidebarOpen ? 'relative' : 'absolute',
+            left: sidebarOpen ? '0' : '60px',
+            top: sidebarOpen ? 'auto' : '50%',
+            marginLeft: sidebarOpen ? '12px' : '0',
             color: 'black',
             fontSize: '13px',
             fontWeight: '600',
-            letterSpacing: '0.2em',
+            letterSpacing: '0.05em',
             opacity: sidebarOpen ? 1 : 0,
-            transform: sidebarOpen ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-10px)',
+            transform: sidebarOpen ? 'none' : 'translateY(-50%) translateX(-10px)',
             transition: 'opacity 0.3s ease-out 0.1s, transform 0.3s ease-out 0.1s',
             whiteSpace: 'nowrap',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            flex: sidebarOpen ? 1 : 'none'
           }}>{label}</span>
 
           {/* Sub-items indicator arrow */}
           {hasSubItems && sidebarOpen && (
             <span style={{
-              position: 'absolute',
-              right: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '10px',
+              fontSize: '12px',
               color: 'rgba(0,0,0,0.4)',
-              opacity: sidebarOpen ? 1 : 0,
+              opacity: 1,
               transition: 'opacity 0.2s ease-out'
             }}>→</span>
           )}
@@ -296,13 +342,14 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           borderRadius: '6px',
           backgroundColor: 'transparent',
           WebkitTapHighlightColor: 'transparent',
-          zIndex: 150,
+          zIndex: 260,
+          pointerEvents: 'auto',
           transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease-out'
         }}
         onMouseEnter={(e) => {
           const baseTransform = variant === "hidden" ? '' : 'translateX(-50%) ';
           e.currentTarget.style.transform = `${baseTransform}scale(1.12)`;
-          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+          e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
         }}
         onMouseLeave={(e) => {
           const baseTransform = variant === "hidden" ? 'none' : 'translateX(-50%) scale(1)';
@@ -333,6 +380,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       </div>
 
       {/* YC Logo - Fixed position for "hidden" variant only */}
+      {/* Always opens Footer only */}
       {variant === "hidden" && (
         <div
           className="yc-logo clickable-element"
@@ -347,7 +395,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             borderRadius: '50%',
             overflow: 'visible',
             cursor: 'pointer',
-            zIndex: 150,
+            zIndex: 290,  // Above everything - sidebar (50), menu overlay (250), slide-over (270)
             transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}
@@ -355,9 +403,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             e.preventDefault();
             if (onFooterToggle) {
               onFooterToggle();
-            } else {
-              handleHomeClick(e);
             }
+            // Logo only opens Footer - no home navigation
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.15) rotate(5deg)';
@@ -394,7 +441,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
         WebkitTransform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
-        pointerEvents: sidebarOpen || variant === "standard" ? 'auto' : 'none'
+        pointerEvents: 'auto'
       }}>
 
         {/* HEADER SECTION - HOME Label */}
@@ -421,14 +468,14 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
               transition: 'background-color 0.2s ease-out'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.15)';
+              e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
             <span style={{
-              color: scrollOffset === 0 ? '#EECF00' : 'black',
+              color: scrollOffset === 0 ? 'rgb(251, 191, 36)' : 'black',
               fontWeight: scrollOffset === 0 ? '700' : '600',
               letterSpacing: '0.1em',
               fontSize: '12px',
@@ -465,7 +512,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           ))}
         </nav>
 
-        {/* SLIDE-OVER PANEL - Sub-items */}
+        {/* SLIDE-OVER PANEL - Sub-items (vertically centered) */}
         {slideOverOpen && (
           <div style={{
             position: 'absolute',
@@ -477,57 +524,27 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             zIndex: 60,
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'center',
             animation: 'slideOverFromLeft 0.3s ease-out',
             padding: '0 20px'
           }}>
-            {/* Back button */}
-            <button
-              onClick={handleCloseSlideOver}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 0',
-                marginBottom: '16px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: '600',
-                color: 'rgba(0,0,0,0.6)',
-                letterSpacing: '0.1em',
-                transition: 'color 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#EECF00';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
-              }}
-            >
-              <span style={{ fontSize: '14px' }}>←</span>
-              <span>BACK</span>
-            </button>
-
             {/* Section title */}
             <h3 style={{
               fontSize: '13px',
               fontWeight: '700',
-              color: '#EECF00',
+              color: 'rgb(251, 191, 36)',
               letterSpacing: '0.2em',
-              marginBottom: '16px',
+              marginBottom: '12px',
               paddingLeft: '8px'
             }}>
               {slideOverTitle}
             </h3>
 
-            {/* Sub-items list */}
+            {/* Sub-items list - centered group */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '4px',
-              flex: 1,
-              overflowY: 'auto'
+              gap: '8px'
             }}>
               {slideOverItems.map((item, idx) => {
                 const itemLabel = typeof item === 'string' ? item : item.label;
@@ -555,8 +572,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                       animation: `slideOverItem 0.25s ease-out ${idx * 0.05}s both`
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
-                      e.currentTarget.style.color = '#EECF00';
+                      e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.2)';
+                      e.currentTarget.style.color = 'rgb(251, 191, 36)';
                       e.currentTarget.style.transform = 'translateX(4px)';
                     }}
                     onMouseLeave={(e) => {
@@ -571,15 +588,49 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                 );
               })}
             </div>
+
+            {/* Back button - positioned at bottom */}
+            <button
+              onClick={handleCloseSlideOver}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 16px',
+                marginTop: '16px',
+                border: 'none',
+                borderRadius: '6px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: 'rgba(0,0,0,0.6)',
+                letterSpacing: '0.1em',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.2)';
+                e.currentTarget.style.color = 'rgb(251, 191, 36)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                e.currentTarget.style.color = 'rgba(0,0,0,0.6)';
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>←</span>
+              <span>BACK</span>
+            </button>
           </div>
         )}
 
         {/* FOOTER SECTION - YC Logo (only for standard variant) */}
+        {/* Always opens Footer only */}
         {variant === "standard" && (
           <div style={{
             flexShrink: 0,
             height: '85px',
-            position: 'relative'
+            position: 'relative',
+            zIndex: 60  // Above sidebar container (50)
           }}>
             <div
               className="yc-logo clickable-element"
@@ -596,15 +647,15 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                 overflow: 'visible',
                 cursor: 'pointer',
                 transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                zIndex: 290  // Above everything - sidebar (50), menu overlay (250), slide-over (270)
               }}
               onClick={(e) => {
                 e.preventDefault();
                 if (onFooterToggle) {
                   onFooterToggle();
-                } else {
-                  handleHomeClick(e);
                 }
+                // Logo only opens Footer - no home navigation
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.15) rotate(5deg)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1) rotate(0deg)'}
@@ -622,12 +673,16 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
         <style>{`
           /* Firefox-specific hover fixes */
           @-moz-document url-prefix() {
+            .nav-item-button {
+              /* Force Firefox to respect hover events */
+              will-change: background-color;
+            }
             .nav-item-button:hover {
-              background-color: rgba(238, 207, 0, 0.12) !important;
+              background-color: rgba(251, 191, 36, 0.12) !important;
             }
             .sub-item-button:hover {
-              background-color: rgba(238, 207, 0, 0.15) !important;
-              color: #EECF00 !important;
+              background-color: rgba(251, 191, 36, 0.15) !important;
+              color: rgb(251, 191, 36) !important;
             }
           }
 
@@ -639,13 +694,16 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             -webkit-touch-callout: none;
           }
 
-          /* Prevent hover flicker on nested elements */
-          .clickable-element * {
-            pointer-events: none;
+          /* Nav item button - ensure hover works on entire area */
+          .nav-item-button {
+            /* Ensure hover area includes absolutely positioned children */
+            isolation: isolate;
           }
-          .clickable-element button,
-          .clickable-element a {
-            pointer-events: auto;
+
+          /* Only apply pointer-events:none to non-interactive children */
+          .nav-item-button > div,
+          .nav-item-button > span {
+            pointer-events: none;
           }
         `}</style>
       </div>

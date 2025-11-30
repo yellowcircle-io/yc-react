@@ -1,0 +1,478 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useLayout } from '../../contexts/LayoutContext';
+
+/**
+ * ContactModal - "Get In Touch" modal with email input
+ *
+ * Features:
+ * - Centered modal overlay
+ * - Email input field with validation
+ * - Message textarea (optional)
+ * - Submit button
+ * - Close on backdrop click or X button
+ * - Accessible keyboard navigation
+ */
+function ContactModal() {
+  const { contactModalOpen, closeContactModal, contactModalEmail } = useLayout();
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const nameInputRef = useRef(null);
+  const emailInputRef = useRef(null);
+
+  // Track previous modal state to detect open transitions
+  const wasOpen = useRef(false);
+
+  // Set prefilled email when modal transitions from closed to open
+  useEffect(() => {
+    // Detect transition from closed to open
+    if (contactModalOpen && !wasOpen.current) {
+      // Modal just opened - apply prefill if provided
+      if (contactModalEmail) {
+        setEmail(contactModalEmail);
+        // Focus name field since email is prefilled
+        setTimeout(() => nameInputRef.current?.focus(), 50);
+      } else {
+        // No prefill - focus email field
+        setTimeout(() => emailInputRef.current?.focus(), 50);
+      }
+    }
+
+    // Reset form when modal closes
+    if (!contactModalOpen && wasOpen.current) {
+      setEmail('');
+      setName('');
+      setPhone('');
+      setMessage('');
+      setError('');
+      setSubmitted(false);
+    }
+
+    // Update tracking ref
+    wasOpen.current = contactModalOpen;
+  }, [contactModalOpen, contactModalEmail]);
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && contactModalOpen) {
+        closeContactModal();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [contactModalOpen, closeContactModal]);
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Simulate form submission (replace with actual API call)
+    try {
+      // For now, just log and show success
+      console.log('Contact form submitted:', { email, name, phone, message });
+
+      // TODO: Replace with actual form submission
+      // await fetch('/api/contact', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email, name, phone, message })
+      // });
+
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setSubmitted(true);
+
+      // Close modal after showing success
+      setTimeout(() => {
+        closeContactModal();
+      }, 2000);
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      closeContactModal();
+    }
+  };
+
+  if (!contactModalOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 400,
+        padding: '20px',
+        animation: 'modalFadeIn 0.2s ease-out'
+      }}
+      onClick={handleBackdropClick}
+    >
+      <style>{`
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .contact-input:focus {
+          outline: none;
+          border-color: rgb(251, 191, 36) !important;
+          box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+        }
+        .contact-input::placeholder {
+          color: rgba(0, 0, 0, 0.4);
+        }
+        .submit-btn:hover:not(:disabled) {
+          background-color: #d4a000 !important;
+          transform: translateY(-1px);
+        }
+        .submit-btn:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        .submit-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .close-btn:hover {
+          background-color: rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
+
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '32px',
+          maxWidth: '420px',
+          width: '100%',
+          position: 'relative',
+          animation: 'modalSlideUp 0.3s ease-out',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          className="close-btn"
+          onClick={closeContactModal}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px',
+            color: 'rgba(0, 0, 0, 0.5)',
+            transition: 'all 0.2s ease'
+          }}
+          aria-label="Close modal"
+        >
+          ×
+        </button>
+
+        {submitted ? (
+          /* Success State */
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              backgroundColor: 'rgb(251, 191, 36)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '28px'
+            }}>
+              ✓
+            </div>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: 'black',
+              margin: '0 0 8px 0'
+            }}>
+              Thanks for reaching out!
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: 'rgba(0, 0, 0, 0.6)',
+              margin: 0
+            }}>
+              We'll get back to you soon.
+            </p>
+          </div>
+        ) : (
+          /* Form State */
+          <form onSubmit={handleSubmit}>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: 'black',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.5px'
+            }}>
+              Get In Touch
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: 'rgba(0, 0, 0, 0.6)',
+              margin: '0 0 24px 0'
+            }}>
+              Enter your email and we'll reach out to start the conversation.
+            </p>
+
+            {/* Email Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label
+                htmlFor="contact-email"
+                style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  marginBottom: '6px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                EMAIL
+              </label>
+              <input
+                ref={emailInputRef}
+                id="contact-email"
+                type="email"
+                className="contact-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  color: 'rgb(180, 140, 20)',
+                  border: '2px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Name Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label
+                htmlFor="contact-name"
+                style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  marginBottom: '6px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                NAME <span style={{ color: 'rgba(0, 0, 0, 0.4)', fontWeight: '400' }}>(optional)</span>
+              </label>
+              <input
+                ref={nameInputRef}
+                id="contact-name"
+                type="text"
+                className="contact-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  border: '2px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Phone Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label
+                htmlFor="contact-phone"
+                style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  marginBottom: '6px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                PHONE <span style={{ color: 'rgba(0, 0, 0, 0.4)', fontWeight: '400' }}>(optional)</span>
+              </label>
+              <input
+                id="contact-phone"
+                type="tel"
+                className="contact-input"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Your phone number"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  border: '2px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Message Input (Optional) */}
+            <div style={{ marginBottom: '20px' }}>
+              <label
+                htmlFor="contact-message"
+                style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  marginBottom: '6px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                MESSAGE <span style={{ color: 'rgba(0, 0, 0, 0.4)', fontWeight: '400' }}>(optional)</span>
+              </label>
+              <textarea
+                id="contact-message"
+                className="contact-input"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Tell us about your project..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  border: '2px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  minHeight: '80px',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div style={{
+                color: '#dc2626',
+                fontSize: '13px',
+                marginBottom: '16px',
+                padding: '10px 12px',
+                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                borderRadius: '6px'
+              }}>
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={isSubmitting}
+              style={{
+                width: '100%',
+                padding: '14px 24px',
+                fontSize: '14px',
+                fontWeight: '700',
+                letterSpacing: '0.05em',
+                color: 'white',
+                backgroundColor: 'rgb(251, 191, 36)',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {isSubmitting ? 'SENDING...' : 'SEND MESSAGE'}
+            </button>
+
+            {/* Direct Email Link */}
+            <p style={{
+              fontSize: '12px',
+              color: 'rgba(0, 0, 0, 0.5)',
+              textAlign: 'center',
+              marginTop: '16px',
+              marginBottom: 0
+            }}>
+              Or email us directly at{' '}
+              <a
+                href="mailto:info@yellowcircle.io"
+                style={{
+                  color: 'rgb(251, 191, 36)',
+                  textDecoration: 'none',
+                  fontWeight: '600'
+                }}
+              >
+                info@yellowcircle.io
+              </a>
+            </p>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default ContactModal;

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
+import { getPagesCategorized, STATUS_CONFIG } from '../config/pagesConfig';
+import { navigationItems } from '../config/navigationItems';
 
 function SitemapPage() {
   const navigate = useNavigate();
@@ -13,61 +15,22 @@ function SitemapPage() {
     navigate('/');
   };
 
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "STORIES",
-      itemKey: "stories",
-      subItems: [
-        { label: "Projects", key: "projects", subItems: ["Brand Development", "Marketing Architecture", "Email Development"] },
-        { label: "Golden Unknown", key: "golden-unknown" },
-        { label: "Cath3dral", key: "cath3dral", subItems: ["Being + Rhyme"] },
-        { label: "Thoughts", key: "thoughts" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: [
-        { label: "UK-Memories", key: "uk-memories" },
-        { label: "Home-17", key: "home-17" },
-        { label: "Visual Noteboard", key: "visual-noteboard" },
-        { label: "Component Library", key: "component-library" }
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
-      label: "ABOUT",
-      itemKey: "about",
-      subItems: []
-    }
-  ];
+  // Get pages from shared config - automatically stays in sync with DirectoryPage
+  const pagesFromConfig = getPagesCategorized();
 
-  const pages = [
-    { category: 'Main Pages', items: [
-      { path: '/', name: 'Home', description: 'Homepage with horizontal scrolling and interactive navigation', icon: '🏠' },
-      { path: '/about', name: 'About', description: 'Information about yellowCIRCLE philosophy and approach', icon: '👤' },
-      { path: '/works', name: 'Works', description: 'Portfolio of websites, graphics, and music projects', icon: '💼' },
-      { path: '/hands', name: 'Hands', description: 'Creative projects and hands-on work', icon: '🎨' }
-    ]},
-    { category: 'Experiments', items: [
-      { path: '/experiments', name: 'Experiments Hub', description: 'Collection of interactive experiments and creative projects', icon: '🧪' },
-      { path: '/experiments/golden-unknown', name: 'Golden Unknown', description: 'Experimental brand exploration', icon: '✨' },
-      { path: '/experiments/being-rhyme', name: 'Being Rhyme', description: 'Interactive poetry and rhythm experience', icon: '🎵' },
-      { path: '/experiments/cath3dral', name: 'Cath3dral', description: '3D architectural visualization experiment', icon: '🏛️' },
-      { path: '/experiments/component-library', name: 'Component Library', description: 'UI component showcase and documentation', icon: '📦' }
-    ]},
-    { category: 'Thoughts', items: [
-      { path: '/thoughts', name: 'Thoughts Hub', description: 'Essays, reflections, and written content', icon: '💭' },
-      { path: '/thoughts/blog', name: 'Blog', description: 'Blog posts and articles', icon: '📝' }
-    ]},
-    { category: 'Special Features', items: [
-      { path: '/uk-memories', name: 'UK Memories', description: 'Travel time capsule with photos and memories', icon: '✈️' },
-      { path: '/feedback', name: 'Feedback', description: 'Submit feedback, bug reports, and feature requests', icon: '📧' },
-      { path: '/sitemap', name: 'Sitemap', description: 'This page - complete directory of all pages', icon: '🗺️' }
-    ]}
-  ];
+  // Transform config format to sitemap display format - show all except draft
+  const pages = pagesFromConfig.map(cat => ({
+    category: cat.category,
+    items: cat.items
+      .filter(page => page.status !== 'draft') // Hide draft pages from public sitemap
+      .map(page => ({
+        path: page.path,
+        name: page.name,
+        description: page.description,
+        icon: page.icon,
+        status: page.status
+      }))
+  })).filter(cat => cat.items.length > 0);
 
   return (
     <Layout
@@ -134,9 +97,15 @@ function SitemapPage() {
                 gap: '16px'
               }}>
                 {category.items.map((page, pageIdx) => (
-                  <div
+                  <a
                     key={pageIdx}
-                    onClick={() => navigate(page.path)}
+                    href={page.path}
+                    onClick={(e) => {
+                      // Allow middle-click and ctrl/cmd-click to open in new tab
+                      if (e.button === 1 || e.ctrlKey || e.metaKey) return;
+                      e.preventDefault();
+                      navigate(page.path);
+                    }}
                     style={{
                       padding: '20px',
                       backgroundColor: 'rgba(255, 255, 255, 0.6)',
@@ -145,7 +114,9 @@ function SitemapPage() {
                       borderRadius: '8px',
                       border: '1px solid rgba(238, 207, 0, 0.2)',
                       cursor: 'pointer',
-                      transition: 'all 0.3s ease-in-out'
+                      transition: 'all 0.3s ease-in-out',
+                      textDecoration: 'none',
+                      display: 'block'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-4px)';
@@ -156,7 +127,28 @@ function SitemapPage() {
                       e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
-                    <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>{page.icon}</div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      marginBottom: '10px'
+                    }}>
+                      <span style={{ fontSize: '2.5rem' }}>{page.icon}</span>
+                      {page.status && page.status !== 'live' && (
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: '600',
+                          color: STATUS_CONFIG[page.status]?.color || '#6b7280',
+                          backgroundColor: `${STATUS_CONFIG[page.status]?.color || '#6b7280'}15`,
+                          padding: '3px 8px',
+                          borderRadius: '10px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {STATUS_CONFIG[page.status]?.icon} {STATUS_CONFIG[page.status]?.label}
+                        </span>
+                      )}
+                    </div>
                     <h3 style={{
                       fontSize: 'clamp(0.95rem, 1.2vw, 1.1rem)',
                       fontWeight: '700',
@@ -182,7 +174,7 @@ function SitemapPage() {
                     }}>
                       {page.path}
                     </p>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>

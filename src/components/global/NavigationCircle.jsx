@@ -5,7 +5,7 @@ import { useLayout } from '../../contexts/LayoutContext';
  * NavigationCircle - Bottom-right navigation circle with scroll indicator
  *
  * Features:
- * - Yellow circle (rgb(238, 207, 0), ~80x80px)
+ * - Yellow circle (rgb(251, 191, 36), ~80x80px)
  * - Scroll indicator SVG that rotates based on page state
  * - State 1 (rotation -90): Scroll hint (wave/chevron down)
  * - State 2 (rotation 0): Arrow pointing right (scroll complete)
@@ -31,7 +31,7 @@ const ScrollIndicatorCircle = ({ size = 78, isHovered = false, rotation = -90 })
       width: size,
       height: size,
       borderRadius: '50%',
-      backgroundColor: 'rgb(238, 207, 0)',
+      backgroundColor: 'rgb(251, 191, 36)',
       position: 'relative',
       overflow: 'hidden',
       boxShadow: isHovered
@@ -118,15 +118,18 @@ const CircleContextMenu = ({
   onMenu,
   onDarkMode,
   onContact,
+  onScrollNext,
   isDarkMode = false
 }) => {
   if (!isOpen) return null;
 
+  // Monochrome yellow palette, except Footer (dark grey) and Dark Mode (black)
   const menuItems = [
-    { label: 'FOOTER', action: onFooter, color: '#6b7280', hoverColor: '#4b5563' },
-    { label: 'MENU', action: onMenu, color: '#3b82f6', hoverColor: '#2563eb' },
-    { label: isDarkMode ? 'LIGHT MODE' : 'DARK MODE', action: onDarkMode, color: '#8b5cf6', hoverColor: '#7c3aed' },
-    { label: 'CONTACT', action: onContact, color: '#10b981', hoverColor: '#059669' }
+    { label: 'NEXT →', action: onScrollNext, color: 'rgb(251, 191, 36)', hoverColor: '#d4a000' },
+    { label: 'MENU', action: onMenu, color: 'rgb(217, 164, 32)', hoverColor: 'rgb(251, 191, 36)' },
+    { label: 'CONTACT', action: onContact, color: 'rgb(183, 138, 28)', hoverColor: 'rgb(217, 164, 32)' },
+    { label: 'FOOTER', action: onFooter, color: '#4b5563', hoverColor: '#374151' },
+    { label: isDarkMode ? 'LIGHT MODE' : 'DARK MODE', action: onDarkMode, color: '#1f2937', hoverColor: '#111827' }
   ];
 
   return (
@@ -140,7 +143,7 @@ const CircleContextMenu = ({
       padding: '8px',
       borderRadius: '4px',
       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-      zIndex: 200,
+      zIndex: 360,  // Above NavigationCircle (350)
       minWidth: '140px',
       animation: 'menuSlideUp 0.2s ease-out'
     }}>
@@ -187,7 +190,8 @@ function NavigationCircle({
   rotation = -90,
   onMenuToggle,
   onDarkModeToggle,
-  onContactClick
+  onContactClick,
+  onScrollNext  // New: handler for scroll jump to next section
 }) {
   const { footerOpen } = useLayout();
   const [showContextMenu, setShowContextMenu] = useState(false);
@@ -274,6 +278,12 @@ function NavigationCircle({
     }
   };
 
+  const handleScrollNext = () => {
+    if (onScrollNext) {
+      onScrollNext();
+    }
+  };
+
   return (
     <div ref={circleRef}>
       <div
@@ -289,7 +299,7 @@ function NavigationCircle({
           position: 'fixed',
           bottom: '50px',
           right: '50px',
-          zIndex: 50,
+          zIndex: 350,  // Above everything - sidebar (50), menu overlay (250), slide-over (270), hamburger (260)
           width: '78px',
           height: '78px',
           cursor: 'pointer',
@@ -297,7 +307,7 @@ function NavigationCircle({
           transition: 'transform 0.5s ease-out',
           WebkitTapHighlightColor: 'transparent'
         }}
-        title="Click for menu | Right-click or long-press for options"
+        title="Click for menu"
       >
         <ScrollIndicatorCircle size={78} isHovered={isHovered} rotation={rotation} />
       </div>
@@ -310,6 +320,7 @@ function NavigationCircle({
         onMenu={handleMenu}
         onDarkMode={handleDarkMode}
         onContact={handleContact}
+        onScrollNext={handleScrollNext}
         isDarkMode={isDarkMode}
       />
     </div>

@@ -32,19 +32,9 @@ const SocialIcon = ({ type, size = 16, color = 'currentColor' }) => {
  */
 function Footer({ onFooterToggle }) {
   const navigate = useNavigate();
-  const { footerOpen } = useLayout();
+  const { footerOpen, openContactModal } = useLayout();
   const footerRef = React.useRef(null);
-
-  // Contact capture state
-  const [showContactForm, setShowContactForm] = React.useState(false);
-  const [showPopup, setShowPopup] = React.useState(false);
-  const [contactData, setContactData] = React.useState({
-    email: '',
-    name: '',
-    phone: '',
-    message: ''
-  });
-  const [submitStatus, setSubmitStatus] = React.useState(null); // 'success' | 'error' | null
+  const [footerEmail, setFooterEmail] = React.useState('');
 
   const handleFooterClick = () => {
     if (!footerOpen && onFooterToggle) {
@@ -66,47 +56,19 @@ function Footer({ onFooterToggle }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [footerOpen, onFooterToggle]);
 
-  // Reset contact form when footer closes
+  // Reset email when footer closes
   React.useEffect(() => {
     if (!footerOpen) {
-      setShowContactForm(false);
-      setShowPopup(false);
-      setSubmitStatus(null);
+      setFooterEmail('');
     }
   }, [footerOpen]);
 
-  // Handle email submit - shows popup for more info
+  // Handle email submit - opens ContactModal with email prefilled
   const handleEmailSubmit = (e) => {
     e.preventDefault();
-    if (contactData.email && contactData.email.includes('@')) {
-      setShowPopup(true);
-    }
-  };
-
-  // Handle full form submit
-  const handleFullSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      // For now, log to console - storage solution to be scoped
-      console.log('Contact form submitted:', contactData);
-
-      // TODO: Implement storage solution (spreadsheet/AirTable/Database)
-      // Options:
-      // 1. Google Sheets API
-      // 2. AirTable API
-      // 3. Firebase/Firestore
-      // 4. Simple email service (EmailJS, Formspree)
-
-      setSubmitStatus('success');
-      setTimeout(() => {
-        setShowPopup(false);
-        setShowContactForm(false);
-        setContactData({ email: '', name: '', phone: '', message: '' });
-        setSubmitStatus(null);
-      }, 2000);
-    } catch (error) {
-      console.error('Contact form error:', error);
-      setSubmitStatus('error');
+    if (footerEmail && footerEmail.includes('@')) {
+      openContactModal(footerEmail);
+      setFooterEmail('');
     }
   };
 
@@ -229,100 +191,66 @@ function Footer({ onFooterToggle }) {
             ))}
           </div>
 
-          {/* Contact Capture Module */}
+          {/* Contact Capture Module - Email Input */}
           <div style={{ marginTop: '20px' }}>
-            {!showContactForm ? (
-              <button
-                onClick={() => setShowContactForm(true)}
+            <form onSubmit={handleEmailSubmit} style={{
+              display: 'flex',
+              gap: '8px',
+              maxWidth: '320px'
+            }}>
+              <input
+                type="email"
+                placeholder="your@email.com"
+                value={footerEmail}
+                onChange={(e) => setFooterEmail(e.target.value)}
                 style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#EECF00',
+                  flex: 1,
+                  padding: '12px 14px',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '13px',
+                  outline: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'rgb(251, 191, 36)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                }}
+                required
+              />
+              <button
+                type="submit"
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: 'rgb(251, 191, 36)',
                   color: 'black',
                   border: 'none',
                   borderRadius: '6px',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: '700',
-                  letterSpacing: '0.15em',
+                  letterSpacing: '0.1em',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
-                  width: '100%',
-                  maxWidth: '200px'
+                  whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#EECF00';
+                  e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 GET IN TOUCH
               </button>
-            ) : (
-              <form onSubmit={handleEmailSubmit} style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                maxWidth: '280px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  gap: '8px'
-                }}>
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={contactData.email}
-                    onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '6px',
-                      color: 'white',
-                      fontSize: '12px',
-                      outline: 'none'
-                    }}
-                    required
-                  />
-                  <button
-                    type="submit"
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: '#EECF00',
-                      color: 'black',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#EECF00'}
-                  >
-                    NEXT
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowContactForm(false)}
-                  style={{
-                    padding: '6px',
-                    backgroundColor: 'transparent',
-                    color: 'rgba(255,255,255,0.5)',
-                    border: 'none',
-                    fontSize: '10px',
-                    cursor: 'pointer',
-                    textAlign: 'left'
-                  }}
-                >
-                  Cancel
-                </button>
-              </form>
-            )}
+            </form>
           </div>
         </div>
 
@@ -375,204 +303,6 @@ function Footer({ onFooterToggle }) {
         </div>
       </div>
 
-      {/* Contact Popup Modal */}
-      {showPopup && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 300,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            animation: 'fadeIn 0.3s ease-out'
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowPopup(false);
-          }}
-        >
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '400px',
-            width: '100%',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            animation: 'slideUpFadeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }}>
-            <h3 style={{
-              margin: '0 0 8px 0',
-              fontSize: '22px',
-              fontWeight: '700',
-              color: 'black',
-              letterSpacing: '0.05em'
-            }}>Tell us more</h3>
-            <p style={{
-              margin: '0 0 24px 0',
-              fontSize: '13px',
-              color: 'rgba(0,0,0,0.6)'
-            }}>We'll get back to you at {contactData.email}</p>
-
-            <form onSubmit={handleFullSubmit} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              <input
-                type="text"
-                placeholder="Your name"
-                value={contactData.name}
-                onChange={(e) => setContactData({ ...contactData, name: e.target.value })}
-                style={{
-                  padding: '14px 16px',
-                  backgroundColor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: 'black',
-                  outline: 'none',
-                  transition: 'border-color 0.2s ease'
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = '#EECF00'}
-                onBlur={(e) => e.currentTarget.style.borderColor = '#e0e0e0'}
-              />
-              <input
-                type="tel"
-                placeholder="Phone number (optional)"
-                value={contactData.phone}
-                onChange={(e) => setContactData({ ...contactData, phone: e.target.value })}
-                style={{
-                  padding: '14px 16px',
-                  backgroundColor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: 'black',
-                  outline: 'none',
-                  transition: 'border-color 0.2s ease'
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = '#EECF00'}
-                onBlur={(e) => e.currentTarget.style.borderColor = '#e0e0e0'}
-              />
-              <textarea
-                placeholder="How can we help?"
-                value={contactData.message}
-                onChange={(e) => setContactData({ ...contactData, message: e.target.value })}
-                rows={3}
-                style={{
-                  padding: '14px 16px',
-                  backgroundColor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: 'black',
-                  outline: 'none',
-                  resize: 'vertical',
-                  minHeight: '80px',
-                  fontFamily: 'inherit',
-                  transition: 'border-color 0.2s ease'
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = '#EECF00'}
-                onBlur={(e) => e.currentTarget.style.borderColor = '#e0e0e0'}
-              />
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowPopup(false)}
-                  style={{
-                    flex: 1,
-                    padding: '14px',
-                    backgroundColor: 'transparent',
-                    color: 'rgba(0,0,0,0.6)',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f5f5f5';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitStatus === 'success'}
-                  style={{
-                    flex: 2,
-                    padding: '14px',
-                    backgroundColor: submitStatus === 'success' ? '#22c55e' : '#EECF00',
-                    color: submitStatus === 'success' ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    cursor: submitStatus === 'success' ? 'default' : 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (submitStatus !== 'success') {
-                      e.currentTarget.style.backgroundColor = 'black';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (submitStatus !== 'success') {
-                      e.currentTarget.style.backgroundColor = '#EECF00';
-                      e.currentTarget.style.color = 'black';
-                    }
-                  }}
-                >
-                  {submitStatus === 'success' ? 'SENT!' : 'SEND MESSAGE'}
-                </button>
-              </div>
-
-              {submitStatus === 'error' && (
-                <p style={{
-                  margin: 0,
-                  fontSize: '12px',
-                  color: '#ef4444',
-                  textAlign: 'center'
-                }}>
-                  Something went wrong. Please try again.
-                </p>
-              )}
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUpFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

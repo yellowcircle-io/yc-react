@@ -13,6 +13,7 @@ import '@xyflow/react/dist/style.css';
 
 import Layout from '../components/global/Layout';
 import { useLayout } from '../contexts/LayoutContext';
+import { navigationItems } from '../config/navigationItems';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
@@ -851,31 +852,6 @@ function UnityNotePlusPage() {
   const handleCircleNavClick = () => {
     setIsUploadModalOpen(true);
   };
-
-  const navigationItems = [
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/history-edu_nuazpv.png",
-      label: "STORIES",
-      itemKey: "stories",
-      subItems: []
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/test-tubes-lab_j4cie7.png",
-      label: "LABS",
-      itemKey: "labs",
-      subItems: [
-        { label: "Unity Notes", key: "unity-notes" },
-        { label: "Unity Notes+", key: "unity-notes-plus" },
-        { label: "UK-Memories", key: "uk-memories" },
-      ]
-    },
-    {
-      icon: "https://res.cloudinary.com/yellowcircle-io/image/upload/v1756684384/face-profile_dxxbba.png",
-      label: "ABOUT",
-      itemKey: "about",
-      subItems: []
-    }
-  ];
 
   return (
     <ErrorBoundary>

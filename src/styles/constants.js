@@ -7,7 +7,7 @@
 export const COLORS = {
   // Brand Colors
   yellow: '#fbbf24',        // Primary yellow (buttons, accents, H1)
-  yellowTransparent: 'rgba(238, 207, 2, 0.7)',  // H1 text with transparency
+  yellowTransparent: 'rgba(251, 191, 36, 0.7)',  // H1 text with transparency
   black: '#000000',          // Text, backgrounds
   white: '#FFFFFF',          // Backgrounds, text on dark
   grey: '#333333',           // Body text (4.6:1 contrast on white)
@@ -27,8 +27,8 @@ export const COLORS = {
   backgroundLight: 'rgba(241, 239, 232, 0.38)',  // Text background with blur
   sidebarBg: 'rgba(242, 242, 242, 0.44)',
   footerBlack: 'rgba(0,0,0,0.9)',
-  footerYellow: '#EECF00',
-  menuOverlay: '#EECF00'
+  footerYellow: 'rgb(251, 191, 36)',
+  menuOverlay: 'rgb(251, 191, 36)'
 };
 
 // Typography Styles

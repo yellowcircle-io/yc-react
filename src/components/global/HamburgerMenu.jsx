@@ -7,7 +7,7 @@ import { useLayout } from '../../contexts/LayoutContext';
  * Inspired by canals-amsterdam.com - right-aligned with slide-in animation
  * Updated with slide-over pattern for subitems with indicators
  */
-function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
+function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { menuOpen } = useLayout();
@@ -169,7 +169,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: '#EECF00',
+          backgroundColor: 'rgb(251, 191, 36)',
           opacity: 0.96,
           zIndex: 250,
           display: 'flex',
@@ -197,7 +197,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                   <div
                     key={item}
                     className={item === 'WORKS' ? 'menu-button-works' : 'menu-button-contact'}
-                    onClick={item === 'CONTACT' ? handleFooterToggle : undefined}
+                    onClick={item === 'CONTACT' ? () => { if (onContactClick) onContactClick(); if (onMenuToggle) onMenuToggle(); } : undefined}
                     style={{
                       backgroundColor: item === 'WORKS' ? 'white' : 'black',
                       border: 'none',
@@ -213,7 +213,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                         e.currentTarget.style.backgroundColor = 'black';
                         e.currentTarget.querySelector('span').style.color = 'white';
                       } else {
-                        e.currentTarget.style.backgroundColor = '#EECF00';
+                        e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
                         e.currentTarget.querySelector('span').style.color = 'white';
                       }
                     }}
@@ -223,12 +223,12 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                         e.currentTarget.querySelector('span').style.color = 'black';
                       } else {
                         e.currentTarget.style.backgroundColor = 'black';
-                        e.currentTarget.querySelector('span').style.color = '#EECF00';
+                        e.currentTarget.querySelector('span').style.color = 'rgb(251, 191, 36)';
                       }
                     }}
                   >
                     <span style={{
-                      color: item === 'WORKS' ? 'black' : '#EECF00',
+                      color: item === 'WORKS' ? 'black' : 'rgb(251, 191, 36)',
                       fontSize: 'clamp(2rem, 5vh, 4rem)',
                       fontWeight: '900',
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
@@ -318,7 +318,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
               right: 0,
               width: 'min(500px, 85vw)',
               height: '100vh',
-              backgroundColor: '#EECF00',
+              backgroundColor: 'rgb(251, 191, 36)',
               zIndex: 270,
               display: 'flex',
               flexDirection: 'column',
@@ -359,9 +359,10 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle }) {
                       textDecoration: 'none',
                       color: 'black',
                       fontSize: 'clamp(1.5rem, 4vh, 3rem)',
-                      fontWeight: '900',
-                      fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
+                      fontWeight: '300',
+                      fontFamily: 'Helvetica, Arial, sans-serif',
                       letterSpacing: '0.2em',
+                      textTransform: 'uppercase',
                       padding: '10px 20px',
                       borderRadius: '4px',
                       WebkitTapHighlightColor: 'transparent',

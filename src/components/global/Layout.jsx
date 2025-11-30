@@ -5,6 +5,8 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import HamburgerMenu from './HamburgerMenu';
+import ContactModal from './ContactModal';
+import { useLayout } from '../../contexts/LayoutContext';
 
 /**
  * Layout - Master wrapper component
@@ -20,14 +22,17 @@ function Layout({
   onHomeClick,
   onFooterToggle,
   onMenuToggle,
+  onScrollNext = null, // Handler for scroll jump to next page
   navigationItems = [],
   navCircleRotation = 0,
   scrollOffset = 0,
   pageLabel = "HOME",
   sidebarVariant = "standard", // "standard" or "hidden"
-  circleNavBehavior = null, // Custom circle nav behavior
-  customCircleNav = null // Custom circle nav component
+  customCircleNav = null, // Custom circle nav component
+  hideParallaxCircle = false, // Hide the background yellow circle
+  hideCircleNav = false // Hide the NavigationCircle completely (for pages with custom nav)
 }) {
+  const { openContactModal } = useLayout();
 
   return (
     <div style={{
@@ -93,7 +98,7 @@ function Layout({
       `}</style>
 
       {/* Yellow Circle with Parallax */}
-      <ParallaxCircle />
+      {!hideParallaxCircle && <ParallaxCircle />}
 
       {/* Navigation Bar */}
       <Header onHomeClick={onHomeClick} />
@@ -114,13 +119,16 @@ function Layout({
       </main>
 
       {/* Navigation Circle (Bottom Right) */}
-      {customCircleNav ? customCircleNav : (
-        <NavigationCircle
-          onClick={circleNavBehavior || onFooterToggle}
-          rotation={navCircleRotation}
-          onMenuToggle={onMenuToggle}
-          onContactClick={onFooterToggle}
-        />
+      {!hideCircleNav && (
+        customCircleNav ? customCircleNav : (
+          <NavigationCircle
+            onClick={onFooterToggle}
+            rotation={navCircleRotation}
+            onMenuToggle={onMenuToggle}
+            onContactClick={openContactModal}
+            onScrollNext={onScrollNext}
+          />
+        )
       )}
 
       {/* Footer */}
@@ -131,7 +139,11 @@ function Layout({
         onMenuToggle={onMenuToggle}
         onHomeClick={onHomeClick}
         onFooterToggle={onFooterToggle}
+        onContactClick={openContactModal}
       />
+
+      {/* Contact Modal */}
+      <ContactModal />
     </div>
   );
 }

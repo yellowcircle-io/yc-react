@@ -23,7 +23,7 @@ function Header({ onHomeClick }) {
       left: 0,
       right: 0,
       height: '80px',
-      zIndex: 40,
+      zIndex: 255,  // Above menu overlay (250), below hamburger button (260)
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

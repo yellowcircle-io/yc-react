@@ -174,7 +174,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
               color: 'white',
               margin: 0
             }}>
-              {step === 'method' ? 'ADD MEMORY' : 'MEMORY DETAILS'}
+              {step === 'method' ? 'ADD NOTE' : 'NOTE DETAILS'}
             </h3>
           </div>
           <button
@@ -716,7 +716,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                 <textarea
                   value={metadata.description}
                   onChange={handleMetadataChange('description')}
-                  placeholder="Tell the story behind this memory..."
+                  placeholder="Tell the story behind this note..."
                   rows={3}
                   style={{
                     width: '100%',
@@ -814,7 +814,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                     e.target.style.boxShadow = '0 4px 12px rgba(238, 207, 0, 0.3)';
                   }}
                 >
-                  {isSubmitting ? 'ADDING...' : 'ADD MEMORY'}
+                  {isSubmitting ? 'ADDING...' : 'ADD NOTE'}
                 </button>
               </div>
             </form>
