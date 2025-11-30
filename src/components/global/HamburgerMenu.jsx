@@ -7,10 +7,12 @@ import { useLayout } from '../../contexts/LayoutContext';
  * Inspired by canals-amsterdam.com - right-aligned with slide-in animation
  * Updated with slide-over pattern for subitems with indicators
  */
+// eslint-disable-next-line no-unused-vars
 function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { menuOpen } = useLayout();
+  // eslint-disable-next-line no-unused-vars
   const [hoveredItem, setHoveredItem] = React.useState(null);
   const [slideOverOpen, setSlideOverOpen] = React.useState(false);
   const [slideOverItems, setSlideOverItems] = React.useState([]);
@@ -23,7 +25,8 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
       hasSubItems: true,
       subItems: [
         { label: 'Thoughts', route: '/thoughts' },
-        { label: 'Case Studies', route: '/thoughts' }
+        { label: 'Case Studies', route: '/thoughts' },
+        { label: 'Projects', route: '/works' }
       ]
     },
     LABS: {
@@ -107,10 +110,6 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
   const handleHomeClick = (e) => {
     e.preventDefault();
     if (onHomeClick) onHomeClick(e);
-  };
-
-  const handleFooterToggle = () => {
-    if (onFooterToggle) onFooterToggle();
   };
 
   return (
@@ -198,7 +197,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                   <div
                     key={item}
                     className={item === 'WORKS' ? 'menu-button-works' : 'menu-button-contact'}
-                    onClick={item === 'CONTACT' ? () => { if (onContactClick) onContactClick(); if (onMenuToggle) onMenuToggle(); } : undefined}
+                    onClick={item === 'CONTACT' ? () => { if (onContactClick) onContactClick(); if (onMenuToggle) onMenuToggle(); } : item === 'WORKS' ? () => { navigate('/works'); if (onMenuToggle) onMenuToggle(); } : undefined}
                     style={{
                       backgroundColor: item === 'WORKS' ? 'white' : 'black',
                       border: 'none',

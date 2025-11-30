@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import ParallaxCircle from './ParallaxCircle';
 import NavigationCircle from './NavigationCircle';
 import Header from './Header';
@@ -24,19 +25,29 @@ function Layout({
   onMenuToggle,
   onScrollNext = null, // Handler for scroll jump to next page
   navigationItems = [],
-  navCircleRotation = 0,
   scrollOffset = 0,
   pageLabel = "HOME",
   sidebarVariant = "standard", // "standard" or "hidden"
   customCircleNav = null, // Custom circle nav component
   hideParallaxCircle = false, // Hide the background yellow circle
-  hideCircleNav = false // Hide the NavigationCircle completely (for pages with custom nav)
+  hideCircleNav = false, // Hide the NavigationCircle completely (for pages with custom nav)
+  isHomePage = false // Show arrow Lottie during scroll, placeholder at end
 }) {
+  const navigate = useNavigate();
   const { openContactModal } = useLayout();
+
+  // Navigation handlers for CircleNav menu
+  const handleHomeClick = () => {
+    navigate('/');
+  };
+
+  const handleWorksClick = () => {
+    navigate('/works');
+  };
 
   return (
     <div style={{
-      height: '100vh',
+      height: '100dvh', // Use dvh for mobile browser toolbar awareness
       width: '100vw',
       position: 'relative',
       overflow: 'hidden',
@@ -53,7 +64,7 @@ function Layout({
           top: 0,
           left: 0,
           width: '100vw',
-          height: '100vh',
+          height: '100dvh', // Use dvh for mobile browser toolbar awareness
           backgroundColor: '#FFFFFF',
           zIndex: -1000,
           pointerEvents: 'none'
@@ -62,10 +73,16 @@ function Layout({
       />
 
       <style>{`
-        /* Global viewport constraints */
+        /* Global viewport constraints - use dvh for mobile compatibility */
         body, html {
-          max-height: 100vh !important;
+          max-height: 100dvh !important;
           overflow: hidden !important;
+        }
+        /* Fallback for browsers that don't support dvh */
+        @supports not (height: 100dvh) {
+          body, html {
+            max-height: 100vh !important;
+          }
         }
 
         /* YC Logo visibility boost */
@@ -123,10 +140,13 @@ function Layout({
         customCircleNav ? customCircleNav : (
           <NavigationCircle
             onClick={onFooterToggle}
-            rotation={navCircleRotation}
+            scrollOffset={scrollOffset}
+            isHomePage={isHomePage}
             onMenuToggle={onMenuToggle}
             onContactClick={openContactModal}
             onScrollNext={onScrollNext}
+            onHomeClick={handleHomeClick}
+            onWorksClick={handleWorksClick}
           />
         )
       )}

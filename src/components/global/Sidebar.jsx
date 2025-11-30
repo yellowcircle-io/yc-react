@@ -431,7 +431,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
         left: 0,
         top: 0,
         width: sidebarOpen ? 'min(max(280px, 35vw), 472px)' : closedWidth,
-        height: '100vh',
+        height: '100dvh', // Use dvh for mobile browser toolbar awareness
         backgroundColor: showBackground ? 'rgba(242, 242, 242, 0.44)' : 'transparent',
         backdropFilter: showBackground ? 'blur(8px)' : 'none',
         WebkitBackdropFilter: showBackground ? 'blur(8px)' : 'none',
