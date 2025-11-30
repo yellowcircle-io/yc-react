@@ -9,6 +9,7 @@
  */
 
 // Lottie animation data for sidebar icons
+import servicesAnimation from '../assets/lottie/wip.json';
 import storiesAnimation from '../assets/lottie/scroll-with-quill.json';
 import labsAnimation from '../assets/lottie/beaker.json';
 import aboutAnimation from '../assets/lottie/wave.json';
@@ -19,7 +20,7 @@ import aboutAnimation from '../assets/lottie/wave.json';
  */
 export const navigationItems = [
   {
-    lottieData: storiesAnimation,
+    lottieData: servicesAnimation,
     label: "SERVICES",
     itemKey: "services",
     subItems: [
