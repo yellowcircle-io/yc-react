@@ -30,7 +30,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
       hasSubItems: true,
       subItems: [
         { label: 'Unity Notes', route: '/unity-notes' },
-        { label: 'Outreach', route: '/experiments/outreach' },
+        { label: 'Outreach', route: '/outreach' },
         { label: 'Home-17', route: '/home-17' },
         { label: 'Visual Noteboard', route: '/experiments/visual-noteboard' },
         { label: 'Component Library', route: '/experiments/component-library' }
