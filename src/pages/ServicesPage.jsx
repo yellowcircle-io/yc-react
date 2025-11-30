@@ -104,6 +104,20 @@ const SERVICES = [
     featured: false
   },
   {
+    id: 'creative-operations',
+    title: 'Creative + Operations',
+    price: 'Custom',
+    duration: 'Project-based',
+    description: 'End-to-end email development, CRM standardization, and brand template systems for enterprise marketing teams.',
+    highlights: [
+      'Responsive email template development',
+      'CRM data standardization',
+      'Cross-brand best practices',
+      'Loyalty & lifecycle communications'
+    ],
+    featured: false
+  },
+  {
     id: 'email-development',
     title: 'Email Template Development',
     price: 'Starting at $500',
@@ -328,36 +342,18 @@ function ServicesPage() {
                   </div>
                 )}
 
-                {/* CTA Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGetStarted(service);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: service.featured ? 'black' : COLORS.yellow,
-                    color: service.featured ? 'white' : 'black',
-                    border: 'none',
-                    borderRadius: '4px',
+                {/* Click hint */}
+                {selectedService !== service.id && (
+                  <p style={{
                     fontSize: '11px',
-                    fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.opacity = '0.9';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.opacity = '1';
-                  }}
-                >
-                  GET STARTED
-                </button>
+                    color: service.featured ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+                    margin: '8px 0 0 0',
+                    textAlign: 'center',
+                    letterSpacing: '0.05em'
+                  }}>
+                    Click for details
+                  </p>
+                )}
               </div>
             ))}
           </div>
