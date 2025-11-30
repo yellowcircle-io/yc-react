@@ -22,18 +22,27 @@ export const PAGES_CONFIG = [
     name: 'Home',
     path: '/',
     category: 'Main',
-    status: 'issue',
-    lastUpdated: '2024-11-29',
+    status: 'live',
+    lastUpdated: '2025-11-30',
     description: 'Homepage with horizontal scrolling and interactive navigation',
     icon: '🏠'
+  },
+  {
+    name: 'Services',
+    path: '/services',
+    category: 'Main',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Marketing Operations Consulting - GTM audits, systems assessment, technical debt',
+    icon: '⚡'
   },
   {
     name: 'About',
     path: '/about',
     category: 'Main',
     status: 'live',
-    lastUpdated: '2024-11-20',
-    description: 'Information about yellowCIRCLE philosophy and approach',
+    lastUpdated: '2025-11-30',
+    description: 'About yellowCircle studio - Marketing Operations Consulting',
     icon: '👤'
   },
   {
@@ -41,8 +50,8 @@ export const PAGES_CONFIG = [
     path: '/works',
     category: 'Main',
     status: 'live',
-    lastUpdated: '2024-11-15',
-    description: 'Portfolio of websites, graphics, and music projects',
+    lastUpdated: '2025-11-30',
+    description: 'Studio work with companies like Rho, Reddit, Estée Lauder, AuditBoard',
     icon: '💼'
   },
   {
@@ -50,7 +59,7 @@ export const PAGES_CONFIG = [
     path: '/hands',
     category: 'Main',
     status: 'live',
-    lastUpdated: '2024-11-15',
+    lastUpdated: '2025-11-30',
     description: 'Creative projects and hands-on work',
     icon: '🎨'
   },
@@ -59,8 +68,8 @@ export const PAGES_CONFIG = [
     path: '/thoughts',
     category: 'Main',
     status: 'live',
-    lastUpdated: '2024-11-18',
-    description: 'Essays, reflections, and written content',
+    lastUpdated: '2025-11-30',
+    description: 'Essays, articles, and thought leadership content',
     icon: '💭'
   },
   {
@@ -68,9 +77,175 @@ export const PAGES_CONFIG = [
     path: '/experiments',
     category: 'Main',
     status: 'live',
-    lastUpdated: '2024-11-22',
+    lastUpdated: '2025-11-30',
     description: 'Collection of interactive experiments and creative projects',
     icon: '🧪'
+  },
+
+  // Services Sub-routes
+  {
+    name: 'GTM Strategic Audit',
+    path: '/services/gtm-audit',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Comprehensive go-to-market infrastructure assessment ($4K-5K)',
+    icon: '🎯'
+  },
+  {
+    name: 'Marketing Systems',
+    path: '/services/marketing-systems',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'HubSpot, Salesforce, marketing automation platform audit ($2.5K-4K)',
+    icon: '⚙️'
+  },
+  {
+    name: 'Technical Debt',
+    path: '/services/technical-debt',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Quantify hidden costs dragging down operations ($2.5K-3.5K)',
+    icon: '💰'
+  },
+  {
+    name: 'Attribution Audit',
+    path: '/services/attribution-audit',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Single source of truth for channel attribution ($2K-3K)',
+    icon: '📈'
+  },
+  {
+    name: 'Data Architecture',
+    path: '/services/data-architecture',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Diagnose data lag, sync errors, schema issues ($3K-4K)',
+    icon: '🔄'
+  },
+  {
+    name: 'Creative + Operations',
+    path: '/services/creative-operations',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Email development, CRM standardization, brand templates (Custom)',
+    icon: '🎨'
+  },
+  {
+    name: 'Email Development',
+    path: '/services/email-development',
+    category: 'Services',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Custom responsive email templates ($500+)',
+    icon: '📧'
+  },
+
+  // Works Sub-routes (Company Detail Pages)
+  {
+    name: 'Rho',
+    path: '/works/rho',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'B2B fintech - Embedded Partnership (2024-2025)',
+    icon: '🏦'
+  },
+  {
+    name: 'AuditBoard',
+    path: '/works/auditboard',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Enterprise SaaS - GTM Assessment (2024)',
+    icon: '📋'
+  },
+  {
+    name: 'Reddit',
+    path: '/works/reddit',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Social Media - Strategic Engagement (2024)',
+    icon: '🔴'
+  },
+  {
+    name: 'Estée Lauder',
+    path: '/works/estee-lauder',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Beauty - Creative + Operations (2024)',
+    icon: '💄'
+  },
+  {
+    name: 'DoorDash',
+    path: '/works/doordash',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Delivery - Strategic Engagement (2022)',
+    icon: '🚗'
+  },
+  {
+    name: 'Virtana',
+    path: '/works/virtana',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Enterprise SaaS - GTM Assessment (2023)',
+    icon: '☁️'
+  },
+  {
+    name: 'YieldStreet',
+    path: '/works/yieldstreet',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'FinTech - Strategic Engagement (2021)',
+    icon: '📊'
+  },
+  {
+    name: 'Zero Grocery',
+    path: '/works/zerogrocery',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'E-Commerce - Embedded Partnership (2020)',
+    icon: '🌱'
+  },
+  {
+    name: 'Thimble',
+    path: '/works/thimble',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'InsurTech - Strategic Engagement (2020)',
+    icon: '🛡️'
+  },
+  {
+    name: 'LiveIntent',
+    path: '/works/liveintent',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Ad Tech - Embedded Partnership (2019-2023)',
+    icon: '📺'
+  },
+  {
+    name: 'TuneCore',
+    path: '/works/tunecore',
+    category: 'Works',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Music Tech - Embedded Partnership (2018-2019)',
+    icon: '🎵'
   },
 
   // Experiments Sub-routes
@@ -79,7 +254,7 @@ export const PAGES_CONFIG = [
     path: '/experiments/golden-unknown',
     category: 'Experiments',
     status: 'live',
-    lastUpdated: '2024-11-10',
+    lastUpdated: '2025-11-30',
     description: 'Experimental brand exploration',
     icon: '✨'
   },
@@ -88,16 +263,16 @@ export const PAGES_CONFIG = [
     path: '/experiments/being-rhyme',
     category: 'Experiments',
     status: 'live',
-    lastUpdated: '2024-11-10',
+    lastUpdated: '2025-11-30',
     description: 'Interactive poetry and rhythm experience',
-    icon: '🎵'
+    icon: '🎶'
   },
   {
     name: 'Cath3dral',
     path: '/experiments/cath3dral',
     category: 'Experiments',
     status: 'live',
-    lastUpdated: '2024-11-10',
+    lastUpdated: '2025-11-30',
     description: '3D architectural visualization experiment',
     icon: '🏛️'
   },
@@ -106,7 +281,7 @@ export const PAGES_CONFIG = [
     path: '/experiments/component-library',
     category: 'Experiments',
     status: 'draft',
-    lastUpdated: '2024-11-05',
+    lastUpdated: '2025-11-30',
     description: 'UI component showcase and documentation',
     icon: '📦'
   },
@@ -114,8 +289,8 @@ export const PAGES_CONFIG = [
     name: 'Outreach Generator',
     path: '/experiments/outreach-generator',
     category: 'Experiments',
-    status: 'in-progress',
-    lastUpdated: '2024-11-29',
+    status: 'live',
+    lastUpdated: '2025-11-30',
     description: 'AI-powered outreach message generator',
     icon: '📨'
   },
@@ -126,7 +301,7 @@ export const PAGES_CONFIG = [
     path: '/thoughts/blog',
     category: 'Thoughts',
     status: 'live',
-    lastUpdated: '2024-11-18',
+    lastUpdated: '2025-11-30',
     description: 'Blog posts and articles',
     icon: '📝'
   },
@@ -134,57 +309,57 @@ export const PAGES_CONFIG = [
     name: 'Why Your GTM Sucks',
     path: '/thoughts/why-your-gtm-sucks',
     category: 'Thoughts',
-    status: 'in-progress',
-    lastUpdated: '2024-11-29',
+    status: 'live',
+    lastUpdated: '2025-11-30',
     description: 'Deep dive into GTM infrastructure failures and solutions',
     icon: '📊'
   },
 
   // Labs / Tools
   {
-    name: 'UK-Memories',
-    path: '/uk-memories',
+    name: 'GTM Health Assessment',
+    path: '/assessment',
     category: 'Labs',
-    status: 'draft',
-    lastUpdated: '2024-10-15',
-    description: 'Travel time capsule with photos and memories',
-    icon: '✈️'
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: '8-question GTM health quiz with scoring and recommendations',
+    icon: '🩺'
   },
   {
     name: 'Unity Notes',
     path: '/unity-notes',
     category: 'Labs',
-    status: 'issue',
-    lastUpdated: '2024-11-29',
+    status: 'live',
+    lastUpdated: '2025-11-30',
     description: 'Visual noteboard and second brain application',
     icon: '🧠'
   },
   {
-    name: 'Unity Notes+',
-    path: '/unity-notes-plus',
+    name: 'Outreach Pro',
+    path: '/outreach',
     category: 'Labs',
-    status: 'issue',
-    lastUpdated: '2024-11-29',
-    description: 'Enhanced Unity Notes with advanced features',
-    icon: '🧠'
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'AI-powered email outreach with templates and sending',
+    icon: '🤝'
+  },
+  {
+    name: 'UK-Memories',
+    path: '/uk-memories',
+    category: 'Labs',
+    status: 'draft',
+    lastUpdated: '2025-11-30',
+    description: 'Travel time capsule with photos and memories',
+    icon: '✈️'
   },
   {
     name: 'Home-17',
     path: '/home-17',
     category: 'Labs',
     status: 'draft',
-    lastUpdated: '2024-09-01',
+    lastUpdated: '2025-11-30',
     description: 'Experimental homepage variant with alternative layout',
     icon: '🏡'
-  },
-  {
-    name: 'Outreach Pro',
-    path: '/outreach',
-    category: 'Labs',
-    status: 'in-progress',
-    lastUpdated: '2024-11-29',
-    description: 'AI-powered email outreach with templates and sending',
-    icon: '🤝'
   },
 
   // Utility Pages
@@ -193,7 +368,7 @@ export const PAGES_CONFIG = [
     path: '/feedback',
     category: 'Utility',
     status: 'live',
-    lastUpdated: '2024-11-15',
+    lastUpdated: '2025-11-30',
     description: 'Submit feedback, bug reports, and feature requests',
     icon: '📧'
   },
@@ -202,7 +377,7 @@ export const PAGES_CONFIG = [
     path: '/sitemap',
     category: 'Utility',
     status: 'live',
-    lastUpdated: '2024-11-29',
+    lastUpdated: '2025-11-30',
     description: 'Visual map of all pages with descriptions',
     icon: '🗺️'
   },
@@ -211,7 +386,7 @@ export const PAGES_CONFIG = [
     path: '/directory',
     category: 'Utility',
     status: 'live',
-    lastUpdated: '2024-11-29',
+    lastUpdated: '2025-11-30',
     description: 'Developer directory with status tracking',
     icon: '📂'
   },
@@ -220,7 +395,7 @@ export const PAGES_CONFIG = [
     path: '/nonexistent',
     category: 'Utility',
     status: 'live',
-    lastUpdated: '2024-11-10',
+    lastUpdated: '2025-11-30',
     description: 'Page not found error handler',
     icon: '❓'
   }
@@ -247,7 +422,7 @@ export const getPagesByCategory = () => {
 };
 
 // Helper to get category order for display
-export const CATEGORY_ORDER = ['Main', 'Experiments', 'Thoughts', 'Labs', 'Utility'];
+export const CATEGORY_ORDER = ['Main', 'Services', 'Works', 'Experiments', 'Thoughts', 'Labs', 'Utility'];
 
 // Get pages as array of category objects (for Sitemap)
 export const getPagesCategorized = () => {
