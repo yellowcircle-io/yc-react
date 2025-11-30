@@ -2,11 +2,50 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 30, 2025 at 9:30 PM PST
-**Machine:** Mac Mini (Services Page + SEO)
-**Status:** 🚀 Services Page Complete, SEO Added, Pushed to GitHub
+**Updated:** November 30, 2025 at 10:45 PM PST
+**Machine:** Mac Mini (Contact Form + Company Pages)
+**Status:** 🚀 Contact Form Backend Working, Company Pages Reframed as Studio Work
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## ✅ NOV 30, 2025 - MAC MINI SESSION - 10:45 PM PST
+
+### Contact Form + Company Pages Reframing Complete
+
+**Commit:** `bdecd97` - "Feature: Contact form backend + Company pages as studio work"
+
+**1. Contact Form Backend Integrated**
+- Web3Forms API integrated with actual access key
+- Form fields: Email, Name (optional), Phone (optional), Message (optional)
+- Success/error handling with user feedback
+- Email sends to info@yellowcircle.io
+
+**2. Company Pages Reframed as Studio Work**
+- Changed "role" to "engagement" throughout data and display
+- Engagement types used:
+  - Embedded Partnership (LiveIntent, TuneCore, Zero Grocery, Rho)
+  - Strategic Engagement (Thimble, YieldStreet, DoorDash, Reddit)
+  - GTM Assessment (Virtana, AuditBoard)
+  - Creative + Operations (Estée Lauder)
+- Descriptions reframed from personal roles to client project work
+- Highlights updated to emphasize deliverables and outcomes
+
+**Files Modified:**
+- `src/components/global/ContactModal.jsx` - Web3Forms integration
+- `src/pages/works/CompanyDetailPage.jsx` - Studio work framing
+
+**All Critical Blockers Now Complete:**
+- ✅ Contact Form Backend (Web3Forms)
+- ✅ Company Detail Pages (studio framing)
+- ✅ Services Page (7 offerings)
+- ✅ Meta Tags / SEO
+- ✅ Favicon
+
+**Remaining Tasks:**
+- ⏳ Complete Article 1 (needs review)
+- ⏳ Update Blog/Thoughts page structure
 
 ---
 
@@ -63,8 +102,8 @@
 
 | # | Item | Status | Details |
 |---|------|--------|---------|
-| 1 | **Contact Form Backend** | ❌ NOT WORKING | `ContactModal.jsx:96` logs to console, needs backend |
-| 2 | **Company Detail Pages** | ⚠️ PLACEHOLDER | Need real descriptions/highlights for 11 companies |
+| 1 | ~~Contact Form Backend~~ | ✅ DONE | Web3Forms API integrated with real key |
+| 2 | ~~Company Detail Pages~~ | ✅ DONE | Reframed as studio work with engagement types |
 | 3 | ~~GTM Assessment Page~~ | ✅ DONE | Created Services page with all offerings |
 | 4 | ~~Meta Tags / SEO~~ | ✅ DONE | Added og tags, robots.txt, sitemap.xml |
 | 5 | ~~Favicon~~ | ✅ DONE | Yellow circle SVG favicon |
