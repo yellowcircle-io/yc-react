@@ -37,6 +37,56 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Service Detail Pages -->
+  <url>
+    <loc>https://yellowcircle.io/services/gtm-audit</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/services/marketing-systems</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/services/technical-debt</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/services/attribution-audit</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/services/data-architecture</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/services/creative-operations</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/services/email-development</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- Articles -->
   <url>
     <loc>https://yellowcircle.io/thoughts/why-your-gtm-sucks</loc>
@@ -47,28 +97,14 @@
 
   <!-- Company Detail Pages -->
   <url>
-    <loc>https://yellowcircle.io/works/liveintent</loc>
+    <loc>https://yellowcircle.io/works/rho</loc>
     <lastmod>2025-11-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://yellowcircle.io/works/tunecore</loc>
-    <lastmod>2025-11-30</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://yellowcircle.io/works/yieldstreet</loc>
-    <lastmod>2025-11-30</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://yellowcircle.io/works/doordash</loc>
+    <loc>https://yellowcircle.io/works/auditboard</loc>
     <lastmod>2025-11-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -89,13 +125,63 @@
   </url>
 
   <url>
-    <loc>https://yellowcircle.io/works/rho</loc>
+    <loc>https://yellowcircle.io/works/doordash</loc>
     <lastmod>2025-11-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
-  <!-- Feedback -->
+  <url>
+    <loc>https://yellowcircle.io/works/virtana</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/works/yieldstreet</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/works/zerogrocery</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/works/thimble</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/works/liveintent</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://yellowcircle.io/works/tunecore</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Labs Tools -->
+  <url>
+    <loc>https://yellowcircle.io/assessment</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Utility Pages -->
   <url>
     <loc>https://yellowcircle.io/feedback</loc>
     <lastmod>2025-11-30</lastmod>
@@ -103,7 +189,6 @@
     <priority>0.4</priority>
   </url>
 
-  <!-- Sitemap (interactive) -->
   <url>
     <loc>https://yellowcircle.io/sitemap</loc>
     <lastmod>2025-11-30</lastmod>
