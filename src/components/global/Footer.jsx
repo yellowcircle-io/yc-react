@@ -155,17 +155,17 @@ function Footer({ onFooterToggle }) {
             paddingBottom: '10px'
           }}>{contactConfig.title}</h2>
 
+          {/* Email + Phone on same line */}
           <div style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '15px'
+            flexWrap: 'wrap',
+            gap: '8px 20px',
+            marginBottom: '12px'
           }}>
-            {contactConfig.links.map((link, index) => (
+            {contactConfig.links.filter(link => link.type === 'email' || link.type === 'phone').map((link, index) => (
               <a
                 key={index}
                 href={link.url}
-                target={link.type === 'social' ? '_blank' : undefined}
-                rel={link.type === 'social' ? 'noopener noreferrer' : undefined}
                 style={{
                   color: contactConfig.colors.linkColor,
                   textDecoration: 'none',
@@ -173,10 +173,42 @@ function Footer({ onFooterToggle }) {
                   fontWeight: '500',
                   letterSpacing: '0.1em',
                   transition: 'color 0.3s ease',
-                  wordBreak: link.type === 'email' ? 'break-word' : 'normal',
+                  wordBreak: link.type === 'email' ? 'break-word' : 'normal'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = contactConfig.colors.linkHoverColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = contactConfig.colors.linkColor;
+                }}
+              >
+                {link.text}
+              </a>
+            ))}
+          </div>
+
+          {/* Social links on their own line */}
+          <div style={{
+            display: 'flex',
+            gap: '20px',
+            marginBottom: '20px'
+          }}>
+            {contactConfig.links.filter(link => link.type === 'social').map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: contactConfig.colors.linkColor,
+                  textDecoration: 'none',
+                  fontSize: 'clamp(11px, 2.5vw, 14px)',
+                  fontWeight: '500',
+                  letterSpacing: '0.1em',
+                  transition: 'color 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px'
+                  gap: '8px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = contactConfig.colors.linkHoverColor;
@@ -192,7 +224,7 @@ function Footer({ onFooterToggle }) {
           </div>
 
           {/* Contact Capture Module - Email Input */}
-          <div style={{ marginTop: '20px' }}>
+          <div>
             <form onSubmit={handleEmailSubmit} style={{
               display: 'flex',
               gap: '8px',
