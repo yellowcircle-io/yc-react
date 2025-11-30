@@ -24,29 +24,27 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
     SERVICES: {
       hasSubItems: true,
       subItems: [
-        { label: 'GTM Strategic Audit', route: '/services' },
-        { label: 'Marketing Systems', route: '/services' },
-        { label: 'Technical Debt Audit', route: '/services' },
-        { label: 'Data Architecture', route: '/services' },
-        { label: 'Email Development', route: '/services' }
+        { label: 'GTM STRATEGIC AUDIT', route: '/services' },
+        { label: 'MARKETING SYSTEMS', route: '/services' },
+        { label: 'TECHNICAL DEBT', route: '/services' },
+        { label: 'DATA ARCHITECTURE', route: '/services' },
+        { label: 'CREATIVE + OPERATIONS', route: '/services' },
+        { label: 'EMAIL DEVELOPMENT', route: '/services' }
       ]
     },
     STORIES: {
       hasSubItems: true,
       subItems: [
-        { label: 'Thoughts', route: '/thoughts' },
-        { label: 'Case Studies', route: '/thoughts' },
-        { label: 'Projects', route: '/works' }
+        { label: 'WORKS', route: '/works' },
+        { label: 'THOUGHTS', route: '/thoughts' },
+        { label: 'GOLDEN UNKNOWN', route: '/experiments/golden-unknown' }
       ]
     },
     LABS: {
       hasSubItems: true,
       subItems: [
-        { label: 'Unity Notes', route: '/unity-notes' },
-        { label: 'Outreach', route: '/outreach' },
-        { label: 'Home-17', route: '/home-17' },
-        { label: 'Visual Noteboard', route: '/experiments/visual-noteboard' },
-        { label: 'Component Library', route: '/experiments/component-library' }
+        { label: 'UNITY NOTES', route: '/unity-notes' },
+        { label: 'OUTREACH', route: '/outreach' }
       ]
     },
     WORKS: { hasSubItems: false, isButton: true },

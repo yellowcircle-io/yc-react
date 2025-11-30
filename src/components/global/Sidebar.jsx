@@ -294,6 +294,11 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
   // Helper function for sub-item navigation
   const handleSubItemClick = (item) => {
+    // Skip click for subheaders (non-clickable labels)
+    if (typeof item === 'object' && item.isSubheader) {
+      return;
+    }
+
     const itemKeyVal = typeof item === 'string' ? item : item.key;
     const itemRoute = typeof item === 'object' && item.route ? item.route : null;
 
@@ -317,6 +322,10 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       navigate('/outreach');
     } else if (itemKeyVal === 'visual-noteboard') {
       navigate('/experiments/visual-noteboard');
+    } else if (itemKeyVal === 'works') {
+      navigate('/works');
+    } else if (itemKeyVal === 'services') {
+      navigate('/services');
     }
     handleCloseSlideOver();
   };
@@ -552,7 +561,70 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             }}>
               {slideOverItems.map((item, idx) => {
                 const itemLabel = typeof item === 'string' ? item : item.label;
+                const isDivider = typeof item === 'object' && item.isDivider;
+                const isSectionHeader = typeof item === 'object' && item.isSectionHeader;
+                const isSubheader = typeof item === 'object' && item.isSubheader;
 
+                // Render divider
+                if (isDivider) {
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        height: '1px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                        margin: '8px 0',
+                        animation: `slideOverItem 0.25s ease-out ${idx * 0.05}s both`
+                      }}
+                    />
+                  );
+                }
+
+                // Render section header
+                if (isSectionHeader) {
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSubItemClick(item)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        padding: isSubheader ? '8px 16px' : '12px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: isSubheader ? 'transparent' : 'rgba(251, 191, 36, 0.15)',
+                        cursor: isSubheader ? 'default' : 'pointer',
+                        fontSize: isSubheader ? '11px' : '13px',
+                        fontWeight: '700',
+                        color: isSubheader ? 'rgba(0,0,0,0.4)' : 'rgb(251, 191, 36)',
+                        letterSpacing: '0.1em',
+                        textAlign: 'left',
+                        textTransform: 'uppercase',
+                        transition: 'all 0.2s ease',
+                        animation: `slideOverItem 0.25s ease-out ${idx * 0.05}s both`
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSubheader) {
+                          e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.3)';
+                          e.currentTarget.style.transform = 'translateX(4px)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSubheader) {
+                          e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                        }
+                      }}
+                    >
+                      <span>{itemLabel}</span>
+                      {!isSubheader && <span style={{ opacity: 0.6, fontSize: '12px' }}>→</span>}
+                    </button>
+                  );
+                }
+
+                // Regular item
                 return (
                   <button
                     key={idx}
@@ -572,6 +644,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                       color: 'black',
                       letterSpacing: '0.05em',
                       textAlign: 'left',
+                      textTransform: 'uppercase',
                       transition: 'all 0.2s ease',
                       animation: `slideOverItem 0.25s ease-out ${idx * 0.05}s both`
                     }}

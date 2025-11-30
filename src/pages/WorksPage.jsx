@@ -5,19 +5,19 @@ import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
 
-// Company data for Works showcase
+// Company data for Works showcase - ordered most recent first
 const COMPANIES = [
-  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2019-2023' },
-  { id: 'tunecore', name: 'TuneCore', category: 'Music', year: '2018-2019' },
-  { id: 'thimble', name: 'Thimble', category: 'Insurance', year: '2020' },
+  { id: 'rho', name: 'Rho', category: 'FinTech', year: '2024-2025' },
+  { id: 'auditboard', name: 'AuditBoard', category: 'Enterprise SaaS', year: '2024' },
+  { id: 'estee-lauder', name: 'Estée Lauder', category: 'Beauty', year: '2024' },
+  { id: 'reddit', name: 'Reddit', category: 'Social Media', year: '2024' },
+  { id: 'virtana', name: 'Virtana', category: 'Enterprise SaaS', year: '2023' },
+  { id: 'doordash', name: 'DoorDash', category: 'Delivery', year: '2022' },
   { id: 'yieldstreet', name: 'YieldStreet', category: 'FinTech', year: '2021' },
   { id: 'zerogrocery', name: 'Zero Grocery', category: 'E-Commerce', year: '2020' },
-  { id: 'doordash', name: 'DoorDash', category: 'Delivery', year: '2022' },
-  { id: 'virtana', name: 'Virtana', category: 'Enterprise', year: '2023' },
-  { id: 'reddit', name: 'Reddit', category: 'Social', year: '2024' },
-  { id: 'estee-lauder', name: 'Estée Lauder', category: 'Beauty', year: '2024' },
-  { id: 'auditboard', name: 'AuditBoard', category: 'Enterprise', year: '2024' },
-  { id: 'rho', name: 'Rho', category: 'FinTech', year: '2024-Present' }
+  { id: 'thimble', name: 'Thimble', category: 'InsurTech', year: '2020' },
+  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2019-2023' },
+  { id: 'tunecore', name: 'TuneCore', category: 'Music Tech', year: '2018-2019' }
 ];
 
 function WorksPage() {

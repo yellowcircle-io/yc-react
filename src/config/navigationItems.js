@@ -24,11 +24,12 @@ export const navigationItems = [
     label: "SERVICES",
     itemKey: "services",
     subItems: [
-      { label: "GTM Strategic Audit", key: "gtm-audit" },
-      { label: "Marketing Systems", key: "marketing-systems" },
-      { label: "Technical Debt Audit", key: "technical-debt" },
-      { label: "Data Architecture", key: "data-architecture" },
-      { label: "Email Development", key: "email-development" }
+      { label: "GTM STRATEGIC AUDIT", key: "gtm-audit", route: "/services" },
+      { label: "MARKETING SYSTEMS", key: "marketing-systems", route: "/services" },
+      { label: "TECHNICAL DEBT", key: "technical-debt", route: "/services" },
+      { label: "DATA ARCHITECTURE", key: "data-architecture", route: "/services" },
+      { label: "CREATIVE + OPERATIONS", key: "creative-operations", route: "/services" },
+      { label: "EMAIL DEVELOPMENT", key: "email-development", route: "/services" }
     ]
   },
   {
@@ -36,18 +37,18 @@ export const navigationItems = [
     label: "STORIES",
     itemKey: "stories",
     subItems: [
-      {
-        label: "Projects",
-        key: "projects",
-        subItems: ["Brand Development", "Marketing Architecture", "Email Development"]
-      },
-      { label: "Golden Unknown", key: "golden-unknown" },
-      {
-        label: "Cath3dral",
-        key: "cath3dral",
-        subItems: ["Being + Rhyme"]
-      },
-      { label: "Thoughts", key: "thoughts" }
+      // Works section
+      { label: "WORKS", key: "works", route: "/works", isSectionHeader: true },
+      { label: "RHO", key: "rho", route: "/works/rho" },
+      { label: "AUDITBOARD", key: "auditboard", route: "/works/auditboard" },
+      { label: "REDDIT", key: "reddit", route: "/works/reddit" },
+      { label: "ESTÉE LAUDER", key: "estee-lauder", route: "/works/estee-lauder" },
+      // Divider + Ongoing Stories section
+      { label: "divider", key: "divider-1", isDivider: true },
+      { label: "ONGOING STORIES", key: "ongoing-header", isSectionHeader: true, isSubheader: true },
+      { label: "GOLDEN UNKNOWN", key: "golden-unknown", route: "/experiments/golden-unknown" },
+      { label: "CATH3DRAL", key: "cath3dral" },
+      { label: "THOUGHTS", key: "thoughts", route: "/thoughts" }
     ]
   },
   {
@@ -55,11 +56,8 @@ export const navigationItems = [
     label: "LABS",
     itemKey: "labs",
     subItems: [
-      { label: "Unity Notes", key: "unity-notes" },
-      { label: "Outreach", key: "outreach" },
-      { label: "Home-17", key: "home-17" },
-      { label: "Visual Noteboard", key: "visual-noteboard" },
-      { label: "Component Library", key: "component-library" }
+      { label: "UNITY NOTES", key: "unity-notes", route: "/unity-notes" },
+      { label: "OUTREACH", key: "outreach", route: "/outreach" }
     ]
   },
   {

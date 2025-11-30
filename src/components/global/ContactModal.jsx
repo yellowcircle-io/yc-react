@@ -1,12 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLayout } from '../../contexts/LayoutContext';
 
+// Service options for dropdown
+const SERVICE_OPTIONS = [
+  { value: '', label: 'Select a service (optional)' },
+  { value: 'gtm-audit', label: 'GTM Strategic Audit' },
+  { value: 'marketing-systems', label: 'Marketing Systems Audit' },
+  { value: 'role-alignment', label: 'Role Alignment Assessment' },
+  { value: 'technical-debt', label: 'Technical Debt Quantification' },
+  { value: 'attribution-audit', label: 'Attribution System Audit' },
+  { value: 'data-architecture', label: 'Data Architecture Assessment' },
+  { value: 'creative-operations', label: 'Creative + Operations' },
+  { value: 'email-development', label: 'Email Template Development' },
+  { value: 'discovery-call', label: 'Discovery Call' },
+  { value: 'other', label: 'Other / Not Sure' }
+];
+
 /**
  * ContactModal - "Get In Touch" modal with email input
  *
  * Features:
  * - Centered modal overlay
  * - Email input field with validation
+ * - Service dropdown selector
  * - Message textarea (optional)
  * - Submit button
  * - Close on backdrop click or X button
@@ -17,6 +33,7 @@ function ContactModal() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [service, setService] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -47,6 +64,7 @@ function ContactModal() {
       setEmail('');
       setName('');
       setPhone('');
+      setService('');
       setMessage('');
       setError('');
       setSubmitted(false);
@@ -104,8 +122,9 @@ function ContactModal() {
           from_name: name || 'Website Visitor',
           email: email,
           phone: phone || 'Not provided',
+          service: service ? SERVICE_OPTIONS.find(s => s.value === service)?.label : 'Not specified',
           message: message || 'No message provided',
-          subject: `New Contact from yellowCircle: ${name || email}`,
+          subject: `New Contact from yellowCircle: ${name || email}${service ? ` - ${SERVICE_OPTIONS.find(s => s.value === service)?.label}` : ''}`,
           // Hidden fields for tracking
           source: 'yellowcircle.io',
           page: window.location.pathname
@@ -389,6 +408,50 @@ function ContactModal() {
                   boxSizing: 'border-box'
                 }}
               />
+            </div>
+
+            {/* Service Dropdown */}
+            <div style={{ marginBottom: '16px' }}>
+              <label
+                htmlFor="contact-service"
+                style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  marginBottom: '6px',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                SERVICE <span style={{ color: 'rgba(0, 0, 0, 0.4)', fontWeight: '400' }}>(optional)</span>
+              </label>
+              <select
+                id="contact-service"
+                className="contact-input"
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  border: '2px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 16px center'
+                }}
+              >
+                {SERVICE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Message Input (Optional) */}
