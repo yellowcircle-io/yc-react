@@ -44,6 +44,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
   return (
     <div
       style={{
+        position: 'relative',
         minWidth: data.width || 280,
         maxWidth: 400,
         borderRadius: '8px',
@@ -52,7 +53,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
         boxShadow: selected
           ? `0 0 0 2px ${accentColor}40, 0 8px 24px rgba(0,0,0,0.15)`
           : '0 4px 12px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
+        overflow: 'visible',
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
       }}
       onDoubleClick={handleDoubleClick}
@@ -190,6 +191,104 @@ const TextNoteNode = memo(({ data, id, selected }) => {
           <span>Created {new Date(data.createdAt || Date.now()).toLocaleDateString()}</span>
         )}
       </div>
+
+      {/* Action Buttons - Only show when selected */}
+      {selected && (
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          display: 'flex',
+          gap: '6px',
+          zIndex: 25,
+        }}>
+          {/* Edit Button */}
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsEditing(true);
+            }}
+            style={{
+              padding: '6px 10px',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              border: `2px solid ${accentColor}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '10px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.2s ease',
+              pointerEvents: 'auto',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = accentColor;
+              e.target.style.color = '#000000';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+              e.target.style.color = 'white';
+              e.target.style.transform = 'scale(1)';
+            }}
+          >
+            ✏️ EDIT
+          </button>
+
+          {/* Delete Button */}
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (data.onDelete) {
+                data.onDelete(id);
+              }
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (data.onDelete) {
+                data.onDelete(id);
+              }
+            }}
+            style={{
+              padding: '6px 10px',
+              backgroundColor: 'rgba(220, 38, 38, 0.9)',
+              color: 'white',
+              border: '2px solid #dc2626',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '10px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.2s ease',
+              pointerEvents: 'auto',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#b91c1c';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';
+              e.target.style.transform = 'scale(1)';
+            }}
+          >
+            🗑️ DELETE
+          </button>
+        </div>
+      )}
     </div>
   );
 });
