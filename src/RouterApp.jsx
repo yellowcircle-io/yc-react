@@ -14,7 +14,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import SitemapPage from './pages/SitemapPage';
 import DirectoryPage from './pages/DirectoryPage';
 import UnityNotesPage from './pages/UnityNotesPage';
-import UnityNotePlusPage from './pages/UnityNotePlusPage';
+import CompanyDetailPage from './pages/works/CompanyDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Experiment sub-routes
@@ -75,16 +75,14 @@ function RouterApp() {
 
         {/* Unity Notes - Second Brain App */}
         <Route path="/unity-notes" element={<UnityNotesPage />} />
-        <Route path="/unity-notes-plus" element={<UnityNotePlusPage />} />
 
         {/* Placeholder routes for future sub-pages */}
         <Route path="/about/timeline" element={<AboutPage />} />
         <Route path="/about/services" element={<AboutPage />} />
         <Route path="/about/contact" element={<AboutPage />} />
 
-        <Route path="/works/websites" element={<WorksPage />} />
-        <Route path="/works/graphics" element={<WorksPage />} />
-        <Route path="/works/music" element={<WorksPage />} />
+        {/* Works Company Detail Pages */}
+        <Route path="/works/:companyId" element={<CompanyDetailPage />} />
 
         {/* 404 - Catch all unmatched routes */}
         <Route path="*" element={<NotFoundPage />} />

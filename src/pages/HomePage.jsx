@@ -229,6 +229,7 @@ function HomePage() {
       navCircleRotation={navCircleRotation}
       scrollOffset={scrollOffset}
       pageLabel="HOME"
+      isHomePage={true}
     >
       {/* 3 Background Images - Horizontal Scrolling */}
       <div className="scrollable-area" style={{
@@ -236,7 +237,7 @@ function HomePage() {
         top: 0,
         left: scrollOffset <= 100 ? `-${scrollOffset}vw` : '-100vw',
         width: '100vw',
-        height: '100vh',
+        height: '100dvh', // Use dvh for mobile browser toolbar awareness
         backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1764457813/Gemini_Generated_Image_jpswjujpswjujpsw_hi7ltv)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -244,8 +245,8 @@ function HomePage() {
         zIndex: 1,
         transition: 'left 0.1s ease-out',
         willChange: 'left',
-        filter: 'grayscale(100%) contrast(1.3)',
-        WebkitFilter: 'grayscale(100%) contrast(1.3)'
+        filter: 'grayscale(100%) contrast(1.17)', // Reduced from 1.3 (10% less)
+        WebkitFilter: 'grayscale(100%) contrast(1.17)'
       }}></div>
 
       <div className="scrollable-area" style={{
@@ -253,7 +254,7 @@ function HomePage() {
         top: 0,
         left: scrollOffset <= 100 ? `${100 - scrollOffset}vw` : '0vw',
         width: '100vw',
-        height: '100vh',
+        height: '100dvh', // Use dvh for mobile browser toolbar awareness
         backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1764457814/Gemini_Generated_Image_7mrn897mrn897mrn_hzgvsb)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -261,8 +262,8 @@ function HomePage() {
         zIndex: 2,
         transition: 'left 0.1s ease-out',
         willChange: 'left',
-        filter: 'grayscale(100%) contrast(1.3)',
-        WebkitFilter: 'grayscale(100%) contrast(1.3)'
+        filter: 'grayscale(100%) contrast(1.17)', // Reduced from 1.3 (10% less)
+        WebkitFilter: 'grayscale(100%) contrast(1.17)'
       }}></div>
 
       <div className="scrollable-area" style={{
@@ -270,7 +271,7 @@ function HomePage() {
         top: 0,
         left: scrollOffset > 100 ? `${200 - scrollOffset}vw` : '100vw',
         width: '100vw',
-        height: '100vh',
+        height: '100dvh', // Use dvh for mobile browser toolbar awareness
         backgroundImage: 'url(https://res.cloudinary.com/yellowcircle-io/image/upload/v1764457815/Gemini_Generated_Image_i20pegi20pegi20p_pa7t5w)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -278,24 +279,9 @@ function HomePage() {
         zIndex: 3,
         transition: 'left 0.1s ease-out',
         willChange: 'left',
-        filter: 'grayscale(100%) contrast(1.3)',
-        WebkitFilter: 'grayscale(100%) contrast(1.3)'
+        filter: 'grayscale(100%) contrast(1.17)', // Reduced from 1.3 (10% less)
+        WebkitFilter: 'grayscale(100%) contrast(1.17)'
       }}></div>
-
-      {/* Scroll Progress Indicator */}
-      <div style={{
-        position: 'fixed',
-        bottom: '20px',
-        left: '120px',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        color: 'white',
-        padding: '5px 10px',
-        borderRadius: '15px',
-        fontSize: '12px',
-        zIndex: 30
-      }}>
-        Scroll: {Math.round(scrollOffset)}% - Page {scrollOffset < 100 ? '1-2' : '3'}
-      </div>
 
       {/* YOUR STORY Text - Adjusts for Sidebar and Footer */}
       <div style={{

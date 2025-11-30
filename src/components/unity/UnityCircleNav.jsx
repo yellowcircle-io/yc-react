@@ -2,19 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import Lottie from 'lottie-react';
 import { useLayout } from '../../contexts/LayoutContext';
 import settingsAnimation from '../../assets/lottie/settings-gear.json';
+import addAnimation from '../../assets/lottie/add.json';
 
 /**
  * UnityCircleNav - Custom CircleNav for Unity Notes
  *
  * Features:
- * - Centered yellow circle with "+" icon
+ * - Centered yellow circle with Lottie "+" animation
  * - Settings gear to the right
  * - Click: Opens Add Note dialog
  * - Right-click/Long-press: Opens options menu (Export, Import, Share, Clear, Footer)
  */
 
-// Plus Icon Circle Component
-const PlusIconCircle = ({ size = 78, isHovered = false }) => {
+// Add Icon Circle Component with Lottie animation
+const AddIconCircle = ({ size = 78, isHovered = false }) => {
   return (
     <div style={{
       width: size,
@@ -27,28 +28,21 @@ const PlusIconCircle = ({ size = 78, isHovered = false }) => {
         ? '0 8px 24px rgba(238, 207, 0, 0.5)'
         : '0 4px 12px rgba(238, 207, 0, 0.3)',
       transition: 'box-shadow 0.3s ease, transform 0.2s ease',
-      transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+      transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
-      {/* Plus Icon */}
-      <svg
-        viewBox="0 0 40 40"
-        width="40"
-        height="40"
+      {/* Add Lottie Animation */}
+      <Lottie
+        animationData={addAnimation}
+        loop={isHovered}
+        autoplay={isHovered}
         style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)'
+          width: size * 0.75,
+          height: size * 0.75
         }}
-      >
-        <path
-          d="M20,10 L20,30 M10,20 L30,20"
-          fill="none"
-          stroke="white"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
-      </svg>
+      />
     </div>
   );
 };
@@ -338,7 +332,7 @@ function UnityCircleNav({
             }}
             title="Add Note (right-click for options)"
           >
-            <PlusIconCircle size={78} isHovered={isCircleHovered} />
+            <AddIconCircle size={78} isHovered={isCircleHovered} />
           </div>
 
           {/* Settings Gear - Overlapping bottom-right */}
