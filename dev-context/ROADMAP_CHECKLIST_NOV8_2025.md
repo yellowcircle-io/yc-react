@@ -1,12 +1,28 @@
 # Project Roadmap Checklist - November 2025
 
 **Status:** 🔴 POST-RHO PIVOT - Consulting revenue + yellowCircle development
-**Last Updated:** November 28, 2025
+**Last Updated:** November 30, 2025
 **Next Review:** December 5, 2025
 
 ---
 
-## ✅ COMPLETED THIS WEEK (Nov 22-28, 2025)
+## ✅ COMPLETED THIS WEEK (Nov 29-30, 2025)
+
+### November 30, 2025 - Mobile Optimizations & Works Page
+
+#### 7. ✅ Mobile Optimizations & Lottie Icons - COMPLETE & DEPLOYED
+- **Commit:** `2c6f018` - Deployed to Firebase production
+- **Lottie System:** 3 animations (arrow, placeholder, add) with white/yellow theming
+- **NavigationCircle:** Hover-only animation, "FORWARD >" menu item
+- **UnityCircleNav:** Lottie add.json integration (replaced SVG)
+- **Works Page:** HomePage-style scrolling, 11 company cards
+- **CompanyDetailPage:** Dynamic routing `/works/:companyId` for 11 companies
+- **Menu Updates:** Projects link under STORIES, WORKS button handler
+- **Archived:** Unity Notes Plus moved to `src/archive/pages/`
+
+---
+
+## ✅ COMPLETED PREVIOUS WEEK (Nov 22-28, 2025)
 
 ### Major Milestones Achieved:
 
