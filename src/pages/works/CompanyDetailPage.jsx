@@ -5,94 +5,94 @@ import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
 
-// Company data with detailed information
+// Client project data - yellowCircle studio work
 const COMPANY_DATA = {
   liveintent: {
     name: 'LiveIntent',
     category: 'Ad Tech',
     year: '2019-2023',
-    role: 'Marketing Operations Manager',
-    description: 'Led marketing operations for identity resolution and programmatic advertising platform serving publishers and advertisers globally.',
+    engagement: 'Embedded Partnership',
+    description: 'Marketing operations transformation for identity resolution and programmatic advertising platform serving publishers and advertisers globally.',
     highlights: [
       'Built and scaled email marketing infrastructure',
       'Implemented HubSpot-Salesforce integration',
       'Developed attribution and reporting frameworks',
-      'Managed marketing automation workflows'
+      'Designed marketing automation architecture'
     ]
   },
   tunecore: {
     name: 'TuneCore',
-    category: 'Music',
+    category: 'Music Tech',
     year: '2018-2019',
-    role: 'Digital Marketing Lead',
-    description: 'Drove digital marketing strategy for the leading music distribution platform serving independent artists worldwide.',
+    engagement: 'Embedded Partnership',
+    description: 'Lifecycle marketing and automation development for the leading music distribution platform serving independent artists worldwide.',
     highlights: [
-      'Scaled email marketing to 1M+ subscribers',
-      'Optimized artist onboarding funnels',
-      'Built lifecycle marketing programs',
-      'Increased artist activation rates 35%'
+      'Scaled email program to 1M+ subscribers',
+      'Improved open rates by +250%',
+      'Improved click-to-open rates by +200%',
+      'Built comprehensive lifecycle automation'
     ]
   },
   thimble: {
     name: 'Thimble',
-    category: 'Insurance',
+    category: 'InsurTech',
     year: '2020',
-    role: 'Growth Marketing Consultant',
-    description: 'Consulted on growth marketing for on-demand insurance platform targeting small businesses and gig workers.',
+    engagement: 'Strategic Engagement',
+    description: 'Growth marketing systems for on-demand insurance platform targeting small businesses and gig economy workers.',
     highlights: [
-      'Developed acquisition strategy',
-      'Optimized quote-to-bind conversion',
-      'Built referral marketing program',
-      'Improved customer retention flows'
+      'Developed customer acquisition strategy',
+      'Optimized quote-to-bind conversion funnel',
+      'Built referral marketing automation',
+      'Designed retention and renewal flows'
     ]
   },
   yieldstreet: {
     name: 'YieldStreet',
     category: 'FinTech',
     year: '2021',
-    role: 'Marketing Automation Consultant',
-    description: 'Designed and implemented marketing automation for alternative investment platform serving accredited investors.',
+    engagement: 'Strategic Engagement',
+    description: 'Marketing automation architecture for alternative investment platform serving accredited investors.',
     highlights: [
       'Built investor nurture sequences',
       'Developed investment alerts system',
       'Created portfolio update campaigns',
-      'Implemented compliance-ready email flows'
+      'Implemented compliance-ready email workflows'
     ]
   },
   zerogrocery: {
     name: 'Zero Grocery',
     category: 'E-Commerce',
     year: '2020',
-    role: 'Email Marketing Lead',
-    description: 'Led email marketing for zero-waste grocery delivery startup focused on sustainability.',
+    engagement: 'Embedded Partnership',
+    description: 'End-to-end marketing operations for zero-waste grocery delivery startup focused on sustainability.',
     highlights: [
       'Built subscription lifecycle program',
       'Developed environmental impact reporting',
       'Created re-engagement campaigns',
-      'Designed delivery reminder sequences'
+      'Designed automated delivery sequences'
     ]
   },
   doordash: {
     name: 'DoorDash',
     category: 'Delivery',
     year: '2022',
-    role: 'Marketing Operations Consultant',
-    description: 'Consulted on merchant-facing marketing operations and restaurant growth programs.',
+    engagement: 'Strategic Engagement',
+    description: 'Merchant-facing marketing operations and restaurant growth program development.',
     highlights: [
       'Optimized merchant onboarding flows',
       'Built restaurant partner communications',
-      'Developed performance reporting',
-      'Created merchant success campaigns'
+      'Developed performance analytics',
+      'Created merchant success automation'
     ]
   },
   virtana: {
     name: 'Virtana',
-    category: 'Enterprise',
+    category: 'Enterprise SaaS',
     year: '2023',
-    role: 'Marketing Ops Consultant',
-    description: 'Advised on marketing operations for AIOps platform serving enterprise infrastructure teams.',
+    engagement: 'GTM Assessment',
+    description: 'Marketing operations assessment for AIOps platform serving enterprise infrastructure teams.',
     highlights: [
-      'Assessed tech stack efficiency',
+      'Assessed MarTech stack efficiency',
       'Designed lead scoring models',
       'Built account-based marketing flows',
       'Optimized demo request process'
@@ -100,39 +100,39 @@ const COMPANY_DATA = {
   },
   reddit: {
     name: 'Reddit',
-    category: 'Social',
+    category: 'Social Media',
     year: '2024',
-    role: 'Marketing Systems Consultant',
-    description: 'Consulted on marketing systems architecture for community and advertiser engagement programs.',
+    engagement: 'Strategic Engagement',
+    description: 'Marketing systems architecture for community and advertiser engagement programs.',
     highlights: [
-      'Audited marketing tech stack',
-      'Designed advertiser nurture journeys',
-      'Built community growth campaigns',
+      'Refined ETL and data processes',
+      'Improved Salesforce-HubSpot integration',
+      'Built advertiser nurture journeys',
       'Optimized self-serve ad platform flows'
     ]
   },
   'estee-lauder': {
-    name: 'Estee Lauder',
+    name: 'Estée Lauder',
     category: 'Beauty',
     year: '2024',
-    role: 'Email Development Consultant',
-    description: 'Developed email templates and marketing automation for luxury beauty brand portfolio.',
+    engagement: 'Creative + Operations',
+    description: 'Email development and CRM standardization for luxury beauty brand portfolio (Origins).',
     highlights: [
       'Created responsive email templates',
-      'Built personalization frameworks',
-      'Developed loyalty program communications',
-      'Designed product launch sequences'
+      'Developed CRM data standardization',
+      'Built cross-brand best practices documentation',
+      'Designed loyalty program communications'
     ]
   },
   auditboard: {
     name: 'AuditBoard',
-    category: 'Enterprise',
+    category: 'Enterprise SaaS',
     year: '2024',
-    role: 'GTM Systems Consultant',
-    description: 'Advised on go-to-market systems for audit and risk management SaaS platform.',
+    engagement: 'GTM Assessment',
+    description: 'Go-to-market systems audit for audit and risk management SaaS platform.',
     highlights: [
       'Audited HubSpot-Salesforce integration',
-      'Identified technical debt ($2M+ savings)',
+      'Identified technical debt ($2M+ potential savings)',
       'Designed workflow optimization plan',
       'Created attribution improvement roadmap'
     ]
@@ -141,8 +141,8 @@ const COMPANY_DATA = {
     name: 'Rho',
     category: 'FinTech',
     year: '2024-2025',
-    role: 'Senior Marketing Operations Manager',
-    description: 'Led marketing operations for B2B fintech platform offering business banking and spend management solutions.',
+    engagement: 'Embedded Partnership',
+    description: 'Comprehensive marketing operations for B2B fintech platform offering business banking and spend management solutions.',
     highlights: [
       'Managed HubSpot-Salesforce integration',
       'Identified $2.5M+ annual technical debt',
@@ -281,7 +281,7 @@ function CompanyDetailPage() {
               padding: '2px 6px',
               animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
             }}>
-              {company.role}
+              {company.engagement}
             </p>
           </div>
 

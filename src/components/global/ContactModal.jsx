@@ -91,7 +91,7 @@ function ContactModal() {
     try {
       // Send form data to Web3Forms (free form submission service)
       // Get your access key at https://web3forms.com/
-      const WEB3FORMS_ACCESS_KEY = 'YOUR_ACCESS_KEY_HERE'; // Replace with actual key
+      const WEB3FORMS_ACCESS_KEY = '960839cb-2448-4f82-b12a-82ca2eb7197f';
 
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
