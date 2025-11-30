@@ -102,7 +102,7 @@ function Footer({ onFooterToggle }) {
 
   // Get configuration
   const contactConfig = globalContent.footer.contact;
-  const projectsConfig = globalContent.footer.projects;
+  const servicesConfig = globalContent.footer.services;
 
   return (
     <div
@@ -254,32 +254,32 @@ function Footer({ onFooterToggle }) {
           </div>
         </div>
 
-        {/* Projects Section */}
-        <div className="footer-section footer-projects" style={{
+        {/* Services Section */}
+        <div className="footer-section footer-services" style={{
           flex: '1 1 50%',
           minWidth: 'min(300px, 100%)',
-          backgroundColor: projectsConfig.colors.backgroundColor,
+          backgroundColor: servicesConfig.colors.backgroundColor,
           padding: '40px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start'
         }}>
           <h2 style={{
-            color: projectsConfig.colors.titleColor,
+            color: servicesConfig.colors.titleColor,
             fontSize: 'clamp(18px, 4vw, 24px)',
             fontWeight: '600',
             letterSpacing: '0.3em',
             margin: '0 0 20px 0',
-            borderBottom: `2px solid ${projectsConfig.colors.borderColor}`,
+            borderBottom: `2px solid ${servicesConfig.colors.borderColor}`,
             paddingBottom: '10px'
-          }}>{projectsConfig.title}</h2>
+          }}>{servicesConfig.title}</h2>
 
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '15px'
           }}>
-            {projectsConfig.links.map((link, index) => (
+            {servicesConfig.links.map((link, index) => (
               <a
                 key={index}
                 href={link.url}
@@ -288,15 +288,15 @@ function Footer({ onFooterToggle }) {
                   navigate(link.route);
                 } : undefined}
                 style={{
-                  color: projectsConfig.colors.linkColor,
+                  color: servicesConfig.colors.linkColor,
                   textDecoration: 'none',
                   fontSize: 'clamp(11px, 2.5vw, 14px)',
                   fontWeight: '500',
                   letterSpacing: '0.1em',
                   transition: 'color 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.target.style.color = projectsConfig.colors.linkHoverColor}
-                onMouseLeave={(e) => e.target.style.color = projectsConfig.colors.linkColor}
+                onMouseEnter={(e) => e.target.style.color = servicesConfig.colors.linkHoverColor}
+                onMouseLeave={(e) => e.target.style.color = servicesConfig.colors.linkColor}
               >{link.text}</a>
             ))}
           </div>

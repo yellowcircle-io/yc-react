@@ -14,6 +14,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import SitemapPage from './pages/SitemapPage';
 import DirectoryPage from './pages/DirectoryPage';
 import UnityNotesPage from './pages/UnityNotesPage';
+import ServicesPage from './pages/ServicesPage';
 import CompanyDetailPage from './pages/works/CompanyDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -45,6 +46,7 @@ function RouterApp() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/works" element={<WorksPage />} />
         <Route path="/hands" element={<HandsPage />} />
+        <Route path="/services" element={<ServicesPage />} />
         
         {/* Experiment Sub-routes */}
         <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />

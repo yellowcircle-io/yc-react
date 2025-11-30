@@ -21,6 +21,16 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
   // Menu items configuration with sub-items
   const menuConfig = {
     HOME: { hasSubItems: false },
+    SERVICES: {
+      hasSubItems: true,
+      subItems: [
+        { label: 'GTM Strategic Audit', route: '/services' },
+        { label: 'Marketing Systems', route: '/services' },
+        { label: 'Technical Debt Audit', route: '/services' },
+        { label: 'Data Architecture', route: '/services' },
+        { label: 'Email Development', route: '/services' }
+      ]
+    },
     STORIES: {
       hasSubItems: true,
       subItems: [

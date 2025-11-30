@@ -44,14 +44,19 @@ const globalContent = {
           type: 'email'
         },
         {
+          text: '914.241.5524',
+          url: 'tel:+19142415524',
+          type: 'phone'
+        },
+        {
           text: 'LINKEDIN',
-          url: 'https://www.linkedin.com/in/crcooper1/',
+          url: 'https://www.linkedin.com/company/yellow-circle/',
           type: 'social',
           icon: 'linkedin'
         },
         {
           text: 'INSTAGRAM',
-          url: 'https://www.instagram.com/labs.yellowcircle.io/',
+          url: 'https://www.instagram.com/yellowcircle.io/',
           type: 'social',
           icon: 'instagram'
         }
@@ -64,33 +69,33 @@ const globalContent = {
         borderColor: 'white'
       }
     },
-    projects: {
-      title: 'PROJECTS',
+    services: {
+      title: 'SERVICES',
       links: [
         {
-          text: 'GOLDEN UNKNOWN',
+          text: 'GTM STRATEGIC AUDIT',
           url: '#',
-          route: null
+          route: '/services'
         },
         {
-          text: 'BEING + RHYME',
+          text: 'MARKETING SYSTEMS',
           url: '#',
-          route: null
+          route: '/services'
         },
         {
-          text: 'CATH3DRAL',
+          text: 'TECHNICAL DEBT AUDIT',
           url: '#',
-          route: null
+          route: '/services'
         },
         {
-          text: 'RHO CONSULTING',
+          text: 'DATA ARCHITECTURE',
           url: '#',
-          route: null
+          route: '/services'
         },
         {
-          text: 'TRAVEL MEMORIES',
+          text: 'EMAIL DEVELOPMENT',
           url: '#',
-          route: '/uk-memories'
+          route: '/services'
         }
       ],
       colors: {

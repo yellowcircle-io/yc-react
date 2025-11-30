@@ -20,6 +20,18 @@ import aboutAnimation from '../assets/lottie/wave.json';
 export const navigationItems = [
   {
     lottieData: storiesAnimation,
+    label: "SERVICES",
+    itemKey: "services",
+    subItems: [
+      { label: "GTM Strategic Audit", key: "gtm-audit" },
+      { label: "Marketing Systems", key: "marketing-systems" },
+      { label: "Technical Debt Audit", key: "technical-debt" },
+      { label: "Data Architecture", key: "data-architecture" },
+      { label: "Email Development", key: "email-development" }
+    ]
+  },
+  {
+    lottieData: storiesAnimation,
     label: "STORIES",
     itemKey: "stories",
     subItems: [
