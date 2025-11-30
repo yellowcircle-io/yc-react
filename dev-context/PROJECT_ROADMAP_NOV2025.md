@@ -1,7 +1,8 @@
 # Project Roadmap - November 2025
 
-**Date:** November 29, 2025
+**Date:** November 30, 2025
 **Status:** 🔴 CRITICAL PIVOT - Post-Rho Immediate Revenue Strategy
+**Days Since Rho Exit:** 5 (Nov 25, 2025)
 
 ---
 
@@ -233,9 +234,11 @@ Continuation of "Own Your Story" series:
 
 ---
 
-## 🎯 NOVEMBER 18, 2025 - STEALTH MODE STRATEGY (SUPERSEDED)
+## ⚠️ NOVEMBER 18, 2025 - STEALTH MODE STRATEGY (SUPERSEDED BY RHO EXIT)
 
-### Major Strategic Documents Completed
+> **Note:** This section was written while still employed at Rho. Employment ended Nov 25, 2025. Strategic pivot now focuses on immediate revenue generation rather than stealth mode building. See "POST-RHO STRATEGIC PIVOT" section above for current strategy.
+
+### Major Strategic Documents Completed (Historical Reference)
 
 **Three comprehensive strategic documents created** totaling ~135 KB of analysis:
 
@@ -416,119 +419,103 @@ All pages now follow unified structure:
 
 ---
 
-## 🎯 Project Priority Order (Updated for Stealth Mode Strategy)
+## 🎯 Project Priority Order (UPDATED Nov 30 - Post-Rho)
 
-### **STEALTH MODE FRAMEWORK: Options Stacking Over Sequential Projects**
+### **CURRENT FOCUS: Immediate Revenue Generation**
 
-**Critical Shift:** Previous roadmap assumed sequential project completion (yellowCircle → Rho → Golden Unknown → Cath3dral).
+**Situation:** Rho employment ended Nov 25, 2025. Severance: $10K.
+**Primary Goal:** Generate $15K-20K in 60 days through consulting + freelance work.
+**Secondary Goal:** Continue building yellowCircle platform and Unity Notes.
 
-**New Approach:** Parallel options stacking with modular building across all projects simultaneously.
-- Time allocation: 15-20 hrs/week personal work across ALL projects
-- Focus: Revenue-generating activities and personal IP building
-- Timeline: 12-month options stacking vs 24-month sequential completion
-
----
-
-### **Priority 1: Stealth Mode Phase 1 - Foundation (Months 1-3)**
-
-**Time Allocation:** 10-15 hrs/week
-**Goal:** Extract value, build portfolio, establish clean hands framework
-
-#### **RHO (40 hrs/week - Day Job)**
-- [ ] **Deliver exceptional value** to maintain position and reputation
-- [ ] **Events Upload Process** - Complete for immediate Rho value
-- [ ] **Monitor Skydog audit outcomes** - Will inform Phase 2/3 decisions
-- [ ] **Document learnings** (generic, anonymized) for personal brand
-- [ ] **Identify automation opportunities** (keep generic for Unity MAP templates)
-
-#### **Personal Brand (5 hrs/week)**
-- [ ] **LinkedIn thought leadership** - 2-3 posts/week on Marketing Ops challenges
-- [ ] **Case study drafting** - Anonymized Rho organizational assessment
-- [ ] **Personal website refresh** - Showcase consulting services and thought leadership
-- [ ] **Network building** - Identify 5-10 potential consulting leads
-
-#### **Skill Development (3 hrs/week)**
-- [ ] **N8N local setup** - Install, explore, test basic workflows
-- [ ] **N8N workflow templates** - Build 2-3 generic, reusable templates
-- [ ] **React email components** - Experiment with rendering patterns
-- [ ] **AI orchestration** - Claude MCP server exploration, OpenAI Assistants testing
-
-#### **Unity Notes Foundation (0-5 hrs/week - if capacity)**
-- [ ] **Architecture refinement** - Review ecosystem architecture document
-- [ ] **Technology research** - ReactFlow, Figma API, Notion integration patterns
-- [ ] **MVP scope reduction** - Identify smallest shippable product
-
-#### **yellowCircle (Deferred to Month 2-3)**
-- [ ] Homepage design update - 12-17 hours (defer until Phase 1 complete)
-- [ ] Global components standardization - 13-20 hours (defer)
+**Time Allocation (Full-time available):**
+- 60% Revenue generation (consulting, outreach, client work)
+- 30% yellowCircle development (Unity Notes, platform features)
+- 10% Content/brand building (Article series, LinkedIn)
 
 ---
 
-### **Priority 2: Stealth Mode Phase 2 - Validation (Months 4-6)**
+### **Priority 1: Revenue Generation (Week 1-2 of 60-Day Plan)**
 
-**Time Allocation:** 13 hrs/week
-**Goal:** Skill validation, revenue test, decision point
+**Status:** Day 5 of 60-day plan
+**Target:** $4K-8K first revenue by Day 30
 
-#### **Consulting Pilot (5 hrs/week)**
-- [ ] **2-3 free audits** - Marketing Ops assessments for early clients
-- [ ] **Service offering refinement** - Based on audit feedback
-- [ ] **Pricing validation** - Test $3K-8K audit packages
-- [ ] **Revenue target** - First $1K-3K in consulting fees
+#### **Immediate Actions (This Week)**
+- [ ] **LinkedIn transition announcement** - Post availability
+- [ ] **Network activation** - Contact 10 warmest leads
+- [ ] **Share Article 1** - "Why Your GTM Sucks" across channels
+- [ ] **Schedule discovery calls** - Target 3-5 this week
 
-#### **Unity MAP Templates (5 hrs/week)**
-- [ ] **N8N workflow templates** - Package 5-10 templates for Gumroad
-- [ ] **Email component library** - React templates for common patterns
-- [ ] **Schema mapping guides** - Generic MAP integration documentation
-- [ ] **Revenue target** - $500-1K/month template sales
+#### **GTM Assessment Service ($4K-5K/engagement)**
+- [x] Service page copy ready (`dev-context/GTM_ASSESSMENT_SERVICE_PAGE.md`)
+- [x] Case studies ready (`dev-context/CONSULTING_PORTFOLIO_AUDIT.md`)
+- [x] Outreach templates ready (`dev-context/OUTREACH_TEMPLATES.md`)
+- [ ] First client signed
 
-#### **Unity MAP Landing Page (3 hrs/week)**
-- [ ] **Build waitlist page** - Simple landing page with value proposition
-- [ ] **Collect email signups** - Target: 50+ waitlist signups
-- [ ] **Customer discovery** - Interview 10-15 waitlist members
-- [ ] **Validation metrics** - Assess product-market fit signals
-
-**DECISION POINT at Month 6:**
-- If >100 waitlist + 5+ beta commitments → Unity MAP SaaS (Phase 3 Path A)
-- If <50 waitlist but 3+ consulting clients → Consulting focus (Phase 3 Path B)
-- If promoted, $180K-220K, equity at Rho → Stay at Rho (Phase 3 Path C)
+#### **yellowCircle Development (Ongoing)**
+- [x] Unity Notes v1 complete with UI refinements
+- [x] Unity Notes Plus with card types
+- [x] Global navigation centralized
+- [ ] Homepage background images (Gemini art integrated)
+- [ ] Works page with company detail pages
 
 ---
 
-### **Priority 3: Stealth Mode Phase 3 - Commit or Pivot (Months 7-12)**
+### **Priority 2: yellowCircle Platform Development**
 
-**Path determined by Phase 2 outcomes and Skydog trajectory.**
+**Status:** Active development alongside revenue work
+**Recent Wins:** Unity Notes complete, global navigation, Lottie animations
 
-#### **Path A: Unity MAP SaaS** (if strong validation signals)
-- [ ] Build MVP (first paying customer)
-- [ ] Beta program (3-5 customers, $1,500-2,500/mo each)
-- [ ] Refine based on feedback
-- [ ] Public launch preparation
+#### **Unity Notes Ecosystem**
+- [x] Unity Notes v1 - Photo canvas with ReactFlow
+- [x] Unity Notes Plus - Multi-card types (Photo, Text, Link, AI, Video)
+- [x] UnityCircleNav component with gear/options menu
+- [x] Add Note dialog with pagination
+- [ ] Export/Import functionality
+- [ ] Cloud sync (Firebase backend)
 
-#### **Path B: Consulting** (if weak SaaS signals but strong consulting demand)
-- [ ] Scale to 3-5 active clients
-- [ ] Productize service offerings
-- [ ] Build referral network
-- [ ] Target: $12K-40K/mo MRR
+#### **Global Components**
+- [x] Centralized navigation config (`src/config/navigationItems.js`)
+- [x] Lottie animations in sidebar
+- [x] HamburgerMenu with yellow slide-over
+- [ ] Footer social links completion
 
-#### **Path C: Stay at Rho** (if promoted with meaningful equity/compensation)
-- [ ] Negotiate role expansion
-- [ ] Continue options stacking at lower intensity
-- [ ] Maintain consulting/templates as side income
-- [ ] Re-evaluate annually
+#### **Content & Pages**
+- [x] Article 1 "Why Your GTM Sucks" - LIVE
+- [ ] Article 2 "Why Your MAP Is a Mess" - Not Started
+- [ ] Works page company detail pages
+- [ ] Homepage design refresh
 
 ---
 
-### **Cross-Cutting: Golden Unknown & Cath3dral** [Opportunistic timing, not timeline-driven]
+### **Priority 3: Future Revenue Streams (Month 2+)**
 
-**Golden Unknown Brand:**
-- [ ] Logo refinement - 5-8 hours (Month 3-6, if capacity)
-- [ ] Social media assets - 8-12 hours (Month 6-9, if capacity)
-- [ ] Asset/clothing creation - 15-25 hours (Month 9-12, if revenue from other sources)
+**Contingent on initial consulting revenue established**
 
-**Cath3dral:**
-- [ ] Being and Rhyme - Q1-Q3 2026 (pending Phase 2 outcomes)
-- [ ] B-Corp incorporation(s) - Q3 2026 (pending revenue validation)
-- [ ] Closed loop system - 2026 (long-term vision)
+#### **Unity MAP Templates (Gumroad)**
+- [ ] N8N workflow templates (5-10 templates)
+- [ ] Email component library
+- [ ] Schema mapping guides
+- [ ] Target: $500-1K/month
+
+#### **Unity MAP SaaS (Q2 2026)**
+- [ ] Landing page with waitlist
+- [ ] MVP development
+- [ ] Beta program
+- [ ] Target: $1,500-5,000/mo per customer
+
+---
+
+### **Cross-Cutting: Golden Unknown & Cath3dral** [Deferred - Revenue First]
+
+**Golden Unknown Brand:** (Revisit Month 3+)
+- [ ] Logo refinement
+- [ ] Social media assets
+- [ ] Asset/clothing creation
+
+**Cath3dral:** (Revisit Q2 2026)
+- [ ] Being and Rhyme
+- [ ] B-Corp incorporation(s)
+- [ ] Closed loop system
 
 ---
 
@@ -582,202 +569,62 @@ You mentioned additional context for "2nd Brain" app as **Visual Note App**.
 
 ---
 
-## 📋 Immediate Next Steps (Updated Nov 18, 2025)
+## 📋 Immediate Next Steps (UPDATED Nov 30, 2025 - Post-Rho)
 
-### 🔴 P0 PRIORITY - THIS WEEK (WORK HOURS)
+### 🔴 P0 PRIORITY - THIS WEEK (Revenue Focus)
 
-#### 1. Rho - Lifecycle Manager Interview Analysis (9-14 hours)
-**Status:** Ready to start (awaiting documents)
-**Timeline:** 1-2 days during work hours
+#### 1. LinkedIn Outreach Campaign
+**Status:** Ready to execute
+**Timeline:** This week (Nov 30 - Dec 6)
 
-```
-NEW - Added Nov 18, 2025:
+- [ ] Post transition announcement (Day 1)
+- [ ] Share Article 1 "Why Your GTM Sucks"
+- [ ] Contact 10 warmest network connections
+- [ ] Request introductions to potential clients
+- [ ] Schedule 3-5 discovery calls
 
-Phase 1: Interview Analysis (2-3 hrs)
-- Review Lifecycle Manager interview (pending attachment)
-- Extract HubSpot pain points and technical debt issues
-- Map problems to Unity MAP capabilities
+#### 2. GTM Assessment Service Launch
+**Status:** All materials ready
+**Timeline:** Ongoing
 
-Phase 2: Conversion.AI Evaluation (2-3 hrs)
-- Research conversion.ai capabilities and features
-- Analyze integration complexity with HubSpot/Salesforce
-- Document pros/cons for Rho use case
+- [x] Service page copy ready
+- [x] Case studies documented
+- [x] Outreach templates created
+- [ ] Create simple landing page on yellowCircle
+- [ ] First paid engagement closed
 
-Phase 3: Default Evaluation (2-3 hrs)
-- Research default.com capabilities and features
-- Analyze integration complexity with existing stack
-- Document pros/cons for Rho use case
+### 🟡 P1 PRIORITY - THIS WEEK (Platform Development)
 
-Phase 4: Comparative Analysis (2-3 hrs)
-- Create comparison matrix: Unity MAP vs. Conversion.AI vs. Default
-- Analyze against sprawl, technical debt, Salesforce sync issues
-- Cost-benefit analysis (build vs. buy)
+#### 3. yellowCircle Platform Polish
+**Status:** Active development
+**Timeline:** Ongoing alongside revenue work
 
-Phase 5: Recommendation (1-2 hrs)
-- Document findings in analysis report
-- Create executive summary with recommendations
-- Prepare for stakeholder discussion
-```
+- [x] Unity Notes UI refinements complete
+- [x] Global navigation centralized
+- [ ] Works page company detail pages
+- [ ] Mobile optimizations
+- [ ] Lottie animations deployment verification
 
-### 🟡 P1 PRIORITY - THIS WEEK (FREE TIME/AFTER WORK)
+#### 4. Article Series Continuation
+**Status:** Article 1 complete, Article 2 not started
+**Due:** Jan 15, 2026
 
-#### 2. Automation Architecture Deployment (3.5 hours)
-**Status:** Ready to deploy
-**Timeline:** After work hours
+- [x] Article 1 "Why Your GTM Sucks" - LIVE
+- [ ] Article 2 "Why Your MAP Is a Mess" - Planning phase
+- [ ] Content calendar for LinkedIn posts
 
-```
-1. Deploy Notion roadmap sync (30 min)
-   - Set up NOTION_API_KEY
-   - Run sync-roadmap-to-notion.js script
-   - Configure LaunchAgent for daily 8 AM execution
+### 🟢 P2 PRIORITY - NEXT 2 WEEKS
 
-2. Set up daily feedback loop workflow (2 hrs)
-   - Import N8N workflow JSON
-   - Configure Claude API integration
-   - Test automated WIP file updates
+#### 5. Automation & Tools Setup
+- [ ] N8N workflow templates (personal use first)
+- [ ] Email automation for outreach
+- [ ] CRM setup for tracking leads
 
-3. Configure smart notifications (1 hr)
-   - Set up Slack webhook notifications
-   - Configure 4-hour check intervals
-   - Test notification system
-```
-
-#### 3. Personal - Job Interview Analysis (7-11 hours)
-**Status:** Ready to start (awaiting documents)
-**Timeline:** Free time over next few days
-
-```
-NEW - Added Nov 18, 2025:
-
-Phase 1: Document Review (2-3 hrs)
-- Review job interview notes/transcripts (pending attachment)
-- Review job descriptions (pending attachment)
-- Organize by role type, company stage, industry
-
-Phase 2: Pattern Analysis (2-3 hrs)
-- Identify common themes
-- Extract skill gaps vs. market demands
-- Analyze compensation ranges
-- Document red/green flags
-
-Phase 3: Strategic Insights (2-3 hrs)
-- Compare against Rho position
-- Identify market positioning opportunities
-- Create development roadmap
-
-Phase 4: Documentation (1-2 hrs)
-- Create analysis report and comparison matrix
-- Update resume/portfolio based on findings
-```
-
-#### 4. yellowCircle - "Own Your Story Series" Scoping (11-18 hours) [P1]
-**Created:** Nov 18, 2025 | **Due:** Dec 15, 2025 | **Status:** In Progress
-**Timeline:** Free time over next week
-
-```
-NEW - Added Nov 18, 2025:
-
-Phase 1: Series Definition (2-3 hrs)
-- Define "Own Your Story Series" brand identity
-- Establish content format and structure
-- Outline first 5-10 topics
-
-Phase 2: Case Study Inventory (1-2 hrs)
-- Review existing case studies in repository
-- Catalog documented expertise
-- Map case studies to topics
-
-Phase 3: First Piece - "Why Your GTM Sucks" (5-8 hrs)
-- Research common GTM failures
-- Draft content with case study examples
-- Create supporting visuals
-- Working title: "[H3] Own Your Story: [H1] Why Your GTM Sucks"
-
-Phase 4: Additional Topics Scoping (2-3 hrs)
-- "Why Your MAP Is a Mess"
-- "Why Your Sales and Marketing Are Divorced"
-- "Why Your Data Is Lying to You"
-- "Why Your Content Strategy Is Backwards"
-
-Phase 5: Integration Planning (1-2 hrs)
-- Plan Stories > Projects > Thoughts navigation
-- Design series landing page
-```
-
-### ⚠️ DEFERRED: Stealth Mode Phase 1 Setup (from previous planning)
-
-The following items from previous planning are deferred pending completion of P0 Rho analysis:
-
-```
-1. Assess Skydog trajectory (2 hrs) - DEFERRED
-2. Document baseline (3 hrs) - DEFERRED
-3. LinkedIn post (2 hrs) - CAN PROCEED (aligns with "Own Your Story" series)
-4. Personal N8N setup (3 hrs) - DEFERRED (will do during automation deployment)
-```
-
-### ⚠️ CRITICAL: Review Strategic Documents First
-**Before ANY implementation work, review:**
-1. COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS.md - Understand full project landscape
-2. RHO_TOTAL_ASSESSMENT_AND_MVP_SOLUTION.md - Unity MAP technical architecture
-3. STEALTH_MODE_STRATEGY_CRITICAL.md - Legal/ethical framework and phasing
-
-### Priority 2: Options Stacking (Next 4 Weeks) - 10 hrs/week
-```
-Based on 3 Buckets framework:
-- Bucket 2 HIGH ROI: 13 hrs/week (personal brand 5, skills 3, consulting 5)
-- Focus on building OPTIONS not all-in bets
-
-Week 1-4 Activities:
-1. Personal Brand (5 hrs/week):
-   - LinkedIn posts (2-3 per week on Marketing Ops challenges)
-   - Case study draft (Rho organizational assessment - anonymized)
-   - Personal website refresh (showcase thought leadership)
-
-2. Skill Development (3 hrs/week):
-   - N8N workflow templates (generic, reusable)
-   - React email component experimentation
-   - AI orchestration patterns (Claude MCP, OpenAI Assistants)
-
-3. Consulting Pipeline (5 hrs/week):
-   - Identify 2-3 potential consulting targets
-   - Draft service offering (Marketing Ops audits)
-   - Pricing model research ($3K-8K audit packages)
-```
-
-### Priority 3: Decision Point - Unity Notes OR Rho Integration
-```
-From COMPREHENSIVE_PROJECT_PORTFOLIO_ANALYSIS:
-
-**Decision Required:** Choose ONE for next phase:
-
-Option A: Unity Notes Foundation Layer (220-260 hours)
-  - Build personal 2nd Brain app
-  - Clean room implementation (zero Rho IP)
-  - Productizable for other clients
-  - Aligns with stealth mode strategy
-
-Option B: Rho Integration Components (30-51 hours remaining)
-  - Finish Rho documentation organization
-  - Extract generic patterns for Unity MAP
-  - Higher short-term Rho value
-  - Risk: May use Rho-specific IP
-
-**Recommendation based on stealth mode:** Option A (Unity Notes Foundation)
-- Clean hands approach
-- Builds personal IP
-- 15-20 hrs/week sustainable pace = 11-17 weeks
-- Allows monitoring Skydog outcomes before committing to Rho work
-```
-
-### Priority 4: yellowCircle Homepage (Deferred to Month 2-3) [P2]
-**Created:** Nov 8, 2025 | **Due:** Jan 1, 2026 | **Status:** Not Started
-```
-Originally Priority 1, now deferred based on stealth mode time allocation:
-- 12-17 hours estimated
-- Non-revenue generating
-- Can wait until after Phase 1 setup complete
-- Will revisit after Skydog outcomes clearer (Month 2-3)
-```
+#### 6. yellowCircle Homepage Refresh
+**Due:** Jan 1, 2026
+- [ ] New Gemini-generated backgrounds (in progress)
+- [ ] Design refresh with new H1 styling
+- [ ] Mobile experience improvements
 
 ---
 
@@ -1011,6 +858,7 @@ h1.your-circle {
 
 ---
 
-**Next Update:** November 15, 2025
+**Last Updated:** November 30, 2025
+**Next Review:** December 7, 2025 (Week 2 of 60-Day Plan)
 **Owner:** Christopher Cooper
-**Version:** 1.0
+**Version:** 2.0 (Post-Rho Pivot)
