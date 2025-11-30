@@ -9,9 +9,9 @@
  */
 
 // Lottie animation data for sidebar icons
-import storiesAnimation from '../../design-assets/scroll-with-quill.json';
-import labsAnimation from '../../design-assets/beaker.json';
-import aboutAnimation from '../../design-assets/wave.json';
+import storiesAnimation from '../assets/lottie/scroll-with-quill.json';
+import labsAnimation from '../assets/lottie/beaker.json';
+import aboutAnimation from '../assets/lottie/wave.json';
 
 /**
  * Standard navigation items for all pages

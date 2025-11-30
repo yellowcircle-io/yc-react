@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Lottie from 'lottie-react';
 import { useLayout } from '../../contexts/LayoutContext';
-import settingsAnimation from '../../../design-assets/settings-gear.json';
+import settingsAnimation from '../../assets/lottie/settings-gear.json';
 
 /**
  * UnityCircleNav - Custom CircleNav for Unity Notes
