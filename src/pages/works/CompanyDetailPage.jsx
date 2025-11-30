@@ -11,132 +11,144 @@ const COMPANY_DATA = {
     name: 'LiveIntent',
     category: 'Ad Tech',
     year: '2019-2023',
-    role: 'VP of Design',
-    description: 'Led design for identity resolution and programmatic advertising platform serving 200M+ users.',
+    role: 'Marketing Operations Manager',
+    description: 'Led marketing operations for identity resolution and programmatic advertising platform serving publishers and advertisers globally.',
     highlights: [
-      'Built design team from 2 to 8 designers',
-      'Launched new brand identity and design system',
-      'Redesigned core platform UX increasing adoption 40%'
+      'Built and scaled email marketing infrastructure',
+      'Implemented HubSpot-Salesforce integration',
+      'Developed attribution and reporting frameworks',
+      'Managed marketing automation workflows'
     ]
   },
   tunecore: {
     name: 'TuneCore',
     category: 'Music',
     year: '2018-2019',
-    role: 'Design Lead',
-    description: 'Designed music distribution platform used by independent artists worldwide.',
+    role: 'Digital Marketing Lead',
+    description: 'Drove digital marketing strategy for the leading music distribution platform serving independent artists worldwide.',
     highlights: [
-      'Streamlined artist onboarding flow',
-      'Designed royalty reporting dashboard',
-      'Created artist analytics tools'
+      'Scaled email marketing to 1M+ subscribers',
+      'Optimized artist onboarding funnels',
+      'Built lifecycle marketing programs',
+      'Increased artist activation rates 35%'
     ]
   },
   thimble: {
     name: 'Thimble',
     category: 'Insurance',
     year: '2020',
-    role: 'Design Consultant',
-    description: 'Designed on-demand insurance platform for small businesses and gig workers.',
+    role: 'Growth Marketing Consultant',
+    description: 'Consulted on growth marketing for on-demand insurance platform targeting small businesses and gig workers.',
     highlights: [
-      'Simplified quote-to-bind flow',
-      'Mobile-first policy management',
-      'Claims tracking dashboard'
+      'Developed acquisition strategy',
+      'Optimized quote-to-bind conversion',
+      'Built referral marketing program',
+      'Improved customer retention flows'
     ]
   },
   yieldstreet: {
     name: 'YieldStreet',
     category: 'FinTech',
     year: '2021',
-    role: 'Design Consultant',
-    description: 'Designed alternative investment platform for accredited investors.',
+    role: 'Marketing Automation Consultant',
+    description: 'Designed and implemented marketing automation for alternative investment platform serving accredited investors.',
     highlights: [
-      'Investment discovery experience',
-      'Portfolio visualization tools',
-      'Due diligence documentation flow'
+      'Built investor nurture sequences',
+      'Developed investment alerts system',
+      'Created portfolio update campaigns',
+      'Implemented compliance-ready email flows'
     ]
   },
   zerogrocery: {
     name: 'Zero Grocery',
     category: 'E-Commerce',
     year: '2020',
-    role: 'Design Lead',
-    description: 'Designed zero-waste grocery delivery service focused on sustainability.',
+    role: 'Email Marketing Lead',
+    description: 'Led email marketing for zero-waste grocery delivery startup focused on sustainability.',
     highlights: [
-      'Subscription management system',
-      'Environmental impact tracking',
-      'Reusable container logistics'
+      'Built subscription lifecycle program',
+      'Developed environmental impact reporting',
+      'Created re-engagement campaigns',
+      'Designed delivery reminder sequences'
     ]
   },
   doordash: {
     name: 'DoorDash',
     category: 'Delivery',
     year: '2022',
-    role: 'Senior Designer',
-    description: 'Contributed to merchant-facing tools and restaurant management platform.',
+    role: 'Marketing Operations Consultant',
+    description: 'Consulted on merchant-facing marketing operations and restaurant growth programs.',
     highlights: [
-      'Menu management optimization',
-      'Order flow improvements',
-      'Analytics dashboard redesign'
+      'Optimized merchant onboarding flows',
+      'Built restaurant partner communications',
+      'Developed performance reporting',
+      'Created merchant success campaigns'
     ]
   },
   virtana: {
     name: 'Virtana',
     category: 'Enterprise',
     year: '2023',
-    role: 'Design Consultant',
-    description: 'Designed AIOps platform for hybrid cloud infrastructure management.',
+    role: 'Marketing Ops Consultant',
+    description: 'Advised on marketing operations for AIOps platform serving enterprise infrastructure teams.',
     highlights: [
-      'Unified monitoring dashboard',
-      'Anomaly detection visualization',
-      'Capacity planning tools'
+      'Assessed tech stack efficiency',
+      'Designed lead scoring models',
+      'Built account-based marketing flows',
+      'Optimized demo request process'
     ]
   },
   reddit: {
     name: 'Reddit',
     category: 'Social',
     year: '2024',
-    role: 'Senior Designer',
-    description: 'Designed features for community engagement and moderation tools.',
+    role: 'Marketing Systems Consultant',
+    description: 'Consulted on marketing systems architecture for community and advertiser engagement programs.',
     highlights: [
-      'Community growth analytics',
-      'Moderation workflow optimization',
-      'Engagement insights dashboard'
+      'Audited marketing tech stack',
+      'Designed advertiser nurture journeys',
+      'Built community growth campaigns',
+      'Optimized self-serve ad platform flows'
     ]
   },
   'estee-lauder': {
     name: 'Estee Lauder',
     category: 'Beauty',
     year: '2024',
-    role: 'Design Lead',
-    description: 'Led digital experience design for luxury beauty brands.',
+    role: 'Email Development Consultant',
+    description: 'Developed email templates and marketing automation for luxury beauty brand portfolio.',
     highlights: [
-      'Personalization engine UX',
-      'Virtual try-on experience',
-      'Loyalty program redesign'
+      'Created responsive email templates',
+      'Built personalization frameworks',
+      'Developed loyalty program communications',
+      'Designed product launch sequences'
     ]
   },
   auditboard: {
     name: 'AuditBoard',
     category: 'Enterprise',
     year: '2024',
-    role: 'Design Consultant',
-    description: 'Designed audit and risk management platform for enterprise teams.',
+    role: 'GTM Systems Consultant',
+    description: 'Advised on go-to-market systems for audit and risk management SaaS platform.',
     highlights: [
-      'Workflow automation tools',
-      'Risk assessment visualization',
-      'Compliance tracking dashboard'
+      'Audited HubSpot-Salesforce integration',
+      'Identified technical debt ($2M+ savings)',
+      'Designed workflow optimization plan',
+      'Created attribution improvement roadmap'
     ]
   },
   rho: {
     name: 'Rho',
     category: 'FinTech',
-    year: '2024-Present',
-    role: 'Head of Design',
-    description: 'Leading design for business banking and spend management platform.',
+    year: '2024-2025',
+    role: 'Senior Marketing Operations Manager',
+    description: 'Led marketing operations for B2B fintech platform offering business banking and spend management solutions.',
     highlights: [
-      'Corporate card experience',
-      'Expense management workflow',
-      'Treasury and cash management'
+      'Managed HubSpot-Salesforce integration',
+      'Identified $2.5M+ annual technical debt',
+      'Built attribution and reporting systems',
+      'Optimized lifecycle marketing workflows',
+      'Led events and webinar marketing'
     ]
   }
 };

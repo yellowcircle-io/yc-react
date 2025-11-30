@@ -88,27 +88,44 @@ function ContactModal() {
 
     setIsSubmitting(true);
 
-    // Simulate form submission (replace with actual API call)
     try {
-      // For now, just log and show success
-      console.log('Contact form submitted:', { email, name, phone, message });
+      // Send form data to Web3Forms (free form submission service)
+      // Get your access key at https://web3forms.com/
+      const WEB3FORMS_ACCESS_KEY = 'YOUR_ACCESS_KEY_HERE'; // Replace with actual key
 
-      // TODO: Replace with actual form submission
-      // await fetch('/api/contact', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, name, phone, message })
-      // });
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          from_name: name || 'Website Visitor',
+          email: email,
+          phone: phone || 'Not provided',
+          message: message || 'No message provided',
+          subject: `New Contact from yellowCircle: ${name || email}`,
+          // Hidden fields for tracking
+          source: 'yellowcircle.io',
+          page: window.location.pathname
+        })
+      });
 
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setSubmitted(true);
+      const result = await response.json();
 
-      // Close modal after showing success
-      setTimeout(() => {
-        closeContactModal();
-      }, 2000);
+      if (result.success) {
+        setSubmitted(true);
+        // Close modal after showing success
+        setTimeout(() => {
+          closeContactModal();
+        }, 2000);
+      } else {
+        throw new Error(result.message || 'Submission failed');
+      }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      console.error('Contact form error:', err);
+      setError('Something went wrong. Please try again or email us directly.');
     } finally {
       setIsSubmitting(false);
     }
