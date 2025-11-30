@@ -42,7 +42,8 @@ export const navigationItems = [
     label: "LABS",
     itemKey: "labs",
     subItems: [
-      { label: "UK-Memories", key: "uk-memories" },
+      { label: "Unity Notes", key: "unity-notes" },
+      { label: "Outreach", key: "outreach" },
       { label: "Home-17", key: "home-17" },
       { label: "Visual Noteboard", key: "visual-noteboard" },
       { label: "Component Library", key: "component-library" }

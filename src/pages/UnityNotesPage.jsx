@@ -15,6 +15,7 @@ import Layout from '../components/global/Layout';
 import { useLayout } from '../contexts/LayoutContext';
 import { navigationItems } from '../config/navigationItems';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
+import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
 import ShareModal from '../components/travel/ShareModal';
 import LightboxModal from '../components/travel/LightboxModal';
@@ -26,9 +27,19 @@ import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
+  textNode: TextNoteNode,
 };
 
 const STORAGE_KEY = 'unity-notes-data';
+
+// Card type configuration (same as Unity Notes Plus)
+const CARD_TYPES = {
+  photo: { label: 'Photo', icon: '🖼️', color: '#EECF00' },
+  note: { label: 'Note', icon: '📝', color: '#3B82F6' },
+  link: { label: 'Link', icon: '🔗', color: '#8B5CF6' },
+  ai: { label: 'AI Chat', icon: '🤖', color: '#10B981' },
+  video: { label: 'Video', icon: '📹', color: '#EF4444' },
+};
 
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle }) => {
   const { fitView, zoomIn, zoomOut, getZoom } = useReactFlow();
@@ -142,6 +153,113 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     console.log('✅ Note deleted successfully');
   }, [editingNodeId, setNodes, setEdges]);
 
+  // Handle node updates (for text nodes)
+  const handleNodeUpdate = useCallback((nodeId, updates) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                ...updates,
+                updatedAt: Date.now(),
+              }
+            }
+          : node
+      )
+    );
+  }, [setNodes]);
+
+  // Add new card (non-photo types)
+  const handleAddCard = useCallback((type) => {
+    const timestamp = Date.now();
+    const totalNodes = nodes.length;
+    const gridX = totalNodes % 8;
+    const gridY = Math.floor(totalNodes / 8);
+
+    // Photo type opens the upload modal
+    if (type === 'photo') {
+      setIsUploadModalOpen(true);
+      return;
+    }
+
+    let newNode;
+
+    if (type === 'note') {
+      newNode = {
+        id: `note-${timestamp}`,
+        type: 'textNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: 'New Note',
+          content: '',
+          color: CARD_TYPES.note.color,
+          createdAt: timestamp,
+          onUpdate: handleNodeUpdate,
+        }
+      };
+    } else if (type === 'link') {
+      newNode = {
+        id: `link-${timestamp}`,
+        type: 'textNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: 'New Link',
+          content: 'Link cards coming soon...',
+          color: CARD_TYPES.link.color,
+          createdAt: timestamp,
+          onUpdate: handleNodeUpdate,
+        }
+      };
+    } else if (type === 'ai') {
+      newNode = {
+        id: `ai-${timestamp}`,
+        type: 'textNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: 'AI Chat',
+          content: 'AI chat integration coming soon...',
+          color: CARD_TYPES.ai.color,
+          createdAt: timestamp,
+          onUpdate: handleNodeUpdate,
+        }
+      };
+    } else if (type === 'video') {
+      newNode = {
+        id: `video-${timestamp}`,
+        type: 'textNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: 'New Video',
+          content: 'Video embeds coming soon...',
+          color: CARD_TYPES.video.color,
+          createdAt: timestamp,
+          onUpdate: handleNodeUpdate,
+        }
+      };
+    }
+
+    if (newNode) {
+      setNodes((nds) => [...nds, newNode]);
+      setTimeout(() => {
+        fitView({ duration: 400, padding: 0.2 });
+      }, 100);
+    }
+  }, [nodes.length, handleNodeUpdate, setNodes, fitView, setIsUploadModalOpen]);
+
   // Ensure all nodes have callbacks
   useEffect(() => {
     if (!isInitialized) return;
@@ -153,11 +271,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           ...node.data,
           onResize: handlePhotoResize,
           onLightbox: handleLightbox,
-          onEdit: handleEdit
+          onEdit: handleEdit,
+          onUpdate: handleNodeUpdate,
         }
       }))
     );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, setNodes]);
 
   // Save to localStorage
   useEffect(() => {
@@ -742,11 +861,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       )}
 
-      {/* Upload Modal */}
+      {/* Upload Modal - With card types */}
       <PhotoUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handlePhotoUpload}
+        cardTypes={CARD_TYPES}
+        onAddCard={handleAddCard}
       />
 
       {/* Share Modal */}
