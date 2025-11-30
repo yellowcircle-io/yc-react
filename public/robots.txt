@@ -1,0 +1,13 @@
+# robots.txt for yellowCircle
+# https://yellowcircle.io
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://yellowcircle.io/sitemap.xml
+
+# Disallow admin/internal paths
+Disallow: /directory
+Disallow: /experiments/
+Disallow: /home-17
