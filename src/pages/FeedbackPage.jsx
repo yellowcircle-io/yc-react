@@ -58,7 +58,6 @@ function FeedbackPage() {
         });
       }
 
-      console.log('Feedback submitted:', formData);
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       setSubmitted(true);

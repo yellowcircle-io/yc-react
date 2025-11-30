@@ -1,95 +1,133 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LayoutProvider } from './contexts/LayoutContext';
+
+// Eagerly loaded pages (critical for initial render)
 import HomePage from './pages/HomePage';
-import Home17Page from './pages/Home17Page';
-import ExperimentsPage from './pages/ExperimentsPage';
-import ThoughtsPage from './pages/ThoughtsPage';
 import AboutPage from './pages/AboutPage';
-import WorksPage from './pages/WorksPage';
-import HandsPage from './pages/HandsPage';
-import TimeCapsulePage from './pages/TimeCapsulePage';
-import CapsuleViewPage from './pages/CapsuleViewPage';
-import FeedbackPage from './pages/FeedbackPage';
-import SitemapPage from './pages/SitemapPage';
-import DirectoryPage from './pages/DirectoryPage';
-import UnityNotesPage from './pages/UnityNotesPage';
 import ServicesPage from './pages/ServicesPage';
-import CompanyDetailPage from './pages/works/CompanyDetailPage';
+import WorksPage from './pages/WorksPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// Experiment sub-routes
-import GoldenUnknownPage from './pages/experiments/GoldenUnknownPage';
-import BeingRhymePage from './pages/experiments/BeingRhymePage';
-import Cath3dralPage from './pages/experiments/Cath3dralPage';
-import ComponentLibraryPage from './pages/experiments/ComponentLibraryPage';
-import OutreachGeneratorPage from './pages/experiments/OutreachGeneratorPage';
-import OutreachBusinessPage from './pages/experiments/OutreachBusinessPage';
+// Lazy loaded pages (code-split for smaller initial bundle)
+const Home17Page = lazy(() => import('./pages/Home17Page'));
+const ExperimentsPage = lazy(() => import('./pages/ExperimentsPage'));
+const ThoughtsPage = lazy(() => import('./pages/ThoughtsPage'));
+const HandsPage = lazy(() => import('./pages/HandsPage'));
+const AssessmentPage = lazy(() => import('./pages/AssessmentPage'));
+const CompanyDetailPage = lazy(() => import('./pages/works/CompanyDetailPage'));
+const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
+const CapsuleViewPage = lazy(() => import('./pages/CapsuleViewPage'));
+const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
+const SitemapPage = lazy(() => import('./pages/SitemapPage'));
+const DirectoryPage = lazy(() => import('./pages/DirectoryPage'));
+const UnityNotesPage = lazy(() => import('./pages/UnityNotesPage'));
 
-// Thoughts sub-routes
-import BlogPage from './pages/thoughts/BlogPage';
+// Experiment sub-routes (lazy loaded)
+const GoldenUnknownPage = lazy(() => import('./pages/experiments/GoldenUnknownPage'));
+const BeingRhymePage = lazy(() => import('./pages/experiments/BeingRhymePage'));
+const Cath3dralPage = lazy(() => import('./pages/experiments/Cath3dralPage'));
+const ComponentLibraryPage = lazy(() => import('./pages/experiments/ComponentLibraryPage'));
+const OutreachGeneratorPage = lazy(() => import('./pages/experiments/OutreachGeneratorPage'));
+const OutreachBusinessPage = lazy(() => import('./pages/experiments/OutreachBusinessPage'));
 
-// Own Your Story - Thought Leadership Series
-import OwnYourStoryArticle1Page from './pages/OwnYourStoryArticle1Page';
+// Thoughts sub-routes (lazy loaded)
+const BlogPage = lazy(() => import('./pages/thoughts/BlogPage'));
+
+// Own Your Story - Thought Leadership Series (lazy loaded - large component)
+const OwnYourStoryArticle1Page = lazy(() => import('./pages/OwnYourStoryArticle1Page'));
+
+// Loading spinner for lazy loaded components
+const PageLoader = () => (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    zIndex: 9999
+  }}>
+    <div style={{
+      width: '50px',
+      height: '50px',
+      borderRadius: '50%',
+      backgroundColor: '#fbbf24',
+      animation: 'pulse 1s ease-in-out infinite'
+    }}></div>
+    <style>{`
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+      }
+    `}</style>
+  </div>
+);
 
 function RouterApp() {
   return (
     <LayoutProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/home-17" element={<Home17Page />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/home-17" element={<Home17Page />} />
 
-        {/* Main Pages */}
-        <Route path="/experiments" element={<ExperimentsPage />} />
-        <Route path="/thoughts" element={<ThoughtsPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/works" element={<WorksPage />} />
-        <Route path="/hands" element={<HandsPage />} />
-        <Route path="/services" element={<ServicesPage />} />
-        
-        {/* Experiment Sub-routes */}
-        <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />
-        <Route path="/experiments/being-rhyme" element={<BeingRhymePage />} />
-        <Route path="/experiments/cath3dral" element={<Cath3dralPage />} />
-        <Route path="/experiments/component-library" element={<ComponentLibraryPage />} />
-        <Route path="/experiments/outreach-generator" element={<OutreachGeneratorPage />} />
-        <Route path="/outreach" element={<OutreachBusinessPage />} />
-        
-        {/* Thoughts Sub-routes */}
-        <Route path="/thoughts/blog" element={<BlogPage />} />
+            {/* Main Pages */}
+            <Route path="/experiments" element={<ExperimentsPage />} />
+            <Route path="/thoughts" element={<ThoughtsPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/works" element={<WorksPage />} />
+            <Route path="/hands" element={<HandsPage />} />
+            <Route path="/services" element={<ServicesPage />} />
+            <Route path="/assessment" element={<AssessmentPage />} />
 
-        {/* Own Your Story - Thought Leadership Series */}
-        <Route path="/thoughts/why-your-gtm-sucks" element={<OwnYourStoryArticle1Page />} />
+            {/* Experiment Sub-routes */}
+            <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />
+            <Route path="/experiments/being-rhyme" element={<BeingRhymePage />} />
+            <Route path="/experiments/cath3dral" element={<Cath3dralPage />} />
+            <Route path="/experiments/component-library" element={<ComponentLibraryPage />} />
+            <Route path="/experiments/outreach-generator" element={<OutreachGeneratorPage />} />
+            <Route path="/outreach" element={<OutreachBusinessPage />} />
 
-        {/* Travel Time Capsule */}
-        <Route path="/uk-memories" element={<TimeCapsulePage />} />
-        <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
+            {/* Thoughts Sub-routes */}
+            <Route path="/thoughts/blog" element={<BlogPage />} />
 
-        {/* Feedback */}
-        <Route path="/feedback" element={<FeedbackPage />} />
+            {/* Own Your Story - Thought Leadership Series */}
+            <Route path="/thoughts/why-your-gtm-sucks" element={<OwnYourStoryArticle1Page />} />
 
-        {/* Sitemap */}
-        <Route path="/sitemap" element={<SitemapPage />} />
+            {/* Travel Time Capsule */}
+            <Route path="/uk-memories" element={<TimeCapsulePage />} />
+            <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
 
-        {/* Directory - Navigation & Testing */}
-        <Route path="/directory" element={<DirectoryPage />} />
+            {/* Feedback */}
+            <Route path="/feedback" element={<FeedbackPage />} />
 
-        {/* Unity Notes - Second Brain App */}
-        <Route path="/unity-notes" element={<UnityNotesPage />} />
+            {/* Sitemap */}
+            <Route path="/sitemap" element={<SitemapPage />} />
 
-        {/* Placeholder routes for future sub-pages */}
-        <Route path="/about/timeline" element={<AboutPage />} />
-        <Route path="/about/services" element={<AboutPage />} />
-        <Route path="/about/contact" element={<AboutPage />} />
+            {/* Directory - Navigation & Testing */}
+            <Route path="/directory" element={<DirectoryPage />} />
 
-        {/* Works Company Detail Pages */}
-        <Route path="/works/:companyId" element={<CompanyDetailPage />} />
+            {/* Unity Notes - Second Brain App */}
+            <Route path="/unity-notes" element={<UnityNotesPage />} />
 
-        {/* 404 - Catch all unmatched routes */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Router>
+            {/* Placeholder routes for future sub-pages */}
+            <Route path="/about/timeline" element={<AboutPage />} />
+            <Route path="/about/services" element={<AboutPage />} />
+            <Route path="/about/contact" element={<AboutPage />} />
+
+            {/* Works Company Detail Pages */}
+            <Route path="/works/:companyId" element={<CompanyDetailPage />} />
+
+            {/* 404 - Catch all unmatched routes */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </Router>
     </LayoutProvider>
   );
 }
