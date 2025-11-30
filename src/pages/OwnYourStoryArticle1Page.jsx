@@ -189,7 +189,6 @@ function OwnYourStoryArticle1Page() {
 
   // Handle email submission
   const handleEmailSubmit = (data) => {
-    console.log('Email submitted:', data);
     // TODO: Send to backend API or email service
   };
 

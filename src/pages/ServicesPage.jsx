@@ -358,6 +358,64 @@ function ServicesPage() {
             ))}
           </div>
 
+          {/* Assessment CTA */}
+          <div style={{
+            backgroundColor: COLORS.yellow,
+            borderRadius: '8px',
+            padding: '24px 30px',
+            animation: 'fadeInUp 0.6s ease-in-out 1s both',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: 'black',
+                margin: '0 0 4px 0'
+              }}>
+                Not sure where to start?
+              </h3>
+              <p style={{
+                fontSize: '13px',
+                color: 'rgba(0,0,0,0.7)',
+                margin: 0
+              }}>
+                Take our 2-minute GTM Health Assessment
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/assessment')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: 'black',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'black';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              START ASSESSMENT
+            </button>
+          </div>
+
           {/* Bottom CTA */}
           <div style={{
             backgroundColor: 'rgba(0,0,0,0.9)',
@@ -365,7 +423,7 @@ function ServicesPage() {
             borderRadius: '8px',
             padding: '30px',
             textAlign: 'center',
-            animation: 'fadeInUp 0.6s ease-in-out 1s both',
+            animation: 'fadeInUp 0.6s ease-in-out 1.1s both',
             marginBottom: '40px'
           }}>
             <h2 style={{
@@ -375,7 +433,7 @@ function ServicesPage() {
               margin: '0 0 10px 0',
               letterSpacing: '0.05em'
             }}>
-              Not sure which service you need?
+              Ready to talk?
             </h2>
             <p style={{
               fontSize: '14px',

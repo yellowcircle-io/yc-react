@@ -601,7 +601,6 @@ function OutreachBusinessPage() {
 
               if (hasDefaultKeys && savedHasEmptyKeys) {
                 // Clear old settings and use defaults
-                console.log('Clearing old empty settings, using DEFAULT_KEYS');
                 localStorage.removeItem('outreach_business_settings_v4');
                 return; // Keep using initial state with DEFAULT_KEYS
               }

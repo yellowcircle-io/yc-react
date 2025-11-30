@@ -70,7 +70,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
         const { nodes: savedNodes, edges: savedEdges } = JSON.parse(savedData);
-        console.log('📥 Loaded:', savedNodes?.length || 0, 'notes');
         if (savedNodes && savedNodes.length > 0) {
           setNodes(savedNodes);
         }
@@ -104,14 +103,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Handle lightbox
   const handleLightbox = useCallback((photoData) => {
-    console.log('🖼️ Opening lightbox for note:', photoData);
     setLightboxPhoto(photoData);
     setShowLightbox(true);
   }, []);
 
   // Handle edit
   const handleEdit = useCallback((nodeId, photoData) => {
-    console.log('✏️ Editing note:', nodeId, photoData);
     setEditingNodeId(nodeId);
     setEditingMemory(photoData);
     setShowEditModal(true);
@@ -119,7 +116,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Handle edit save
   const handleEditSave = useCallback((updatedData) => {
-    console.log('💾 Saving edited note:', editingNodeId, updatedData);
 
     setNodes((nds) =>
       nds.map((node) => {
@@ -138,31 +134,26 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       })
     );
 
-    console.log('✅ Note updated successfully');
   }, [editingNodeId, setNodes]);
 
   // Handle delete memory (from edit modal)
   const handleDeleteMemory = useCallback(() => {
-    console.log('🗑️ Deleting note:', editingNodeId);
 
     setNodes((nds) => nds.filter((node) => node.id !== editingNodeId));
     setEdges((eds) => eds.filter((edge) =>
       edge.source !== editingNodeId && edge.target !== editingNodeId
     ));
 
-    console.log('✅ Note deleted successfully');
   }, [editingNodeId, setNodes, setEdges]);
 
   // Handle direct delete from node (for text/non-photo nodes)
   const handleDeleteNode = useCallback((nodeId) => {
-    console.log('🗑️ Direct deleting node:', nodeId);
 
     if (confirm('⚠️ Delete this note?\n\nThis cannot be undone.')) {
       setNodes((nds) => nds.filter((node) => node.id !== nodeId));
       setEdges((eds) => eds.filter((edge) =>
         edge.source !== nodeId && edge.target !== nodeId
       ));
-      console.log('✅ Node deleted successfully');
     }
   }, [setNodes, setEdges]);
 
@@ -301,7 +292,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     if (!isInitialized) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
-      console.log('💾 Saved to localStorage:', nodes.length, 'notes');
     } catch (error) {
       console.error('❌ localStorage save error:', error);
       alert('⚠️ Unable to save locally. Your notes will be preserved in the current session.\n\nUse EXPORT to save as JSON file, or SHARE to save to cloud.');
@@ -438,7 +428,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    console.log('📤 Exported', nodes.length, 'notes');
   };
 
   // Import layout from JSON file
@@ -469,7 +458,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
         setNodes(importData.nodes);
         setEdges(importData.edges || []);
-        console.log('📥 Imported', importData.nodes.length, 'notes');
         alert(`✅ Successfully imported ${importData.nodes.length} ${importData.nodes.length === 1 ? 'note' : 'notes'}!`);
       } catch (error) {
         console.error('Import failed:', error);
@@ -486,7 +474,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       return;
     }
 
-    console.log('🔄 Starting save process...');
 
     try {
       const serializableNodes = nodes.map(node => ({
@@ -564,7 +551,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   };
 
   const handlePhotoUpload = async (filesOrUrls, metadata, uploadType) => {
-    console.log('🔄 Upload started:', { uploadType, files: filesOrUrls, metadata });
 
     try {
       let imageUrls = [];
@@ -649,7 +635,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setNodes([]);
       setEdges([]);
       localStorage.removeItem(STORAGE_KEY);
-      console.log('🗑️ All notes cleared');
     }
   };
 

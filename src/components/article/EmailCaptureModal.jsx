@@ -45,7 +45,6 @@ function EmailCaptureModal({ isOpen, onClose, type = 'consultation', onSubmit })
       // TODO: Replace with actual API call
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
 
-      console.log('Email captured:', { email, name, type });
 
       if (onSubmit) {
         onSubmit({ email, name, type });
