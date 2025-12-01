@@ -92,7 +92,7 @@ function AboutPage() {
               padding: '2px 6px',
               animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
             }}>
-              Marketing Operations Studio
+              Creative GTM Operations Studio
             </p>
           </div>
 
@@ -105,10 +105,10 @@ function AboutPage() {
             display: 'inline-block',
             padding: '4px 8px',
             animation: 'fadeInUp 0.6s ease-in-out 0.6s both',
-            maxWidth: '500px',
+            maxWidth: '520px',
             lineHeight: '1.6'
           }}>
-            yellowCircle helps growth-stage companies fix their go-to-market infrastructure. We specialize in marketing operations, data architecture, and the organizational alignment that makes it all work.
+            Where operational rigor meets creative execution. yellowCircle bridges the gap between beautiful brand experiences and the infrastructure that scales them—helping growth-stage companies build GTM systems that actually work.
           </p>
 
           {/* What we do */}
@@ -132,23 +132,41 @@ function AboutPage() {
               gap: '8px'
             }}>
               {[
-                'GTM Audits & Technical Debt Quantification',
-                'HubSpot, Salesforce & Marketing Automation',
-                'Attribution Systems & Data Architecture',
-                'Email Development & Creative Operations'
+                { text: 'GTM Audits & Technical Debt', tag: 'Strategy' },
+                { text: 'Marketing Systems & Automation', tag: 'Operations' },
+                { text: 'Attribution & Data Architecture', tag: 'Infrastructure' },
+                { text: 'Email Design & Brand Templates', tag: 'Creative' },
+                { text: 'Campaign Development & Launch', tag: 'Execution' }
               ].map((item, index) => (
-                <p key={index} style={{
-                  ...TYPOGRAPHY.body,
-                  fontSize: '14px',
-                  margin: 0,
-                  backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                  ...EFFECTS.blur,
-                  display: 'inline-block',
-                  padding: '6px 12px',
-                  width: 'fit-content'
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
                 }}>
-                  {item}
-                </p>
+                  <p style={{
+                    ...TYPOGRAPHY.body,
+                    fontSize: '14px',
+                    margin: 0,
+                    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                    ...EFFECTS.blur,
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    width: 'fit-content'
+                  }}>
+                    {item.text}
+                  </p>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    letterSpacing: '0.1em',
+                    color: COLORS.yellow,
+                    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                    padding: '3px 8px',
+                    borderRadius: '10px'
+                  }}>
+                    {item.tag}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
