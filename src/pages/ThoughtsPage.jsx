@@ -12,7 +12,7 @@ const ARTICLES = [
     title: 'Why Your GTM Sucks',
     subtitle: 'The Human Cost of Operations Theater',
     category: 'Own Your Story',
-    readTime: '78 min read',
+    readTime: '12 min read',
     date: 'November 2025',
     description: 'A confrontational look at why your go-to-market operations are failing your team—and how to fix it.',
     featured: true

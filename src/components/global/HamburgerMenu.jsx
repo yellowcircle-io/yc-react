@@ -47,8 +47,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
       subItems: [
         { label: 'GTM HEALTH ASSESSMENT', route: '/assessment' },
         { label: 'OUTREACH GENERATOR', route: '/experiments/outreach-generator' },
-        { label: 'UNITY NOTES', route: '/unity-notes' },
-        { label: 'OUTREACH', route: '/outreach' }
+        { label: 'UNITY NOTES', route: '/unity-notes' }
       ]
     },
     WORKS: { hasSubItems: false, isButton: true },

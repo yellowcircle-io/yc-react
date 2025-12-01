@@ -42,8 +42,7 @@ export const navigationItems = [
     subItems: [
       // Works section
       { label: "WORKS", key: "works", route: "/works", isSectionHeader: true },
-      { label: "RHO", key: "rho", route: "/works/rho" },
-      { label: "AUDITBOARD", key: "auditboard", route: "/works/auditboard" },
+      { label: "RHO TECHNOLOGIES", key: "rho", route: "/works/rho" },
       { label: "REDDIT", key: "reddit", route: "/works/reddit" },
       { label: "ESTÉE LAUDER", key: "estee-lauder", route: "/works/estee-lauder" },
       // Divider + Ongoing Stories section
@@ -61,8 +60,8 @@ export const navigationItems = [
     subItems: [
       { label: "GTM HEALTH ASSESSMENT", key: "assessment", route: "/assessment" },
       { label: "OUTREACH GENERATOR", key: "outreach-generator", route: "/experiments/outreach-generator" },
-      { label: "UNITY NOTES", key: "unity-notes", route: "/unity-notes" },
-      { label: "OUTREACH", key: "outreach", route: "/outreach" }
+      { label: "UNITY NOTES", key: "unity-notes", route: "/unity-notes" }
+      // Note: OUTREACH hidden from nav but accessible via /outreach and in sitemap
     ]
   },
   {

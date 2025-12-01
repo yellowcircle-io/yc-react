@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import { useLayout } from '../../contexts/LayoutContext';
+
+// Random page destinations for "Forward" when no action is mapped
+const RANDOM_DESTINATIONS = [
+  { path: '/services', label: 'Services' },
+  { path: '/works', label: 'Works' },
+  { path: '/thoughts', label: 'Thoughts' },
+  { path: '/about', label: 'About' },
+  { path: '/assessment', label: 'Assessment' },
+  { path: '/experiments/golden-unknown', label: 'Golden Unknown' }
+];
 import arrowAnimation from '../../assets/lottie/arrow.json';
 import placeholderAnimation from '../../assets/lottie/placeholder.json';
 
@@ -202,6 +213,7 @@ function NavigationCircle({
   onHomeClick,   // Handler for HOME button
   onWorksClick   // Handler for WORKS button
 }) {
+  const navigate = useNavigate();
   const { footerOpen } = useLayout();
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -282,6 +294,11 @@ function NavigationCircle({
   const handleScrollNext = () => {
     if (onScrollNext) {
       onScrollNext();
+    } else {
+      // Random page navigation when Forward is not mapped
+      const randomDest = RANDOM_DESTINATIONS[Math.floor(Math.random() * RANDOM_DESTINATIONS.length)];
+      console.log(`[NavigationCircle] Forward unmapped - navigating to random: ${randomDest.label}`);
+      navigate(randomDest.path);
     }
   };
 
