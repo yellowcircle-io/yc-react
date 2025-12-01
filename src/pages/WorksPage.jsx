@@ -7,7 +7,7 @@ import { navigationItems } from '../config/navigationItems';
 
 // Company data for Works showcase - ordered most recent first
 const COMPANIES = [
-  { id: 'rho', name: 'Rho', category: 'FinTech', year: '2024-2025' },
+  { id: 'rho', name: 'Rho Technologies', category: 'FinTech', year: '2024-2025' },
   { id: 'auditboard', name: 'AuditBoard', category: 'Enterprise SaaS', year: '2024' },
   { id: 'estee-lauder', name: 'Estée Lauder', category: 'Beauty', year: '2024' },
   { id: 'reddit', name: 'Reddit', category: 'Social Media', year: '2024' },
@@ -16,8 +16,8 @@ const COMPANIES = [
   { id: 'yieldstreet', name: 'YieldStreet', category: 'FinTech', year: '2021' },
   { id: 'zerogrocery', name: 'Zero Grocery', category: 'E-Commerce', year: '2020' },
   { id: 'thimble', name: 'Thimble', category: 'InsurTech', year: '2020' },
-  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2019-2023' },
-  { id: 'tunecore', name: 'TuneCore', category: 'Music Tech', year: '2018-2019' }
+  { id: 'tunecore', name: 'TuneCore', category: 'Music Tech', year: '2018-2019' },
+  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2019-2023' }
 ];
 
 function WorksPage() {
@@ -335,6 +335,35 @@ function WorksPage() {
           }}>
             {currentCompanyIndex + 1} / {COMPANIES.length}
           </p>
+
+          {/* View Details CTA */}
+          <button
+            onClick={() => handleCompanyClick(currentCompany.id)}
+            style={{
+              marginTop: '24px',
+              padding: '14px 28px',
+              backgroundColor: COLORS.yellow,
+              color: COLORS.black,
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '700',
+              letterSpacing: '0.1em',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fff';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = COLORS.yellow;
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            VIEW {currentCompany.name.toUpperCase()} →
+          </button>
         </div>
       </div>
     </Layout>

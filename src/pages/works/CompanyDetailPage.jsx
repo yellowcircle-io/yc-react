@@ -138,7 +138,7 @@ const COMPANY_DATA = {
     ]
   },
   rho: {
-    name: 'Rho',
+    name: 'Rho Technologies',
     category: 'FinTech',
     year: '2024-2025',
     engagement: 'Embedded Partnership',
@@ -229,19 +229,26 @@ function CompanyDetailPage() {
           position: 'fixed',
           top: '20px',
           left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-          backgroundColor: 'transparent',
-          border: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          border: `1px solid ${COLORS.yellow}`,
+          borderRadius: '4px',
           cursor: 'pointer',
           padding: '10px 20px',
           fontSize: '12px',
           fontWeight: '700',
           letterSpacing: '0.1em',
-          color: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 100,
-          transition: 'left 0.5s ease-out, color 0.2s ease'
+          color: COLORS.black,
+          zIndex: 500,
+          transition: 'all 0.2s ease'
         }}
-        onMouseEnter={(e) => e.target.style.color = COLORS.yellow}
-        onMouseLeave={(e) => e.target.style.color = 'rgba(0, 0, 0, 0.5)'}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = COLORS.yellow;
+          e.currentTarget.style.color = COLORS.black;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+          e.currentTarget.style.color = COLORS.black;
+        }}
       >
         ← BACK TO WORKS
       </button>

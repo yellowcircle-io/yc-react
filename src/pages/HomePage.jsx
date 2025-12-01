@@ -342,6 +342,70 @@ function HomePage() {
                   ? 'Built Better and Faster'
                   : 'From Beginning to End'}
             </p>
+
+            {/* Contact/Explore CTAs - Show on final page */}
+            {scrollOffset >= 180 && (
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                marginTop: '20px',
+                pointerEvents: 'auto',
+                animation: 'fadeInUp 0.5s ease-in-out both'
+              }}>
+                <button
+                  onClick={() => navigate('/services')}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: 'rgba(251, 191, 36, 0.95)',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fff';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  EXPLORE SERVICES
+                </button>
+                <button
+                  onClick={handleFooterToggle}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    border: '1px solid rgba(251, 191, 36, 0.5)',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
+                    e.currentTarget.style.color = 'black';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    e.currentTarget.style.color = 'white';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  GET IN TOUCH
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

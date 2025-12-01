@@ -149,7 +149,7 @@ export const PAGES_CONFIG = [
 
   // Works Sub-routes (Company Detail Pages)
   {
-    name: 'Rho',
+    name: 'Rho Technologies',
     path: '/works/rho',
     category: 'Works',
     status: 'live',
