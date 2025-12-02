@@ -187,30 +187,6 @@ function ServiceDetailPage() {
         zIndex: 1
       }}></div>
 
-      {/* Back Button */}
-      <button
-        onClick={handleBackToServices}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-          backgroundColor: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '10px 20px',
-          fontSize: '12px',
-          fontWeight: '700',
-          letterSpacing: '0.1em',
-          color: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 100,
-          transition: 'left 0.5s ease-out, color 0.2s ease'
-        }}
-        onMouseEnter={(e) => e.target.style.color = COLORS.yellow}
-        onMouseLeave={(e) => e.target.style.color = 'rgba(0, 0, 0, 0.5)'}
-      >
-        ← BACK TO SERVICES
-      </button>
-
       {/* Main Content */}
       <div style={{
         position: 'fixed',
@@ -234,6 +210,32 @@ function ServiceDetailPage() {
           }}>
             {service.name}
           </h1>
+
+          {/* Back Link - Under H1 */}
+          <a
+            href="/services"
+            onClick={(e) => {
+              e.preventDefault();
+              handleBackToServices();
+            }}
+            style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '500',
+              letterSpacing: '0.05em',
+              color: COLORS.yellow,
+              textDecoration: 'none',
+              marginTop: '8px',
+              marginBottom: '16px',
+              cursor: 'pointer',
+              transition: 'opacity 0.2s ease',
+              animation: 'fadeInUp 0.6s ease-in-out 0.3s both'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            ← Back to Services
+          </a>
 
           {/* Category & Price */}
           <div style={{ position: 'relative', minHeight: '80px' }}>

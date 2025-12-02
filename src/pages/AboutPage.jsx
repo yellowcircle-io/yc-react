@@ -26,6 +26,17 @@ function AboutPage() {
             transform: translateY(0);
           }
         }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+          }
+          40% {
+            transform: translateY(-8px);
+          }
+          60% {
+            transform: translateY(-4px);
+          }
+        }
       `;
       document.head.appendChild(style);
     }
@@ -59,18 +70,22 @@ function AboutPage() {
         zIndex: 1
       }}></div>
 
-      {/* Main Content */}
+      {/* Main Content - Scrollable */}
       <div style={{
         position: 'fixed',
-        bottom: '40px',
+        top: '100px',
+        bottom: footerOpen ? '400px' : '40px',
         left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        right: '100px',
         zIndex: 61,
-        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
+        paddingRight: '20px'
       }}>
         <div style={{
-          ...TYPOGRAPHY.container
+          ...TYPOGRAPHY.container,
+          maxWidth: '700px'
         }}>
           {/* Large "ABOUT" heading */}
           <h1 style={{
@@ -204,6 +219,122 @@ function AboutPage() {
               GET IN TOUCH
             </button>
           </div>
+
+          {/* Scroll Indicator */}
+          <div style={{
+            marginTop: '40px',
+            textAlign: 'center',
+            animation: 'fadeInUp 0.6s ease-in-out 0.85s both'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'rgba(0, 0, 0, 0.4)',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              document.querySelector('.faq-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            >
+              <span style={{
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase'
+              }}>
+                FAQ Below
+              </span>
+              <span style={{
+                fontSize: '20px',
+                animation: 'bounce 2s infinite'
+              }}>
+                ↓
+              </span>
+            </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div
+            className="faq-section"
+            style={{
+              marginTop: '60px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
+            }}>
+            <h2 style={{
+              fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)',
+              fontWeight: '700',
+              letterSpacing: '0.15em',
+              marginBottom: '30px',
+              color: COLORS.yellow
+            }}>
+              QUESTIONS FOUNDERS ASK
+            </h2>
+
+            {[
+              {
+                q: "Can you do this for a $50K annual marketing budget?",
+                a: "Yes. I actually prefer it—you can't afford bloat, which means we focus on the 20% that matters."
+              },
+              {
+                q: "How long does this take?",
+                a: "GTM Audit is 2–4 weeks. Build engagements are 4–12 weeks depending on scope."
+              },
+              {
+                q: "What if I can't afford a $4K build?",
+                a: "Start with the GTM Audit ($1.5K). 70% of the time, there's low-hanging fruit you can implement yourself with my guidance."
+              },
+              {
+                q: "Why aren't you cheaper?",
+                a: "I don't have team overhead. My work costs less than agencies, but I'm not competing with $200/month templates. You're paying for diagnosis + execution, not just templates."
+              },
+              {
+                q: "Will you help me pick between HubSpot and Marketo?",
+                a: "Yes, but the honest answer is usually: \"HubSpot unless you have 2-week lead scoring requirements or need campaign orchestration.\" Most early-stage companies overshoot on complexity."
+              },
+              {
+                q: "Can we do equity/revenue share instead of cash?",
+                a: "Let's talk. I've done it before for founders I believe in."
+              },
+              {
+                q: "How do you stay current with new tools and AI?",
+                a: "I use Claude for code + architecture, build tools with Vercel/Firebase, and test new platforms as they launch. I'm not dogmatic about tech stack—I optimize for your specific problem."
+              }
+            ].map((faq, index) => (
+              <div key={index} style={{
+                marginBottom: '24px',
+                padding: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: '8px',
+                border: '1px solid rgba(251, 191, 36, 0.2)'
+              }}>
+                <p style={{
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  color: COLORS.black,
+                  marginBottom: '10px',
+                  lineHeight: '1.5'
+                }}>
+                  Q: {faq.q}
+                </p>
+                <p style={{
+                  fontSize: '0.9rem',
+                  fontWeight: '400',
+                  color: 'rgba(0, 0, 0, 0.75)',
+                  lineHeight: '1.6',
+                  margin: 0
+                }}>
+                  A: {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Spacer for footer */}
+          <div style={{ height: '120px' }}></div>
         </div>
       </div>
     </Layout>

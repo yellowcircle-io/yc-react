@@ -10,7 +10,7 @@ const COMPANY_DATA = {
   liveintent: {
     name: 'LiveIntent',
     category: 'Ad Tech',
-    year: '2019-2023',
+    year: '2013-2016',
     engagement: 'Embedded Partnership',
     description: 'Marketing operations transformation for identity resolution and programmatic advertising platform serving publishers and advertisers globally.',
     highlights: [
@@ -23,7 +23,7 @@ const COMPANY_DATA = {
   tunecore: {
     name: 'TuneCore',
     category: 'Music Tech',
-    year: '2018-2019',
+    year: '2016-2018',
     engagement: 'Embedded Partnership',
     description: 'Lifecycle marketing and automation development for the leading music distribution platform serving independent artists worldwide.',
     highlights: [
@@ -36,7 +36,7 @@ const COMPANY_DATA = {
   thimble: {
     name: 'Thimble',
     category: 'InsurTech',
-    year: '2020',
+    year: '2019',
     engagement: 'Strategic Engagement',
     description: 'Growth marketing systems for on-demand insurance platform targeting small businesses and gig economy workers.',
     highlights: [
@@ -49,7 +49,7 @@ const COMPANY_DATA = {
   yieldstreet: {
     name: 'YieldStreet',
     category: 'FinTech',
-    year: '2021',
+    year: '2019',
     engagement: 'Strategic Engagement',
     description: 'Marketing automation architecture for alternative investment platform serving accredited investors.',
     highlights: [
@@ -62,7 +62,7 @@ const COMPANY_DATA = {
   zerogrocery: {
     name: 'Zero Grocery',
     category: 'E-Commerce',
-    year: '2020',
+    year: '2021',
     engagement: 'Embedded Partnership',
     description: 'End-to-end marketing operations for zero-waste grocery delivery startup focused on sustainability.',
     highlights: [
@@ -75,7 +75,7 @@ const COMPANY_DATA = {
   doordash: {
     name: 'DoorDash',
     category: 'Delivery',
-    year: '2022',
+    year: '2021',
     engagement: 'Strategic Engagement',
     description: 'Merchant-facing marketing operations and restaurant growth program development.',
     highlights: [
@@ -88,7 +88,7 @@ const COMPANY_DATA = {
   virtana: {
     name: 'Virtana',
     category: 'Enterprise SaaS',
-    year: '2023',
+    year: '2022',
     engagement: 'GTM Assessment',
     description: 'Marketing operations assessment for AIOps platform serving enterprise infrastructure teams.',
     highlights: [
@@ -101,7 +101,7 @@ const COMPANY_DATA = {
   reddit: {
     name: 'Reddit',
     category: 'Social Media',
-    year: '2024',
+    year: '2022-2023',
     engagement: 'Strategic Engagement',
     description: 'Marketing systems architecture for community and advertiser engagement programs.',
     highlights: [
@@ -114,7 +114,7 @@ const COMPANY_DATA = {
   'estee-lauder': {
     name: 'Estée Lauder',
     category: 'Beauty',
-    year: '2024',
+    year: '2023-2024',
     engagement: 'Creative + Operations',
     description: 'Email development and CRM standardization for luxury beauty brand portfolio (Origins).',
     highlights: [
@@ -140,7 +140,7 @@ const COMPANY_DATA = {
   rho: {
     name: 'Rho Technologies',
     category: 'FinTech',
-    year: '2024-2025',
+    year: '2025',
     engagement: 'Embedded Partnership',
     description: 'Comprehensive marketing operations for B2B fintech platform offering business banking and spend management solutions.',
     highlights: [
@@ -156,7 +156,7 @@ const COMPANY_DATA = {
 function CompanyDetailPage() {
   const navigate = useNavigate();
   const { companyId } = useParams();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle, openContactModal } = useLayout();
 
   // Get company data or redirect to 404
   const company = COMPANY_DATA[companyId];
@@ -222,37 +222,6 @@ function CompanyDetailPage() {
         zIndex: 1
       }}></div>
 
-      {/* Back Button */}
-      <button
-        onClick={handleBackToWorks}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          border: `1px solid ${COLORS.yellow}`,
-          borderRadius: '4px',
-          cursor: 'pointer',
-          padding: '10px 20px',
-          fontSize: '12px',
-          fontWeight: '700',
-          letterSpacing: '0.1em',
-          color: COLORS.black,
-          zIndex: 500,
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = COLORS.yellow;
-          e.currentTarget.style.color = COLORS.black;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-          e.currentTarget.style.color = COLORS.black;
-        }}
-      >
-        ← BACK TO WORKS
-      </button>
-
       {/* Main Content */}
       <div style={{
         position: 'fixed',
@@ -276,6 +245,32 @@ function CompanyDetailPage() {
           }}>
             {company.name}
           </h1>
+
+          {/* Back Link - Under H1 */}
+          <a
+            href="/works"
+            onClick={(e) => {
+              e.preventDefault();
+              handleBackToWorks();
+            }}
+            style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '500',
+              letterSpacing: '0.05em',
+              color: COLORS.yellow,
+              textDecoration: 'none',
+              marginTop: '8px',
+              marginBottom: '16px',
+              cursor: 'pointer',
+              transition: 'opacity 0.2s ease',
+              animation: 'fadeInUp 0.6s ease-in-out 0.3s both'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            ← Back to Clients
+          </a>
 
           {/* Role & Category */}
           <div style={{ position: 'relative', minHeight: '80px' }}>
@@ -349,36 +344,92 @@ function CompanyDetailPage() {
             ))}
           </div>
 
-          {/* Dormant Case Study CTA - Placeholder for future */}
+          {/* CTA Buttons */}
           <div style={{
-            margin: '30px 0 0 0',
+            marginTop: '30px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px',
             animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
+          }}>
+            <button
+              onClick={() => openContactModal('', `Inquiry from ${company.name} case study`)}
+              style={{
+                padding: '14px 28px',
+                backgroundColor: COLORS.yellow,
+                color: 'black',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'black';
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = COLORS.yellow;
+                e.currentTarget.style.color = 'black';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              GET IN TOUCH
+            </button>
+            <button
+              onClick={() => navigate('/assessment')}
+              style={{
+                padding: '14px 28px',
+                backgroundColor: 'black',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = COLORS.yellow;
+                e.currentTarget.style.color = 'black';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'black';
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              GROWTH HEALTH CHECK
+            </button>
+          </div>
+
+          {/* Case Study - Coming Soon */}
+          <div style={{
+            marginTop: '20px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
           }}>
             <button
               disabled
               style={{
-                padding: '14px 28px',
-                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                padding: '12px 24px',
+                backgroundColor: 'transparent',
                 color: 'rgba(0, 0, 0, 0.3)',
                 border: '1px dashed rgba(0, 0, 0, 0.2)',
                 borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '700',
+                fontSize: '11px',
+                fontWeight: '600',
                 letterSpacing: '0.1em',
                 cursor: 'not-allowed'
               }}
               title="Case study coming soon"
             >
-              VIEW FULL CASE STUDY
+              VIEW FULL CASE STUDY — COMING SOON
             </button>
-            <p style={{
-              ...TYPOGRAPHY.small,
-              color: 'rgba(0, 0, 0, 0.3)',
-              marginTop: '8px',
-              fontStyle: 'italic'
-            }}>
-              Coming soon
-            </p>
           </div>
         </div>
       </div>

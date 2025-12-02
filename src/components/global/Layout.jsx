@@ -31,7 +31,8 @@ function Layout({
   customCircleNav = null, // Custom circle nav component
   hideParallaxCircle = false, // Hide the background yellow circle
   hideCircleNav = false, // Hide the NavigationCircle completely (for pages with custom nav)
-  isHomePage = false // Show arrow Lottie during scroll, placeholder at end
+  isHomePage = false, // Show arrow Lottie during scroll, placeholder at end
+  allowScroll = false // Enable vertical scrolling for article pages
 }) {
   const navigate = useNavigate();
   const { openContactModal } = useLayout();
@@ -47,10 +48,11 @@ function Layout({
 
   return (
     <div style={{
-      height: '100dvh', // Use dvh for mobile browser toolbar awareness
+      height: allowScroll ? 'auto' : '100dvh', // Use dvh for mobile browser toolbar awareness
+      minHeight: allowScroll ? '100dvh' : undefined,
       width: '100vw',
       position: 'relative',
-      overflow: 'hidden',
+      overflow: allowScroll ? 'visible' : 'hidden',
       margin: 0,
       padding: 0,
       fontFamily: 'Arial, sans-serif'
@@ -74,6 +76,12 @@ function Layout({
 
       <style>{`
         /* Global viewport constraints - use dvh for mobile compatibility */
+        ${allowScroll ? `
+        body, html {
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+        }
+        ` : `
         body, html {
           max-height: 100dvh !important;
           overflow: hidden !important;
@@ -84,6 +92,7 @@ function Layout({
             max-height: 100vh !important;
           }
         }
+        `}
 
         /* YC Logo visibility boost */
         .yc-logo {

@@ -7,17 +7,17 @@ import { navigationItems } from '../config/navigationItems';
 
 // Company data for Works showcase - ordered most recent first
 const COMPANIES = [
-  { id: 'rho', name: 'Rho Technologies', category: 'FinTech', year: '2024-2025' },
+  { id: 'rho', name: 'Rho Technologies', category: 'FinTech', year: '2025' },
   { id: 'auditboard', name: 'AuditBoard', category: 'Enterprise SaaS', year: '2024' },
-  { id: 'estee-lauder', name: 'Estée Lauder', category: 'Beauty', year: '2024' },
-  { id: 'reddit', name: 'Reddit', category: 'Social Media', year: '2024' },
-  { id: 'virtana', name: 'Virtana', category: 'Enterprise SaaS', year: '2023' },
-  { id: 'doordash', name: 'DoorDash', category: 'Delivery', year: '2022' },
-  { id: 'yieldstreet', name: 'YieldStreet', category: 'FinTech', year: '2021' },
-  { id: 'zerogrocery', name: 'Zero Grocery', category: 'E-Commerce', year: '2020' },
-  { id: 'thimble', name: 'Thimble', category: 'InsurTech', year: '2020' },
-  { id: 'tunecore', name: 'TuneCore', category: 'Music Tech', year: '2018-2019' },
-  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2019-2023' }
+  { id: 'estee-lauder', name: 'Estée Lauder', category: 'Beauty', year: '2023-2024' },
+  { id: 'reddit', name: 'Reddit', category: 'Social Media', year: '2022-2023' },
+  { id: 'virtana', name: 'Virtana', category: 'Enterprise SaaS', year: '2022' },
+  { id: 'doordash', name: 'DoorDash', category: 'Delivery', year: '2021' },
+  { id: 'zerogrocery', name: 'Zero Grocery', category: 'E-Commerce', year: '2021' },
+  { id: 'yieldstreet', name: 'YieldStreet', category: 'FinTech', year: '2019' },
+  { id: 'thimble', name: 'Thimble', category: 'InsurTech', year: '2019' },
+  { id: 'tunecore', name: 'TuneCore', category: 'Music Tech', year: '2016-2018' },
+  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2013-2016' }
 ];
 
 function WorksPage() {
@@ -216,7 +216,7 @@ function WorksPage() {
       onScrollNext={handleScrollNext}
       navigationItems={navigationItems}
       scrollOffset={scrollOffset}
-      pageLabel="WORKS"
+      pageLabel="CLIENTS"
     >
       {/* Background - Gradient based on scroll progress */}
       <div className="scrollable-area" style={{
@@ -281,7 +281,7 @@ function WorksPage() {
         <div style={{
           ...TYPOGRAPHY.container
         }}>
-          {/* Large "WORKS" heading */}
+          {/* Large "CLIENTS" heading */}
           <h1 style={{
             ...TYPOGRAPHY.h1,
             color: COLORS.yellow,
@@ -289,7 +289,7 @@ function WorksPage() {
             display: 'inline-block',
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
           }}>
-            WORKS
+            CLIENTS
           </h1>
 
           {/* Company Name - Changes based on scroll */}

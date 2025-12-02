@@ -378,6 +378,31 @@ function HomePage() {
                   EXPLORE SERVICES
                 </button>
                 <button
+                  onClick={() => navigate('/journeys')}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    color: 'black',
+                    border: '1px solid rgba(251, 191, 36, 0.5)',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  START A JOURNEY
+                </button>
+                <button
                   onClick={handleFooterToggle}
                   style={{
                     padding: '12px 24px',

@@ -7,22 +7,28 @@ import { navigationItems } from '../config/navigationItems';
 import { CALENDAR_ENABLED, openCalendarBooking } from '../config/calendarConfig';
 
 /**
- * ServicesPage - Consulting services offerings
+ * ServicesPage - Growth Infrastructure Solutions
  *
- * Services include:
- * - GTM Strategic Audit ($4K-5K)
- * - Marketing Systems Audit
- * - Role Alignment Assessment ($1.5K-2.5K)
+ * Organized as a journey of progressively scaling vendor-client relationship:
+ *
+ * DIAGNOSTIC SERVICES:
+ * - Growth Infrastructure Audit ($4K-5K)
+ * - Marketing Systems Audit ($2.5K-4K)
+ * - Hire-or-Build Assessment ($1.5K-2.5K)
  * - Technical Debt Quantification ($2.5K-3.5K)
  * - Attribution System Audit ($2K-3K)
  * - Data Architecture Assessment ($3K-4K)
- * - Email Template Development
+ *
+ * BUILD & EXECUTION SERVICES:
+ * - Creative + Operations (Custom)
+ * - Email Template Development ($1,500+)
+ * - Custom Engagement (Let's Talk)
  */
 
-const SERVICES = [
+const DIAGNOSTIC_SERVICES = [
   {
     id: 'gtm-audit',
-    title: 'GTM Strategic Audit',
+    title: 'Growth Infrastructure Audit',
     price: '$4,000 - $5,000',
     duration: '2-3 weeks',
     description: 'Comprehensive go-to-market infrastructure assessment. Find out why your marketing ops feels stuck—and get a clear path forward.',
@@ -50,15 +56,15 @@ const SERVICES = [
   },
   {
     id: 'role-alignment',
-    title: 'Role Alignment Assessment',
+    title: 'Hire-or-Build Assessment',
     price: '$1,500 - $2,500',
-    duration: '1 week',
-    description: 'Stop hiring for the wrong role. Get clarity on what you actually need before your next marketing hire.',
+    duration: '2-3 weeks',
+    description: 'Thinking about hiring a marketing ops person, fractional CMO, or agency? Let\'s figure out what you actually need before you spend $100K+ on the wrong hire.',
     highlights: [
-      'Job description analysis',
-      'Leadership expectations mapping',
-      'RACI matrix for marketing functions',
-      'Correct role definition'
+      'Gap analysis (what\'s missing in your current setup)',
+      'Role definition (exact job description if you hire)',
+      'Build-vs-buy recommendation (can tools solve this?)',
+      'Cost comparison: hire vs. contract vs. automate'
     ],
     featured: false
   },
@@ -103,7 +109,10 @@ const SERVICES = [
       'Event-driven migration recommendation'
     ],
     featured: false
-  },
+  }
+];
+
+const BUILD_SERVICES = [
   {
     id: 'creative-operations',
     title: 'Creative + Operations',
@@ -121,7 +130,7 @@ const SERVICES = [
   {
     id: 'email-development',
     title: 'Email Template Development',
-    price: 'Starting at $500',
+    price: 'Starting at $1,500',
     duration: 'Per template',
     description: 'Custom, responsive email templates that render perfectly across all clients and devices.',
     highlights: [
@@ -129,6 +138,20 @@ const SERVICES = [
       'Dark mode compatible',
       'HubSpot/Salesforce/Marketo ready',
       'A/B test variations included'
+    ],
+    featured: false
+  },
+  {
+    id: 'custom',
+    title: 'Custom Engagement',
+    price: "Let's Talk",
+    duration: 'Flexible',
+    description: 'Have a specific challenge that doesn\'t fit the boxes above? Let\'s design something that works for your situation.',
+    highlights: [
+      'Scoping call to understand your needs',
+      'Custom proposal within 48 hours',
+      'Flexible payment structures available',
+      'Equity/revenue share for right fit'
     ],
     featured: false
   }
@@ -223,7 +246,7 @@ function ServicesPage() {
             animation: 'fadeInUp 0.6s ease-in-out 0.4s both',
             marginBottom: '30px'
           }}>
-            Marketing Operations Consulting
+            Growth Infrastructure Solutions
           </p>
 
           <p style={{
@@ -239,14 +262,24 @@ function ServicesPage() {
             Stop buying tools to fix organizational problems. Get strategic clarity on your go-to-market infrastructure.
           </p>
 
-          {/* Services Grid */}
+          {/* DIAGNOSTIC SERVICES Section */}
+          <h2 style={{
+            fontSize: 'clamp(14px, 2vw, 16px)',
+            fontWeight: '700',
+            letterSpacing: '0.15em',
+            color: 'rgba(0,0,0,0.5)',
+            marginBottom: '16px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
+          }}>
+            DIAGNOSTIC SERVICES
+          </h2>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
             gap: '20px',
             paddingBottom: '40px'
           }}>
-            {SERVICES.map((service, index) => (
+            {DIAGNOSTIC_SERVICES.map((service, index) => (
               <div
                 key={service.id}
                 onClick={() => setSelectedService(selectedService === service.id ? null : service.id)}
@@ -258,6 +291,136 @@ function ServicesPage() {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   animation: `fadeInUp 0.6s ease-in-out ${0.3 + index * 0.1}s both`,
+                  border: selectedService === service.id ? `2px solid ${COLORS.yellow}` : '2px solid transparent',
+                  transform: selectedService === service.id ? 'scale(1.02)' : 'scale(1)'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedService !== service.id) {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedService !== service.id) {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }
+                }}
+              >
+                {/* Service Title */}
+                <h3 style={{
+                  fontSize: 'clamp(16px, 2vw, 20px)',
+                  fontWeight: '700',
+                  letterSpacing: '0.05em',
+                  color: service.featured ? 'black' : 'white',
+                  margin: '0 0 8px 0'
+                }}>
+                  {service.title}
+                </h3>
+
+                {/* Price & Duration */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: service.featured ? 'rgba(0,0,0,0.8)' : COLORS.yellow
+                  }}>
+                    {service.price}
+                  </span>
+                  <span style={{
+                    fontSize: '12px',
+                    color: service.featured ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
+                    letterSpacing: '0.05em'
+                  }}>
+                    {service.duration}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p style={{
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  color: service.featured ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
+                  margin: '0 0 16px 0'
+                }}>
+                  {service.description}
+                </p>
+
+                {/* Highlights - Show when expanded */}
+                {selectedService === service.id && (
+                  <div style={{
+                    animation: 'scaleIn 0.3s ease-out',
+                    marginBottom: '16px'
+                  }}>
+                    <ul style={{
+                      margin: '0',
+                      padding: '0 0 0 16px',
+                      listStyle: 'disc'
+                    }}>
+                      {service.highlights.map((highlight, i) => (
+                        <li key={i} style={{
+                          fontSize: '12px',
+                          color: service.featured ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)',
+                          marginBottom: '6px',
+                          lineHeight: '1.4'
+                        }}>
+                          {highlight}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Click hint */}
+                {selectedService !== service.id && (
+                  <p style={{
+                    fontSize: '11px',
+                    color: service.featured ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+                    margin: '8px 0 0 0',
+                    textAlign: 'center',
+                    letterSpacing: '0.05em'
+                  }}>
+                    Click for details
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* BUILD & EXECUTION SERVICES Section */}
+          <h2 style={{
+            fontSize: 'clamp(14px, 2vw, 16px)',
+            fontWeight: '700',
+            letterSpacing: '0.15em',
+            color: 'rgba(0,0,0,0.5)',
+            marginBottom: '16px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
+          }}>
+            BUILD & EXECUTION SERVICES
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '20px',
+            paddingBottom: '40px'
+          }}>
+            {BUILD_SERVICES.map((service, index) => (
+              <div
+                key={service.id}
+                onClick={() => setSelectedService(selectedService === service.id ? null : service.id)}
+                style={{
+                  backgroundColor: service.featured ? COLORS.yellow : 'rgba(0,0,0,0.85)',
+                  backdropFilter: 'blur(12px)',
+                  borderRadius: '8px',
+                  padding: '24px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  animation: `fadeInUp 0.6s ease-in-out ${0.9 + index * 0.1}s both`,
                   border: selectedService === service.id ? `2px solid ${COLORS.yellow}` : '2px solid transparent',
                   transform: selectedService === service.id ? 'scale(1.02)' : 'scale(1)'
                 }}
@@ -386,7 +549,7 @@ function ServicesPage() {
                 color: 'rgba(0,0,0,0.7)',
                 margin: 0
               }}>
-                Take our 2-minute GTM Health Assessment
+                Take our 2-minute Growth Health Check
               </p>
             </div>
             <button

@@ -16,12 +16,18 @@ function FeedbackPage() {
     category: 'bug',
     message: '',
     browser: '',
-    device: ''
+    device: '',
+    // UTM tracking
+    utm_source: '',
+    utm_medium: '',
+    utm_campaign: '',
+    utm_content: '',
+    utm_term: ''
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Detect browser and device
+  // Detect browser, device, and capture UTM parameters
   React.useEffect(() => {
     const detectBrowser = () => {
       const userAgent = navigator.userAgent;
@@ -38,10 +44,21 @@ function FeedbackPage() {
       return isMobile ? 'Mobile' : 'Desktop';
     };
 
+    // Capture UTM parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmParams = {
+      utm_source: urlParams.get('utm_source') || '',
+      utm_medium: urlParams.get('utm_medium') || '',
+      utm_campaign: urlParams.get('utm_campaign') || '',
+      utm_content: urlParams.get('utm_content') || '',
+      utm_term: urlParams.get('utm_term') || ''
+    };
+
     setFormData(prev => ({
       ...prev,
       browser: detectBrowser(),
-      device: detectDevice()
+      device: detectDevice(),
+      ...utmParams
     }));
   }, []);
 
@@ -54,7 +71,10 @@ function FeedbackPage() {
         logEvent(analytics, 'feedback_submitted', {
           category: formData.category,
           device: formData.device,
-          browser: formData.browser
+          browser: formData.browser,
+          utm_source: formData.utm_source,
+          utm_medium: formData.utm_medium,
+          utm_campaign: formData.utm_campaign
         });
       }
 
@@ -220,12 +240,15 @@ function FeedbackPage() {
                 onChange={handleChange}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: '4px',
+                  maxWidth: '500px',
+                  padding: '12px 14px',
+                  border: '1px solid rgba(0,0,0,0.3)',
+                  borderRadius: '6px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  color: COLORS.black
                 }}
                 placeholder="Your name"
               />
@@ -248,12 +271,15 @@ function FeedbackPage() {
                 onChange={handleChange}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: '4px',
+                  maxWidth: '500px',
+                  padding: '12px 14px',
+                  border: '1px solid rgba(0,0,0,0.3)',
+                  borderRadius: '6px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  color: COLORS.black
                 }}
                 placeholder="your@email.com"
               />
@@ -275,12 +301,16 @@ function FeedbackPage() {
                 onChange={handleChange}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: '4px',
+                  maxWidth: '500px',
+                  padding: '12px 14px',
+                  border: '1px solid rgba(0,0,0,0.3)',
+                  borderRadius: '6px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  color: COLORS.black,
+                  cursor: 'pointer'
                 }}
               >
                 <option value="bug">Bug Report</option>
@@ -309,45 +339,59 @@ function FeedbackPage() {
                 rows={6}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid rgba(0,0,0,0.2)',
-                  borderRadius: '4px',
+                  maxWidth: '500px',
+                  padding: '12px 14px',
+                  border: '1px solid rgba(0,0,0,0.3)',
+                  borderRadius: '6px',
                   fontSize: '14px',
                   fontFamily: 'inherit',
                   resize: 'vertical',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  color: COLORS.black
                 }}
                 placeholder="Please describe your feedback in detail..."
               />
             </div>
 
             <div style={{
-              backgroundColor: 'rgba(238, 207, 0, 0.1)',
+              backgroundColor: 'rgba(251, 191, 36, 0.15)',
               padding: '16px',
-              borderRadius: '4px',
+              borderRadius: '6px',
               marginBottom: '24px',
               fontSize: '12px',
-              color: 'rgba(0,0,0,0.7)'
+              color: COLORS.black,
+              maxWidth: '500px',
+              boxSizing: 'border-box'
             }}>
               <strong>System Info:</strong><br />
               Browser: {formData.browser}<br />
               Device: {formData.device}
             </div>
 
+            {/* Hidden UTM tracking fields */}
+            <input type="hidden" name="utm_source" value={formData.utm_source} />
+            <input type="hidden" name="utm_medium" value={formData.utm_medium} />
+            <input type="hidden" name="utm_campaign" value={formData.utm_campaign} />
+            <input type="hidden" name="utm_content" value={formData.utm_content} />
+            <input type="hidden" name="utm_term" value={formData.utm_term} />
+
             <button
               type="submit"
               disabled={submitting || !formData.message.trim()}
               style={{
                 width: '100%',
+                maxWidth: '500px',
                 backgroundColor: formData.message.trim() ? COLORS.yellow : '#ccc',
                 color: COLORS.black,
                 padding: '14px 24px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 border: 'none',
                 fontSize: '15px',
                 fontWeight: '600',
                 cursor: formData.message.trim() ? 'pointer' : 'not-allowed',
-                transition: 'transform 0.2s ease, background-color 0.2s ease'
+                transition: 'transform 0.2s ease, background-color 0.2s ease',
+                boxSizing: 'border-box'
               }}
               onMouseEnter={(e) => {
                 if (formData.message.trim()) {

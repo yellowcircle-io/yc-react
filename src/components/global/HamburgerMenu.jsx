@@ -8,12 +8,16 @@ import { useLayout } from '../../contexts/LayoutContext';
  * Updated with slide-over pattern for subitems with indicators
  */
 // eslint-disable-next-line no-unused-vars
-function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactClick }) {
+function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactClick, darkBackground = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { menuOpen } = useLayout();
   // eslint-disable-next-line no-unused-vars
   const [hoveredItem, setHoveredItem] = React.useState(null);
+
+  // Auto-detect dark background pages
+  const darkPages = ['/thoughts/why-your-gtm-sucks', '/experiments/golden-unknown'];
+  const isDarkPage = darkBackground || darkPages.some(path => location.pathname.startsWith(path));
   const [slideOverOpen, setSlideOverOpen] = React.useState(false);
   const [slideOverItems, setSlideOverItems] = React.useState([]);
   const [slideOverTitle, setSlideOverTitle] = React.useState('');
@@ -25,7 +29,8 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
     SERVICES: {
       hasSubItems: true,
       subItems: [
-        { label: 'GTM STRATEGIC AUDIT', route: '/services/gtm-audit' },
+        { label: 'ALL SERVICES', route: '/services' },
+        { label: 'GROWTH INFRASTRUCTURE AUDIT', route: '/services/gtm-audit' },
         { label: 'MARKETING SYSTEMS', route: '/services/marketing-systems' },
         { label: 'TECHNICAL DEBT', route: '/services/technical-debt' },
         { label: 'ATTRIBUTION AUDIT', route: '/services/attribution-audit' },
@@ -37,20 +42,20 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
     STORIES: {
       hasSubItems: true,
       subItems: [
-        { label: 'WORKS', route: '/works' },
+        { label: 'CLIENTS', route: '/works' },
         { label: 'THOUGHTS', route: '/thoughts' },
         { label: 'GOLDEN UNKNOWN', route: '/experiments/golden-unknown' }
       ]
     },
-    LABS: {
+    JOURNEYS: {
       hasSubItems: true,
       subItems: [
-        { label: 'GTM HEALTH ASSESSMENT', route: '/assessment' },
+        { label: 'GROWTH HEALTH CHECK', route: '/assessment' },
         { label: 'OUTREACH GENERATOR', route: '/experiments/outreach-generator' },
         { label: 'UNITY NOTES', route: '/unity-notes' }
       ]
     },
-    WORKS: { hasSubItems: false, isButton: true },
+    CLIENTS: { hasSubItems: false, isButton: true },
     CONTACT: { hasSubItems: false, isButton: true }
   };
 
@@ -133,11 +138,13 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
           right: '50px',
           top: '20px',
           padding: '10px',
-          backgroundColor: 'transparent',
+          backgroundColor: isDarkPage && !menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
           border: 'none',
+          borderRadius: '8px',
           cursor: 'pointer',
           zIndex: 260,
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          transition: 'background-color 0.3s ease'
         }}
       >
         <div style={{
@@ -156,7 +163,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
               left: index === 1 ? '60%' : '50%',
               width: '40px',
               height: '3px',
-              backgroundColor: 'black',
+              backgroundColor: menuOpen ? 'black' : (isDarkPage ? 'white' : 'black'),
               transformOrigin: 'center',
               transform: menuOpen
                 ? index === 0
@@ -198,7 +205,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
             alignItems: 'flex-end',
             gap: '5px'
           }}>
-            {['HOME', 'SERVICES', 'STORIES', 'LABS', 'WORKS', 'CONTACT'].map((item, index) => {
+            {['HOME', 'SERVICES', 'STORIES', 'JOURNEYS', 'CLIENTS', 'CONTACT'].map((item, index) => {
               const config = menuConfig[item];
               const isButton = config?.isButton;
               const hasSubItems = config?.hasSubItems;
@@ -207,10 +214,10 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                 return (
                   <div
                     key={item}
-                    className={item === 'WORKS' ? 'menu-button-works' : 'menu-button-contact'}
-                    onClick={item === 'CONTACT' ? () => { if (onContactClick) onContactClick(); if (onMenuToggle) onMenuToggle(); } : item === 'WORKS' ? () => { navigate('/works'); if (onMenuToggle) onMenuToggle(); } : undefined}
+                    className={item === 'CLIENTS' ? 'menu-button-clients' : 'menu-button-contact'}
+                    onClick={item === 'CONTACT' ? () => { if (onContactClick) onContactClick(); if (onMenuToggle) onMenuToggle(); } : item === 'CLIENTS' ? () => { navigate('/works'); if (onMenuToggle) onMenuToggle(); } : undefined}
                     style={{
-                      backgroundColor: item === 'WORKS' ? 'white' : 'black',
+                      backgroundColor: item === 'CLIENTS' ? 'white' : 'black',
                       border: 'none',
                       padding: '15px 40px',
                       borderRadius: '4px',
@@ -220,7 +227,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                       transition: 'all 0.3s ease-in-out'
                     }}
                     onMouseEnter={(e) => {
-                      if (item === 'WORKS') {
+                      if (item === 'CLIENTS') {
                         e.currentTarget.style.backgroundColor = 'black';
                         e.currentTarget.querySelector('span').style.color = 'white';
                       } else {
@@ -229,7 +236,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (item === 'WORKS') {
+                      if (item === 'CLIENTS') {
                         e.currentTarget.style.backgroundColor = 'white';
                         e.currentTarget.querySelector('span').style.color = 'black';
                       } else {
@@ -239,7 +246,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                     }}
                   >
                     <span style={{
-                      color: item === 'WORKS' ? 'black' : 'rgb(251, 191, 36)',
+                      color: item === 'CLIENTS' ? 'black' : 'rgb(251, 191, 36)',
                       fontSize: 'clamp(2rem, 5vh, 4rem)',
                       fontWeight: '900',
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
@@ -270,15 +277,15 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                         handleHomeClick(e);
                       } else if (hasSubItems) {
                         handleOpenSlideOver(item, config.subItems);
-                      } else if (item === 'LABS') {
-                        navigate('/experiments');
+                      } else if (item === 'JOURNEYS') {
+                        navigate('/journeys');
                       }
                     }}
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       if (item === 'HOME') handleHomeClick(e);
                       else if (hasSubItems) handleOpenSlideOver(item, config.subItems);
-                      else if (item === 'LABS') navigate('/experiments');
+                      else if (item === 'JOURNEYS') navigate('/journeys');
                     }}
                     className={`menu-item-${index + 1} menu-link`}
                     style={{
@@ -355,43 +362,57 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-end',
-                gap: '5px'
+                gap: slideOverItems.length > 6 ? '2px' : '5px'
               }}>
-                {slideOverItems.map((subItem, idx) => (
-                  <a
-                    key={idx}
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(subItem.route);
-                      handleCloseSlideOver();
-                    }}
-                    style={{
-                      textDecoration: 'none',
-                      color: 'black',
-                      fontSize: 'clamp(1.5rem, 4vh, 3rem)',
-                      fontWeight: '300',
-                      fontFamily: 'Helvetica, Arial, sans-serif',
-                      letterSpacing: '0.2em',
-                      textTransform: 'uppercase',
-                      padding: '10px 20px',
-                      borderRadius: '4px',
-                      WebkitTapHighlightColor: 'transparent',
-                      userSelect: 'none',
-                      textAlign: 'right',
-                      transition: 'color 0.3s ease-in-out',
-                      animation: `slideInMenuItem 0.3s ease-out ${(idx + 1) * 0.08}s both`
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'white';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'black';
-                    }}
-                  >
-                    {subItem.label}
-                  </a>
-                ))}
+                {slideOverItems.map((subItem, idx) => {
+                  // Scale font size based on number of items
+                  const itemCount = slideOverItems.length;
+                  let fontSize = 'clamp(1.5rem, 4vh, 3rem)';
+                  let padding = '10px 20px';
+                  if (itemCount > 8) {
+                    fontSize = 'clamp(0.9rem, 2.5vh, 1.8rem)';
+                    padding = '6px 20px';
+                  } else if (itemCount > 6) {
+                    fontSize = 'clamp(1.1rem, 3vh, 2.2rem)';
+                    padding = '8px 20px';
+                  }
+
+                  return (
+                    <a
+                      key={idx}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(subItem.route);
+                        handleCloseSlideOver();
+                      }}
+                      style={{
+                        textDecoration: 'none',
+                        color: 'black',
+                        fontSize: fontSize,
+                        fontWeight: '300',
+                        fontFamily: 'Helvetica, Arial, sans-serif',
+                        letterSpacing: '0.2em',
+                        textTransform: 'uppercase',
+                        padding: padding,
+                        borderRadius: '4px',
+                        WebkitTapHighlightColor: 'transparent',
+                        userSelect: 'none',
+                        textAlign: 'right',
+                        transition: 'color 0.3s ease-in-out',
+                        animation: `slideInMenuItem 0.3s ease-out ${(idx + 1) * 0.08}s both`
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'black';
+                      }}
+                    >
+                      {subItem.label}
+                    </a>
+                  );
+                })}
 
                 {/* Back button - under last item */}
                 <button

@@ -173,12 +173,12 @@ GROQ_API_KEY=gsk_your_key_here
 
 # Email Sending (optional)
 RESEND_API_KEY=re_your_key_here
-FROM_EMAIL=chris@yellowcircle.co
+FROM_EMAIL=chris@yellowcircle.io
 FROM_NAME=Chris Cooper
 
 # Links
 CALENDAR_LINK=https://calendly.com/your-link
-ARTICLE_LINK=https://yellowcircle-app.web.app/thoughts/why-your-gtm-sucks
+ARTICLE_LINK=https://yellowcircle.io/thoughts/why-your-gtm-sucks
 ```
 
 ### Brand Configuration

@@ -97,9 +97,29 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
     }
   }, []);
 
+  // Section Label Component - renders "START HERE" and "EXPLORE" headers
+  const SectionLabel = ({ label }) => {
+    return (
+      <div style={{
+        padding: sidebarOpen ? '8px 36px 4px' : '8px 0 4px',
+        width: '100%'
+      }}>
+        <span style={{
+          fontSize: '10px',
+          fontWeight: '700',
+          letterSpacing: '0.15em',
+          color: 'rgba(0, 0, 0, 0.4)',
+          opacity: sidebarOpen ? 1 : 0,
+          transition: 'opacity 0.3s ease-out 0.1s',
+          textTransform: 'uppercase'
+        }}>{label}</span>
+      </div>
+    );
+  };
+
   // Navigation Item Component - with slide-over trigger
   // Supports both Lottie animations (lottieData) and static images (icon URL)
-  const NavigationItem = ({ icon, lottieData, label, subItems, itemKey, index }) => {
+  const NavigationItem = ({ icon, lottieData, label, subItems, itemKey, index, route }) => {
     const [isHovered, setIsHovered] = useState(false);
     const hoverTimeoutRef = useRef(null);
     const hasSubItems = subItems && subItems.length > 0;
@@ -113,13 +133,21 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           setTimeout(() => {
             handleOpenSlideOver(label, subItems);
           }, 300);
+        } else if (route) {
+          // Navigate directly for items with route
+          setTimeout(() => {
+            navigate(route);
+          }, 300);
         }
       } else {
         if (hasSubItems) {
           // Open slide-over panel
           handleOpenSlideOver(label, subItems);
+        } else if (route) {
+          // Navigate directly for items with route
+          navigate(route);
         } else {
-          // Navigate directly for items without sub-items
+          // Legacy fallback for items without route
           if (itemKey === 'labs') {
             navigate('/experiments');
           } else if (itemKey === 'about') {
@@ -470,7 +498,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             onClick={handleHomeClick}
             style={{
               position: 'absolute',
-              top: 'calc(160% + 60px)',
+              top: '280px',
               left: '40px',
               transform: 'rotate(-90deg)',
               transformOrigin: 'left center',
@@ -491,8 +519,12 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
               color: scrollOffset === 0 ? 'rgb(251, 191, 36)' : 'black',
               fontWeight: scrollOffset === 0 ? '700' : '600',
               letterSpacing: '0.1em',
-              fontSize: '12px',
-              transition: 'color 0.2s ease-out, font-weight 0.2s ease-out'
+              fontSize: '11px',
+              transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: 'block'
             }}>{pageLabel}</span>
           </div>
         </div>
@@ -516,13 +548,25 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             pointerEvents: slideOverOpen ? 'none' : 'auto'
           }}
         >
-          {navigationItems.map((item, index) => (
-            <NavigationItem
-              key={item.itemKey}
-              {...item}
-              index={index}
-            />
-          ))}
+          {navigationItems.map((item, index) => {
+            // Render section labels (START HERE, EXPLORE)
+            if (item.isSectionLabel) {
+              return (
+                <SectionLabel
+                  key={item.itemKey}
+                  label={item.label}
+                />
+              );
+            }
+            // Render regular navigation items
+            return (
+              <NavigationItem
+                key={item.itemKey}
+                {...item}
+                index={index}
+              />
+            );
+          })}
         </nav>
 
         {/* SLIDE-OVER PANEL - Sub-items (vertically centered) */}
