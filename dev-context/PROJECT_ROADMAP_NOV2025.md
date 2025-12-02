@@ -1,8 +1,58 @@
-# Project Roadmap - November 2025
+# Project Roadmap - November/December 2025
 
-**Date:** November 30, 2025
+**Date:** December 2, 2025
 **Status:** 🔴 CRITICAL PIVOT - Post-Rho Immediate Revenue Strategy
-**Days Since Rho Exit:** 5 (Nov 25, 2025)
+**Days Since Rho Exit:** 7 (Nov 25, 2025)
+
+---
+
+## 🟢 DECEMBER 2, 2025 - LEGAL PAGES, BLOG TOGGLE, BREADCRUMB FIXES
+
+### Mac Mini Session: UI Polish & Legal Compliance
+
+**Commit:** `2c6f018` - "Feature: Dec 2 session - Legal pages, blog toggle, breadcrumb fixes"
+
+#### 1. Legal Pages Created
+- ✅ Privacy Policy page (`/privacy`) - GDPR/CCPA compliant
+- ✅ Terms of Service page (`/terms`) - Standard consulting terms
+- ✅ Footer links added (PRIVACY, TERMS)
+- ✅ Lazy loading for both pages
+
+#### 2. Blog Scroll Toggle (ThoughtsPage)
+- ✅ LIST/CAROUSEL toggle buttons
+- ✅ Vertical scroll mode (default)
+- ✅ Horizontal scroll with snap behavior
+- ✅ Theme-aware styling (black/yellow buttons)
+
+#### 3. Reading Progress Bar
+- ✅ Shared component: `src/components/shared/ReadingProgressBar.jsx`
+- ✅ `useReadingProgress` custom hook
+- ✅ Supports both `progress` prop and `contentRef` prop
+- ✅ Fixed gradient (yellow → transparent)
+
+#### 4. Breadcrumbs Spacing Fix (Sidebar)
+- ✅ Positioned pageLabel at `top: 280px`
+- ✅ Added `maxWidth: 180px` with ellipsis truncation
+- ✅ Reduced font size to 11px
+- ✅ Rotated -90deg for vertical alignment
+
+#### 5. Domain Migration Status
+- ⚠️ DNS configured correctly (Cloudflare → Firebase)
+- ⚠️ TXT record shows `hosting-site=yellowcircle-app`
+- ❌ Firebase verification failing (backend cache issue)
+- 📋 **ACTION NEEDED:** Submit Firebase Support ticket
+
+**Files Created:**
+- `src/pages/PrivacyPolicyPage.jsx` - Privacy policy
+- `src/pages/TermsPage.jsx` - Terms of service
+- `src/components/shared/ReadingProgressBar.jsx` - Shared progress bar
+
+**Files Modified:**
+- `src/RouterApp.jsx` - Legal page routes
+- `src/config/globalContent.js` - Footer links
+- `src/pages/ThoughtsPage.jsx` - Scroll toggle
+- `src/components/global/Sidebar.jsx` - Breadcrumb positioning
+- `src/pages/OwnYourStoryArticle1Page.jsx` - Use shared progress bar
 
 ---
 
@@ -1023,7 +1073,7 @@ h1.your-circle {
 
 ---
 
-**Last Updated:** November 30, 2025
+**Last Updated:** December 2, 2025
 **Next Review:** December 7, 2025 (Week 2 of 60-Day Plan)
 **Owner:** Christopher Cooper
-**Version:** 2.0 (Post-Rho Pivot)
+**Version:** 2.1 (Dec 2 Session Update)
