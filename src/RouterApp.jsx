@@ -23,6 +23,7 @@ const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
 const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 const DirectoryPage = lazy(() => import('./pages/DirectoryPage'));
 const UnityNotesPage = lazy(() => import('./pages/UnityNotesPage'));
+const JourneysPage = lazy(() => import('./pages/JourneysPage'));
 
 // Experiment sub-routes (lazy loaded)
 const GoldenUnknownPage = lazy(() => import('./pages/experiments/GoldenUnknownPage'));
@@ -37,6 +38,10 @@ const BlogPage = lazy(() => import('./pages/thoughts/BlogPage'));
 
 // Own Your Story - Thought Leadership Series (lazy loaded - large component)
 const OwnYourStoryArticle1Page = lazy(() => import('./pages/OwnYourStoryArticle1Page'));
+
+// Legal pages (lazy loaded)
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 
 // Loading spinner for lazy loaded components
 const PageLoader = () => (
@@ -79,6 +84,7 @@ function RouterApp() {
 
             {/* Main Pages */}
             <Route path="/experiments" element={<ExperimentsPage />} />
+            <Route path="/journeys" element={<JourneysPage />} />
             <Route path="/thoughts" element={<ThoughtsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/works" element={<WorksPage />} />
@@ -126,6 +132,10 @@ function RouterApp() {
 
             {/* Services Detail Pages */}
             <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+
+            {/* Legal Pages */}
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />

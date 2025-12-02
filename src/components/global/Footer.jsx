@@ -102,7 +102,7 @@ function Footer({ onFooterToggle }) {
 
   // Get configuration
   const contactConfig = globalContent.footer.contact;
-  const servicesConfig = globalContent.footer.services;
+  const resourcesConfig = globalContent.footer.resources;
 
   return (
     <div
@@ -187,11 +187,12 @@ function Footer({ onFooterToggle }) {
             ))}
           </div>
 
-          {/* Social links on their own line */}
+          {/* Social links + internal links on their own line */}
           <div style={{
             display: 'flex',
             gap: '20px',
-            marginBottom: '20px'
+            marginBottom: '20px',
+            flexWrap: 'wrap'
           }}>
             {contactConfig.links.filter(link => link.type === 'social').map((link, index) => (
               <a
@@ -219,6 +220,34 @@ function Footer({ onFooterToggle }) {
               >
                 {link.icon && <SocialIcon type={link.icon} size={18} color="currentColor" />}
                 <span>{link.text}</span>
+              </a>
+            ))}
+            {/* Internal navigation links (like Feedback) */}
+            {contactConfig.links.filter(link => link.type === 'link').map((link, index) => (
+              <a
+                key={`link-${index}`}
+                href={link.url}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(link.route || link.url);
+                }}
+                style={{
+                  color: contactConfig.colors.linkColor,
+                  textDecoration: 'none',
+                  fontSize: 'clamp(11px, 2.5vw, 14px)',
+                  fontWeight: '500',
+                  letterSpacing: '0.1em',
+                  transition: 'color 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = contactConfig.colors.linkHoverColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = contactConfig.colors.linkColor;
+                }}
+              >
+                {link.text}
               </a>
             ))}
           </div>
@@ -286,32 +315,32 @@ function Footer({ onFooterToggle }) {
           </div>
         </div>
 
-        {/* Services Section */}
-        <div className="footer-section footer-services" style={{
+        {/* Resources Section */}
+        <div className="footer-section footer-resources" style={{
           flex: '1 1 50%',
           minWidth: 'min(300px, 100%)',
-          backgroundColor: servicesConfig.colors.backgroundColor,
+          backgroundColor: resourcesConfig.colors.backgroundColor,
           padding: '40px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start'
         }}>
           <h2 style={{
-            color: servicesConfig.colors.titleColor,
+            color: resourcesConfig.colors.titleColor,
             fontSize: 'clamp(18px, 4vw, 24px)',
             fontWeight: '600',
             letterSpacing: '0.3em',
             margin: '0 0 20px 0',
-            borderBottom: `2px solid ${servicesConfig.colors.borderColor}`,
+            borderBottom: `2px solid ${resourcesConfig.colors.borderColor}`,
             paddingBottom: '10px'
-          }}>{servicesConfig.title}</h2>
+          }}>{resourcesConfig.title}</h2>
 
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '15px'
           }}>
-            {servicesConfig.links.map((link, index) => (
+            {resourcesConfig.links.map((link, index) => (
               <a
                 key={index}
                 href={link.url}
@@ -320,15 +349,15 @@ function Footer({ onFooterToggle }) {
                   navigate(link.route);
                 } : undefined}
                 style={{
-                  color: servicesConfig.colors.linkColor,
+                  color: resourcesConfig.colors.linkColor,
                   textDecoration: 'none',
                   fontSize: 'clamp(11px, 2.5vw, 14px)',
                   fontWeight: '500',
                   letterSpacing: '0.1em',
                   transition: 'color 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.target.style.color = servicesConfig.colors.linkHoverColor}
-                onMouseLeave={(e) => e.target.style.color = servicesConfig.colors.linkColor}
+                onMouseEnter={(e) => e.target.style.color = resourcesConfig.colors.linkHoverColor}
+                onMouseLeave={(e) => e.target.style.color = resourcesConfig.colors.linkColor}
               >{link.text}</a>
             ))}
           </div>

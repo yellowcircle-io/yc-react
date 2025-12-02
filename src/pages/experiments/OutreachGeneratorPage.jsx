@@ -11,12 +11,12 @@ const DEFAULT_BRAND = {
   sender: {
     name: 'Chris Cooper',
     title: 'GTM & Marketing Operations Consultant',
-    email: 'chris@yellowcircle.co'
+    email: 'chris@yellowcircle.io'
   },
   links: {
     calendar: 'https://calendly.com/christophercooper',
-    article: 'https://yellowcircle-app.web.app/thoughts/why-your-gtm-sucks',
-    website: 'https://yellowcircle-app.web.app'
+    article: 'https://yellowcircle.io/thoughts/why-your-gtm-sucks',
+    website: 'https://yellowcircle.io'
   }
 };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
+import ReadingProgressBar from '../components/shared/ReadingProgressBar';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
 
@@ -17,29 +18,6 @@ import { navigationItems } from '../config/navigationItems';
  *
  * Updated: November 30, 2025
  */
-
-// Reading Progress Bar Component
-function ReadingProgressBar({ progress }) {
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '4px',
-      backgroundColor: 'rgba(251, 191, 36, 0.2)',
-      zIndex: 1000
-    }}>
-      <div style={{
-        height: '100%',
-        width: `${progress}%`,
-        backgroundColor: COLORS.yellow,
-        transition: 'width 0.1s ease-out',
-        boxShadow: '0 0 10px rgba(251, 191, 36, 0.5)'
-      }} />
-    </div>
-  );
-}
 
 // Stat Card Component
 function StatCard({ value, label, source }) {
@@ -166,6 +144,7 @@ function OwnYourStoryArticle1Page() {
       onMenuToggle={handleMenuToggle}
       navigationItems={navigationItems}
       pageLabel="THOUGHTS"
+      allowScroll={true}
     >
       {/* Reading Progress Indicator */}
       <ReadingProgressBar progress={readingProgress} />

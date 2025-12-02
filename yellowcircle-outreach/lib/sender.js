@@ -9,7 +9,7 @@ require('dotenv').config();
 class Sender {
   constructor(config = {}) {
     this.apiKey = config.apiKey || process.env.RESEND_API_KEY;
-    this.fromEmail = config.fromEmail || process.env.FROM_EMAIL || 'chris@yellowcircle.co';
+    this.fromEmail = config.fromEmail || process.env.FROM_EMAIL || 'chris@yellowcircle.io';
     this.fromName = config.fromName || process.env.FROM_NAME || 'Chris Cooper';
     this.client = null;
 

@@ -9,13 +9,13 @@ const BRAND = {
   // Company info
   name: 'yellowCircle',
   tagline: 'GTM Strategy & Marketing Operations Consulting',
-  website: 'https://yellowcircle-app.web.app',
+  website: 'https://yellowcircle.io',
 
   // Consultant info
   consultant: {
     name: 'Christopher Cooper',
     shortName: 'Chris',
-    email: 'chris@yellowcircle.co',
+    email: 'chris@yellowcircle.io',
     title: 'GTM & Marketing Operations Consultant'
   },
 

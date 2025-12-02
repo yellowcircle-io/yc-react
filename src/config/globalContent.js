@@ -59,6 +59,24 @@ const globalContent = {
           url: 'https://www.instagram.com/yellowcircle.io/',
           type: 'social',
           icon: 'instagram'
+        },
+        {
+          text: 'FEEDBACK',
+          url: '/feedback',
+          type: 'link',
+          route: '/feedback'
+        },
+        {
+          text: 'PRIVACY',
+          url: '/privacy',
+          type: 'link',
+          route: '/privacy'
+        },
+        {
+          text: 'TERMS',
+          url: '/terms',
+          type: 'link',
+          route: '/terms'
         }
       ],
       colors: {
@@ -69,33 +87,33 @@ const globalContent = {
         borderColor: 'white'
       }
     },
-    services: {
-      title: 'SERVICES',
+    resources: {
+      title: 'RESOURCES',
       links: [
         {
-          text: 'GTM STRATEGIC AUDIT',
+          text: 'GROWTH HEALTH CHECK',
+          url: '#',
+          route: '/assessment'
+        },
+        {
+          text: 'SERVICES',
           url: '#',
           route: '/services'
         },
         {
-          text: 'MARKETING SYSTEMS',
+          text: 'OUTREACH GENERATOR',
           url: '#',
-          route: '/services'
+          route: '/experiments/outreach-generator'
         },
         {
-          text: 'TECHNICAL DEBT AUDIT',
+          text: 'WHY YOUR GTM SUCKS',
           url: '#',
-          route: '/services'
+          route: '/thoughts/why-your-gtm-sucks'
         },
         {
-          text: 'DATA ARCHITECTURE',
+          text: 'CLIENTS',
           url: '#',
-          route: '/services'
-        },
-        {
-          text: 'EMAIL DEVELOPMENT',
-          url: '#',
-          route: '/services'
+          route: '/works'
         }
       ],
       colors: {

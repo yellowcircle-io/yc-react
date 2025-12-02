@@ -23,6 +23,9 @@ function ThoughtsPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
 
+  // Scroll mode: 'vertical' (list) or 'horizontal' (carousel)
+  const [scrollMode, setScrollMode] = React.useState('vertical');
+
   // Inject stagger animation
   React.useEffect(() => {
     const styleId = 'text-stagger-animations';
@@ -112,10 +115,71 @@ function ThoughtsPage() {
             </p>
           </div>
 
-          {/* Articles List */}
+          {/* Scroll Mode Toggle */}
           <div style={{
-            marginTop: '30px',
-            animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginTop: '20px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.5s both'
+          }}>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              letterSpacing: '0.1em',
+              color: 'rgba(0, 0, 0, 0.4)',
+              textTransform: 'uppercase'
+            }}>
+              VIEW:
+            </span>
+            <button
+              onClick={() => setScrollMode('vertical')}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: scrollMode === 'vertical' ? COLORS.yellow : 'transparent',
+                color: scrollMode === 'vertical' ? 'black' : 'rgba(0, 0, 0, 0.5)',
+                border: scrollMode === 'vertical' ? 'none' : '1px solid rgba(0, 0, 0, 0.2)',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.05em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              LIST
+            </button>
+            <button
+              onClick={() => setScrollMode('horizontal')}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: scrollMode === 'horizontal' ? COLORS.yellow : 'transparent',
+                color: scrollMode === 'horizontal' ? 'black' : 'rgba(0, 0, 0, 0.5)',
+                border: scrollMode === 'horizontal' ? 'none' : '1px solid rgba(0, 0, 0, 0.2)',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.05em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              CAROUSEL
+            </button>
+          </div>
+
+          {/* Articles List/Carousel */}
+          <div style={{
+            marginTop: '20px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.6s both',
+            ...(scrollMode === 'horizontal' ? {
+              display: 'flex',
+              gap: '16px',
+              overflowX: 'auto',
+              paddingBottom: '16px',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch'
+            } : {})
           }}>
             {ARTICLES.map((article, index) => (
               <div
@@ -126,13 +190,20 @@ function ThoughtsPage() {
                   border: article.featured ? `2px solid ${COLORS.yellow}` : '1px solid rgba(0, 0, 0, 0.1)',
                   borderRadius: '8px',
                   padding: '20px',
-                  marginBottom: '16px',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
-                  ...EFFECTS.blur
+                  ...EFFECTS.blur,
+                  ...(scrollMode === 'horizontal' ? {
+                    minWidth: '300px',
+                    maxWidth: '300px',
+                    flexShrink: 0,
+                    scrollSnapAlign: 'start'
+                  } : {
+                    marginBottom: '16px'
+                  })
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.transform = scrollMode === 'horizontal' ? 'translateY(-4px)' : 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
                 }}
                 onMouseLeave={(e) => {

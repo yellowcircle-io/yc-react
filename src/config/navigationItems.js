@@ -11,22 +11,40 @@
 // Lottie animation data for sidebar icons
 import servicesAnimation from '../assets/lottie/wip.json';
 import storiesAnimation from '../assets/lottie/scroll-with-quill.json';
-import labsAnimation from '../assets/lottie/beaker.json';
+import checklistAnimation from '../assets/lottie/checklist.json';
+import mapAnimation from '../assets/lottie/map.json';
 import aboutAnimation from '../assets/lottie/wave.json';
 
 /**
  * Standard navigation items for all pages
  * Uses Lottie animations for icons
+ * Organized into two sections: START HERE and EXPLORE
  *
  * IMPORTANT: Keep in sync with HamburgerMenu.jsx menuConfig
  */
 export const navigationItems = [
+  // ========================
+  // START HERE - Primary actions
+  // ========================
+  {
+    isSectionLabel: true,
+    label: "START HERE",
+    itemKey: "section-start-here"
+  },
+  {
+    lottieData: checklistAnimation,
+    label: "GROWTH HEALTH CHECK",
+    itemKey: "assessment",
+    route: "/assessment",
+    subItems: []
+  },
   {
     lottieData: servicesAnimation,
     label: "SERVICES",
     itemKey: "services",
     subItems: [
-      { label: "GTM STRATEGIC AUDIT", key: "gtm-audit", route: "/services/gtm-audit" },
+      { label: "ALL SERVICES", key: "all-services", route: "/services", isSectionHeader: true },
+      { label: "GROWTH INFRASTRUCTURE AUDIT", key: "gtm-audit", route: "/services/gtm-audit" },
       { label: "MARKETING SYSTEMS", key: "marketing-systems", route: "/services/marketing-systems" },
       { label: "TECHNICAL DEBT", key: "technical-debt", route: "/services/technical-debt" },
       { label: "ATTRIBUTION AUDIT", key: "attribution-audit", route: "/services/attribution-audit" },
@@ -36,12 +54,27 @@ export const navigationItems = [
     ]
   },
   {
+    lottieData: aboutAnimation,
+    label: "ABOUT",
+    itemKey: "about",
+    route: "/about",
+    subItems: []
+  },
+  // ========================
+  // EXPLORE - Stories and tools
+  // ========================
+  {
+    isSectionLabel: true,
+    label: "EXPLORE",
+    itemKey: "section-explore"
+  },
+  {
     lottieData: storiesAnimation,
     label: "STORIES",
     itemKey: "stories",
     subItems: [
-      // Works section
-      { label: "WORKS", key: "works", route: "/works", isSectionHeader: true },
+      // Clients section
+      { label: "CLIENTS", key: "works", route: "/works", isSectionHeader: true },
       { label: "RHO TECHNOLOGIES", key: "rho", route: "/works/rho" },
       { label: "REDDIT", key: "reddit", route: "/works/reddit" },
       { label: "ESTÉE LAUDER", key: "estee-lauder", route: "/works/estee-lauder" },
@@ -54,21 +87,14 @@ export const navigationItems = [
     ]
   },
   {
-    lottieData: labsAnimation,
-    label: "LABS",
-    itemKey: "labs",
+    lottieData: mapAnimation,
+    label: "JOURNEYS",
+    itemKey: "journeys",
     subItems: [
-      { label: "GTM HEALTH ASSESSMENT", key: "assessment", route: "/assessment" },
       { label: "OUTREACH GENERATOR", key: "outreach-generator", route: "/experiments/outreach-generator" },
       { label: "UNITY NOTES", key: "unity-notes", route: "/unity-notes" }
       // Note: OUTREACH hidden from nav but accessible via /outreach and in sitemap
     ]
-  },
-  {
-    lottieData: aboutAnimation,
-    label: "ABOUT",
-    itemKey: "about",
-    subItems: []
   }
 ];
 

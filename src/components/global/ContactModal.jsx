@@ -38,8 +38,27 @@ function ContactModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [utmParams, setUtmParams] = useState({
+    utm_source: '',
+    utm_medium: '',
+    utm_campaign: '',
+    utm_content: '',
+    utm_term: ''
+  });
   const nameInputRef = useRef(null);
   const emailInputRef = useRef(null);
+
+  // Capture UTM parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    setUtmParams({
+      utm_source: urlParams.get('utm_source') || '',
+      utm_medium: urlParams.get('utm_medium') || '',
+      utm_campaign: urlParams.get('utm_campaign') || '',
+      utm_content: urlParams.get('utm_content') || '',
+      utm_term: urlParams.get('utm_term') || ''
+    });
+  }, []);
 
   // Track previous modal state to detect open transitions
   const wasOpen = useRef(false);
@@ -94,6 +113,11 @@ function ContactModal() {
     e.preventDefault();
     setError('');
 
+    if (!name.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+
     if (!email.trim()) {
       setError('Please enter your email address');
       return;
@@ -127,7 +151,13 @@ function ContactModal() {
           subject: `New Contact from yellowCircle: ${name || email}${service ? ` - ${SERVICE_OPTIONS.find(s => s.value === service)?.label}` : ''}`,
           // Hidden fields for tracking
           source: 'yellowcircle.io',
-          page: window.location.pathname
+          page: window.location.pathname,
+          // UTM tracking
+          utm_source: utmParams.utm_source,
+          utm_medium: utmParams.utm_medium,
+          utm_campaign: utmParams.utm_campaign,
+          utm_content: utmParams.utm_content,
+          utm_term: utmParams.utm_term
         })
       });
 
@@ -315,7 +345,7 @@ function ContactModal() {
                   letterSpacing: '0.05em'
                 }}
               >
-                EMAIL
+                EMAIL <span style={{ color: 'rgb(251, 191, 36)', fontWeight: '400' }}>*</span>
               </label>
               <input
                 ref={emailInputRef}
@@ -329,7 +359,7 @@ function ContactModal() {
                   width: '100%',
                   padding: '12px 16px',
                   fontSize: '16px',
-                  color: 'rgb(180, 140, 20)',
+                  color: 'black',
                   border: '2px solid rgba(0, 0, 0, 0.1)',
                   borderRadius: '8px',
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',
@@ -352,7 +382,7 @@ function ContactModal() {
                   letterSpacing: '0.05em'
                 }}
               >
-                NAME <span style={{ color: 'rgba(0, 0, 0, 0.4)', fontWeight: '400' }}>(optional)</span>
+                NAME <span style={{ color: 'rgb(251, 191, 36)', fontWeight: '400' }}>*</span>
               </label>
               <input
                 ref={nameInputRef}
