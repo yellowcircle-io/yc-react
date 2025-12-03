@@ -1,26 +1,24 @@
 /**
  * Calendar Booking Configuration
  *
- * Configure your calendar booking service (Calendly, Cal.com, etc.)
- *
- * To enable calendar booking:
- * 1. Sign up at calendly.com or cal.com
- * 2. Create a 30-minute discovery call event type
- * 3. Copy your booking URL and paste it below
- * 4. Set CALENDAR_ENABLED to true
+ * Using Cal.com for scheduling (open source, generous free tier)
+ * API Key stored for future backend integrations
  */
 
-// Set to true when you have a calendar URL configured
-export const CALENDAR_ENABLED = false;
+// Calendar booking is now enabled with Cal.com
+export const CALENDAR_ENABLED = true;
 
-// Your calendar booking URL (Calendly or Cal.com)
-// Examples:
-// - Calendly: https://calendly.com/yellowcircle/discovery-call
-// - Cal.com: https://cal.com/yellowcircle/discovery-call
-export const CALENDAR_URL = '';
+// Cal.com booking URL
+// Format: https://cal.com/[username]/[event-type]
+// Update the username below after creating your Cal.com account
+export const CALENDAR_URL = 'https://cal.com/yellowcircle/discovery-call';
 
 // Calendar service name for display
-export const CALENDAR_SERVICE = 'Calendly';
+export const CALENDAR_SERVICE = 'Cal.com';
+
+// Cal.com API key for future backend integrations (webhooks, availability API, etc.)
+// Note: This is a live API key - keep secure
+export const CAL_API_KEY = 'cal_live_2062ddf01a278109f6419d7508dc72bb';
 
 /**
  * Opens the calendar booking page
