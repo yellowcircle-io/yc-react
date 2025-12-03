@@ -3,6 +3,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Shortlinks collection - public read for redirects, controlled write
+    match /shortlinks/{shortCode} {
+      // Allow anyone to read shortlinks (for redirect lookups)
+      allow read: if true;
+
+      // Allow create/update/delete (admin via client bypass)
+      allow create: if request.resource.data.keys().hasAll(['shortCode', 'destinationUrl', 'createdAt', 'isActive'])
+                    && request.resource.data.destinationUrl is string
+                    && request.resource.data.destinationUrl.size() <= 2000;
+
+      // Allow click count updates
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['clicks', 'uniqueClicks', 'updatedAt', 'isActive', 'title', 'campaign', 'destinationUrl']);
+
+      allow delete: if true;
+
+      // Clicks subcollection
+      match /clicks/{clickId} {
+        allow read: if true;
+        allow create: if request.resource.data.keys().hasAll(['timestamp']);
+        allow delete: if true;
+      }
+    }
+
     // Capsules collection - public read, controlled write
     match /capsules/{capsuleId} {
       // Allow anyone to read capsules (for shared links)
