@@ -12,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import Layout from '../components/global/Layout';
+import LeadGate from '../components/shared/LeadGate';
 import { useLayout } from '../contexts/LayoutContext';
 import { navigationItems } from '../config/navigationItems';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
@@ -919,25 +920,31 @@ function UnityNotesPage() {
   };
 
   return (
-    <ErrorBoundary>
-      <Layout
-        onHomeClick={handleHomeClick}
-        onFooterToggle={handleFooterToggle}
-        onMenuToggle={handleMenuToggle}
-        navigationItems={navigationItems}
-        pageLabel="UNITY NOTES"
-        sidebarVariant="hidden"
-        hideCircleNav={true}
-      >
-        <ReactFlowProvider>
-          <UnityNotesFlow
-            isUploadModalOpen={isUploadModalOpen}
-            setIsUploadModalOpen={setIsUploadModalOpen}
-            onFooterToggle={handleFooterToggle}
-          />
-        </ReactFlowProvider>
-      </Layout>
-    </ErrorBoundary>
+    <LeadGate
+      toolName="Unity Notes"
+      toolDescription="A visual canvas for organizing ideas, notes, and images. Enter your email to get instant access."
+      storageKey="yc_unity_lead"
+    >
+      <ErrorBoundary>
+        <Layout
+          onHomeClick={handleHomeClick}
+          onFooterToggle={handleFooterToggle}
+          onMenuToggle={handleMenuToggle}
+          navigationItems={navigationItems}
+          pageLabel="UNITY NOTES"
+          sidebarVariant="hidden"
+          hideCircleNav={true}
+        >
+          <ReactFlowProvider>
+            <UnityNotesFlow
+              isUploadModalOpen={isUploadModalOpen}
+              setIsUploadModalOpen={setIsUploadModalOpen}
+              onFooterToggle={handleFooterToggle}
+            />
+          </ReactFlowProvider>
+        </Layout>
+      </ErrorBoundary>
+    </LeadGate>
   );
 }
 

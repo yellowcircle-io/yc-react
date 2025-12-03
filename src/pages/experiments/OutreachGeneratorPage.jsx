@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
+import LeadGate from '../../components/shared/LeadGate';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
 
@@ -311,6 +312,11 @@ Return ONLY a JSON object with this exact format:
   };
 
   return (
+    <LeadGate
+      toolName="Outreach Generator"
+      toolDescription="Generate personalized cold outreach emails with AI. Enter your email to get instant access."
+      storageKey="yc_outreach_lead"
+    >
     <Layout
       onHomeClick={handleHomeClick}
       onFooterToggle={handleFooterToggle}
@@ -856,6 +862,7 @@ Return ONLY a JSON object with this exact format:
         </div>
       </div>
     </Layout>
+    </LeadGate>
   );
 }
 
