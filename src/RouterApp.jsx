@@ -26,6 +26,8 @@ const DirectoryPage = lazy(() => import('./pages/DirectoryPage'));
 const UnityNotesPage = lazy(() => import('./pages/UnityNotesPage'));
 const JourneysPage = lazy(() => import('./pages/JourneysPage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
+const ShortlinkRedirectPage = lazy(() => import('./pages/ShortlinkRedirectPage'));
+const ShortlinkManagerPage = lazy(() => import('./pages/ShortlinkManagerPage'));
 
 // Experiment sub-routes (lazy loaded)
 const GoldenUnknownPage = lazy(() => import('./pages/experiments/GoldenUnknownPage'));
@@ -94,6 +96,10 @@ function RouterApp() {
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/assessment" element={<AssessmentPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
+
+            {/* Shortlinks */}
+            <Route path="/go/:shortCode" element={<ShortlinkRedirectPage />} />
+            <Route path="/shortlinks" element={<ShortlinkManagerPage />} />
 
             {/* Experiment Sub-routes */}
             <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />
