@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLayout } from '../../contexts/LayoutContext';
+import { submitContactForm } from '../../utils/formSubmit';
 
 // Service options for dropdown
 const SERVICE_OPTIONS = [
@@ -131,37 +132,16 @@ function ContactModal() {
     setIsSubmitting(true);
 
     try {
-      // Send form data to Web3Forms (free form submission service)
-      // Get your access key at https://web3forms.com/
-      const WEB3FORMS_ACCESS_KEY = '960839cb-2448-4f82-b12a-82ca2eb7197f';
+      // Use shared form submission utility
+      const serviceName = service ? SERVICE_OPTIONS.find(s => s.value === service)?.label : '';
 
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_ACCESS_KEY,
-          from_name: name || 'Website Visitor',
-          email: email,
-          phone: phone || 'Not provided',
-          service: service ? SERVICE_OPTIONS.find(s => s.value === service)?.label : 'Not specified',
-          message: message || 'No message provided',
-          subject: `New Contact from yellowCircle: ${name || email}${service ? ` - ${SERVICE_OPTIONS.find(s => s.value === service)?.label}` : ''}`,
-          // Hidden fields for tracking
-          source: 'yellowcircle.io',
-          page: window.location.pathname,
-          // UTM tracking
-          utm_source: utmParams.utm_source,
-          utm_medium: utmParams.utm_medium,
-          utm_campaign: utmParams.utm_campaign,
-          utm_content: utmParams.utm_content,
-          utm_term: utmParams.utm_term
-        })
+      const result = await submitContactForm({
+        email,
+        name,
+        phone,
+        service: serviceName,
+        message
       });
-
-      const result = await response.json();
 
       if (result.success) {
         setSubmitted(true);
@@ -170,7 +150,7 @@ function ContactModal() {
           closeContactModal();
         }, 2000);
       } else {
-        throw new Error(result.message || 'Submission failed');
+        throw new Error('Submission failed');
       }
     } catch (err) {
       console.error('Contact form error:', err);
