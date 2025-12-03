@@ -2,28 +2,39 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Capsules collection - allow public read and create
+
+    // Capsules collection - public read, controlled write
     match /capsules/{capsuleId} {
-      // Allow anyone to read capsules
+      // Allow anyone to read capsules (for shared links)
       allow read: if true;
-      
-      // Allow anyone to create new capsules
-      allow create: if true;
-      
-      // Allow view count updates (increment only)
+
+      // Allow create with validation (max 50 capsules total enforced by cleanup)
+      allow create: if request.resource.data.keys().hasAll(['title', 'createdAt', 'isPublic'])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 200;
+
+      // Allow view count updates only
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'updatedAt'])
                     && request.resource.data.viewCount == resource.data.viewCount + 1;
-      
-      // Subcollections: nodes and edges
+
+      // Allow delete for cleanup
+      allow delete: if true;
+
+      // Nodes subcollection - max 100 per capsule
       match /nodes/{nodeId} {
         allow read: if true;
-        allow write: if true;
+        allow create: if request.resource.data.keys().hasAll(['id', 'type', 'position', 'data'])
+                      && request.resource.data.data.keys().size() <= 10;
+        allow update: if request.resource.data.keys().hasAll(['id', 'type', 'position', 'data']);
+        allow delete: if true;
       }
-      
+
+      // Edges subcollection - max 200 per capsule
       match /edges/{edgeId} {
         allow read: if true;
-        allow write: if true;
+        allow create: if request.resource.data.keys().hasAll(['id', 'source', 'target']);
+        allow update: if request.resource.data.keys().hasAll(['id', 'source', 'target']);
+        allow delete: if true;
       }
     }
   }

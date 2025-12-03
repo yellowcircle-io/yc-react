@@ -50,11 +50,17 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [isInitialized, setIsInitialized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Firebase hook for shareable URLs
+  // Firebase hook for shareable URLs (gated for pro/admin users)
   const { saveCapsule, isSaving } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Check if user has pro/admin access for cloud features
+  const hasProAccess = () => {
+    return localStorage.getItem('yc_bypass_active') === 'true' ||
+           localStorage.getItem('yc_client_access') === 'true';
+  };
 
   // Lightbox state
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
@@ -468,13 +474,24 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     input.click();
   };
 
-  // Save capsule to Firebase and get shareable URL
+  // Save capsule to Firebase and get shareable URL (Pro feature)
   const handleSaveAndShare = async () => {
+    // Gate cloud sharing for pro/admin users only
+    if (!hasProAccess()) {
+      alert(
+        '☁️ Cloud Sharing - Pro Feature\n\n' +
+        'Cloud sharing is available for Pro users.\n\n' +
+        '✅ You can still use EXPORT to save as JSON file\n' +
+        '✅ Import your JSON on any device\n\n' +
+        'Contact us for Pro access.'
+      );
+      return;
+    }
+
     if (nodes.length === 0) {
       alert('⚠️ Please add at least one note before sharing');
       return;
     }
-
 
     try {
       const serializableNodes = nodes.map(node => ({
