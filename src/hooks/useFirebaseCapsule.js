@@ -5,11 +5,14 @@ import {
   writeBatch,
   getDoc,
   getDocs,
+  deleteDoc,
   serverTimestamp,
   increment,
   updateDoc,
   query,
-  limit
+  limit,
+  where,
+  orderBy
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -241,10 +244,119 @@ export const useFirebaseCapsule = () => {
     }
   };
 
+  /**
+   * Delete a capsule and all its subcollections
+   * @param {string} capsuleId - Capsule ID to delete
+   */
+  const deleteCapsule = async (capsuleId) => {
+    try {
+      const batch = writeBatch(db);
+
+      // Delete all nodes
+      const nodesRef = collection(db, `capsules/${capsuleId}/nodes`);
+      const nodesSnap = await getDocs(nodesRef);
+      nodesSnap.docs.forEach(doc => batch.delete(doc.ref));
+
+      // Delete all edges
+      const edgesRef = collection(db, `capsules/${capsuleId}/edges`);
+      const edgesSnap = await getDocs(edgesRef);
+      edgesSnap.docs.forEach(doc => batch.delete(doc.ref));
+
+      // Delete capsule document
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      batch.delete(capsuleRef);
+
+      await batch.commit();
+      console.log('✅ Capsule deleted:', capsuleId);
+      return true;
+    } catch (err) {
+      console.error('❌ Delete failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Cleanup old capsules with low/no views
+   * @param {number} maxAgeDays - Delete capsules older than this (default: 30)
+   * @param {number} minViews - Keep capsules with at least this many views (default: 5)
+   * @returns {Promise<Object>} { deleted: number, kept: number }
+   */
+  const cleanupOldCapsules = async (maxAgeDays = 30, minViews = 5) => {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
+
+      // Query all capsules
+      const capsulesRef = collection(db, 'capsules');
+      const capsulesSnap = await getDocs(capsulesRef);
+
+      let deleted = 0;
+      let kept = 0;
+
+      for (const capsuleDoc of capsulesSnap.docs) {
+        const data = capsuleDoc.data();
+        const createdAt = data.createdAt?.toDate?.() || new Date(0);
+        const viewCount = data.viewCount || 0;
+
+        // Delete if old AND low views
+        if (createdAt < cutoffDate && viewCount < minViews) {
+          await deleteCapsule(capsuleDoc.id);
+          deleted++;
+          console.log(`🗑️ Deleted: ${capsuleDoc.id} (${viewCount} views, created ${createdAt.toLocaleDateString()})`);
+        } else {
+          kept++;
+        }
+      }
+
+      console.log(`\n📊 Cleanup complete: ${deleted} deleted, ${kept} kept`);
+      return { deleted, kept };
+    } catch (err) {
+      console.error('❌ Cleanup failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Get statistics about all capsules
+   * @returns {Promise<Object>} { total, totalViews, oldCapsules, lowViewCapsules }
+   */
+  const getCapsuleStats = async () => {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 30);
+
+      const capsulesRef = collection(db, 'capsules');
+      const capsulesSnap = await getDocs(capsulesRef);
+
+      let total = 0;
+      let totalViews = 0;
+      let oldCapsules = 0;
+      let lowViewCapsules = 0;
+
+      capsulesSnap.docs.forEach(doc => {
+        const data = doc.data();
+        total++;
+        totalViews += data.viewCount || 0;
+
+        const createdAt = data.createdAt?.toDate?.() || new Date(0);
+        if (createdAt < cutoffDate) oldCapsules++;
+        if ((data.viewCount || 0) < 5) lowViewCapsules++;
+      });
+
+      return { total, totalViews, oldCapsules, lowViewCapsules };
+    } catch (err) {
+      console.error('❌ Stats failed:', err);
+      throw err;
+    }
+  };
+
   return {
     saveCapsule,
     loadCapsule,
     updateCapsule,
+    deleteCapsule,
+    cleanupOldCapsules,
+    getCapsuleStats,
     isSaving,
     isLoading,
     error
