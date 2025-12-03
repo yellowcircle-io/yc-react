@@ -9,9 +9,7 @@
 export const CALENDAR_ENABLED = true;
 
 // Cal.com booking URL
-// Format: https://cal.com/[username]/[event-type]
-// Update the username below after creating your Cal.com account
-export const CALENDAR_URL = 'https://cal.com/yellowcircle/discovery-call';
+export const CALENDAR_URL = 'https://cal.com/christopher-at-yellowcircle/15min?overlayCalendar=true';
 
 // Calendar service name for display
 export const CALENDAR_SERVICE = 'Cal.com';
