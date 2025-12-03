@@ -1,4 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="45" fill="#fbbf24"/>
-  <circle cx="50" cy="50" r="35" fill="none" stroke="#000" stroke-width="3"/>
+  <!-- Outer circle ring -->
+  <circle cx="50" cy="50" r="46" fill="none" stroke="#000" stroke-width="5"/>
+  <!-- yc monogram - stylized -->
+  <g transform="translate(25, 20)">
+    <!-- y stem and descender -->
+    <path d="M10 5 L10 35 Q10 50 25 50 Q33 50 37 45 L37 55 Q37 62 30 62 L20 62 Q13 62 10 58 L10 5 Z" fill="#000"/>
+    <!-- c curve connecting to y -->
+    <path d="M37 5 L37 32 Q37 40 30 40 L27 40 Q20 40 20 32 L20 28 Q20 20 27 20 L30 20 Q37 20 37 13 L37 5 Z" fill="#000"/>
+    <!-- dot/circle accent -->
+    <circle cx="32" cy="10" r="6" fill="#000"/>
+  </g>
 </svg>
