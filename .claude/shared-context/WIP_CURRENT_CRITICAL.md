@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 3, 2025 at 12:30 AM PST
+**Updated:** December 3, 2025 at 1:00 AM PST
 **Machine:** Mac Mini
-**Status:** 🟢 PHASE 0 COMPLETE - yellowcircle.io LIVE
+**Status:** 🟢 PHASE 1 IN PROGRESS - Outreach + Unity Notes Integration
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -45,6 +45,62 @@
 - **LIVE:** https://yellowcircle.io
 - **Backup:** https://yellowcircle-app.web.app
 - **Commit:** `02f91b9`
+
+---
+
+## ✅ DEC 3, 2025 - MAC MINI SESSION - 1:00 AM PST
+
+### Outreach Generator + Unity Notes Integration Complete
+
+**Commit:** Pending (changes built successfully)
+
+**1. LeadGate Fixed for Navigation Access**
+- Changed from full-screen overlay (zIndex 1000) to content-area only
+- New positioning: `top: 80px, left: 80px, zIndex: 100`
+- Sidebar (zIndex 260) and Header (zIndex 255) now accessible when gated
+
+**2. Sidebar Icon Flickering Fixed**
+- Root cause: Lottie `key` prop changing on hover caused re-mount
+- Fix: Removed key prop from Lottie animation component
+- Simplified toggle button with direct button element (not div with handlers)
+
+**3. Travel Time Capsule Archived**
+- Routes commented out in RouterApp.jsx
+- Entry removed from pagesConfig.js
+- Comment added: "ARCHIVED: Travel Time Capsule (uses Cloudinary - archived for simplification)"
+
+**4. Phase 1: 3 Free Credits System Implemented**
+- `FREE_CREDITS = 3` constant with localStorage tracking (`outreach_free_credits`)
+- Credits badge shows remaining: "✨ X free generations left"
+- API key required after credits exhausted
+- Client access (`yc_client_access`) bypasses credit system
+- `useCredit()` function decrements on successful generation
+
+**5. Unity Notes Connection Complete**
+- `deployToUnityNotes()` function creates campaign nodes:
+  - Header node: Company + prospect info (yellow)
+  - Day 0 node: Initial email (green)
+  - Day 3 node: Follow-up #1 (blue)
+  - Day 10 node: Follow-up #2 (purple)
+- Edges connect sequence: header → day0 → day3 → day10
+- Merges with existing Unity Notes data (offset X if nodes exist)
+- Saves to `unity-notes-data` localStorage key
+- "🚀 Deploy to Unity Notes" button added to Step 3 action bar
+- Navigates to `/unity-notes` after deployment
+
+**Files Modified:**
+- `src/components/shared/LeadGate.jsx` - Positioning fix
+- `src/components/global/Sidebar.jsx` - Flickering fix
+- `src/pages/experiments/OutreachGeneratorPage.jsx` - Credits + Unity Notes
+- `src/RouterApp.jsx` - Travel Capsule archived
+- `src/config/pagesConfig.js` - UK-Memories removed
+
+**Build Status:** ✅ Successful (2.47s, no errors)
+
+**Next Steps:**
+- Deploy changes to production
+- Test Unity Notes integration flow end-to-end
+- Consider Phase 2: Elevated Client Access features
 
 ---
 

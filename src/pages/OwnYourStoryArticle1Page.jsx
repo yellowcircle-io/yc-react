@@ -157,16 +157,16 @@ function OwnYourStoryArticle1Page() {
           minHeight: '100vh',
           backgroundColor: COLORS.black,
           color: COLORS.white,
-          paddingTop: 'max(100px, env(safe-area-inset-top))',
+          paddingTop: '240px',
           paddingBottom: 'max(120px, env(safe-area-inset-bottom))',
-          paddingLeft: 'max(20px, env(safe-area-inset-left))',
-          paddingRight: 'max(20px, env(safe-area-inset-right))'
+          paddingLeft: sidebarOpen ? 'calc(min(35vw, 472px) + 40px)' : 'max(100px, 8vw)',
+          paddingRight: 'max(40px, env(safe-area-inset-right))',
+          transition: 'padding-left 0.5s ease-out'
         }}
       >
         {/* Content Wrapper - Constrained Width */}
         <div style={{
           maxWidth: '720px',
-          margin: '0 auto',
           padding: '0 20px'
         }}>
           {/* Back Navigation */}

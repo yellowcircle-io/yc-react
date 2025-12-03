@@ -260,7 +260,6 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           }}>
             {lottieData ? (
               <Lottie
-                key={`${itemKey}-${isHovered ? 'playing' : 'stopped'}`}
                 animationData={lottieData}
                 loop={isHovered}
                 autoplay={isHovered}
@@ -317,7 +316,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
   const closedWidth = variant === "hidden" ? '0px' : '80px';
   const showBackground = variant === "hidden" ? sidebarOpen : true;
-  const togglePosition = variant === "hidden" ? 'fixed' : 'absolute';
+  // Always use fixed position for toggle button to prevent scrolling issues
+  const togglePosition = 'fixed';
   const toggleLeft = variant === "hidden" ? '20px' : '40px';
 
   // Helper function for sub-item navigation
@@ -361,13 +361,10 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
   return (
     <>
       {/* Sidebar Toggle Button */}
-      <div
-        className="clickable-element"
+      <button
+        type="button"
+        className="clickable-element sidebar-toggle-btn"
         onClick={handleSidebarToggle}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          handleSidebarToggle();
-        }}
         style={{
           position: togglePosition,
           top: '20px',
@@ -382,20 +379,11 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           height: '40px',
           borderRadius: '6px',
           backgroundColor: 'transparent',
+          border: 'none',
+          outline: 'none',
           WebkitTapHighlightColor: 'transparent',
           zIndex: 260,
-          pointerEvents: 'auto',
-          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease-out'
-        }}
-        onMouseEnter={(e) => {
-          const baseTransform = variant === "hidden" ? '' : 'translateX(-50%) ';
-          e.currentTarget.style.transform = `${baseTransform}scale(1.12)`;
-          e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
-        }}
-        onMouseLeave={(e) => {
-          const baseTransform = variant === "hidden" ? 'none' : 'translateX(-50%) scale(1)';
-          e.currentTarget.style.transform = baseTransform;
-          e.currentTarget.style.backgroundColor = 'transparent';
+          pointerEvents: 'auto'
         }}
       >
         <svg
@@ -418,7 +406,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             }}
           />
         </svg>
-      </div>
+      </button>
 
       {/* YC Logo - Fixed position for "hidden" variant only */}
       {/* Always opens Footer only */}
@@ -792,19 +780,13 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
         {/* CSS styles */}
         <style>{`
-          /* Firefox-specific hover fixes */
-          @-moz-document url-prefix() {
-            .nav-item-button {
-              /* Force Firefox to respect hover events */
-              will-change: background-color;
-            }
-            .nav-item-button:hover {
-              background-color: rgba(251, 191, 36, 0.12) !important;
-            }
-            .sub-item-button:hover {
-              background-color: rgba(251, 191, 36, 0.15) !important;
-              color: rgb(251, 191, 36) !important;
-            }
+          /* Sidebar toggle button hover */
+          .sidebar-toggle-btn {
+            transition: transform 0.2s ease-out, background-color 0.2s ease-out;
+          }
+          .sidebar-toggle-btn:hover {
+            transform: ${variant === "hidden" ? 'scale(1.1)' : 'translateX(-50%) scale(1.1)'};
+            background-color: rgba(251, 191, 36, 0.1);
           }
 
           /* General hover stability */
@@ -817,7 +799,6 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
           /* Nav item button - ensure hover works on entire area */
           .nav-item-button {
-            /* Ensure hover area includes absolutely positioned children */
             isolation: isolate;
           }
 

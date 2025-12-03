@@ -7,17 +7,105 @@ import { navigationItems } from '../config/navigationItems';
 
 // Company data for Works showcase - ordered most recent first
 const COMPANIES = [
-  { id: 'rho', name: 'Rho Technologies', category: 'FinTech', year: '2025' },
-  { id: 'auditboard', name: 'AuditBoard', category: 'Enterprise SaaS', year: '2024' },
-  { id: 'estee-lauder', name: 'Estée Lauder', category: 'Beauty', year: '2023-2024' },
-  { id: 'reddit', name: 'Reddit', category: 'Social Media', year: '2022-2023' },
-  { id: 'virtana', name: 'Virtana', category: 'Enterprise SaaS', year: '2022' },
-  { id: 'doordash', name: 'DoorDash', category: 'Delivery', year: '2021' },
-  { id: 'zerogrocery', name: 'Zero Grocery', category: 'E-Commerce', year: '2021' },
-  { id: 'yieldstreet', name: 'YieldStreet', category: 'FinTech', year: '2019' },
-  { id: 'thimble', name: 'Thimble', category: 'InsurTech', year: '2019' },
-  { id: 'tunecore', name: 'TuneCore', category: 'Music Tech', year: '2016-2018' },
-  { id: 'liveintent', name: 'LiveIntent', category: 'Ad Tech', year: '2013-2016' }
+  {
+    id: 'rho',
+    name: 'Rho Technologies',
+    category: 'FinTech',
+    stage: 'Series B',
+    year: '2025',
+    headline: '45-minute data sync → real-time clarity',
+    highlights: ['80% faster decisions', '$2.5M identified waste']
+  },
+  {
+    id: 'auditboard',
+    name: 'AuditBoard',
+    category: 'Enterprise SaaS',
+    stage: 'Growth',
+    year: '2024',
+    headline: 'HubSpot-Salesforce integration audit',
+    highlights: ['$2M+ potential savings', 'Attribution roadmap']
+  },
+  {
+    id: 'estee-lauder',
+    name: 'Estée Lauder',
+    category: 'Beauty',
+    stage: 'Enterprise',
+    year: '2023-2024',
+    headline: 'Email development & CRM standardization',
+    highlights: ['Responsive templates', 'Cross-brand standards']
+  },
+  {
+    id: 'reddit',
+    name: 'Reddit',
+    category: 'Social Media',
+    stage: 'Pre-IPO',
+    year: '2022-2023',
+    headline: 'Marketing systems architecture',
+    highlights: ['ETL refinement', 'Advertiser nurture flows']
+  },
+  {
+    id: 'virtana',
+    name: 'Virtana',
+    category: 'Enterprise SaaS',
+    stage: 'Growth',
+    year: '2022',
+    headline: 'MarTech stack efficiency assessment',
+    highlights: ['Lead scoring models', 'ABM workflows']
+  },
+  {
+    id: 'doordash',
+    name: 'DoorDash',
+    category: 'Delivery',
+    stage: 'Public',
+    year: '2021',
+    headline: 'Merchant-facing marketing operations',
+    highlights: ['Onboarding optimization', 'Partner automation']
+  },
+  {
+    id: 'zerogrocery',
+    name: 'Zero Grocery',
+    category: 'E-Commerce',
+    stage: 'Seed',
+    year: '2021',
+    headline: 'End-to-end marketing operations',
+    highlights: ['Subscription lifecycle', 'Delivery sequences']
+  },
+  {
+    id: 'yieldstreet',
+    name: 'YieldStreet',
+    category: 'FinTech',
+    stage: 'Series B',
+    year: '2019',
+    headline: 'Investment platform automation',
+    highlights: ['Investor nurture flows', 'Compliance-ready emails']
+  },
+  {
+    id: 'thimble',
+    name: 'Thimble',
+    category: 'InsurTech',
+    stage: 'Series A',
+    year: '2019',
+    headline: 'Growth marketing systems',
+    highlights: ['Quote-to-bind funnel', 'Referral automation']
+  },
+  {
+    id: 'tunecore',
+    name: 'TuneCore',
+    category: 'Music Tech',
+    stage: 'Growth',
+    year: '2016-2018',
+    headline: 'Scaled to 1M+ subscribers',
+    highlights: ['+250% open rates', '+200% click-to-open']
+  },
+  {
+    id: 'liveintent',
+    name: 'LiveIntent',
+    category: 'Ad Tech',
+    stage: 'Series C',
+    year: '2013-2016',
+    headline: 'Marketing ops transformation',
+    highlights: ['HubSpot-Salesforce integration', 'Attribution frameworks']
+  }
 ];
 
 function WorksPage() {
@@ -292,78 +380,124 @@ function WorksPage() {
             CLIENTS
           </h1>
 
-          {/* Company Name - Changes based on scroll */}
-          <div style={{ position: 'relative', minHeight: '120px' }}>
-            <p
-              key={`company-${currentCompany.id}`}
-              style={{
-                ...TYPOGRAPHY.h2,
-                color: COLORS.black,
-                backgroundColor: COLORS.backgroundLight,
-                ...EFFECTS.blur,
-                display: 'inline-block',
-                padding: '2px 6px',
-                animation: 'fadeInUp 0.4s ease-in-out both',
-                cursor: 'pointer'
-              }}
-              onClick={() => handleCompanyClick(currentCompany.id)}
-            >
-              {currentCompany.name}
-            </p>
-          </div>
+          {/* Company Card */}
+          <div
+            key={`company-card-${currentCompany.id}`}
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `2px solid ${COLORS.yellow}`,
+              borderRadius: '12px',
+              padding: '24px',
+              marginTop: '16px',
+              maxWidth: '400px',
+              animation: 'fadeInUp 0.4s ease-in-out both',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            {/* Company Name */}
+            <h2 style={{
+              fontSize: 'clamp(1.2rem, 3vw, 1.6rem)',
+              fontWeight: '700',
+              color: COLORS.black,
+              margin: '0 0 4px 0',
+              letterSpacing: '-0.5px'
+            }}>
+              {currentCompany.name.toUpperCase()}
+            </h2>
 
-          {/* Company Category & Year */}
-          <p style={{
-            ...TYPOGRAPHY.body,
-            margin: '10px 0 0 0',
-            backgroundColor: COLORS.backgroundLight,
-            ...EFFECTS.blur,
-            display: 'inline-block',
-            padding: '4px 8px',
-            animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
-          }}>
-            {currentCompany.category} • {currentCompany.year}
-          </p>
+            {/* Category • Stage • Year */}
+            <p style={{
+              fontSize: '13px',
+              color: 'rgba(0, 0, 0, 0.6)',
+              margin: '0 0 16px 0',
+              fontWeight: '500'
+            }}>
+              {currentCompany.category} • {currentCompany.stage} • {currentCompany.year}
+            </p>
+
+            {/* Divider */}
+            <div style={{
+              height: '1px',
+              backgroundColor: 'rgba(251, 191, 36, 0.3)',
+              margin: '0 0 16px 0'
+            }}></div>
+
+            {/* Headline */}
+            <p style={{
+              fontSize: '15px',
+              color: COLORS.black,
+              margin: '0 0 16px 0',
+              lineHeight: '1.5',
+              fontWeight: '500'
+            }}>
+              {currentCompany.headline}
+            </p>
+
+            {/* Highlights */}
+            <div style={{ marginBottom: '20px' }}>
+              {currentCompany.highlights.map((highlight, idx) => (
+                <div key={idx} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px'
+                }}>
+                  <span style={{
+                    color: COLORS.yellow,
+                    fontSize: '14px',
+                    fontWeight: '700'
+                  }}>✓</span>
+                  <span style={{
+                    fontSize: '14px',
+                    color: 'rgba(0, 0, 0, 0.75)'
+                  }}>{highlight}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA Button */}
+            <button
+              onClick={() => handleCompanyClick(currentCompany.id)}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                backgroundColor: COLORS.yellow,
+                color: COLORS.black,
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.08em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = COLORS.black;
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = COLORS.yellow;
+                e.currentTarget.style.color = COLORS.black;
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              READ CASE STUDY →
+            </button>
+          </div>
 
           {/* Progress Counter */}
           <p style={{
             ...TYPOGRAPHY.small,
-            margin: '20px 0 0 0',
+            margin: '16px 0 0 0',
             color: 'rgba(0, 0, 0, 0.4)',
             fontWeight: '600',
             letterSpacing: '0.1em'
           }}>
             {currentCompanyIndex + 1} / {COMPANIES.length}
           </p>
-
-          {/* View Details CTA */}
-          <button
-            onClick={() => handleCompanyClick(currentCompany.id)}
-            style={{
-              marginTop: '24px',
-              padding: '14px 28px',
-              backgroundColor: COLORS.yellow,
-              color: COLORS.black,
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: '700',
-              letterSpacing: '0.1em',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#fff';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = COLORS.yellow;
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            VIEW {currentCompany.name.toUpperCase()} →
-          </button>
         </div>
       </div>
     </Layout>

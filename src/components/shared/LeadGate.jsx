@@ -14,6 +14,9 @@ import { submitLeadGate } from '../../utils/formSubmit';
  * </LeadGate>
  */
 
+// Personal password for client/admin bypass
+const BYPASS_PASSWORD = 'yc2025';
+
 function LeadGate({
   children,
   toolName = 'Tool',
@@ -26,15 +29,30 @@ function LeadGate({
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [password, setPassword] = useState('');
 
   // Check if already unlocked on mount
   useEffect(() => {
     const captured = localStorage.getItem(storageKey);
-    if (captured) {
+    const bypassActive = localStorage.getItem('yc_bypass_active');
+    if (captured || bypassActive) {
       setIsUnlocked(true);
       onUnlock?.();
     }
   }, [storageKey, onUnlock]);
+
+  // Handle password bypass
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === BYPASS_PASSWORD) {
+      localStorage.setItem('yc_bypass_active', 'true');
+      setIsUnlocked(true);
+      onUnlock?.();
+    } else {
+      setError('Invalid password');
+    }
+  };
 
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -69,6 +87,19 @@ function LeadGate({
         timestamp: new Date().toISOString()
       }));
 
+      // Track conversion in Google Ads + GA4
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-17772974519/lead_gate',
+          'event_category': 'lead_gate',
+          'event_label': toolName
+        });
+        gtag('event', 'sign_up', {
+          'event_category': 'lead_gate',
+          'event_label': toolName
+        });
+      }
+
       setIsUnlocked(true);
       onUnlock?.();
     } catch (err) {
@@ -88,26 +119,27 @@ function LeadGate({
     }
   };
 
-  // If unlocked, show the tool
-  if (isUnlocked) {
-    return <>{children}</>;
-  }
-
-  // Show gate
+  // Always render children - nav stays accessible, only content area gated
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.95)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '20px'
-    }}>
+    <>
+      {/* Render children normally - Layout/Nav have their own z-index */}
+      {children}
+
+      {/* Show gate overlay when locked - positioned to not cover nav */}
+      {!isUnlocked && (
+        <div style={{
+          position: 'fixed',
+          top: '80px', // Below header
+          left: '80px', // Right of sidebar when closed
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50, // Well below sidebar (260) and header (255)
+          padding: '20px'
+        }}>
       <style>{`
         .lead-input:focus {
           outline: none;
@@ -261,8 +293,65 @@ function LeadGate({
         }}>
           Free to use. We'll send occasional updates about new tools.
         </p>
+
+        {/* Password bypass option */}
+        <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+          {!showPasswordInput ? (
+            <button
+              onClick={() => setShowPasswordInput(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: '11px',
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'center'
+              }}
+            >
+              Client access →
+            </button>
+          ) : (
+            <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="lead-input"
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  color: 'white',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '6px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  padding: '10px 16px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'black',
+                  backgroundColor: COLORS.yellow,
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                GO
+              </button>
+            </form>
+          )}
+        </div>
       </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 

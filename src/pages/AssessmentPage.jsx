@@ -276,6 +276,28 @@ function AssessmentPage() {
         recommendations
       });
 
+      // Store in localStorage for Contact Modal autofill
+      localStorage.setItem('yc_assessment_data', JSON.stringify({
+        email,
+        name,
+        company,
+        timestamp: new Date().toISOString()
+      }));
+
+      // Track conversion in Google Ads + GA4
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-17772974519/assessment',
+          'event_category': 'assessment',
+          'event_label': level,
+          'value': score
+        });
+        gtag('event', 'generate_lead', {
+          'event_category': 'assessment',
+          'event_label': `score_${score}_${level}`
+        });
+      }
+
       setSubmitted(true);
     } catch (err) {
       console.error('Assessment submission error:', err);

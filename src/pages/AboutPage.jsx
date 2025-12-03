@@ -107,7 +107,7 @@ function AboutPage() {
               padding: '2px 6px',
               animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
             }}>
-              Creative GTM Operations Studio
+              Creative Growth Operations Studio
             </p>
           </div>
 
@@ -123,7 +123,7 @@ function AboutPage() {
             maxWidth: '520px',
             lineHeight: '1.6'
           }}>
-            Where operational rigor meets creative execution. yellowCircle bridges the gap between beautiful brand experiences and the infrastructure that scales them—helping growth-stage companies build GTM systems that actually work.
+            Where operational rigor meets creative execution. yellowCircle bridges the gap between beautiful brand experiences and the infrastructure that scales them—helping growing companies build growth systems that actually work.
           </p>
 
           {/* What we do */}
@@ -147,7 +147,7 @@ function AboutPage() {
               gap: '8px'
             }}>
               {[
-                { text: 'GTM Audits & Technical Debt', tag: 'Strategy' },
+                { text: 'Growth Audits & Technical Debt', tag: 'Strategy' },
                 { text: 'Marketing Systems & Automation', tag: 'Operations' },
                 { text: 'Attribution & Data Architecture', tag: 'Infrastructure' },
                 { text: 'Email Design & Brand Templates', tag: 'Creative' },
@@ -279,11 +279,11 @@ function AboutPage() {
               },
               {
                 q: "How long does this take?",
-                a: "GTM Audit is 2–4 weeks. Build engagements are 4–12 weeks depending on scope."
+                a: "Growth Infrastructure Audit is 2–4 weeks. Build engagements are 4–12 weeks depending on scope."
               },
               {
                 q: "What if I can't afford a $4K build?",
-                a: "Start with the GTM Audit ($1.5K). 70% of the time, there's low-hanging fruit you can implement yourself with my guidance."
+                a: "Start with the Growth Audit ($1.5K). 70% of the time, there's low-hanging fruit you can implement yourself with my guidance."
               },
               {
                 q: "Why aren't you cheaper?",

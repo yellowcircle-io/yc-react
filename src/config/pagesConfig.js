@@ -33,7 +33,7 @@ export const PAGES_CONFIG = [
     category: 'Main',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: 'Marketing Operations Consulting - GTM audits, systems assessment, technical debt',
+    description: 'Creative Growth Operations - infrastructure audits, systems assessment, technical debt',
     icon: '⚡'
   },
   {
@@ -42,7 +42,7 @@ export const PAGES_CONFIG = [
     category: 'Main',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: 'About yellowCircle studio - Marketing Operations Consulting',
+    description: 'About yellowCircle studio - Creative Growth Operations',
     icon: '👤'
   },
   {
@@ -84,12 +84,12 @@ export const PAGES_CONFIG = [
 
   // Services Sub-routes
   {
-    name: 'GTM Strategic Audit',
-    path: '/services/gtm-audit',
+    name: 'Growth Infrastructure Audit',
+    path: '/services/growth-audit',
     category: 'Services',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: 'Comprehensive go-to-market infrastructure assessment ($4K-5K)',
+    description: 'Comprehensive growth infrastructure assessment ($4K-5K)',
     icon: '🎯'
   },
   {
@@ -163,7 +163,7 @@ export const PAGES_CONFIG = [
     category: 'Works',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: 'Enterprise SaaS - GTM Assessment (2024)',
+    description: 'Enterprise SaaS - Growth Assessment (2024)',
     icon: '📋'
   },
   {
@@ -199,7 +199,7 @@ export const PAGES_CONFIG = [
     category: 'Works',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: 'Enterprise SaaS - GTM Assessment (2023)',
+    description: 'Enterprise SaaS - Growth Assessment (2023)',
     icon: '☁️'
   },
   {
@@ -297,32 +297,23 @@ export const PAGES_CONFIG = [
 
   // Thoughts Sub-routes
   {
-    name: 'Blog',
-    path: '/thoughts/blog',
-    category: 'Thoughts',
-    status: 'live',
-    lastUpdated: '2025-11-30',
-    description: 'Blog posts and articles',
-    icon: '📝'
-  },
-  {
     name: 'Why Your GTM Sucks',
     path: '/thoughts/why-your-gtm-sucks',
     category: 'Thoughts',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: 'Deep dive into GTM infrastructure failures and solutions',
+    description: 'Deep dive into growth infrastructure failures and solutions',
     icon: '📊'
   },
 
   // Labs / Tools
   {
-    name: 'GTM Health Assessment',
+    name: 'Growth Health Assessment',
     path: '/assessment',
     category: 'Labs',
     status: 'live',
     lastUpdated: '2025-11-30',
-    description: '8-question GTM health quiz with scoring and recommendations',
+    description: '8-question growth health quiz with scoring and recommendations',
     icon: '🩺'
   },
   {
@@ -343,15 +334,7 @@ export const PAGES_CONFIG = [
     description: 'AI-powered email outreach with templates and sending',
     icon: '🤝'
   },
-  {
-    name: 'UK-Memories',
-    path: '/uk-memories',
-    category: 'Labs',
-    status: 'draft',
-    lastUpdated: '2025-11-30',
-    description: 'Travel time capsule with photos and memories',
-    icon: '✈️'
-  },
+  // ARCHIVED: UK-Memories (Travel Time Capsule)
   {
     name: 'Home-17',
     path: '/home-17',
