@@ -9,7 +9,7 @@
 export const CALENDAR_ENABLED = true;
 
 // Cal.com booking URL
-export const CALENDAR_URL = 'https://cal.com/christopher-at-yellowcircle/15min?overlayCalendar=true';
+export const CALENDAR_URL = 'https://cal.com/christopher-at-yellowcircle/';
 
 // Calendar service name for display
 export const CALENDAR_SERVICE = 'Cal.com';
