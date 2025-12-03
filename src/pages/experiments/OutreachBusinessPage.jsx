@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
-import LeadGate from '../../components/shared/LeadGate';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
 
@@ -1188,11 +1187,6 @@ Provide an improved version. Return ONLY a JSON object:
   const stepLabels = ['Send Type', 'Recipient', 'Generate', 'Review & Edit', 'Refine', 'Send'];
 
   return (
-    <LeadGate
-      toolName="Outreach Generator Pro"
-      toolDescription="Advanced AI-powered outreach with enrichment and sending. Enter your email to get access."
-      storageKey="yc_outreach_lead"
-    >
     <Layout onHomeClick={handleHomeClick} onFooterToggle={handleFooterToggle} onMenuToggle={handleMenuToggle} navigationItems={navigationItems} pageLabel="OUTREACH" hideParallaxCircle>
       <div className="outreach-scroll" style={{
         position: 'fixed',
@@ -2170,7 +2164,6 @@ Provide an improved version. Return ONLY a JSON object:
         </>
       )}
     </Layout>
-    </LeadGate>
   );
 }
 
