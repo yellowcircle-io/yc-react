@@ -128,14 +128,39 @@ const COMPANY_DATA = {
     name: 'AuditBoard',
     category: 'Enterprise SaaS',
     year: '2024',
-    engagement: 'Growth Assessment',
-    description: 'Go-to-market systems audit for audit and risk management SaaS platform.',
+    engagement: 'Email Development',
+    description: 'Developed a global, reusable email template system in Marketo for enterprise audit, risk, and compliance SaaS platform. 80+ hours of scoping, development, and QA across a 6-week engagement.',
     highlights: [
-      'Audited HubSpot-Salesforce integration',
-      'Identified technical debt ($2M+ potential savings)',
-      'Designed workflow optimization plan',
-      'Created attribution improvement roadmap'
-    ]
+      'Built modular Marketo email template with 200+ editable parameters',
+      'Created responsive, cross-client compatible HTML/CSS architecture',
+      'Designed configurable component system (headers, CTAs, columns, signatures)',
+      'Implemented AuditBoard brand guidelines with Inter typography',
+      'Delivered comprehensive documentation for marketing team self-service'
+    ],
+    caseStudy: {
+      timeline: 'November - December 2024',
+      scope: '80+ hours',
+      deliverables: [
+        'Global Marketo email template',
+        'Modular component library',
+        'Brand-compliant design system',
+        'Marketing team documentation'
+      ],
+      challenge: 'AuditBoard needed a scalable, brand-consistent email template that their marketing team could easily customize without developer support. The existing templates required code changes for each campaign.',
+      solution: 'Developed a comprehensive modular template system using MJML for initial prototyping, then converted to production-ready Marketo HTML with 200+ configurable meta variables. Each component—headers, buttons, columns, images, signatures—could be customized directly in the Marketo editor.',
+      results: [
+        'Marketing team can now build emails without developer support',
+        'Template supports all major email clients (Outlook, Gmail, Apple Mail)',
+        'Brand consistency maintained across all campaigns',
+        'Reduced email production time by 60%'
+      ],
+      testimonial: {
+        quote: 'We hired Christopher for a time-sensitive project that required technical expertise in email development and Marketo. He was responsive, professional, and delivered high-quality work that exceeded our expectations. His ability to translate complex requirements into clean, functional code made the entire process seamless. I highly recommend Christopher for any email development or marketing automation needs.',
+        author: 'Freddy Ho',
+        title: 'Art Director, AuditBoard'
+      },
+      technologies: ['Marketo', 'MJML', 'HTML/CSS', 'Email Development']
+    }
   },
   rho: {
     name: 'Rho Technologies',
@@ -406,31 +431,210 @@ function CompanyDetailPage() {
             >
               GROWTH HEALTH CHECK
             </button>
+            {company.caseStudy && (
+              <button
+                onClick={() => navigate('/portfolio')}
+                style={{
+                  padding: '14px 28px',
+                  backgroundColor: 'transparent',
+                  color: 'black',
+                  border: '2px solid rgba(0,0,0,0.2)',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'black';
+                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.borderColor = 'black';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'black';
+                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                VIEW PORTFOLIO
+              </button>
+            )}
           </div>
 
-          {/* Case Study - Coming Soon */}
-          <div style={{
-            marginTop: '20px',
-            animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
-          }}>
-            <button
-              disabled
-              style={{
-                padding: '12px 24px',
-                backgroundColor: 'transparent',
-                color: 'rgba(0, 0, 0, 0.3)',
-                border: '1px dashed rgba(0, 0, 0, 0.2)',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: '600',
-                letterSpacing: '0.1em',
-                cursor: 'not-allowed'
-              }}
-              title="Case study coming soon"
-            >
-              VIEW FULL CASE STUDY — COMING SOON
-            </button>
-          </div>
+          {/* Case Study Section */}
+          {company.caseStudy ? (
+            <div style={{
+              marginTop: '30px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
+            }}>
+              {/* Timeline & Scope */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginBottom: '20px'
+              }}>
+                <span style={{
+                  backgroundColor: 'black',
+                  color: 'white',
+                  padding: '6px 14px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  letterSpacing: '0.05em'
+                }}>
+                  {company.caseStudy.timeline}
+                </span>
+                <span style={{
+                  backgroundColor: COLORS.yellow,
+                  color: 'black',
+                  padding: '6px 14px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  letterSpacing: '0.05em'
+                }}>
+                  {company.caseStudy.scope}
+                </span>
+              </div>
+
+              {/* Challenge & Solution */}
+              {company.caseStudy.challenge && (
+                <div style={{ marginBottom: '20px' }}>
+                  <p style={{
+                    ...TYPOGRAPHY.small,
+                    color: 'rgba(0, 0, 0, 0.4)',
+                    fontWeight: '700',
+                    letterSpacing: '0.15em',
+                    marginBottom: '8px'
+                  }}>
+                    THE CHALLENGE
+                  </p>
+                  <p style={{
+                    ...TYPOGRAPHY.body,
+                    backgroundColor: COLORS.backgroundLight,
+                    ...EFFECTS.blur,
+                    padding: '8px 12px',
+                    maxWidth: '500px',
+                    lineHeight: '1.6',
+                    fontSize: '14px'
+                  }}>
+                    {company.caseStudy.challenge}
+                  </p>
+                </div>
+              )}
+
+              {company.caseStudy.solution && (
+                <div style={{ marginBottom: '20px' }}>
+                  <p style={{
+                    ...TYPOGRAPHY.small,
+                    color: 'rgba(0, 0, 0, 0.4)',
+                    fontWeight: '700',
+                    letterSpacing: '0.15em',
+                    marginBottom: '8px'
+                  }}>
+                    THE SOLUTION
+                  </p>
+                  <p style={{
+                    ...TYPOGRAPHY.body,
+                    backgroundColor: COLORS.backgroundLight,
+                    ...EFFECTS.blur,
+                    padding: '8px 12px',
+                    maxWidth: '500px',
+                    lineHeight: '1.6',
+                    fontSize: '14px'
+                  }}>
+                    {company.caseStudy.solution}
+                  </p>
+                </div>
+              )}
+
+              {/* Testimonial */}
+              {company.caseStudy.testimonial && (
+                <div style={{
+                  marginTop: '24px',
+                  padding: '20px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                  borderLeft: `3px solid ${COLORS.yellow}`,
+                  maxWidth: '520px'
+                }}>
+                  <p style={{
+                    ...TYPOGRAPHY.body,
+                    fontStyle: 'italic',
+                    fontSize: '14px',
+                    lineHeight: '1.7',
+                    marginBottom: '12px',
+                    color: 'rgba(0, 0, 0, 0.8)'
+                  }}>
+                    "{company.caseStudy.testimonial.quote}"
+                  </p>
+                  <p style={{
+                    ...TYPOGRAPHY.small,
+                    fontWeight: '600',
+                    margin: 0
+                  }}>
+                    — {company.caseStudy.testimonial.author}
+                  </p>
+                  <p style={{
+                    ...TYPOGRAPHY.small,
+                    color: 'rgba(0, 0, 0, 0.5)',
+                    margin: '2px 0 0 0'
+                  }}>
+                    {company.caseStudy.testimonial.title}
+                  </p>
+                </div>
+              )}
+
+              {/* Technologies */}
+              {company.caseStudy.technologies && (
+                <div style={{
+                  marginTop: '20px',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}>
+                  {company.caseStudy.technologies.map((tech, index) => (
+                    <span key={index} style={{
+                      backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                      color: 'rgba(0, 0, 0, 0.7)',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: '500'
+                    }}>
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{
+              marginTop: '20px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
+            }}>
+              <button
+                disabled
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: 'transparent',
+                  color: 'rgba(0, 0, 0, 0.3)',
+                  border: '1px dashed rgba(0, 0, 0, 0.2)',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  letterSpacing: '0.1em',
+                  cursor: 'not-allowed'
+                }}
+                title="Case study coming soon"
+              >
+                VIEW FULL CASE STUDY — COMING SOON
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

@@ -25,6 +25,7 @@ const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 const DirectoryPage = lazy(() => import('./pages/DirectoryPage'));
 const UnityNotesPage = lazy(() => import('./pages/UnityNotesPage'));
 const JourneysPage = lazy(() => import('./pages/JourneysPage'));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 
 // Experiment sub-routes (lazy loaded)
 const GoldenUnknownPage = lazy(() => import('./pages/experiments/GoldenUnknownPage'));
@@ -92,6 +93,7 @@ function RouterApp() {
             <Route path="/hands" element={<HandsPage />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/assessment" element={<AssessmentPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
 
             {/* Experiment Sub-routes */}
             <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />
