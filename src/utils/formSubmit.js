@@ -1,19 +1,16 @@
 /**
  * Centralized Form Submission Utility
  *
- * All form submissions go through here so webhooks only need
- * to be configured in one place.
+ * All form submissions go through here.
+ * Currently using Web3Forms (free tier: 250 submissions/month)
  *
- * Sends to:
- * 1. Web3Forms (email notification)
- * 2. Zapier webhook (database + Slack) - when configured
+ * Future options for database/automation (all free tier):
+ * - Airtable API direct (1,200 records free)
+ * - Firebase Firestore (already integrated, 20K reads/day free)
+ * - Supabase (500MB free)
  */
 
 const WEB3FORMS_ACCESS_KEY = '960839cb-2448-4f82-b12a-82ca2eb7197f';
-
-// TODO: Add Zapier webhook URL when ready
-// const ZAPIER_WEBHOOK_URL = '';
-const ZAPIER_WEBHOOK_URL = '';
 
 /**
  * Get UTM parameters from current URL
@@ -68,11 +65,10 @@ export async function submitForm(data) {
     ...(data.extra || {})
   };
 
-  const results = { web3forms: false, zapier: false };
+  let success = false;
 
-  // 1. Send to Web3Forms
   try {
-    const web3Response = await fetch('https://api.web3forms.com/submit', {
+    const response = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -87,30 +83,13 @@ export async function submitForm(data) {
       })
     });
 
-    const web3Result = await web3Response.json();
-    results.web3forms = web3Result.success;
+    const result = await response.json();
+    success = result.success;
   } catch (err) {
-    console.error('Web3Forms error:', err);
+    console.error('Form submission error:', err);
   }
 
-  // 2. Send to Zapier (if configured)
-  if (ZAPIER_WEBHOOK_URL) {
-    try {
-      await fetch(ZAPIER_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      results.zapier = true;
-    } catch (err) {
-      console.error('Zapier webhook error:', err);
-    }
-  }
-
-  return {
-    success: results.web3forms || results.zapier,
-    results
-  };
+  return { success };
 }
 
 /**
