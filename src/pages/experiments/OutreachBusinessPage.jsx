@@ -5,8 +5,9 @@ import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
 
-// Password for access (simple client-side protection)
-const ACCESS_PASSWORD = 'yc2025outreach';
+// Password for access (hash comparison, not plaintext)
+// To generate: btoa('yourpassword') in console
+const ACCESS_HASH = 'eWMyMDI1b3V0cmVhY2g=';
 
 // API keys - users must enter their own keys via the settings panel
 // Keys are encrypted and stored in localStorage
@@ -671,15 +672,20 @@ function OutreachBusinessPage() {
     }
   }, []);
 
-  // Auth handlers
+  // Auth handlers (hash comparison)
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    if (passwordInput === ACCESS_PASSWORD) {
-      setSessionPassword(passwordInput); // Store for encryption/decryption
-      setIsAuthenticated(true);
-      localStorage.setItem('outreach_business_auth', 'true');
-      setAuthError('');
-    } else {
+    try {
+      if (btoa(passwordInput) === ACCESS_HASH) {
+        setSessionPassword(passwordInput); // Store for encryption/decryption
+        setIsAuthenticated(true);
+        localStorage.setItem('outreach_business_auth', 'true');
+        setAuthError('');
+      } else {
+        setAuthError('Invalid password');
+        setPasswordInput('');
+      }
+    } catch {
       setAuthError('Invalid password');
       setPasswordInput('');
     }
@@ -1151,10 +1157,15 @@ Provide an improved version. Return ONLY a JSON object:
 
     const handleReauthSubmit = (e) => {
       e.preventDefault();
-      if (passwordInput === ACCESS_PASSWORD) {
-        setSessionPassword(passwordInput);
-        setAuthError('');
-      } else {
+      try {
+        if (btoa(passwordInput) === ACCESS_HASH) {
+          setSessionPassword(passwordInput);
+          setAuthError('');
+        } else {
+          setAuthError('Invalid password');
+          setPasswordInput('');
+        }
+      } catch {
         setAuthError('Invalid password');
         setPasswordInput('');
       }

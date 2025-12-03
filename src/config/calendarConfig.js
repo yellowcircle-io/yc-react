@@ -14,9 +14,9 @@ export const CALENDAR_URL = 'https://cal.com/christopher-at-yellowcircle/';
 // Calendar service name for display
 export const CALENDAR_SERVICE = 'Cal.com';
 
-// Cal.com API key for future backend integrations (webhooks, availability API, etc.)
-// Note: This is a live API key - keep secure
-export const CAL_API_KEY = 'cal_live_2062ddf01a278109f6419d7508dc72bb';
+// Cal.com API key should be stored in environment variables for backend use
+// Do not commit API keys to source code
+// Use: import.meta.env.VITE_CAL_API_KEY for frontend (if needed)
 
 /**
  * Opens the calendar booking page
