@@ -2,11 +2,313 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** November 30, 2025 at 10:45 PM PST
-**Machine:** Mac Mini (Contact Form + Company Pages)
-**Status:** 🚀 Contact Form Backend Working, Company Pages Reframed as Studio Work
+**Updated:** December 2, 2025 at 11:55 PM PST
+**Machine:** Mac Mini
+**Status:** 🔴 NEW PRIORITIES - Unity Notes & Growth Health Check Optimization
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## 🔴 PHASED LAUNCH APPROACH - DECEMBER 2025
+
+### STRATEGIC CONTEXT (Updated Dec 2)
+- LinkedIn organic deprioritized → Focus on paid ads (Instagram, LinkedIn, Reddit)
+- Cost-efficient distribution strategy required
+- Mobile optimizations needed
+- Prospect database + automation pipeline needed
+- Unity Notes → App Store path to scope
+
+---
+
+## PHASE 0: IMMEDIATE BLOCKERS (Day 1-2)
+
+### 0.1 Google Tag Manager [DONE - CODE PROVIDED]
+```html
+<!-- HEAD -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T4D8CCDC');</script>
+
+<!-- BODY (after opening tag) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T4D8CCDC"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+```
+**Status:** Code provided, needs implementation
+
+### 0.2 Calendar Setup (Cal.com vs Calendly)
+- **Recommendation:** Use Cal.com (open source, free tier generous)
+- **Calendly:** $10/mo for basic features Cal.com provides free
+- **Action:** Create Cal.com account, configure discovery call event
+- **File:** `src/config/calendarConfig.js` → Update URL
+
+### 0.3 Firebase Re-auth + Domain Support
+- Run: `firebase login --reauth`
+- Submit Firebase Support ticket for domain cache issue
+
+### 0.4 Favicon Update
+- **Source:** `/Users/christophercooper_1/yellowcircle-redesign/yc 2024/`
+- **Assets available:** favicon.ico, favicon-16x16.png, favicon-32x32.png, favicon-96x96.png, apple-icon-*.png
+- **Action:** Copy to `/public/` and update `index.html`
+
+---
+
+## PHASE 1: INFRASTRUCTURE (Day 3-7)
+
+### 1.1 Prospect Database Architecture
+**Options Evaluated:**
+| Option | Cost | Pros | Cons |
+|--------|------|------|------|
+| **Firebase Firestore** | Free tier 20K reads/day | Already integrated | NoSQL learning curve |
+| **Supabase** | Free tier 500MB | PostgreSQL, auth built-in | New integration |
+| **MongoDB Atlas** | Free 512MB | Flexible schema | New integration |
+| **Airtable** | Free 1,200 records | Easy UI, Zapier native | Limited records |
+
+**Recommendation:** Airtable for MVP (easy triggers, Zapier/Make integration) → migrate to Supabase if scale needed
+
+### 1.2 Form Submit → Database → Notification Pipeline
+```
+Contact Form Submit
+    ↓
+Web3Forms (current) → Airtable webhook
+    ↓
+Airtable: New prospect row
+    ↓
+Zapier/Make trigger:
+    1. Slack notification to #prospects
+    2. Draft Outreach email via API
+    3. Queue for approval in Notion/Slack
+    ↓
+Manual approval → Send via Resend
+```
+
+### 1.3 Prospect Enrichment (Clay Alternative Scope)
+**Free/Low-Cost Options:**
+- **Hunter.io** (50 free searches/mo) - Email verification
+- **Clearbit Free** (50 lookups/mo) - Company data
+- **Apollo.io** (Free tier) - Contact + company data
+- **LinkedIn Sales Navigator** (existing?) - Manual enrichment
+
+**Recommended Flow:**
+```
+New prospect email → Apollo.io enrichment → Airtable update → Outreach Generator
+```
+
+---
+
+## PHASE 2: PRODUCT OPTIMIZATION (Day 8-14)
+
+### 2.1 P0-1: UNITY NOTES OPTIMIZATION [HIGHEST PRIORITY]
+
+**Goal:** Full functionality without incurring additional cost for external use. Scope gating/architecture for revenue generation.
+
+**Current External Dependencies (Cost Risks):**
+| Dependency | Current Use | Cost Risk |
+|------------|-------------|-----------|
+| **Cloudinary** | Photo uploads | Usage-based pricing |
+| **Firebase Firestore** | Share URLs | Quota warnings already in code |
+| **ReactFlow** | Canvas system | Free/open source ✅ |
+
+**Optimization Strategy:**
+1. **Photo Uploads:**
+   - Default: Local base64 storage (free)
+   - Premium: Cloudinary optimization (gated)
+
+2. **Share Functionality:**
+   - Default: Export/Import JSON (local, free)
+   - Premium: Cloud share URLs (Firebase, gated)
+
+3. **Persistence:**
+   - Default: localStorage (free)
+   - Premium: Cloud sync (Firebase, gated)
+
+**Revenue Gating Architecture:**
+| Feature | Free Tier | Pro Tier |
+|---------|-----------|----------|
+| Local notes | ✅ Unlimited | ✅ Unlimited |
+| Export/Import JSON | ✅ Yes | ✅ Yes |
+| Local photos (base64) | ✅ Up to 10 | ✅ Unlimited |
+| Cloud photo optimization | ❌ | ✅ Cloudinary |
+| Shareable URLs | ❌ | ✅ Firebase |
+| Cloud sync/backup | ❌ | ✅ Firebase |
+
+**Files to Modify:**
+- `src/pages/UnityNotesPage.jsx` - Add gating logic
+- `src/components/travel/PhotoUploadModal.jsx` - Local-first uploads
+- `src/utils/cloudinaryUpload.js` - Conditional usage
+- `src/hooks/useFirebaseCapsule.js` - Conditional usage
+
+---
+
+### P0-2: GROWTH HEALTH CHECK → SERVICES FUNNEL
+
+**Goal:** Link assessment results to specific services based on category scores.
+
+**Current Assessment Categories → Service Mapping:**
+| Assessment Category | Lowest Score → Recommend Service |
+|---------------------|----------------------------------|
+| Data Architecture | Data Architecture Assessment ($3K-4K) |
+| Attribution | Attribution System Audit ($2K-3K) |
+| Marketing Automation | Marketing Systems Audit ($2.5K-4K) |
+| Integration Health | Technical Debt Quantification ($2.5K-3.5K) |
+| Team Alignment | Hire-or-Build Assessment ($1.5K-2.5K) |
+| Technical Debt | Technical Debt Quantification ($2.5K-3.5K) |
+| Reporting | Marketing Systems Audit ($2.5K-4K) |
+| Sales-Marketing Alignment | Growth Infrastructure Audit ($4K-5K) |
+
+**Enhancement Plan:**
+1. Calculate category-specific scores after assessment
+2. Identify 1-2 lowest scoring categories
+3. Show recommended services with direct links
+4. Add "Learn More" buttons to service detail pages
+
+**Files to Modify:**
+- `src/pages/AssessmentPage.jsx` - Add category scores + service recommendations
+
+---
+
+## PHASE 3: DISTRIBUTION & ADS (Day 15-21)
+
+### 3.1 Ads Generator Scope
+**Concept:** Use Component Library styles to generate ad creatives
+**Platforms:** Reddit, Instagram, LinkedIn
+**Implementation:**
+- Lives inside Unity Notes OR as separate `/experiments/ads-generator`
+- Uses existing COLORS, TYPOGRAPHY, EFFECTS constants
+- Outputs: Image dimensions per platform, copy variants
+- **Stretch:** Direct API integration to ad platforms
+
+### 3.2 Component Library Enhancement
+**Action:** Add global components to `/experiments/component-library`
+- Header variants
+- Footer variants
+- Navigation components (Sidebar, HamburgerMenu, NavigationCircle)
+- Button styles
+- Form components
+- Card layouts
+
+### 3.3 Paid Ads Strategy
+**Budget:** TBD (user to define)
+**Platforms (Priority Order):**
+1. **Reddit** - Low CPM, niche targeting (r/marketing, r/startups, r/SaaS)
+2. **LinkedIn** - Higher CPM but precise B2B targeting
+3. **Instagram** - Brand awareness, visual content
+
+---
+
+## PHASE 4: MOBILE & APP STORE (Day 22-30)
+
+### 4.1 Mobile Optimization Audit
+- [ ] Test all pages on physical iOS/Android devices
+- [ ] Touch target sizes (min 44px)
+- [ ] Horizontal scroll behavior
+- [ ] Footer/navigation usability
+- [ ] Form input zoom prevention
+
+### 4.2 Unity Notes → App Store Process
+**Prerequisites:**
+1. Apple Developer Account ($99/year)
+2. App icon set (all sizes)
+3. Screenshots for App Store
+4. Privacy policy URL (✅ `/privacy` exists)
+5. Terms of service URL (✅ `/terms` exists)
+
+**Technical Options:**
+| Approach | Effort | Native Feel |
+|----------|--------|-------------|
+| **PWA** | Low | Medium |
+| **Capacitor (Ionic)** | Medium | High |
+| **React Native rebuild** | High | Highest |
+
+**Recommendation:** Start with PWA, add Capacitor wrapper for App Store submission
+
+**PWA Requirements:**
+- [ ] Service worker for offline
+- [ ] Web app manifest
+- [ ] App icons (all sizes)
+- [ ] Splash screens
+
+---
+
+## PHASE 5: ANALYTICS & OPTIMIZATION (Ongoing)
+
+### 5.1 Google Analytics Optimization
+**Current:** GA4 crawling, not configured
+**Actions:**
+1. Configure goals/conversions (form submit, assessment complete)
+2. Set up custom events (CTA clicks, scroll depth)
+3. Create audiences for remarketing
+4. Connect to Google Ads (if running)
+
+### 5.2 GTM Events to Track
+- Page views (automatic)
+- Form submissions (contact, assessment)
+- CTA button clicks
+- Outbound link clicks
+- Scroll depth (25%, 50%, 75%, 100%)
+- Time on page
+
+---
+
+## ✅ DEC 2, 2025 - MAC MINI SESSION - 11:45 PM PST
+
+### Legal Pages, Blog Toggle, Breadcrumb Fixes, Domain Migration
+
+**Commit:** `ae1c440` - "Feature: Dec 2 session - Legal pages, blog toggle, breadcrumb fixes"
+
+**1. Legal Pages Created**
+- `/privacy` - Privacy Policy page
+- `/terms` - Terms of Service page
+- Footer links added for both
+
+**2. Blog Scroll Toggle**
+- ThoughtsPage now has LIST/CAROUSEL toggle
+- Horizontal scroll mode with snap behavior
+
+**3. Reading Progress Bar**
+- Extracted as shared component (`src/components/shared/ReadingProgressBar.jsx`)
+- Reusable across all article pages
+
+**4. Breadcrumb Positioning Fixed**
+- Moved from overlapping sidebar icon to middle zone
+- Added max-width (180px) with ellipsis truncation
+- Reduced font size (12px → 11px) for long labels
+
+**5. Domain Reference Updates**
+- Changed .co → .io across outreach system
+- Updated: OutreachGeneratorPage, brand.js, sender.js, package.json, .env.example, README.md
+
+**6. Navigation Updates**
+- Works → Clients throughout
+- Footer: Services → Resources
+- Added Lottie icons: checklist.json, map.json
+- JourneysPage grid layout
+
+**7. CTA Buttons Added**
+- Client detail pages now have Contact + Growth Health Check buttons
+
+**🔴 DOMAIN MIGRATION STATUS:**
+- DNS correctly configured (Cloudflare)
+- A record: 199.36.158.100 ✅
+- TXT record: hosting-site=yellowcircle-app ✅
+- Firebase verification FAILING (cache issue)
+- **ACTION NEEDED:** Submit Firebase Support ticket
+- Domain was previously on yellowcircle-io project (now disconnected)
+- Firebase backend not recognizing the change
+
+**Files Created:**
+- `src/pages/PrivacyPolicyPage.jsx`
+- `src/pages/TermsPage.jsx`
+- `src/pages/JourneysPage.jsx`
+- `src/components/shared/ReadingProgressBar.jsx`
+- `src/assets/lottie/checklist.json`
+- `src/assets/lottie/map.json`
+
+**Files Modified:** 24 files (see commit for full list)
+
+**Deployed:** ✅ Firebase production (https://yellowcircle-app.web.app)
 
 ---
 
