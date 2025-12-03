@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { COLORS } from '../../styles/constants';
+import { submitLeadGate } from '../../utils/formSubmit';
 
 /**
  * LeadGate - Email capture gate for tools
  *
  * Requires email before allowing access to tools.
- * Sends lead to Web3Forms and stores in localStorage.
+ * Uses shared form submission utility.
  *
  * Usage:
  * <LeadGate toolName="Outreach Generator" onUnlock={() => setUnlocked(true)}>
  *   <YourToolContent />
  * </LeadGate>
  */
-
-const WEB3FORMS_ACCESS_KEY = '960839cb-2448-4f82-b12a-82ca2eb7197f';
 
 function LeadGate({
   children,
@@ -59,48 +58,19 @@ function LeadGate({
     setIsSubmitting(true);
 
     try {
-      // Capture UTM parameters
-      const urlParams = new URLSearchParams(window.location.search);
+      // Use shared form submission utility
+      await submitLeadGate(email, name, toolName);
 
-      // Send to Web3Forms
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_ACCESS_KEY,
-          from_name: name || 'Tool User',
-          email: email,
-          subject: `Lead Capture: ${toolName} Access`,
-          message: `User requested access to ${toolName}`,
-          source: 'yellowcircle.io',
-          tool: toolName,
-          page: window.location.pathname,
-          lead_type: 'tool_access',
-          utm_source: urlParams.get('utm_source') || '',
-          utm_medium: urlParams.get('utm_medium') || '',
-          utm_campaign: urlParams.get('utm_campaign') || ''
-        })
-      });
+      // Store in localStorage
+      localStorage.setItem(storageKey, JSON.stringify({
+        email,
+        name,
+        tool: toolName,
+        timestamp: new Date().toISOString()
+      }));
 
-      const result = await response.json();
-
-      if (result.success) {
-        // Store in localStorage
-        localStorage.setItem(storageKey, JSON.stringify({
-          email,
-          name,
-          tool: toolName,
-          timestamp: new Date().toISOString()
-        }));
-
-        setIsUnlocked(true);
-        onUnlock?.();
-      } else {
-        throw new Error(result.message || 'Submission failed');
-      }
+      setIsUnlocked(true);
+      onUnlock?.();
     } catch (err) {
       console.error('Lead capture error:', err);
       // Still unlock on error to not block users

@@ -4,6 +4,51 @@ import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
+import { submitAssessment } from '../utils/formSubmit';
+
+// Category to Service mapping for recommendations
+const CATEGORY_SERVICE_MAP = {
+  'Data Architecture': {
+    service: 'Data Architecture Assessment',
+    serviceId: 'data-architecture',
+    price: '$3,000 - $4,000'
+  },
+  'Attribution': {
+    service: 'Attribution System Audit',
+    serviceId: 'attribution-audit',
+    price: '$2,000 - $3,000'
+  },
+  'Marketing Automation': {
+    service: 'Marketing Systems Audit',
+    serviceId: 'marketing-systems',
+    price: '$2,500 - $4,000'
+  },
+  'Integration Health': {
+    service: 'Technical Debt Quantification',
+    serviceId: 'technical-debt',
+    price: '$2,500 - $3,500'
+  },
+  'Team Alignment': {
+    service: 'Hire-or-Build Assessment',
+    serviceId: 'role-alignment',
+    price: '$1,500 - $2,500'
+  },
+  'Technical Debt': {
+    service: 'Technical Debt Quantification',
+    serviceId: 'technical-debt',
+    price: '$2,500 - $3,500'
+  },
+  'Reporting': {
+    service: 'Marketing Systems Audit',
+    serviceId: 'marketing-systems',
+    price: '$2,500 - $4,000'
+  },
+  'Sales-Marketing Alignment': {
+    service: 'Growth Infrastructure Audit',
+    serviceId: 'gtm-audit',
+    price: '$4,000 - $5,000'
+  }
+};
 
 /**
  * GTM Health Assessment - Interactive Quiz
@@ -168,6 +213,46 @@ function AssessmentPage() {
     }
   };
 
+  // Calculate category scores for recommendations
+  const getCategoryScores = () => {
+    const categoryScores = {};
+    QUESTIONS.forEach(q => {
+      if (!categoryScores[q.category]) {
+        categoryScores[q.category] = { total: 0, count: 0, maxPossible: 0 };
+      }
+      categoryScores[q.category].total += answers[q.id] || 0;
+      categoryScores[q.category].count += 1;
+      categoryScores[q.category].maxPossible += 5;
+    });
+    return categoryScores;
+  };
+
+  // Get recommended services based on lowest scoring categories
+  const getRecommendedServices = () => {
+    const categoryScores = getCategoryScores();
+
+    // Calculate percentage score for each category
+    const categoryPercentages = Object.entries(categoryScores)
+      .map(([category, data]) => ({
+        category,
+        percentage: (data.total / data.maxPossible) * 100,
+        ...CATEGORY_SERVICE_MAP[category]
+      }))
+      .filter(item => item.serviceId) // Only categories with mapped services
+      .sort((a, b) => a.percentage - b.percentage); // Sort by lowest score first
+
+    // Return top 2 weakest areas (unique services)
+    const seen = new Set();
+    const recommendations = [];
+    for (const item of categoryPercentages) {
+      if (!seen.has(item.serviceId) && recommendations.length < 2) {
+        seen.add(item.serviceId);
+        recommendations.push(item);
+      }
+    }
+    return recommendations;
+  };
+
   const handleSubmitResults = async (e) => {
     e.preventDefault();
     if (!email) return;
@@ -177,43 +262,18 @@ function AssessmentPage() {
     try {
       const score = calculateScore();
       const level = getResultLevel(score);
-      const categoryScores = {};
+      const categoryScores = getCategoryScores();
+      const recommendations = getRecommendedServices().map(r => r.service);
 
-      QUESTIONS.forEach(q => {
-        if (!categoryScores[q.category]) {
-          categoryScores[q.category] = { total: 0, count: 0 };
-        }
-        categoryScores[q.category].total += answers[q.id] || 0;
-        categoryScores[q.category].count += 1;
-      });
-
-      // Send to Web3Forms
-      const WEB3FORMS_ACCESS_KEY = '960839cb-2448-4f82-b12a-82ca2eb7197f';
-
-      await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_ACCESS_KEY,
-          from_name: name || 'Assessment Visitor',
-          email: email,
-          company: company || 'Not provided',
-          subject: `GTM Assessment: ${RESULTS_CONFIG[level].title} (Score: ${score}/40)`,
-          assessment_score: `${score}/40`,
-          assessment_level: level,
-          category_breakdown: Object.entries(categoryScores)
-            .map(([cat, data]) => `${cat}: ${data.total}/${data.count * 5}`)
-            .join(', '),
-          source: 'yellowcircle.io/assessment',
-          message: `GTM Health Assessment completed.\n\nScore: ${score}/40 (${level})\n\nCategory Breakdown:\n${
-            Object.entries(categoryScores)
-              .map(([cat, data]) => `- ${cat}: ${data.total}/${data.count * 5}`)
-              .join('\n')
-          }`
-        })
+      // Use shared form submission utility
+      await submitAssessment({
+        email,
+        name,
+        company,
+        score,
+        level,
+        categoryScores,
+        recommendations
       });
 
       setSubmitted(true);
@@ -627,6 +687,67 @@ function AssessmentPage() {
                   }}>
                     Check your inbox for your detailed GTM assessment.
                   </p>
+
+                  {/* Recommended Services based on assessment */}
+                  {getRecommendedServices().length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <p style={{
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        letterSpacing: '0.05em',
+                        color: 'rgba(0,0,0,0.5)',
+                        marginBottom: '12px'
+                      }}>
+                        RECOMMENDED FOR YOU:
+                      </p>
+                      {getRecommendedServices().map((rec, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => navigate(`/services/${rec.serviceId}`)}
+                          style={{
+                            padding: '12px 16px',
+                            backgroundColor: idx === 0 ? COLORS.yellow : 'rgba(0,0,0,0.05)',
+                            borderRadius: '8px',
+                            marginBottom: '8px',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s ease'
+                          }}
+                        >
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <div>
+                              <p style={{
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: 'black',
+                                margin: '0 0 4px 0'
+                              }}>
+                                {rec.service}
+                              </p>
+                              <p style={{
+                                fontSize: '12px',
+                                color: 'rgba(0,0,0,0.6)',
+                                margin: 0
+                              }}>
+                                Addresses: {rec.category}
+                              </p>
+                            </div>
+                            <span style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'black'
+                            }}>
+                              {rec.price} →
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <button
                     onClick={() => openContactModal(email)}
                     style={{
@@ -638,7 +759,8 @@ function AssessmentPage() {
                       fontSize: '13px',
                       fontWeight: '700',
                       letterSpacing: '0.05em',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      width: '100%'
                     }}
                   >
                     SCHEDULE A CALL
