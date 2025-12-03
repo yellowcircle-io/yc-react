@@ -5,7 +5,7 @@ import { submitContactForm } from '../../utils/formSubmit';
 // Service options for dropdown
 const SERVICE_OPTIONS = [
   { value: '', label: 'Select a service (optional)' },
-  { value: 'gtm-audit', label: 'GTM Strategic Audit' },
+  { value: 'growth-audit', label: 'Growth Infrastructure Audit' },
   { value: 'marketing-systems', label: 'Marketing Systems Audit' },
   { value: 'role-alignment', label: 'Role Alignment Assessment' },
   { value: 'technical-debt', label: 'Technical Debt Quantification' },
@@ -68,10 +68,33 @@ function ContactModal() {
   useEffect(() => {
     // Detect transition from closed to open
     if (contactModalOpen && !wasOpen.current) {
-      // Modal just opened - apply prefill if provided
+      // Try to get saved contact info from localStorage (from lead gates)
+      let savedEmail = '';
+      let savedName = '';
+
+      try {
+        // Check common storage keys from lead gates and assessment
+        const leadData = localStorage.getItem('yc_assessment_data') ||
+                        localStorage.getItem('yc_lead_captured') ||
+                        localStorage.getItem('yc_outreach_lead') ||
+                        localStorage.getItem('yc_unity_lead');
+        if (leadData) {
+          const parsed = JSON.parse(leadData);
+          savedEmail = parsed.email || '';
+          savedName = parsed.name || parsed.company || ''; // Assessment uses company field
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+
+      // Modal just opened - apply prefill if provided (priority: passed prop > localStorage)
       if (contactModalEmail) {
         setEmail(contactModalEmail);
-        // Focus name field since email is prefilled
+        if (savedName && !name) setName(savedName);
+        setTimeout(() => nameInputRef.current?.focus(), 50);
+      } else if (savedEmail) {
+        setEmail(savedEmail);
+        if (savedName) setName(savedName);
         setTimeout(() => nameInputRef.current?.focus(), 50);
       } else {
         // No prefill - focus email field
@@ -110,6 +133,13 @@ function ContactModal() {
     return re.test(email);
   };
 
+  const validatePhone = (phone) => {
+    if (!phone.trim()) return true; // Optional field
+    // Allow various phone formats: digits, spaces, dashes, parentheses, plus
+    const re = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
+    return re.test(phone) && phone.replace(/\D/g, '').length >= 10;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -129,6 +159,11 @@ function ContactModal() {
       return;
     }
 
+    if (!validatePhone(phone)) {
+      setError('Please enter a valid phone number (at least 10 digits)');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -145,6 +180,18 @@ function ContactModal() {
 
       if (result.success) {
         setSubmitted(true);
+        // Track conversion in Google Ads + GA4
+        if (typeof gtag === 'function') {
+          gtag('event', 'conversion', {
+            'send_to': 'AW-17772974519/contact_form',
+            'event_category': 'form',
+            'event_label': serviceName || 'general'
+          });
+          gtag('event', 'generate_lead', {
+            'event_category': 'form',
+            'event_label': 'contact_form'
+          });
+        }
         // Close modal after showing success
         setTimeout(() => {
           closeContactModal();
@@ -376,6 +423,7 @@ function ContactModal() {
                   width: '100%',
                   padding: '12px 16px',
                   fontSize: '16px',
+                  color: 'black',
                   border: '2px solid rgba(0, 0, 0, 0.1)',
                   borderRadius: '8px',
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',
@@ -411,6 +459,7 @@ function ContactModal() {
                   width: '100%',
                   padding: '12px 16px',
                   fontSize: '16px',
+                  color: 'black',
                   border: '2px solid rgba(0, 0, 0, 0.1)',
                   borderRadius: '8px',
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',
@@ -490,6 +539,7 @@ function ContactModal() {
                   width: '100%',
                   padding: '12px 16px',
                   fontSize: '16px',
+                  color: 'black',
                   border: '2px solid rgba(0, 0, 0, 0.1)',
                   borderRadius: '8px',
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',

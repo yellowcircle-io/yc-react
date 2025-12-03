@@ -17,8 +17,9 @@ const HandsPage = lazy(() => import('./pages/HandsPage'));
 const AssessmentPage = lazy(() => import('./pages/AssessmentPage'));
 const CompanyDetailPage = lazy(() => import('./pages/works/CompanyDetailPage'));
 const ServiceDetailPage = lazy(() => import('./pages/services/ServiceDetailPage'));
-const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
-const CapsuleViewPage = lazy(() => import('./pages/CapsuleViewPage'));
+// ARCHIVED: Travel Time Capsule (uses Cloudinary - archived for simplification)
+// const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
+// const CapsuleViewPage = lazy(() => import('./pages/CapsuleViewPage'));
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
 const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 const DirectoryPage = lazy(() => import('./pages/DirectoryPage'));
@@ -106,9 +107,10 @@ function RouterApp() {
             {/* Own Your Story - Thought Leadership Series */}
             <Route path="/thoughts/why-your-gtm-sucks" element={<OwnYourStoryArticle1Page />} />
 
-            {/* Travel Time Capsule */}
+            {/* ARCHIVED: Travel Time Capsule
             <Route path="/uk-memories" element={<TimeCapsulePage />} />
             <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
+            */}
 
             {/* Feedback */}
             <Route path="/feedback" element={<FeedbackPage />} />

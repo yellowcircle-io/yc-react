@@ -89,7 +89,7 @@ const COMPANY_DATA = {
     name: 'Virtana',
     category: 'Enterprise SaaS',
     year: '2022',
-    engagement: 'GTM Assessment',
+    engagement: 'Growth Assessment',
     description: 'Marketing operations assessment for AIOps platform serving enterprise infrastructure teams.',
     highlights: [
       'Assessed MarTech stack efficiency',
@@ -128,7 +128,7 @@ const COMPANY_DATA = {
     name: 'AuditBoard',
     category: 'Enterprise SaaS',
     year: '2024',
-    engagement: 'GTM Assessment',
+    engagement: 'Growth Assessment',
     description: 'Go-to-market systems audit for audit and risk management SaaS platform.',
     highlights: [
       'Audited HubSpot-Salesforce integration',
@@ -148,7 +148,7 @@ const COMPANY_DATA = {
       'Identified $2.5M+ annual technical debt',
       'Built attribution and reporting systems',
       'Optimized lifecycle marketing workflows',
-      'Led events and webinar marketing'
+      'Built processes for events and webinar marketing'
     ]
   }
 };

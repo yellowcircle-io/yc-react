@@ -8,21 +8,21 @@ import { navigationItems } from '../../config/navigationItems';
 
 // Default brand configuration (can be customized by user)
 const DEFAULT_BRAND = {
-  name: 'yellowCircle',
+  name: '',
   sender: {
-    name: 'Chris Cooper',
-    title: 'GTM & Marketing Operations Consultant',
-    email: 'chris@yellowcircle.io'
+    name: '',
+    title: '',
+    email: ''
   },
   links: {
-    calendar: 'https://calendly.com/christophercooper',
-    article: 'https://yellowcircle.io/thoughts/why-your-gtm-sucks',
-    website: 'https://yellowcircle.io'
+    calendar: '',
+    article: '',
+    website: ''
   }
 };
 
 // Generate system prompt based on user's brand config
-const generateSystemPrompt = (brand) => `You are writing cold outreach emails for ${brand.sender.name}, ${brand.sender.title}${brand.name ? ` at ${brand.name}` : ''}.
+const generateSystemPrompt = (brand) => `You are writing cold outreach emails${brand.sender.name ? ` for ${brand.sender.name}` : ''}${brand.sender.title ? `, ${brand.sender.title}` : ''}${brand.name ? ` at ${brand.name}` : ''}.
 
 **VOICE:**
 - Direct, no fluff
@@ -33,7 +33,7 @@ const generateSystemPrompt = (brand) => `You are writing cold outreach emails fo
 **CREDENTIALS (use sparingly):**
 ${brand.credentials || '- Experienced professional in their field'}
 
-**FRAMEWORK (NextPlay.so 3-part structure):**
+**STRUCTURE:**
 1. Who you are (1 sentence)
 2. Why reaching out (specific trigger)
 3. Why they should care (value prop + easy ask)
@@ -43,7 +43,7 @@ ${brand.credentials || '- Experienced professional in their field'}
 - No corporate jargon
 - One clear CTA
 - Reference specific trigger when provided
-- Sign off as "— ${brand.sender.name.split(' ')[0]}"`;
+${brand.sender.name ? `- Sign off as "— ${brand.sender.name.split(' ')[0]}"` : '- Sign off with a simple closing'}`;
 
 function OutreachGeneratorPage() {
   const navigate = useNavigate();
@@ -66,21 +66,43 @@ function OutreachGeneratorPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedEmails, setGeneratedEmails] = useState(null);
   const [error, setError] = useState(null);
+  const [formError, setFormError] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [showBrandSettings, setShowBrandSettings] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
 
+  // Free credits system
+  const FREE_CREDITS = 3;
+  const [creditsRemaining, setCreditsRemaining] = useState(FREE_CREDITS);
+  const [isClient, setIsClient] = useState(false);
+
+  // Email validation
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   // Brand customization state
   const [brand, setBrand] = useState(DEFAULT_BRAND);
 
-  // Load API key and brand from localStorage
+  // Load API key, brand, and credits from localStorage
   useEffect(() => {
     const savedKey = localStorage.getItem('groq_api_key');
     if (savedKey) {
       setApiKey(savedKey);
-    } else {
-      setShowApiKeyInput(true);
+    }
+
+    // Load credits
+    const savedCredits = localStorage.getItem('outreach_free_credits');
+    if (savedCredits !== null) {
+      setCreditsRemaining(parseInt(savedCredits, 10));
+    }
+
+    // Check client status (elevated access)
+    const clientStatus = localStorage.getItem('yc_client_access');
+    if (clientStatus) {
+      setIsClient(true);
     }
 
     const savedBrand = localStorage.getItem('outreach_brand_config');
@@ -91,7 +113,23 @@ function OutreachGeneratorPage() {
         console.error('Failed to parse saved brand config');
       }
     }
+
+    // Show API key input only if no credits AND no API key
+    if (!savedKey && savedCredits !== null && parseInt(savedCredits, 10) <= 0) {
+      setShowApiKeyInput(true);
+    }
   }, []);
+
+  // Check if user can generate (has credits OR has API key OR is client)
+  const canGenerate = creditsRemaining > 0 || apiKey || isClient;
+
+  // Use a credit
+  const useCredit = () => {
+    if (isClient || apiKey) return; // Clients and API key users don't use credits
+    const newCredits = Math.max(0, creditsRemaining - 1);
+    setCreditsRemaining(newCredits);
+    localStorage.setItem('outreach_free_credits', newCredits.toString());
+  };
 
   // Save brand to localStorage when changed
   useEffect(() => {
@@ -130,6 +168,29 @@ function OutreachGeneratorPage() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear form error when user starts typing
+    if (formError) setFormError('');
+  };
+
+  const handleContinueToStep2 = () => {
+    setFormError('');
+    if (!formData.company.trim()) {
+      setFormError('Company name is required');
+      return;
+    }
+    if (!formData.firstName.trim()) {
+      setFormError('First name is required');
+      return;
+    }
+    if (!formData.email.trim()) {
+      setFormError('Email address is required');
+      return;
+    }
+    if (!validateEmail(formData.email)) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
+    setCurrentStep(2);
   };
 
   const saveApiKey = () => {
@@ -199,8 +260,17 @@ Return ONLY a JSON object with this exact format:
   };
 
   const handleGenerate = async () => {
-    if (!apiKey) {
+    // Check if user can generate
+    if (!canGenerate) {
       setShowApiKeyInput(true);
+      setError('You\'ve used all free credits. Enter a Groq API key to continue.');
+      return;
+    }
+
+    // If no API key but has credits, show warning that API key is needed
+    if (!apiKey && creditsRemaining > 0) {
+      setShowApiKeyInput(true);
+      setError('Please enter your Groq API key to generate emails.');
       return;
     }
 
@@ -213,6 +283,9 @@ Return ONLY a JSON object with this exact format:
         followup1: await generateEmailContent('followup1', formData),
         followup2: await generateEmailContent('followup2', formData)
       };
+
+      // Use a credit on successful generation
+      useCredit();
 
       setGeneratedEmails(emails);
       setCurrentStep(3);
@@ -248,6 +321,170 @@ Return ONLY a JSON object with this exact format:
     a.download = `${formData.company.toLowerCase().replace(/\s+/g, '-')}-outreach-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadAsMarkdown = () => {
+    let md = `# Outreach Sequence for ${formData.company}\n\n`;
+    md += `**Prospect:** ${formData.firstName} ${formData.lastName || ''} (${formData.email})\n`;
+    md += `**Title:** ${formData.title || 'N/A'}\n`;
+    md += `**Industry:** ${formData.industry}\n`;
+    if (formData.trigger) md += `**Trigger:** ${triggerOptions.find(t => t.value === formData.trigger)?.label}\n`;
+    md += `\n---\n\n`;
+
+    const stages = [
+      { key: 'initial', label: 'Initial Email (Day 0)' },
+      { key: 'followup1', label: 'Follow-up #1 (Day 3)' },
+      { key: 'followup2', label: 'Follow-up #2 (Day 10)' }
+    ];
+
+    stages.forEach(stage => {
+      if (generatedEmails[stage.key]) {
+        md += `## ${stage.label}\n\n`;
+        md += `**Subject:** ${generatedEmails[stage.key].subject}\n\n`;
+        md += `${generatedEmails[stage.key].body}\n\n`;
+        md += `---\n\n`;
+      }
+    });
+
+    md += `*Generated on ${new Date().toLocaleDateString()}*\n`;
+
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${formData.company.toLowerCase().replace(/\s+/g, '-')}-outreach.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadAsDoc = () => {
+    let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Outreach Sequence - ${formData.company}</title></head><body style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 40px;">`;
+    html += `<h1>Outreach Sequence for ${formData.company}</h1>`;
+    html += `<p><strong>Prospect:</strong> ${formData.firstName} ${formData.lastName || ''} (${formData.email})</p>`;
+    html += `<p><strong>Title:</strong> ${formData.title || 'N/A'}</p>`;
+    html += `<p><strong>Industry:</strong> ${formData.industry}</p>`;
+    if (formData.trigger) html += `<p><strong>Trigger:</strong> ${triggerOptions.find(t => t.value === formData.trigger)?.label}</p>`;
+    html += `<hr>`;
+
+    const stages = [
+      { key: 'initial', label: 'Initial Email (Day 0)' },
+      { key: 'followup1', label: 'Follow-up #1 (Day 3)' },
+      { key: 'followup2', label: 'Follow-up #2 (Day 10)' }
+    ];
+
+    stages.forEach(stage => {
+      if (generatedEmails[stage.key]) {
+        html += `<h2>${stage.label}</h2>`;
+        html += `<p><strong>Subject:</strong> ${generatedEmails[stage.key].subject}</p>`;
+        html += `<div style="background: #f5f5f5; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${generatedEmails[stage.key].body}</div>`;
+        html += `<hr>`;
+      }
+    });
+
+    html += `<p style="color: #888; font-size: 12px;"><em>Generated on ${new Date().toLocaleDateString()}</em></p>`;
+    html += `</body></html>`;
+
+    const blob = new Blob([html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${formData.company.toLowerCase().replace(/\s+/g, '-')}-outreach.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Deploy to Unity Notes - creates a journey/campaign
+  const deployToUnityNotes = () => {
+    if (!generatedEmails) return;
+
+    const UNITY_STORAGE_KEY = 'unity-notes-data';
+    const timestamp = Date.now();
+
+    // Create nodes for the outreach campaign
+    const campaignNodes = [
+      // Campaign header node
+      {
+        id: `outreach-${timestamp}-header`,
+        type: 'default',
+        position: { x: 100, y: 50 },
+        data: {
+          label: `📧 ${formData.company} Outreach`,
+          content: `**Prospect:** ${formData.firstName} ${formData.lastName || ''}\n**Email:** ${formData.email}\n**Title:** ${formData.title || 'N/A'}\n**Industry:** ${formData.industry}\n${formData.trigger ? `**Trigger:** ${triggerOptions.find(t => t.value === formData.trigger)?.label}` : ''}\n\n*Generated ${new Date().toLocaleDateString()}*`,
+          color: '#fbbf24'
+        }
+      },
+      // Day 0 - Initial Email
+      {
+        id: `outreach-${timestamp}-day0`,
+        type: 'default',
+        position: { x: 100, y: 200 },
+        data: {
+          label: '📬 Day 0: Initial Email',
+          content: `**Subject:** ${generatedEmails.initial.subject}\n\n${generatedEmails.initial.body}`,
+          color: '#10b981'
+        }
+      },
+      // Day 3 - Follow-up #1
+      {
+        id: `outreach-${timestamp}-day3`,
+        type: 'default',
+        position: { x: 100, y: 350 },
+        data: {
+          label: '📬 Day 3: Follow-up #1',
+          content: `**Subject:** ${generatedEmails.followup1.subject}\n\n${generatedEmails.followup1.body}`,
+          color: '#3b82f6'
+        }
+      },
+      // Day 10 - Follow-up #2
+      {
+        id: `outreach-${timestamp}-day10`,
+        type: 'default',
+        position: { x: 100, y: 500 },
+        data: {
+          label: '📬 Day 10: Follow-up #2',
+          content: `**Subject:** ${generatedEmails.followup2.subject}\n\n${generatedEmails.followup2.body}`,
+          color: '#8b5cf6'
+        }
+      }
+    ];
+
+    // Create edges connecting the sequence
+    const campaignEdges = [
+      { id: `e-${timestamp}-0`, source: `outreach-${timestamp}-header`, target: `outreach-${timestamp}-day0` },
+      { id: `e-${timestamp}-1`, source: `outreach-${timestamp}-day0`, target: `outreach-${timestamp}-day3` },
+      { id: `e-${timestamp}-2`, source: `outreach-${timestamp}-day3`, target: `outreach-${timestamp}-day10` }
+    ];
+
+    // Get existing Unity Notes data or create new
+    let existingData = { nodes: [], edges: [] };
+    try {
+      const saved = localStorage.getItem(UNITY_STORAGE_KEY);
+      if (saved) {
+        existingData = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to parse Unity Notes data');
+    }
+
+    // Offset new nodes if there are existing ones
+    if (existingData.nodes.length > 0) {
+      const offsetX = 400; // Place new campaign to the right
+      campaignNodes.forEach(node => {
+        node.position.x += offsetX;
+      });
+    }
+
+    // Merge with existing data
+    const mergedData = {
+      nodes: [...existingData.nodes, ...campaignNodes],
+      edges: [...existingData.edges, ...campaignEdges]
+    };
+
+    // Save to Unity Notes storage
+    localStorage.setItem(UNITY_STORAGE_KEY, JSON.stringify(mergedData));
+
+    // Navigate to Unity Notes
+    navigate('/unity-notes');
   };
 
   // Styles
@@ -357,12 +594,39 @@ Return ONLY a JSON object with this exact format:
               padding: '4px 8px',
               borderRadius: '4px'
             }}>
-              AI-powered cold email generation using the NextPlay.so framework
+              AI-powered cold email generation with 3-part structure
             </p>
           </div>
 
-          {/* Settings Toggle */}
-          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+          {/* Credits & Settings Toggle */}
+          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Credits Badge */}
+            {!isClient && !apiKey && (
+              <div style={{
+                padding: '8px 14px',
+                backgroundColor: creditsRemaining > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                border: `1px solid ${creditsRemaining > 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: creditsRemaining > 0 ? '#10b981' : '#ef4444'
+              }}>
+                {creditsRemaining > 0 ? `✨ ${creditsRemaining} free generation${creditsRemaining !== 1 ? 's' : ''} left` : '🔒 API key required'}
+              </div>
+            )}
+            {isClient && (
+              <div style={{
+                padding: '8px 14px',
+                backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                border: '1px solid rgba(251, 191, 36, 0.3)',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: COLORS.yellow
+              }}>
+                ⭐ Client Access
+              </div>
+            )}
             <button
               onClick={() => setShowApiKeyInput(!showApiKeyInput)}
               style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}
@@ -650,15 +914,25 @@ Return ONLY a JSON object with this exact format:
                 </div>
               )}
 
+              {/* Form Error */}
+              {formError && (
+                <div style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px',
+                  color: '#dc2626',
+                  fontSize: '14px'
+                }}>
+                  {formError}
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
                 <button
-                  onClick={() => setCurrentStep(2)}
-                  disabled={!formData.company || !formData.firstName || !formData.email}
-                  style={{
-                    ...primaryButtonStyle,
-                    opacity: (!formData.company || !formData.firstName || !formData.email) ? 0.5 : 1,
-                    cursor: (!formData.company || !formData.firstName || !formData.email) ? 'not-allowed' : 'pointer'
-                  }}
+                  onClick={handleContinueToStep2}
+                  style={primaryButtonStyle}
                 >
                   Continue →
                 </button>
@@ -767,14 +1041,27 @@ Return ONLY a JSON object with this exact format:
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '16px'
+                marginBottom: '16px',
+                flexWrap: 'wrap',
+                gap: '12px'
               }}>
                 <button onClick={() => { setCurrentStep(1); setGeneratedEmails(null); }} style={secondaryButtonStyle}>
                   ← New Prospect
                 </button>
-                <button onClick={downloadAsJson} style={primaryButtonStyle}>
-                  Download JSON ↓
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button onClick={downloadAsMarkdown} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
+                    ↓ Download .md
+                  </button>
+                  <button onClick={downloadAsDoc} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
+                    ↓ Download .doc
+                  </button>
+                  <button onClick={downloadAsJson} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
+                    ↓ Download .json
+                  </button>
+                  <button onClick={deployToUnityNotes} style={{ ...primaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
+                    🚀 Deploy to Unity Notes
+                  </button>
+                </div>
               </div>
 
               {/* Email Cards */}

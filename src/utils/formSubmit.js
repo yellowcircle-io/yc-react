@@ -136,13 +136,13 @@ export async function submitAssessment({ email, name, company, score, level, cat
     company,
     source: 'assessment',
     leadType: 'assessment_complete',
-    subject: `GTM Assessment: ${level} (Score: ${score}/40)`,
+    subject: `Growth Health Check: ${level} (Score: ${score}/40)`,
     extra: {
       assessment_score: `${score}/40`,
       assessment_level: level,
       category_breakdown: categoryBreakdown,
       recommended_services: recommendations?.join(', ') || '',
-      message: `GTM Health Assessment completed.\n\nScore: ${score}/40 (${level})\n\nCategory Breakdown:\n${
+      message: `Growth Health Check completed.\n\nScore: ${score}/40 (${level})\n\nCategory Breakdown:\n${
         Object.entries(categoryScores)
           .map(([cat, data]) => `- ${cat}: ${data.total}/${data.count * 5}`)
           .join('\n')

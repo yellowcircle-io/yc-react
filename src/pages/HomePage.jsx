@@ -343,6 +343,28 @@ function HomePage() {
                   : 'From Beginning to End'}
             </p>
 
+            {/* Description text - Show on final page */}
+            {scrollOffset >= 180 && (
+              <p style={{
+                margin: '16px 0 0 0',
+                backgroundColor: 'rgba(241, 239, 232, 0.7)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                display: 'inline-block',
+                padding: '10px 14px',
+                fontSize: 'clamp(0.75rem, 1.4vw, 0.95rem)',
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                fontWeight: '400',
+                letterSpacing: '0',
+                lineHeight: '1.6',
+                maxWidth: '520px',
+                color: 'rgba(0, 0, 0, 0.85)',
+                animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
+              }}>
+                yellowCircle helps early-stage and small-to-medium sized companies fix their growth systems in weeks, not quarters. I audit your marketing operations, design systems that scale, and build automations that stick—then get out of your way.
+              </p>
+            )}
+
             {/* Contact/Explore CTAs - Show on final page */}
             {scrollOffset >= 180 && (
               <div style={{
@@ -350,7 +372,7 @@ function HomePage() {
                 gap: '12px',
                 marginTop: '20px',
                 pointerEvents: 'auto',
-                animation: 'fadeInUp 0.5s ease-in-out both'
+                animation: 'fadeInUp 0.5s ease-in-out 0.4s both'
               }}>
                 <button
                   onClick={() => navigate('/services')}
