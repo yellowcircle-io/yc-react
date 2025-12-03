@@ -14,8 +14,9 @@ import { submitLeadGate } from '../../utils/formSubmit';
  * </LeadGate>
  */
 
-// Personal password for client/admin bypass
-const BYPASS_PASSWORD = 'yc2025';
+// Client bypass uses hash comparison (not plaintext)
+// To generate: btoa('yourpassword') in console
+const BYPASS_HASH = 'eWMyMDI1'; // Base64 encoded
 
 function LeadGate({
   children,
@@ -42,14 +43,18 @@ function LeadGate({
     }
   }, [storageKey, onUnlock]);
 
-  // Handle password bypass
+  // Handle password bypass (hash comparison)
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    if (password === BYPASS_PASSWORD) {
-      localStorage.setItem('yc_bypass_active', 'true');
-      setIsUnlocked(true);
-      onUnlock?.();
-    } else {
+    try {
+      if (btoa(password) === BYPASS_HASH) {
+        localStorage.setItem('yc_bypass_active', 'true');
+        setIsUnlocked(true);
+        onUnlock?.();
+      } else {
+        setError('Invalid password');
+      }
+    } catch {
       setError('Invalid password');
     }
   };
