@@ -50,7 +50,7 @@ const globalContent = {
         },
         {
           text: 'LINKEDIN',
-          url: 'https://www.linkedin.com/company/yellow-circle/',
+          url: 'https://www.linkedin.com/company/yellowcircle-io',
           type: 'social',
           icon: 'linkedin'
         },
