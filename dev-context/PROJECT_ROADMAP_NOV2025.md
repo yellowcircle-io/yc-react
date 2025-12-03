@@ -1,8 +1,57 @@
-# Project Roadmap - November/December 2025
+# Project Roadmap - December 2025
 
 **Date:** December 2, 2025
-**Status:** 🔴 CRITICAL PIVOT - Post-Rho Immediate Revenue Strategy
+**Status:** 🚀 LAUNCH PREPARATION - Phased Execution Plan
 **Days Since Rho Exit:** 7 (Nov 25, 2025)
+
+---
+
+## 🔴 PHASED LAUNCH PLAN (5 Phases, 30 Days)
+
+### PHASE 0: IMMEDIATE BLOCKERS (Day 1-2)
+| Task | Status | Owner |
+|------|--------|-------|
+| Google Tag Manager (GTM-T4D8CCDC) | 🔲 Ready | Claude Code |
+| Cal.com setup (vs Calendly - free tier better) | 🔲 Pending | Self |
+| Firebase re-auth + domain support ticket | 🔲 Pending | Self |
+| Favicon update from legacy assets | 🔲 Ready | Claude Code |
+
+### PHASE 1: INFRASTRUCTURE (Day 3-7)
+| Task | Status | Owner |
+|------|--------|-------|
+| Prospect database (Airtable → Supabase path) | 🔲 Scoped | Self |
+| Form → DB → Notification pipeline | 🔲 Scoped | Claude Code + Self |
+| Prospect enrichment (Apollo.io free tier) | 🔲 Scoped | Self |
+| Outreach approval workflow (Slack/Notion) | 🔲 Scoped | Self |
+
+### PHASE 2: PRODUCT OPTIMIZATION (Day 8-14)
+| Task | Status | Owner |
+|------|--------|-------|
+| P0-1: Unity Notes cost optimization | 🔲 Scoped | Claude Code |
+| P0-2: Assessment → Services funnel | 🔲 Scoped | Claude Code |
+| Component Library global components | 🔲 Planned | Claude Code |
+| Mobile responsiveness audit | 🔲 Planned | Self + Claude Code |
+
+### PHASE 3: DISTRIBUTION & ADS (Day 15-21)
+| Task | Status | Owner |
+|------|--------|-------|
+| Ads Generator (Component Library integration) | 🔲 Planned | Claude Code |
+| Paid ads strategy (Reddit, LinkedIn, IG) | 🔲 Planned | Self |
+| Ad creative pipeline | 🔲 Planned | Claude Code |
+
+### PHASE 4: MOBILE & APP STORE (Day 22-30)
+| Task | Status | Owner |
+|------|--------|-------|
+| Mobile optimization testing | 🔲 Planned | Self |
+| PWA setup for Unity Notes | 🔲 Planned | Claude Code |
+| App Store submission prep | 🔲 Planned | Self |
+
+### PHASE 5: ANALYTICS & OPTIMIZATION (Ongoing)
+| Task | Status | Owner |
+|------|--------|-------|
+| GA4 goals/conversions | 🔲 Planned | Self |
+| GTM event tracking | 🔲 Planned | Claude Code |
+| Remarketing audiences | 🔲 Planned | Self |
 
 ---
 
