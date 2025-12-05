@@ -1096,7 +1096,7 @@ Return ONLY a JSON object with this exact format:
                 >
                   <span style={{ marginRight: '6px' }}>🎯</span>
                   Prospect
-                  <span style={{ display: 'block', fontSize: '11px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
+                  <span style={{ display: 'block', fontSize: isMobile ? '12px' : '11px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Cold outreach
                   </span>
                 </button>
@@ -1114,7 +1114,7 @@ Return ONLY a JSON object with this exact format:
                 >
                   <span style={{ marginRight: '6px' }}>📣</span>
                   MarCom
-                  <span style={{ display: 'block', fontSize: '11px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
+                  <span style={{ display: 'block', fontSize: isMobile ? '12px' : '11px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Marketing comms
                   </span>
                 </button>
@@ -1140,7 +1140,7 @@ Return ONLY a JSON object with this exact format:
                 >
                   <span style={{ marginRight: '6px' }}>⚡</span>
                   One-Off
-                  <span style={{ display: 'block', fontSize: '10px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
+                  <span style={{ display: 'block', fontSize: isMobile ? '12px' : '10px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Generate + Send NOW
                   </span>
                 </button>
@@ -1159,7 +1159,7 @@ Return ONLY a JSON object with this exact format:
                 >
                   <span style={{ marginRight: '6px' }}>📨</span>
                   3-Email Set
-                  <span style={{ display: 'block', fontSize: '10px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
+                  <span style={{ display: 'block', fontSize: isMobile ? '12px' : '10px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Sequence to copy
                   </span>
                 </button>
@@ -1178,7 +1178,7 @@ Return ONLY a JSON object with this exact format:
                 >
                   <span style={{ marginRight: '6px' }}>🗺️</span>
                   Journey Build
-                  <span style={{ display: 'block', fontSize: '10px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
+                  <span style={{ display: 'block', fontSize: isMobile ? '12px' : '10px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Deploy to UnityMAP
                   </span>
                 </button>

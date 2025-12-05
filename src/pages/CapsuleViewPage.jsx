@@ -21,7 +21,6 @@ const CapsuleView = () => {
   useEffect(() => {
     const fetchCapsule = async () => {
       try {
-        console.log('Loading capsule:', capsuleId);
         const data = await loadCapsule(capsuleId);
         setNodes(data.nodes);
         setEdges(data.edges);

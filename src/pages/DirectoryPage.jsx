@@ -68,7 +68,6 @@ function DirectoryPage() {
       ...page,
       status: pageStatuses[page.path] || page.status
     }));
-    console.log('Updated PAGES_CONFIG:', JSON.stringify(updates, null, 2));
 
     // Copy to clipboard
     const text = updates.map(p => `  { path: '${p.path}', status: '${pageStatuses[p.path] || p.status}' }`).join(',\n');

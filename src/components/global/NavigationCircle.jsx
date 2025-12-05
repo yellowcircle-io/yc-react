@@ -313,7 +313,6 @@ function NavigationCircle({
     } else {
       // Random page navigation when Forward is not mapped
       const randomDest = RANDOM_DESTINATIONS[Math.floor(Math.random() * RANDOM_DESTINATIONS.length)];
-      console.log(`[NavigationCircle] Forward unmapped - navigating to random: ${randomDest.label}`);
       navigate(randomDest.path);
     }
   };
