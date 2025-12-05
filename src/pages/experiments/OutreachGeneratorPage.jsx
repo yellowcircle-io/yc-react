@@ -1258,7 +1258,7 @@ Return ONLY a JSON object with this exact format:
                 borderRadius: '20px',
                 fontSize: '13px',
                 fontWeight: '600',
-                color: apiKeyCreditsRemaining > 0 ? '#8b5cf6' : '#ef4444'
+                color: apiKeyCreditsRemaining > 0 ? 'rgb(251, 191, 36)' : '#ef4444'
               }}>
                 {apiKeyCreditsRemaining > 0 ? `🔑 ${apiKeyCreditsRemaining}/${API_KEY_CREDITS} API credits` : '🔒 API credits exhausted'}
               </div>
@@ -1270,7 +1270,7 @@ Return ONLY a JSON object with this exact format:
                 borderRadius: '20px',
                 fontSize: '13px',
                 fontWeight: '600',
-                color: freeCreditsRemaining > 0 ? '#10b981' : '#ef4444'
+                color: freeCreditsRemaining > 0 ? 'rgb(251, 191, 36)' : '#ef4444'
               }}>
                 {freeCreditsRemaining > 0 ? `✨ ${freeCreditsRemaining}/${FREE_CREDITS} free` : '🔒 Add API key for more'}
               </div>
@@ -1287,8 +1287,8 @@ Return ONLY a JSON object with this exact format:
                 ...secondaryButtonStyle,
                 padding: '10px 16px',
                 fontSize: '13px',
-                borderColor: resendApiKey ? '#10b981' : '#e5e7eb',
-                color: resendApiKey ? '#10b981' : '#374151',
+                borderColor: resendApiKey ? 'rgb(251, 191, 36)' : '#e5e7eb',
+                color: resendApiKey ? 'rgb(251, 191, 36)' : '#374151',
                 opacity: resendApiKey ? 1 : 0.7
               }}
             >
@@ -1359,14 +1359,14 @@ Return ONLY a JSON object with this exact format:
 
           {/* Resend API Key Input (for sending) */}
           {showResendKeyInput && (
-            <div style={{ ...cardStyle, borderColor: '#10b981', animation: 'fadeInUp 0.4s ease-out' }}>
+            <div style={{ ...cardStyle, borderColor: 'rgb(251, 191, 36)', animation: 'fadeInUp 0.4s ease-out' }}>
               <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#374151' }}>
                 📧 Email Sending API Key
               </h3>
               <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
                 To send emails, you need a Resend API key.{' '}
                 <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#10b981', textDecoration: 'underline' }}>Get one free</a>{' '}
+                  style={{ color: 'rgb(251, 191, 36)', textDecoration: 'underline' }}>Get one free</a>{' '}
                 (100 emails/day, 3,000/month)
               </p>
               <div style={{ display: 'flex', gap: '12px' }}>
@@ -1377,12 +1377,12 @@ Return ONLY a JSON object with this exact format:
                   placeholder="re_..."
                   style={{ ...inputStyle, flex: 1 }}
                 />
-                <button onClick={saveResendApiKey} style={{ ...primaryButtonStyle, backgroundColor: '#10b981' }}>
+                <button onClick={saveResendApiKey} style={{ ...primaryButtonStyle, backgroundColor: 'rgb(251, 191, 36)' }}>
                   Save
                 </button>
               </div>
               {resendApiKey && (
-                <p style={{ fontSize: '12px', color: '#10b981', marginTop: '8px' }}>
+                <p style={{ fontSize: '12px', color: 'rgb(251, 191, 36)', marginTop: '8px' }}>
                   ✓ Resend API key configured
                 </p>
               )}
@@ -1584,8 +1584,8 @@ Return ONLY a JSON object with this exact format:
                 >
                   Reset to Default
                 </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#10b981' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'rgb(251, 191, 36)' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgb(251, 191, 36)' }} />
                   Auto-saved
                 </div>
               </div>
@@ -1924,7 +1924,7 @@ Return ONLY a JSON object with this exact format:
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontSize: '24px' }}>✅</span>
                     <div>
-                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#10b981', marginBottom: '4px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: '600', color: 'rgb(251, 191, 36)', marginBottom: '4px' }}>
                         Email Sent Successfully!
                       </h3>
                       <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
@@ -1986,7 +1986,7 @@ Return ONLY a JSON object with this exact format:
                           ...primaryButtonStyle,
                           padding: '10px 20px',
                           fontSize: '14px',
-                          backgroundColor: sendSuccess ? '#10b981' : '#10b981',
+                          backgroundColor: sendSuccess ? 'rgb(251, 191, 36)' : 'rgb(251, 191, 36)',
                           opacity: (isSending || sendSuccess) ? 0.7 : 1,
                           cursor: (isSending || sendSuccess) ? 'not-allowed' : 'pointer'
                         }}
@@ -2110,9 +2110,9 @@ Return ONLY a JSON object with this exact format:
 
                   {/* Email Cards */}
                   {[
-                    { key: 'initial', label: sendMode === SEND_MODES.PROSPECT ? 'Initial Cold Email' : 'Welcome Email', day: 'Day 0', color: '#10b981' },
+                    { key: 'initial', label: sendMode === SEND_MODES.PROSPECT ? 'Initial Cold Email' : 'Welcome Email', day: 'Day 0', color: 'rgb(251, 191, 36)' },
                     { key: 'followup1', label: 'Follow-up #1', day: 'Day 3', color: '#3b82f6' },
-                    { key: 'followup2', label: sendMode === SEND_MODES.PROSPECT ? 'Final Breakup' : 'Final Nurture', day: 'Day 10', color: '#8b5cf6' }
+                    { key: 'followup2', label: sendMode === SEND_MODES.PROSPECT ? 'Final Breakup' : 'Final Nurture', day: 'Day 10', color: 'rgb(251, 191, 36)' }
                   ].map((stage, idx) => (
                     <div key={stage.key} style={{ ...cardStyle, animation: `fadeInUp 0.5s ease-out ${0.1 * idx}s both` }}>
                       <div style={{

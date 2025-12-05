@@ -548,7 +548,7 @@ const PhotoUploadModal = ({
                             style={{
                               width: '100%',
                               padding: '20px',
-                              backgroundColor: emailCount < emailLimit ? '#8b5cf6' : 'rgba(139, 92, 246, 0.3)',
+                              backgroundColor: emailCount < emailLimit ? 'rgb(251, 191, 36)' : 'rgba(251, 191, 36, 0.3)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '0',

@@ -35,7 +35,7 @@ const MODES = [
     description: 'Campaign journey builder • Connected to Outreach Generator',
     available: true, // ACTIVE - campaign builder
     route: '/unity-notes?mode=map',
-    color: '#8b5cf6', // Purple
+    color: '#f59e0b', // Amber
     badge: '⚡ OUTREACH', // Indicates Outreach Generator connection
     badgeColor: '#EECF00'
   },
@@ -46,7 +46,7 @@ const MODES = [
     description: 'Asset creation suite',
     available: false, // Coming soon
     route: '/unity-notes?mode=studio',
-    color: '#3b82f6', // Blue
+    color: '#d97706', // Dark amber
     badge: null
   },
 ];

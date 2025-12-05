@@ -1337,8 +1337,8 @@ Provide an improved version. Return ONLY a JSON object:
                   { label: 'Perplexity', configured: !!settings.perplexityApiKey },
                   { label: 'Resend', configured: !!settings.resendApiKey }
                 ].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: item.configured ? '#10b981' : '#9ca3af' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.configured ? '#10b981' : '#e5e7eb' }} />
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: item.configured ? 'rgb(251, 191, 36)' : '#9ca3af' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.configured ? 'rgb(251, 191, 36)' : '#e5e7eb' }} />
                     {item.label} {item.configured ? 'ready' : 'not configured'}
                   </div>
                 ))}

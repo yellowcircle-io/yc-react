@@ -1277,7 +1277,7 @@ const TimeCapsuleFlow = () => {
             style={{
               width: '100%',
               padding: '8px 6px',
-              backgroundColor: nodes.length === 0 ? 'rgba(59, 130, 246, 0.3)' : '#3b82f6',
+              backgroundColor: nodes.length === 0 ? 'rgba(251, 191, 36, 0.3)' : 'rgb(251, 191, 36)',
               color: 'white',
               border: 'none',
               borderRadius: '0',
@@ -1285,7 +1285,7 @@ const TimeCapsuleFlow = () => {
               fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
-              boxShadow: nodes.length === 0 ? 'none' : '0 2px 4px rgba(59, 130, 246, 0.3)',
+              boxShadow: nodes.length === 0 ? 'none' : '0 2px 4px rgba(251, 191, 36, 0.3)',
               transition: 'all 0.3s ease',
               opacity: nodes.length === 0 ? 0.5 : 1,
               WebkitTapHighlightColor: 'transparent',
@@ -1293,16 +1293,16 @@ const TimeCapsuleFlow = () => {
             }}
             onMouseOver={(e) => {
               if (nodes.length > 0) {
-                e.target.style.backgroundColor = '#2563eb';
+                e.target.style.backgroundColor = '#b45309';
                 e.target.style.transform = 'translateY(-1px)';
-                e.target.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.4)';
+                e.target.style.boxShadow = '0 4px 8px rgba(251, 191, 36, 0.4)';
               }
             }}
             onMouseOut={(e) => {
               if (nodes.length > 0) {
-                e.target.style.backgroundColor = '#3b82f6';
+                e.target.style.backgroundColor = 'rgb(251, 191, 36)';
                 e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.3)';
+                e.target.style.boxShadow = '0 2px 4px rgba(251, 191, 36, 0.3)';
               }
             }}
             title="Download layout as JSON file"
@@ -1318,7 +1318,7 @@ const TimeCapsuleFlow = () => {
             style={{
               width: '100%',
               padding: '8px 6px',
-              backgroundColor: '#8b5cf6',
+              backgroundColor: 'rgb(251, 191, 36)',
               color: 'white',
               border: 'none',
               borderRadius: '0',
@@ -1326,20 +1326,20 @@ const TimeCapsuleFlow = () => {
               fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
-              boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)',
+              boxShadow: '0 2px 4px rgba(251, 191, 36, 0.3)',
               transition: 'all 0.3s ease',
               WebkitTapHighlightColor: 'transparent',
               userSelect: 'none'
             }}
             onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#7c3aed';
+              e.target.style.backgroundColor = '#b45309';
               e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 4px 8px rgba(139, 92, 246, 0.4)';
+              e.target.style.boxShadow = '0 4px 8px rgba(251, 191, 36, 0.4)';
             }}
             onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#8b5cf6';
+              e.target.style.backgroundColor = 'rgb(251, 191, 36)';
               e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 2px 4px rgba(139, 92, 246, 0.3)';
+              e.target.style.boxShadow = '0 2px 4px rgba(251, 191, 36, 0.3)';
             }}
             title="Load layout from JSON file"
           >
@@ -1357,7 +1357,7 @@ const TimeCapsuleFlow = () => {
             style={{
               width: '100%',
               padding: '10px 6px',
-              backgroundColor: nodes.length === 0 ? 'rgba(16, 185, 129, 0.3)' : '#10b981',
+              backgroundColor: nodes.length === 0 ? 'rgba(251, 191, 36, 0.3)' : 'rgb(251, 191, 36)',
               color: 'white',
               border: 'none',
               borderRadius: '0',
@@ -1365,7 +1365,7 @@ const TimeCapsuleFlow = () => {
               fontSize: '9px',
               fontWeight: '700',
               letterSpacing: '0.05em',
-              boxShadow: nodes.length === 0 ? 'none' : '0 4px 8px rgba(16, 185, 129, 0.3)',
+              boxShadow: nodes.length === 0 ? 'none' : '0 4px 8px rgba(251, 191, 36, 0.3)',
               transition: 'all 0.3s ease',
               opacity: nodes.length === 0 ? 0.5 : 1,
               WebkitTapHighlightColor: 'transparent',
@@ -1373,16 +1373,16 @@ const TimeCapsuleFlow = () => {
             }}
             onMouseOver={(e) => {
               if (nodes.length > 0 && !isSaving) {
-                e.target.style.backgroundColor = '#059669';
+                e.target.style.backgroundColor = '#b45309';
                 e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 6px 12px rgba(16, 185, 129, 0.4)';
+                e.target.style.boxShadow = '0 6px 12px rgba(251, 191, 36, 0.4)';
               }
             }}
             onMouseOut={(e) => {
               if (nodes.length > 0) {
-                e.target.style.backgroundColor = '#10b981';
+                e.target.style.backgroundColor = 'rgb(251, 191, 36)';
                 e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 4px 8px rgba(16, 185, 129, 0.3)';
+                e.target.style.boxShadow = '0 4px 8px rgba(251, 191, 36, 0.3)';
               }
             }}
           >
