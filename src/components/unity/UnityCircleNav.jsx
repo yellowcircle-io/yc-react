@@ -6,7 +6,7 @@ import settingsAnimation from '../../assets/lottie/settings-gear.json';
 import addAnimation from '../../assets/lottie/add.json';
 
 /**
- * UnityCircleNav - Custom CircleNav for Unity Notes
+ * UnityCircleNav - Custom CircleNav for UnityNotes
  *
  * Features:
  * - Centered yellow circle with Lottie "+" animation
@@ -113,11 +113,20 @@ const OptionsMenu = ({
   onClear,
   onFooter,
   isSaving = false,
-  hasNotes = false
+  hasNotes = false,
+  currentMode = 'notes',
+  onAddEmail,
+  onAddWait,
+  onAddCondition,
+  emailCount = 0,
+  emailLimit = 3
 }) => {
   if (!isOpen) return null;
 
-  const menuItems = [
+  const canAddEmail = emailCount < emailLimit;
+
+  // Different menu items based on mode
+  const notesMenuItems = [
     { label: '+ ADD NOTE', action: onAddNote, color: 'rgb(251, 191, 36)', textColor: 'black', hoverColor: '#d4a000' },
     { label: 'EXPORT', action: onExport, color: '#3b82f6', textColor: 'white', hoverColor: '#2563eb' },
     { label: 'IMPORT', action: onImport, color: '#8b5cf6', textColor: 'white', hoverColor: '#7c3aed' },
@@ -132,6 +141,24 @@ const OptionsMenu = ({
     { label: 'CLEAR', action: onClear, color: '#dc2626', textColor: 'white', hoverColor: '#b91c1c' },
     { label: 'FOOTER', action: onFooter, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true }
   ];
+
+  const mapMenuItems = [
+    {
+      label: canAddEmail ? `+ ADD EMAIL (${emailCount}/${emailLimit})` : `LIMIT REACHED (${emailLimit})`,
+      action: onAddEmail,
+      color: canAddEmail ? '#8b5cf6' : 'rgba(139, 92, 246, 0.3)',
+      textColor: 'white',
+      hoverColor: '#7c3aed',
+      disabled: !canAddEmail
+    },
+    { label: '+ ADD WAIT', action: onAddWait, color: '#f59e0b', textColor: 'black', hoverColor: '#d97706' },
+    { label: '+ ADD CONDITION', action: onAddCondition, color: '#3b82f6', textColor: 'white', hoverColor: '#2563eb' },
+    { label: 'EXPORT', action: onExport, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true },
+    { label: 'CLEAR', action: onClear, color: '#dc2626', textColor: 'white', hoverColor: '#b91c1c' },
+    { label: 'FOOTER', action: onFooter, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true }
+  ];
+
+  const menuItems = currentMode === 'map' ? mapMenuItems : notesMenuItems;
 
   return (
     <div
@@ -218,7 +245,13 @@ function UnityCircleNav({
   onClear,
   onFooter,
   isSaving = false,
-  hasNotes = false
+  hasNotes = false,
+  currentMode = 'notes',
+  onAddEmail,
+  onAddWait,
+  onAddCondition,
+  emailCount = 0,
+  emailLimit = 3
 }) {
   const { footerOpen } = useLayout();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -352,6 +385,12 @@ function UnityCircleNav({
         onFooter={onFooter}
         isSaving={isSaving}
         hasNotes={hasNotes}
+        currentMode={currentMode}
+        onAddEmail={onAddEmail}
+        onAddWait={onAddWait}
+        onAddCondition={onAddCondition}
+        emailCount={emailCount}
+        emailLimit={emailLimit}
       />
     </div>
   );

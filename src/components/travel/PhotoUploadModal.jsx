@@ -1,7 +1,20 @@
 import React, { useState, useRef } from 'react';
 import { isCloudinaryConfigured } from '../../utils/cloudinaryUpload';
 
-const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) => {
+const PhotoUploadModal = ({
+  isOpen,
+  onClose,
+  onUpload,
+  cardTypes,
+  onAddCard,
+  // MAP mode props
+  currentMode = 'notes',
+  onAddEmail,
+  onAddWait,
+  onAddCondition,
+  emailCount = 0,
+  emailLimit = 3
+}) => {
   const [step, setStep] = useState('method');
   const [uploadMethod, setUploadMethod] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -12,9 +25,16 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
     description: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0); // 0 = upload methods, 1 = card types
+  const [currentPage, setCurrentPage] = useState(0);
   const touchStartX = useRef(0);
   const hasCardTypes = cardTypes && onAddCard;
+
+  // In MAP mode, start directly on page 1 (MAP Actions) when modal opens
+  React.useEffect(() => {
+    if (isOpen && currentMode === 'map') {
+      setCurrentPage(1);
+    }
+  }, [isOpen, currentMode]);
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -63,14 +83,14 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
   };
 
   const handleTouchEnd = (e) => {
-    if (!hasCardTypes || step !== 'method') return;
+    if ((!hasCardTypes && currentMode !== 'map') || step !== 'method') return;
 
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX.current - touchEndX;
 
     if (Math.abs(diff) > 50) { // Minimum swipe distance
       if (diff > 0 && currentPage === 0) {
-        setCurrentPage(1); // Swipe left -> go to card types
+        setCurrentPage(1); // Swipe left -> go to card types / MAP actions
       } else if (diff < 0 && currentPage === 1) {
         setCurrentPage(0); // Swipe right -> go to upload methods
       }
@@ -199,7 +219,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
               margin: 0
             }}>
               {step === 'method'
-                ? (currentPage === 0 ? 'ADD NOTE' : 'CARD TYPES')
+                ? (currentPage === 0 ? 'ADD NOTE' : (currentMode === 'map' ? 'MAP ACTIONS' : 'CARD TYPES'))
                 : 'NOTE DETAILS'}
             </h3>
           </div>
@@ -406,8 +426,8 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                       </div>
                     )}
 
-                    {/* More Options Button - Navigate to Card Types */}
-                    {hasCardTypes && (
+                    {/* More Options Button - Navigate to Card Types / MAP Actions */}
+                    {(hasCardTypes || currentMode === 'map') && (
                       <button
                         onClick={() => setCurrentPage(1)}
                         style={{
@@ -452,54 +472,56 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                   </div>
                 </div>
 
-                {/* Page 1: Card Types (only if cardTypes provided) */}
-                {hasCardTypes && (
+                {/* Page 1: Card Types OR MAP Actions (context-aware) */}
+                {(hasCardTypes || currentMode === 'map') && (
                   <div style={{
                     minWidth: '100%',
                     padding: '32px',
                     boxSizing: 'border-box'
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {/* Back Button */}
-                      <button
-                        onClick={() => setCurrentPage(0)}
-                        style={{
-                          alignSelf: 'flex-start',
-                          padding: '8px 16px',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          backgroundColor: 'transparent',
-                          borderRadius: '0',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          transition: 'all 0.3s ease',
-                          marginBottom: '8px'
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.borderColor = '#EECF00';
-                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <span style={{
-                          fontSize: '14px',
-                          color: '#EECF00'
-                        }}>
-                          ←
-                        </span>
-                        <span style={{
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          letterSpacing: '0.1em',
-                          color: 'rgba(255, 255, 255, 0.7)'
-                        }}>
-                          BACK
-                        </span>
-                      </button>
+                      {/* Back Button - Hide in MAP mode since we skip page 0 */}
+                      {currentMode !== 'map' && (
+                        <button
+                          onClick={() => setCurrentPage(0)}
+                          style={{
+                            alignSelf: 'flex-start',
+                            padding: '8px 16px',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            backgroundColor: 'transparent',
+                            borderRadius: '0',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.3s ease',
+                            marginBottom: '8px'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.borderColor = '#EECF00';
+                            e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <span style={{
+                            fontSize: '14px',
+                            color: '#EECF00'
+                          }}>
+                            ←
+                          </span>
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            letterSpacing: '0.1em',
+                            color: 'rgba(255, 255, 255, 0.7)'
+                          }}>
+                            BACK
+                          </span>
+                        </button>
+                      )}
 
                       <p style={{
                         fontSize: '14px',
@@ -508,22 +530,78 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                         color: 'rgba(255, 255, 255, 0.7)',
                         margin: '0 0 8px 0'
                       }}>
-                        Select a card type:
+                        {currentMode === 'map' ? 'Add journey step:' : 'Select a card type:'}
                       </p>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {Object.entries(cardTypes).map(([type, config]) => (
+                      {/* MAP Mode Actions */}
+                      {currentMode === 'map' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {/* Add Email */}
                           <button
-                            key={type}
                             onClick={() => {
-                              onAddCard(type);
-                              handleClose();
+                              if (emailCount < emailLimit && onAddEmail) {
+                                onAddEmail();
+                                handleClose();
+                              }
+                            }}
+                            disabled={emailCount >= emailLimit}
+                            style={{
+                              width: '100%',
+                              padding: '20px',
+                              backgroundColor: emailCount < emailLimit ? '#8b5cf6' : 'rgba(139, 92, 246, 0.3)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0',
+                              cursor: emailCount >= emailLimit ? 'not-allowed' : 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              letterSpacing: '0.1em',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              transition: 'all 0.2s ease',
+                              textAlign: 'left',
+                              opacity: emailCount >= emailLimit ? 0.5 : 1
+                            }}
+                            onMouseOver={(e) => {
+                              if (emailCount < emailLimit) {
+                                e.currentTarget.style.opacity = '0.9';
+                                e.currentTarget.style.transform = 'translateX(4px)';
+                              }
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.opacity = emailCount >= emailLimit ? '0.5' : '1';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                            }}
+                          >
+                            <span style={{ fontSize: '24px' }}>📧</span>
+                            <div>
+                              <span style={{ display: 'block' }}>
+                                {emailCount < emailLimit ? 'ADD EMAIL' : 'LIMIT REACHED'}
+                              </span>
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: '500',
+                                opacity: 0.8
+                              }}>
+                                {emailCount}/{emailLimit} emails used
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* Add Wait */}
+                          <button
+                            onClick={() => {
+                              if (onAddWait) {
+                                onAddWait();
+                                handleClose();
+                              }
                             }}
                             style={{
                               width: '100%',
                               padding: '20px',
-                              backgroundColor: config.color,
-                              color: type === 'photo' ? 'black' : 'white',
+                              backgroundColor: '#f59e0b',
+                              color: 'black',
                               border: 'none',
                               borderRadius: '0',
                               cursor: 'pointer',
@@ -545,18 +623,115 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                               e.currentTarget.style.transform = 'translateX(0)';
                             }}
                           >
-                            <span style={{ fontSize: '24px' }}>{config.icon}</span>
-                            <span>{config.label.toUpperCase()}</span>
+                            <span style={{ fontSize: '24px' }}>⏱️</span>
+                            <div>
+                              <span style={{ display: 'block' }}>ADD WAIT</span>
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: '500',
+                                opacity: 0.8
+                              }}>
+                                Add delay between steps
+                              </span>
+                            </div>
                           </button>
-                        ))}
-                      </div>
+
+                          {/* Add Condition */}
+                          <button
+                            onClick={() => {
+                              if (onAddCondition) {
+                                onAddCondition();
+                                handleClose();
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '20px',
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              letterSpacing: '0.1em',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              transition: 'all 0.2s ease',
+                              textAlign: 'left'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.opacity = '0.9';
+                              e.currentTarget.style.transform = 'translateX(4px)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.opacity = '1';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                            }}
+                          >
+                            <span style={{ fontSize: '24px' }}>🔀</span>
+                            <div>
+                              <span style={{ display: 'block' }}>ADD CONDITION</span>
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: '500',
+                                opacity: 0.8
+                              }}>
+                                Branch based on engagement
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      ) : (
+                        /* NOTES Mode - Card Types */
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {cardTypes && Object.entries(cardTypes).map(([type, config]) => (
+                            <button
+                              key={type}
+                              onClick={() => {
+                                onAddCard(type);
+                                handleClose();
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '20px',
+                                backgroundColor: config.color,
+                                color: type === 'photo' ? 'black' : 'white',
+                                border: 'none',
+                                borderRadius: '0',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '700',
+                                letterSpacing: '0.1em',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                transition: 'all 0.2s ease',
+                                textAlign: 'left'
+                              }}
+                              onMouseOver={(e) => {
+                                e.currentTarget.style.opacity = '0.9';
+                                e.currentTarget.style.transform = 'translateX(4px)';
+                              }}
+                              onMouseOut={(e) => {
+                                e.currentTarget.style.opacity = '1';
+                                e.currentTarget.style.transform = 'translateX(0)';
+                              }}
+                            >
+                              <span style={{ fontSize: '24px' }}>{config.icon}</span>
+                              <span>{config.label.toUpperCase()}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Pagination Dots (only if cardTypes exist) */}
-              {hasCardTypes && (
+              {/* Pagination Dots - Hide in MAP mode since we only show page 1 */}
+              {hasCardTypes && currentMode !== 'map' && (
                 <div style={{
                   position: 'absolute',
                   bottom: '12px',
@@ -582,7 +757,7 @@ const PhotoUploadModal = ({ isOpen, onClose, onUpload, cardTypes, onAddCard }) =
                         padding: 0,
                         transition: 'all 0.3s ease'
                       }}
-                      title={page === 0 ? 'Upload Methods' : 'Card Types'}
+                      title={page === 0 ? 'Upload Methods' : (currentMode === 'map' ? 'MAP Actions' : 'Card Types')}
                     />
                   ))}
                 </div>

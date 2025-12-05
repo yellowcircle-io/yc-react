@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ReactFlow,
   Background,
@@ -23,19 +23,25 @@ import LightboxModal from '../components/travel/LightboxModal';
 import EditMemoryModal from '../components/travel/EditMemoryModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import UnityCircleNav from '../components/unity/UnityCircleNav';
+import { mapNodeTypes, createJourneyFromOutreach } from '../components/unity/map';
+import EmailEditModal from '../components/unity/map/EmailEditModal';
+import WaitEditModal from '../components/unity/map/WaitEditModal';
+import ConditionEditModal from '../components/unity/map/ConditionEditModal';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
   textNode: TextNoteNode,
+  // UnityMAP journey node types
+  ...mapNodeTypes
 };
 
 const STORAGE_KEY = 'unity-notes-data';
 
-// Card type configuration (same as Unity Notes Plus)
+// Card type configuration (same as UnityNotes Plus)
 const CARD_TYPES = {
-  photo: { label: 'Photo', icon: '🖼️', color: '#EECF00' },
+  photo: { label: 'Photo', icon: '🖼️', color: 'rgb(251, 191, 36)' },
   note: { label: 'Note', icon: '📝', color: '#3B82F6' },
   link: { label: 'Link', icon: '🔗', color: '#8B5CF6' },
   ai: { label: 'AI Chat', icon: '🤖', color: '#10B981' },
@@ -45,10 +51,52 @@ const CARD_TYPES = {
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle }) => {
   const { fitView, zoomIn, zoomOut, getZoom } = useReactFlow();
   const { sidebarOpen } = useLayout();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+
+  // Mode state: 'notes' (default), 'map', or 'studio'
+  const [currentMode, setCurrentMode] = useState(() => {
+    const modeParam = searchParams.get('mode');
+    return modeParam && ['notes', 'map', 'studio'].includes(modeParam) ? modeParam : 'notes';
+  });
+
+  // Detect if canvas has journey/campaign content (from Outreach Generator)
+  const hasJourneyContent = useMemo(() => {
+    // Check for nodes that look like outreach campaign nodes
+    return nodes.some(node =>
+      node.id?.startsWith('outreach-') ||
+      node.data?.label?.includes('Outreach') ||
+      node.data?.label?.includes('Day 0') ||
+      node.data?.label?.includes('Follow-up')
+    );
+  }, [nodes]);
+
+  // Check if coming from Outreach Generator
+  const fromOutreach = searchParams.get('from') === 'outreach';
+
+  // Handle mode change
+  const handleModeChange = useCallback((newMode) => {
+    // If selecting MAP mode but no campaign exists, redirect to Outreach Generator
+    if (newMode === 'map' && !hasJourneyContent) {
+      navigate('/experiments/outreach-generator?from=unity-map');
+      return;
+    }
+
+    setCurrentMode(newMode);
+    // Update URL without full navigation
+    const newParams = new URLSearchParams(searchParams);
+    if (newMode === 'notes') {
+      newParams.delete('mode');
+    } else {
+      newParams.set('mode', newMode);
+    }
+    newParams.delete('from'); // Clear the from param after first load
+    navigate(`/unity-notes${newParams.toString() ? '?' + newParams.toString() : ''}`, { replace: true });
+  }, [navigate, searchParams, hasJourneyContent]);
 
   // Firebase hook for shareable URLs (gated for pro/admin users)
   const { saveCapsule, isSaving } = useFirebaseCapsule();
@@ -70,6 +118,29 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [editingMemory, setEditingMemory] = useState(null);
   const [editingNodeId, setEditingNodeId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Email preview state
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [previewEmailData, setPreviewEmailData] = useState(null);
+
+  // Email inline edit state
+  const [showEmailEditModal, setShowEmailEditModal] = useState(false);
+  const [editingEmailNodeId, setEditingEmailNodeId] = useState(null);
+  const [editingEmailData, setEditingEmailData] = useState(null);
+
+  // Wait inline edit state
+  const [showWaitEditModal, setShowWaitEditModal] = useState(false);
+  const [editingWaitNodeId, setEditingWaitNodeId] = useState(null);
+  const [editingWaitData, setEditingWaitData] = useState(null);
+
+  // Condition inline edit state
+  const [showConditionEditModal, setShowConditionEditModal] = useState(false);
+  const [editingConditionNodeId, setEditingConditionNodeId] = useState(null);
+  const [editingConditionData, setEditingConditionData] = useState(null);
+
+  // Mode panel slideout state
+  // Auto-open mode panel when coming from Outreach Generator
+  const [showModePanel, setShowModePanel] = useState(fromOutreach);
 
   // Load from localStorage
   useEffect(() => {
@@ -120,6 +191,184 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setEditingMemory(photoData);
     setShowEditModal(true);
   }, []);
+
+  // Handle email preview for outreach nodes
+  const handleEmailPreview = useCallback((nodeId, nodeData) => {
+    // Parse email content from node
+    const content = nodeData.content || '';
+    const subjectMatch = content.match(/\*\*Subject:\*\*\s*(.+?)(?:\n|$)/);
+    const bodyContent = content.replace(/\*\*Subject:\*\*\s*.+?\n\n?/, '').trim();
+
+    setPreviewEmailData({
+      subject: subjectMatch ? subjectMatch[1].trim() : nodeData.title || 'Email Preview',
+      body: bodyContent || content,
+      title: nodeData.title
+    });
+    setShowEmailPreview(true);
+  }, []);
+
+  // Handle inline email edit - opens modal to edit email content
+  const handleInlineEmailEdit = useCallback((nodeId, nodeData) => {
+    setEditingEmailNodeId(nodeId);
+    setEditingEmailData(nodeData);
+    setShowEmailEditModal(true);
+  }, []);
+
+  // Save inline email edits
+  const handleEmailEditSave = useCallback((updatedData) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === editingEmailNodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              ...updatedData
+            }
+          };
+        }
+        return node;
+      })
+    );
+    setShowEmailEditModal(false);
+    setEditingEmailNodeId(null);
+    setEditingEmailData(null);
+  }, [editingEmailNodeId, setNodes]);
+
+  // Handle inline wait edit - opens modal to edit wait duration
+  const handleInlineWaitEdit = useCallback((nodeId, nodeData) => {
+    setEditingWaitNodeId(nodeId);
+    setEditingWaitData(nodeData);
+    setShowWaitEditModal(true);
+  }, []);
+
+  // Save inline wait edits
+  const handleWaitEditSave = useCallback((updatedData) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === editingWaitNodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              ...updatedData
+            }
+          };
+        }
+        return node;
+      })
+    );
+    setShowWaitEditModal(false);
+    setEditingWaitNodeId(null);
+    setEditingWaitData(null);
+  }, [editingWaitNodeId, setNodes]);
+
+  // Handle inline condition edit - opens modal to edit condition settings
+  const handleInlineConditionEdit = useCallback((nodeId, nodeData) => {
+    setEditingConditionNodeId(nodeId);
+    setEditingConditionData(nodeData);
+    setShowConditionEditModal(true);
+  }, []);
+
+  // Save inline condition edits
+  const handleConditionEditSave = useCallback((updatedData) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === editingConditionNodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              ...updatedData
+            }
+          };
+        }
+        return node;
+      })
+    );
+    setShowConditionEditModal(false);
+    setEditingConditionNodeId(null);
+    setEditingConditionData(null);
+  }, [editingConditionNodeId, setNodes]);
+
+  // Ref to access current nodes without causing re-renders
+  const nodesRef = useRef(nodes);
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  // Handle "Edit in Outreach" - Navigate back to Outreach Generator with context
+  const handleEditInOutreach = useCallback((nodeId, nodeData) => {
+    // Find all related campaign nodes (same timestamp prefix)
+    // Handles both old format (outreach-xxx) and new UnityMAP format (email-xxx, prospect-xxx)
+    const timestampMatch = nodeId?.match(/(?:outreach|email|prospect|wait|exit)-(\d+)/) ||
+                          (typeof nodeId === 'object' && nodeId?.id?.match(/(?:outreach|email|prospect|wait|exit)-(\d+)/));
+    if (!timestampMatch) {
+      // If no match, just navigate to Outreach Generator
+      navigate('/outreach');
+      return;
+    }
+
+    const campaignTimestamp = timestampMatch[1];
+    // Use ref to get current nodes without dependency
+    const currentNodes = nodesRef.current;
+    // Find all related nodes with the same timestamp (handles both old and new formats)
+    const campaignNodes = currentNodes.filter(n =>
+      n.id.includes(`outreach-${campaignTimestamp}`) ||
+      n.id.includes(`email-${campaignTimestamp}`) ||
+      n.id.includes(`prospect-${campaignTimestamp}`) ||
+      n.id.includes(`wait-${campaignTimestamp}`) ||
+      n.id.includes(`exit-${campaignTimestamp}`)
+    );
+
+    // Parse prospect info from header node (old format) or prospectNode (new UnityMAP format)
+    const headerNode = campaignNodes.find(n => n.id.includes('-header'));
+    const prospectNode = campaignNodes.find(n => n.id.includes('prospect-'));
+    let prospectInfo = {};
+
+    // Try old header node format first
+    if (headerNode && headerNode.data?.content) {
+      const content = headerNode.data.content;
+      const prospectMatch = content.match(/\*\*Prospect:\*\*\s*(.+?)(?:\n|$)/);
+      const emailMatch = content.match(/\*\*Email:\*\*\s*(.+?)(?:\n|$)/);
+      const titleMatch = content.match(/\*\*Title:\*\*\s*(.+?)(?:\n|$)/);
+      const industryMatch = content.match(/\*\*Industry:\*\*\s*(.+?)(?:\n|$)/);
+      const triggerMatch = content.match(/\*\*Trigger:\*\*\s*(.+?)(?:\n|$)/);
+
+      if (prospectMatch) {
+        const [firstName, ...lastParts] = prospectMatch[1].trim().split(' ');
+        prospectInfo.firstName = firstName || '';
+        prospectInfo.lastName = lastParts.join(' ') || '';
+      }
+      if (emailMatch) prospectInfo.email = emailMatch[1].trim();
+      if (titleMatch) prospectInfo.title = titleMatch[1].trim();
+      if (industryMatch) prospectInfo.industry = industryMatch[1].trim();
+      if (triggerMatch) prospectInfo.trigger = triggerMatch[1].trim();
+
+      // Extract company name from header title
+      const companyMatch = headerNode.data?.title?.match(/📧\s*(.+?)\s*Outreach/);
+      if (companyMatch) prospectInfo.company = companyMatch[1].trim();
+    }
+    // Try new UnityMAP prospectNode format
+    else if (prospectNode && prospectNode.data) {
+      const pData = prospectNode.data;
+      prospectInfo.company = pData.label || '';
+      prospectInfo.industry = pData.tags?.[0] || '';
+      // Note: New format doesn't store full prospect details, user will enter in Outreach Generator
+    }
+
+    // Store context for Outreach Generator
+    localStorage.setItem('outreach-edit-context', JSON.stringify({
+      campaignTimestamp,
+      prospectInfo,
+      sourceNodeId: nodeId,
+      fromUnityMAP: true,
+      editedAt: new Date().toISOString()
+    }));
+
+    // Navigate to Outreach Generator with edit context
+    navigate('/experiments/outreach-generator?from=unity-map&edit=true');
+  }, [navigate]);
 
   // Handle edit save
   const handleEditSave = useCallback((updatedData) => {
@@ -280,19 +529,34 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     if (!isInitialized) return;
 
     setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          onResize: handlePhotoResize,
-          onLightbox: handleLightbox,
-          onEdit: handleEdit,
-          onUpdate: handleNodeUpdate,
-          onDelete: handleDeleteNode,
+      nds.map((node) => {
+        // Determine the correct inline edit handler based on node type
+        let inlineEditHandler = null;
+        if (node.type === 'emailNode') {
+          inlineEditHandler = handleInlineEmailEdit;
+        } else if (node.type === 'waitNode') {
+          inlineEditHandler = handleInlineWaitEdit;
+        } else if (node.type === 'conditionNode') {
+          inlineEditHandler = handleInlineConditionEdit;
         }
-      }))
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            onResize: handlePhotoResize,
+            onLightbox: handleLightbox,
+            onEdit: handleEdit,
+            onUpdate: handleNodeUpdate,
+            onDelete: handleDeleteNode,
+            onPreview: handleEmailPreview,
+            onInlineEdit: inlineEditHandler,
+            onEditInOutreach: handleEditInOutreach,
+          }
+        };
+      })
     );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, setNodes]);
 
   // Save to localStorage
   useEffect(() => {
@@ -418,7 +682,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     const exportData = {
       version: '1.0',
       exportDate: new Date().toISOString(),
-      title: 'Unity Notes',
+      title: 'UnityNotes',
       nodes,
       edges
     };
@@ -468,7 +732,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         alert(`✅ Successfully imported ${importData.nodes.length} ${importData.nodes.length === 1 ? 'note' : 'notes'}!`);
       } catch (error) {
         console.error('Import failed:', error);
-        alert(`❌ Import failed: ${error.message}\n\nPlease check that the file is a valid Unity Notes export.`);
+        alert(`❌ Import failed: ${error.message}\n\nPlease check that the file is a valid UnityNotes export.`);
       }
     };
     input.click();
@@ -518,7 +782,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       }));
 
       const capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
-        title: 'Unity Notes'
+        title: 'UnityNotes'
       });
 
       const url = `${window.location.origin}/unity-notes/view/${capsuleId}`;
@@ -661,6 +925,75 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setIsUploadModalOpen(true);
   };
 
+  // Count email nodes for credit enforcement
+  const emailNodeCount = useMemo(() => {
+    return nodes.filter(n => n.type === 'emailNode').length;
+  }, [nodes]);
+
+  // Determine email limit based on user access
+  const emailLimit = useMemo(() => {
+    const hasApiAccess = localStorage.getItem('yc_bypass_active') === 'true' ||
+                         localStorage.getItem('yc_client_access') === 'true';
+    return hasApiAccess ? 10 : 3;
+  }, []);
+
+  // Add new Email node to canvas
+  const handleAddEmail = useCallback(() => {
+    if (emailNodeCount >= emailLimit) return;
+
+    const timestamp = Date.now();
+    const newNode = {
+      id: `email-${timestamp}-${emailNodeCount}`,
+      type: 'emailNode',
+      position: { x: 400, y: 200 + (emailNodeCount * 180) },
+      data: {
+        label: `Email ${emailNodeCount + 1}`,
+        subject: '',
+        preview: 'Click Edit to add content',
+        fullBody: '',
+        status: 'draft',
+        onInlineEdit: handleInlineEmailEdit,
+        onPreview: handleEmailPreview,
+        onEditInOutreach: handleEditInOutreach
+      }
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, [emailNodeCount, emailLimit, setNodes, handleInlineEmailEdit, handleEmailPreview, handleEditInOutreach]);
+
+  // Add new Wait node to canvas
+  const handleAddWait = useCallback(() => {
+    const timestamp = Date.now();
+    const newNode = {
+      id: `wait-${timestamp}`,
+      type: 'waitNode',
+      position: { x: 400, y: nodes.length * 100 + 100 },
+      data: {
+        duration: 3,
+        unit: 'days',
+        label: 'Wait',
+        onInlineEdit: handleInlineWaitEdit
+      }
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, [nodes.length, setNodes, handleInlineWaitEdit]);
+
+  // Add new Condition node to canvas
+  const handleAddCondition = useCallback(() => {
+    const timestamp = Date.now();
+    const newNode = {
+      id: `condition-${timestamp}`,
+      type: 'conditionNode',
+      position: { x: 400, y: nodes.length * 100 + 100 },
+      data: {
+        conditionType: 'opened',
+        label: 'Condition',
+        waitDays: 3,
+        onInlineEdit: handleInlineConditionEdit
+      }
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, [nodes.length, setNodes, handleInlineConditionEdit]);
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
       {/* React Flow Container */}
@@ -704,7 +1037,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </ReactFlow>
       </div>
 
-      {/* Zoom Controls - Right Rail */}
+      {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
       <div style={{
         position: 'fixed',
         top: '50%',
@@ -712,15 +1045,72 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         transform: 'translateY(-50%)',
         zIndex: 150,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
-        gap: '10px',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(8px)',
-        padding: '12px 8px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+        gap: '0'
       }}>
+        {/* Mode Tab Slideout Panel */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(8px)',
+          padding: showModePanel ? '10px' : '0',
+          borderRadius: '8px 0 0 8px',
+          boxShadow: showModePanel ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+          overflow: 'hidden',
+          maxWidth: showModePanel ? '120px' : '0',
+          opacity: showModePanel ? 1 : 0,
+          transition: 'all 0.3s ease-out',
+          marginRight: showModePanel ? '0' : '-8px'
+        }}>
+          {[
+            { key: 'notes', label: 'NOTES', icon: '📝', color: 'rgb(251, 191, 36)' },
+            { key: 'map', label: 'MAP', icon: '🗺️', color: '#8b5cf6' },
+            { key: 'studio', label: 'STUDIO', icon: '🎨', color: '#3b82f6', disabled: true }
+          ].map((mode) => (
+            <button
+              key={mode.key}
+              onClick={() => !mode.disabled && handleModeChange(mode.key)}
+              disabled={mode.disabled}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                fontSize: '10px',
+                fontWeight: currentMode === mode.key ? '700' : '500',
+                letterSpacing: '0.05em',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: mode.disabled ? 'not-allowed' : 'pointer',
+                backgroundColor: currentMode === mode.key ? mode.color : 'transparent',
+                color: currentMode === mode.key ? (mode.key === 'notes' ? '#000' : '#fff') : mode.disabled ? '#999' : '#333',
+                opacity: mode.disabled ? 0.5 : 1,
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>{mode.icon}</span>
+              <span>{mode.label}</span>
+              {mode.disabled && <span style={{ fontSize: '8px' }}>SOON</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Main Zoom Controls */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(8px)',
+          padding: '12px 8px',
+          borderRadius: showModePanel ? '0 8px 8px 0' : '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+        }}>
         {/* Zoom In Button */}
         <button
           onClick={() => zoomIn({ duration: 200 })}
@@ -730,7 +1120,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#EECF00',
+            backgroundColor: 'rgb(251, 191, 36)',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -741,11 +1131,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#fbbf24';
+            e.target.style.backgroundColor = '#f5b000';
             e.target.style.transform = 'scale(1.05)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#EECF00';
+            e.target.style.backgroundColor = 'rgb(251, 191, 36)';
             e.target.style.transform = 'scale(1)';
           }}
           title="Zoom In"
@@ -774,7 +1164,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#EECF00',
+            backgroundColor: 'rgb(251, 191, 36)',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -785,11 +1175,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#fbbf24';
+            e.target.style.backgroundColor = '#f5b000';
             e.target.style.transform = 'scale(1.05)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#EECF00';
+            e.target.style.backgroundColor = 'rgb(251, 191, 36)';
             e.target.style.transform = 'scale(1)';
           }}
           title="Zoom Out"
@@ -827,6 +1217,44 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         >
           ⊙
         </button>
+
+        {/* Divider */}
+        <div style={{ width: '24px', height: '1px', backgroundColor: '#e5e7eb', margin: '4px 0' }} />
+
+        {/* Mode Toggle Button */}
+        <button
+          onClick={() => setShowModePanel(!showModePanel)}
+          style={{
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: showModePanel ? 'rgba(139, 92, 246, 0.2)' : 'rgba(0, 0, 0, 0.05)',
+            border: `1px solid ${showModePanel ? 'rgba(139, 92, 246, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: showModePanel ? '#8b5cf6' : 'black',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (!showModePanel) {
+              e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+              e.target.style.transform = 'scale(1.05)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!showModePanel) {
+              e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+              e.target.style.transform = 'scale(1)';
+            }
+          }}
+          title={showModePanel ? 'Hide Modes' : 'Switch Mode'}
+        >
+          {showModePanel ? '◀' : '▶'}
+        </button>
+        </div>
       </div>
 
       {/* Unity Circle Nav - Custom Add Note + Options Menu */}
@@ -839,6 +1267,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         onFooter={onFooterToggle}
         isSaving={isSaving}
         hasNotes={nodes.length > 0}
+        currentMode={currentMode}
+        onAddEmail={handleAddEmail}
+        onAddWait={handleAddWait}
+        onAddCondition={handleAddCondition}
+        emailCount={emailNodeCount}
+        emailLimit={emailLimit}
       />
 
       {/* Empty State */}
@@ -864,7 +1298,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             color: '#000',
             marginBottom: '8px'
           }}>
-            Start Your Unity Notes
+            Start Your UnityNotes
           </h2>
           <p style={{
             fontSize: '12px',
@@ -882,13 +1316,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       )}
 
-      {/* Upload Modal - With card types */}
+      {/* Upload Modal - With card types / MAP actions (context-aware) */}
       <PhotoUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handlePhotoUpload}
         cardTypes={CARD_TYPES}
         onAddCard={handleAddCard}
+        currentMode={currentMode}
+        onAddEmail={handleAddEmail}
+        onAddWait={handleAddWait}
+        onAddCondition={handleAddCondition}
+        emailCount={emailNodeCount}
+        emailLimit={emailLimit}
       />
 
       {/* Share Modal */}
@@ -922,6 +1362,204 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         onSave={handleEditSave}
         onDelete={handleDeleteMemory}
       />
+
+      {/* Email Inline Edit Modal */}
+      <EmailEditModal
+        isOpen={showEmailEditModal}
+        onClose={() => {
+          setShowEmailEditModal(false);
+          setEditingEmailNodeId(null);
+          setEditingEmailData(null);
+        }}
+        emailData={editingEmailData}
+        onSave={handleEmailEditSave}
+      />
+
+      {/* Wait Inline Edit Modal */}
+      <WaitEditModal
+        isOpen={showWaitEditModal}
+        onClose={() => {
+          setShowWaitEditModal(false);
+          setEditingWaitNodeId(null);
+          setEditingWaitData(null);
+        }}
+        waitData={editingWaitData}
+        onSave={handleWaitEditSave}
+      />
+
+      {/* Condition Inline Edit Modal */}
+      <ConditionEditModal
+        isOpen={showConditionEditModal}
+        onClose={() => {
+          setShowConditionEditModal(false);
+          setEditingConditionNodeId(null);
+          setEditingConditionData(null);
+        }}
+        conditionData={editingConditionData}
+        onSave={handleConditionEditSave}
+      />
+
+      {/* Email Preview Modal */}
+      {showEmailPreview && previewEmailData && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowEmailPreview(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#f5f5f5',
+              borderRadius: '12px',
+              maxWidth: '700px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '16px 24px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#fff'
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#111' }}>
+                  Email Preview
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
+                  {previewEmailData.title || 'Branded template preview'}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowEmailPreview(false)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#f3f4f6',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6b7280'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Preview Content */}
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              backgroundColor: '#e5e5e5',
+              padding: '24px'
+            }}>
+              {/* Email Template Preview */}
+              <div style={{
+                maxWidth: '600px',
+                margin: '0 auto',
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+              }}>
+                {/* Header */}
+                <div style={{
+                  backgroundColor: 'rgb(251, 191, 36)',
+                  padding: '24px 40px'
+                }}>
+                  <h1 style={{
+                    margin: 0,
+                    fontFamily: 'Helvetica, Arial, sans-serif',
+                    fontSize: '24px',
+                    fontWeight: '900',
+                    color: '#000000',
+                    letterSpacing: '-1px'
+                  }}>
+                    yellowCircle
+                  </h1>
+                </div>
+
+                {/* Subject */}
+                <div style={{
+                  padding: '32px 40px 16px',
+                  borderBottom: '1px solid #eee'
+                }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Subject
+                  </p>
+                  <h2 style={{
+                    margin: 0,
+                    fontFamily: 'Helvetica, Arial, sans-serif',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#111'
+                  }}>
+                    {previewEmailData.subject}
+                  </h2>
+                </div>
+
+                {/* Body */}
+                <div style={{
+                  padding: '32px 40px',
+                  fontSize: '15px',
+                  color: '#333',
+                  lineHeight: '1.6',
+                  fontFamily: 'Georgia, "Times New Roman", serif'
+                }}>
+                  {previewEmailData.body.split('\n').map((line, i) => (
+                    <p key={i} style={{ margin: '0 0 16px' }}>{line || '\u00A0'}</p>
+                  ))}
+                </div>
+
+                {/* Footer */}
+                <div style={{
+                  backgroundColor: '#1a1a1a',
+                  padding: '24px 40px'
+                }}>
+                  <p style={{
+                    margin: '0 0 4px',
+                    fontFamily: 'Helvetica, Arial, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: 'rgb(251, 191, 36)'
+                  }}>
+                    Chris Cooper
+                  </p>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.7)'
+                  }}>
+                    Founder & GTM Strategist • yellowCircle
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -938,7 +1576,7 @@ function UnityNotesPage() {
 
   return (
     <LeadGate
-      toolName="Unity Notes"
+      toolName="UnityNotes"
       toolDescription="A visual canvas for organizing ideas, notes, and images. Enter your email to get instant access."
       storageKey="yc_unity_lead"
     >
@@ -948,7 +1586,7 @@ function UnityNotesPage() {
           onFooterToggle={handleFooterToggle}
           onMenuToggle={handleMenuToggle}
           navigationItems={navigationItems}
-          pageLabel="UNITY NOTES"
+          pageLabel="UNITYNOTES"
           sidebarVariant="hidden"
           hideCircleNav={true}
         >
