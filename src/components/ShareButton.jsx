@@ -43,7 +43,6 @@ function ShareButton({ title, url, text }) {
         });
       } catch (err) {
         // User cancelled or error occurred
-        console.log('Share cancelled:', err);
       }
     }
   };
