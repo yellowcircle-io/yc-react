@@ -13,6 +13,15 @@ function HomePage() {
   const [navCircleRotation, setNavCircleRotation] = useState(0);
   const touchStartRef = useRef({ x: 0, y: 0 });
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Inject stagger animation
   useEffect(() => {
     const styleId = 'text-stagger-animations';
@@ -283,16 +292,53 @@ function HomePage() {
         WebkitFilter: 'grayscale(100%) contrast(1.17)'
       }}></div>
 
-      {/* YOUR STORY Text - Adjusts for Sidebar and Footer */}
+      {/* Talk Bubble Description - Upper right, appears on final page */}
+      {scrollOffset >= 180 && (
+        <div style={{
+          position: 'fixed',
+          top: isMobile ? '100px' : '120px',
+          right: isMobile ? '20px' : '80px',
+          zIndex: 60,
+          pointerEvents: 'none',
+          animation: 'fadeInUp 0.6s ease-in-out 0.1s both'
+        }}>
+          {/* Talk bubble container */}
+          <div style={{
+            backgroundColor: '#f1efe8',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            padding: isMobile ? '12px 14px' : '16px 20px',
+            borderRadius: '12px 12px 12px 0',
+            maxWidth: isMobile ? '200px' : '320px',
+            textAlign: 'right',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          }}>
+            <p style={{
+              margin: '0',
+              fontSize: isMobile ? '11px' : '14px',
+              fontFamily: 'Helvetica, Arial, sans-serif',
+              fontWeight: '400',
+              letterSpacing: '0',
+              lineHeight: '1.5',
+              color: 'rgba(0, 0, 0, 0.85)'
+            }}>
+              yellowCircle helps early-stage and small-to-medium sized companies fix their growth systems in weeks, not quarters. We bring clarity to chaos and turn complexity into competitive advantage.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content - H1 and Subtitle - Fixed position from bottom */}
+      {/* Positioned to match FINAL scroll state - buttons separate to prevent jump */}
       <div style={{
         position: 'fixed',
-        bottom: '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        bottom: footerOpen ? '380px' : '80px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        right: isMobile ? '100px' : '140px',
+        padding: isMobile ? '0 20px' : '0 40px',
         zIndex: 61,
         pointerEvents: 'none',
-        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
         <div style={{
           color: 'black',
@@ -300,162 +346,161 @@ function HomePage() {
           fontSize: 'clamp(0.855rem, 1.98vw, 1.62rem)',
           lineHeight: '1.3',
           letterSpacing: '0.05em',
-          textAlign: 'left'
+          textAlign: 'left',
+          maxWidth: isMobile ? '100%' : '780px'
         }}>
+          {/* H1 - YOUR STORY - Always same position */}
           <h1 style={{
             margin: '-1rem 0px',
             backdropFilter: 'blur(1px)',
             WebkitBackdropFilter: 'blur(1px)',
             display: 'inline-block',
-            fontSize: 'clamp(1.17rem, 18vw, 15rem)',
+            fontSize: isMobile ? 'clamp(2rem, 15vw, 4rem)' : 'clamp(1.17rem, 18vw, 15rem)',
             fontWeight: '900',
             padding: '-40px 0px',
             lineHeight: '0.82',
             fontFamily: 'Helvetica, Arial, sans-serif',
-            letterSpacing: '-5px',
+            letterSpacing: isMobile ? '-2px' : '-5px',
             color: 'rgba(251, 191, 36, 0.7)',
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
           }}>
             YOUR STORY
           </h1>
 
-          <div style={{ position: 'relative', minHeight: '120px' }}>
-            <p
-              key={`page-${scrollOffset < 100 ? '1' : scrollOffset < 200 ? '2' : '3'}`}
-              style={{
-                margin: '3px 0',
-                backgroundColor: 'rgba(241, 239, 232, 0.38)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                display: 'inline-block',
-                padding: '2px 6px',
-                fontSize: 'clamp(1.17rem, 6.2vw, 3rem)',
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                fontWeight: '400',
-                letterSpacing: '-2px',
-                animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
-              }}
-            >
-              {scrollOffset < 100
-                ? 'Deserves to be Told'
-                : scrollOffset < 200
-                  ? 'Built Better and Faster'
-                  : 'From Beginning to End'}
-            </p>
-
-            {/* Description text - Show on final page */}
-            {scrollOffset >= 180 && (
-              <p style={{
-                margin: '16px 0 0 0',
-                backgroundColor: 'rgba(241, 239, 232, 0.7)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                display: 'inline-block',
-                padding: '10px 14px',
-                fontSize: 'clamp(0.75rem, 1.4vw, 0.95rem)',
-                fontFamily: 'Helvetica, Arial, sans-serif',
-                fontWeight: '400',
-                letterSpacing: '0',
-                lineHeight: '1.6',
-                maxWidth: '520px',
-                color: 'rgba(0, 0, 0, 0.85)',
-                animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
-              }}>
-                yellowCircle helps early-stage and small-to-medium sized companies fix their growth systems in weeks, not quarters. I audit your marketing operations, design systems that scale, and build automations that stick—then get out of your way.
-              </p>
-            )}
-
-            {/* Contact/Explore CTAs - Show on final page */}
-            {scrollOffset >= 180 && (
-              <div style={{
-                display: 'flex',
-                gap: '12px',
-                marginTop: '20px',
-                pointerEvents: 'auto',
-                animation: 'fadeInUp 0.5s ease-in-out 0.4s both'
-              }}>
-                <button
-                  onClick={() => navigate('/services')}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'rgba(251, 191, 36, 0.95)',
-                    color: 'black',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#fff';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  EXPLORE SERVICES
-                </button>
-                <button
-                  onClick={() => navigate('/journeys')}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    color: 'black',
-                    border: '1px solid rgba(251, 191, 36, 0.5)',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  START A JOURNEY
-                </button>
-                <button
-                  onClick={handleFooterToggle}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
-                    border: '1px solid rgba(251, 191, 36, 0.5)',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
-                    e.currentTarget.style.color = 'black';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                    e.currentTarget.style.color = 'white';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  GET IN TOUCH
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Subtitle - Always same position, only text changes */}
+          <p
+            key={`page-${scrollOffset < 100 ? '1' : scrollOffset < 200 ? '2' : '3'}`}
+            style={{
+              margin: '3px 0',
+              backgroundColor: 'rgba(241, 239, 232, 0.38)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              display: 'inline-block',
+              padding: '2px 6px',
+              fontSize: isMobile ? 'clamp(1.2rem, 5vw, 2rem)' : 'clamp(1.17rem, 6.2vw, 3rem)',
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontWeight: '400',
+              letterSpacing: '-2px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
+            }}
+          >
+            {scrollOffset < 100
+              ? 'Deserves to be Told'
+              : scrollOffset < 200
+                ? 'Built Better and Faster'
+                : 'From Beginning to End'}
+          </p>
         </div>
       </div>
+
+      {/* Buttons - Separate fixed container to prevent H1/subtitle jump */}
+      {scrollOffset >= 180 && (
+        <div style={{
+          position: 'fixed',
+          bottom: footerOpen ? '340px' : '40px',
+          left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+          right: isMobile ? '100px' : '140px',
+          padding: isMobile ? '0 20px' : '0 40px',
+          zIndex: 61,
+          pointerEvents: 'auto',
+          transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
+            gap: isMobile ? '8px' : '12px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.5s both'
+          }}>
+            <button
+              onClick={() => navigate('/services')}
+              style={{
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                minHeight: '44px',
+                backgroundColor: 'rgba(251, 191, 36, 0.95)',
+                color: 'black',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: isMobile ? '12px' : '11px',
+                fontWeight: '700',
+                letterSpacing: '0.02em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              SERVICES
+            </button>
+            <button
+              onClick={() => navigate('/journeys')}
+              style={{
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                minHeight: '44px',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                color: 'black',
+                border: '1px solid rgba(251, 191, 36, 0.5)',
+                borderRadius: '4px',
+                fontSize: isMobile ? '12px' : '11px',
+                fontWeight: '700',
+                letterSpacing: '0.02em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              JOURNEYS
+            </button>
+            <button
+              onClick={handleFooterToggle}
+              style={{
+                padding: isMobile ? '10px 16px' : '12px 24px',
+                minHeight: '44px',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                color: 'white',
+                border: '1px solid rgba(251, 191, 36, 0.5)',
+                borderRadius: '4px',
+                fontSize: isMobile ? '12px' : '11px',
+                fontWeight: '700',
+                letterSpacing: '0.02em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.95)';
+                e.currentTarget.style.color = 'black';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              CONTACT
+            </button>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
