@@ -2,6 +2,16 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log"
+    ]
+  },
   "hosting": {
     "site": "yellowcircle-app",
     "public": "dist",
@@ -11,6 +21,14 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/api/generate",
+        "function": "generate"
+      },
+      {
+        "source": "/api/health",
+        "function": "health"
+      },
       {
         "source": "**",
         "destination": "/index.html"

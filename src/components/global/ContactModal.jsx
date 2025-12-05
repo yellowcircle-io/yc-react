@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLayout } from '../../contexts/LayoutContext';
 import { submitContactForm } from '../../utils/formSubmit';
+import { sendLeadCapture } from '../../config/integrations';
 
 // Service options for dropdown
 const SERVICE_OPTIONS = [
@@ -180,6 +181,14 @@ function ContactModal() {
 
       if (result.success) {
         setSubmitted(true);
+
+        // Send to n8n for Airtable + Slack automation (fire and forget)
+        sendLeadCapture(
+          { email, name, phone, service: serviceName, message },
+          'contact_form',
+          service ? 'Service Inquiry' : 'Contact Request'
+        );
+
         // Track conversion in Google Ads + GA4
         if (typeof gtag === 'function') {
           gtag('event', 'conversion', {
