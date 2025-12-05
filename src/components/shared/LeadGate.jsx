@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { COLORS } from '../../styles/constants';
 import { submitLeadGate } from '../../utils/formSubmit';
+import { sendLeadCapture } from '../../config/integrations';
 
 /**
  * LeadGate - Email capture gate for tools
@@ -83,6 +84,13 @@ function LeadGate({
     try {
       // Use shared form submission utility
       await submitLeadGate(email, name, toolName);
+
+      // Send to n8n for Airtable + Slack automation (fire and forget)
+      sendLeadCapture(
+        { email, name, tool: toolName },
+        'lead_gate',
+        'Tool Access'
+      );
 
       // Store in localStorage
       localStorage.setItem(storageKey, JSON.stringify({

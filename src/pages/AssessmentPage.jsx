@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
 import { submitAssessment } from '../utils/formSubmit';
+import { sendLeadCapture } from '../config/integrations';
 
 // Category to Service mapping for recommendations
 const CATEGORY_SERVICE_MAP = {
@@ -183,6 +184,14 @@ function AssessmentPage() {
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Mobile detection
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [submitted, setSubmitted] = useState(false);
 
   // Calculate score
@@ -275,6 +284,13 @@ function AssessmentPage() {
         categoryScores,
         recommendations
       });
+
+      // Send to n8n for Airtable + Slack automation (fire and forget)
+      sendLeadCapture(
+        { email, name, company, score, service: recommendations.join(', ') },
+        'assessment',
+        'Assessment Complete'
+      );
 
       // Store in localStorage for Contact Modal autofill
       localStorage.setItem('yc_assessment_data', JSON.stringify({
@@ -370,8 +386,9 @@ function AssessmentPage() {
         position: 'fixed',
         top: '80px',
         bottom: footerOpen ? '320px' : '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        right: '80px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        right: 0,
+        padding: isMobile ? '0 20px' : '0 80px',
         overflow: 'auto',
         zIndex: 61,
         transition: 'left 0.5s ease-out, bottom 0.5s ease-out'

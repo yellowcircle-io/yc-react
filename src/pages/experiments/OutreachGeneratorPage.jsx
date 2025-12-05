@@ -9,6 +9,9 @@ import { navigationItems } from '../../config/navigationItems';
 // Adapter imports - hot-swappable LLM, ESP, and storage
 import { getLLMAdapter, getESPAdapter, getStorageAdapter } from '../../adapters';
 
+// Backend proxy for free generation (no API key required)
+import { generateViaProxy, shouldUseProxy } from '../../utils/generateProxy';
+
 // Send mode types
 const SEND_MODES = {
   PROSPECT: 'prospect',  // Cold outreach to prospects
@@ -133,6 +136,8 @@ function OutreachGeneratorPage() {
   const [formError, setFormError] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [resendApiKey, setResendApiKey] = useState('');
+  const [showResendKeyInput, setShowResendKeyInput] = useState(false);
   const [showBrandSettings, setShowBrandSettings] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [sendSuccess, setSendSuccess] = useState(null);
@@ -169,6 +174,12 @@ function OutreachGeneratorPage() {
     const savedKey = localStorage.getItem('groq_api_key');
     if (savedKey) {
       setApiKey(savedKey);
+    }
+
+    // Load Resend API key for sending
+    const savedResendKey = localStorage.getItem('resend_api_key');
+    if (savedResendKey) {
+      setResendApiKey(savedResendKey);
     }
 
     // Load credits
@@ -346,6 +357,13 @@ function OutreachGeneratorPage() {
     }
   };
 
+  const saveResendApiKey = () => {
+    if (resendApiKey.trim()) {
+      localStorage.setItem('resend_api_key', resendApiKey.trim());
+      setShowResendKeyInput(false);
+    }
+  };
+
   const triggerOptions = [
     { value: 'funding', label: 'Recent Funding' },
     { value: 'hiring', label: 'Hiring for Marketing/Ops Role' },
@@ -386,23 +404,51 @@ TASK: ${stagePrompts[stage]}
 Return ONLY a JSON object with this exact format:
 {"subject": "subject line here", "body": "email body here"}`;
 
-    // Get LLM adapter (uses provider from .env: groq, openai, or claude)
-    const llm = await getLLMAdapter();
+    let response;
 
-    // Generate using adapter - pass user's API key if they have one
-    const response = await llm.generate(prompt, {
-      apiKey: apiKey || undefined, // Use user's key if provided, otherwise use .env key
-      systemPrompt: generateSystemPrompt(brand, mode),
-      temperature: 0.7,
-      maxTokens: 500,
-    });
+    // Check if we should use the backend proxy (no user API key + free credits)
+    if (shouldUseProxy(apiKey, freeCreditsRemaining)) {
+      // Use backend proxy for free generation
+      const proxyResult = await generateViaProxy(
+        `${generateSystemPrompt(brand, mode)}\n\n${prompt}`,
+        stage,
+        { prospect, mode }
+      );
+
+      if (!proxyResult.success) {
+        // Handle proxy errors
+        if (proxyResult.rateLimited) {
+          setFreeCreditsRemaining(0);
+          localStorage.setItem('outreach_free_credits', '0');
+          setShowApiKeyInput(true);
+        }
+        throw new Error(proxyResult.error || 'Generation failed');
+      }
+
+      response = proxyResult.content;
+
+      // Update credits from proxy response
+      if (typeof proxyResult.creditsRemaining === 'number') {
+        setFreeCreditsRemaining(proxyResult.creditsRemaining);
+        localStorage.setItem('outreach_free_credits', String(proxyResult.creditsRemaining));
+      }
+    } else {
+      // Use direct LLM adapter with user's API key
+      const llm = await getLLMAdapter();
+      response = await llm.generate(prompt, {
+        apiKey: apiKey || undefined,
+        systemPrompt: generateSystemPrompt(brand, mode),
+        temperature: 0.7,
+        maxTokens: 500,
+      });
+    }
 
     // Parse JSON from response
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Invalid response format');
 
     return JSON.parse(jsonMatch[0]);
-  }, [apiKey, brand, sendMode]);
+  }, [apiKey, brand, sendMode, freeCreditsRemaining]);
 
   // Send email via ESP adapter (Resend)
   const sendEmailNow = useCallback(async (emailData, recipientEmail) => {
@@ -413,9 +459,11 @@ Return ONLY a JSON object with this exact format:
     try {
       const esp = await getESPAdapter();
 
-      // Check if ESP is configured
-      if (!esp.isConfigured()) {
-        throw new Error('Email sending requires a Resend API key. Get one free at resend.com/api-keys (100 emails/day)');
+      // Check if ESP is configured (user's key OR .env key)
+      const hasResendKey = resendApiKey || esp.isConfigured();
+      if (!hasResendKey) {
+        setShowResendKeyInput(true);
+        throw new Error('Email sending requires a Resend API key. Enter your key below or get one free at resend.com/api-keys');
       }
 
       // Convert plain text body to HTML (simple paragraphs)
@@ -430,6 +478,7 @@ Return ONLY a JSON object with this exact format:
         html: htmlBody,
         text: emailData.body,
         replyTo: brand.sender.email || undefined,
+        apiKey: resendApiKey || undefined, // Use user's key if provided
         tags: [
           { name: 'source', value: 'outreach-generator' },
           { name: 'mode', value: sendMode },
@@ -465,7 +514,7 @@ Return ONLY a JSON object with this exact format:
     } finally {
       setIsSending(false);
     }
-  }, [brand, sendMode]);
+  }, [brand, sendMode, resendApiKey]);
 
   const handleGenerate = async () => {
     // Check if user can generate
@@ -1181,7 +1230,19 @@ Return ONLY a JSON object with this exact format:
               onClick={() => setShowApiKeyInput(!showApiKeyInput)}
               style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}
             >
-              🔑 API Key {showApiKeyInput ? '▲' : '▼'}
+              🔑 LLM Key {showApiKeyInput ? '▲' : '▼'}
+            </button>
+            <button
+              onClick={() => setShowResendKeyInput(!showResendKeyInput)}
+              style={{
+                ...secondaryButtonStyle,
+                padding: '10px 16px',
+                fontSize: '13px',
+                borderColor: resendApiKey ? '#10b981' : undefined,
+                color: resendApiKey ? '#10b981' : undefined
+              }}
+            >
+              📧 Send Key {resendApiKey ? '✓' : ''} {showResendKeyInput ? '▲' : '▼'}
             </button>
             <button
               onClick={() => setShowBrandSettings(!showBrandSettings)}
@@ -1243,6 +1304,38 @@ Return ONLY a JSON object with this exact format:
                   Save
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Resend API Key Input (for sending) */}
+          {showResendKeyInput && (
+            <div style={{ ...cardStyle, borderColor: '#10b981', animation: 'fadeInUp 0.4s ease-out' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#374151' }}>
+                📧 Email Sending API Key
+              </h3>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                To send emails, you need a Resend API key.{' '}
+                <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer"
+                  style={{ color: '#10b981', textDecoration: 'underline' }}>Get one free</a>{' '}
+                (100 emails/day, 3,000/month)
+              </p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <input
+                  type="password"
+                  value={resendApiKey}
+                  onChange={(e) => setResendApiKey(e.target.value)}
+                  placeholder="re_..."
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                <button onClick={saveResendApiKey} style={{ ...primaryButtonStyle, backgroundColor: '#10b981' }}>
+                  Save
+                </button>
+              </div>
+              {resendApiKey && (
+                <p style={{ fontSize: '12px', color: '#10b981', marginTop: '8px' }}>
+                  ✓ Resend API key configured
+                </p>
+              )}
             </div>
           )}
 
