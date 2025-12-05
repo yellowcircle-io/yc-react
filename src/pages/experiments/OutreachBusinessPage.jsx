@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
+import UserMenu from '../../components/auth/UserMenu';
 
 // Password for access (hash comparison, not plaintext)
 // To generate: btoa('yourpassword') in console
@@ -118,18 +119,53 @@ const SEND_TYPES = {
     name: 'Batch Upload',
     description: 'Upload a CSV of recipients for bulk generation',
     icon: '📋',
-    available: false,
-    comingSoon: true
+    available: true
   },
   trigger: {
     id: 'trigger',
     name: 'Automated / Trigger-Based',
     description: 'Set up rules to automatically send based on events',
     icon: '⚡',
-    available: false,
-    comingSoon: true
+    available: true
   }
 };
+
+// Sample prospect data for testing
+const SAMPLE_PROSPECTS = [
+  {
+    id: 'sample-1',
+    company: 'TechFlow Inc',
+    firstName: 'Sarah',
+    lastName: 'Chen',
+    email: 'sarah.chen@techflow.io',
+    title: 'VP of Marketing',
+    industry: 'B2B SaaS',
+    trigger: 'funding',
+    triggerDetails: 'Series B funding of $25M announced last week, expanding GTM team'
+  },
+  {
+    id: 'sample-2',
+    company: 'DataScale',
+    firstName: 'Marcus',
+    lastName: 'Johnson',
+    email: 'marcus@datascale.com',
+    title: 'Head of Revenue Operations',
+    industry: 'Fintech',
+    trigger: 'hiring',
+    triggerDetails: 'Posted 3 new marketing ops roles on LinkedIn this month'
+  },
+  {
+    id: 'sample-3',
+    company: 'CloudNine Solutions',
+    firstName: 'Emily',
+    lastName: 'Park',
+    email: 'emily.park@cloudnine.io',
+    title: 'Director of Demand Gen',
+    industry: 'B2B SaaS',
+    trigger: 'content',
+    triggerDetails: 'Recent LinkedIn post about struggling with attribution and GTM alignment'
+  }
+];
 
 // Outreach motions with distinct templates and prompts
 const OUTREACH_MOTIONS = {
@@ -508,8 +544,10 @@ const generateBrandEmailHTML = (subject, body, preheader = '', sections = DEFAUL
 
 function OutreachBusinessPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
   const previewRef = useRef(null);
+  const fileInputRef = useRef(null); // For batch CSV upload
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -526,14 +564,28 @@ function OutreachBusinessPage() {
     sendProvider: 'resend',
     enableSending: true,
     fromEmail: 'onboarding@resend.dev',
-    fromName: 'Chris Cooper'
+    fromName: 'Chris Cooper',
+    // API Toggles
+    enableGeneration: true,
+    enableRefinement: true
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [showSampleData, setShowSampleData] = useState(false);
+
+  // Batch upload state
+  const [batchRecipients, setBatchRecipients] = useState([]);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, results: [] });
+
+  // Trigger automation state
+  const [triggerRules, setTriggerRules] = useState([]);
 
   // Workflow state
   const [sendType, setSendType] = useState(null); // 'manual', 'batch', 'trigger'
   const [selectedMotion, setSelectedMotion] = useState('sales');
   const [currentStep, setCurrentStep] = useState(0); // 0: Select type, 1: Recipient, 2: Generate, 3: Review, 4: Refine, 5: Send
+
+  // Track if editing an existing campaign (store timestamp for replacement)
+  const [editingCampaignTimestamp, setEditingCampaignTimestamp] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -556,6 +608,16 @@ function OutreachBusinessPage() {
   const [previewMode, setPreviewMode] = useState('text'); // 'text', 'html', or 'components'
   const [refinementFeedback, setRefinementFeedback] = useState('');
   const [showComponentLibrary, setShowComponentLibrary] = useState(false);
+
+  // Enhanced editor state
+  const [subjectVariants, setSubjectVariants] = useState({}); // { initial: ['variant1', 'variant2'], ... }
+  const [isGeneratingVariants, setIsGeneratingVariants] = useState(false);
+  const [abTestEnabled, setAbTestEnabled] = useState(false);
+  const [selectedAbVariants, setSelectedAbVariants] = useState([]); // indices of selected A/B variants
+  const [preheaderText, setPreheaderText] = useState(''); // Preview text / preheader
+  const [showVariablePicker, setShowVariablePicker] = useState(false);
+  const [ctaConfig, setCtaConfig] = useState({ text: 'GET IN TOUCH', url: '', style: 'primary' });
+  const [showSnippetLibrary, setShowSnippetLibrary] = useState(false);
 
   // UI state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -671,6 +733,207 @@ function OutreachBusinessPage() {
       document.head.appendChild(style);
     }
   }, []);
+
+  // Handle bi-directional editing from UnityMAP
+  useEffect(() => {
+    const fromMap = searchParams.get('from') === 'unity-map';
+    const isEdit = searchParams.get('edit') === 'true';
+
+    if (fromMap && isEdit) {
+      // Load edit context from localStorage
+      try {
+        const editContext = localStorage.getItem('unity-outreach-edit-context');
+        if (editContext) {
+          const context = JSON.parse(editContext);
+          // Pre-populate form with existing data
+          if (context.prospect) {
+            setFormData(prev => ({
+              ...prev,
+              company: context.prospect.company || '',
+              firstName: context.prospect.firstName || '',
+              lastName: context.prospect.lastName || '',
+              email: context.prospect.email || '',
+              title: context.prospect.title || '',
+              industry: context.prospect.industry || 'B2B SaaS',
+              trigger: context.prospect.trigger || '',
+              triggerDetails: context.prospect.triggerDetails || ''
+            }));
+          }
+          // Pre-populate emails if available
+          if (context.emails && context.emails.length > 0) {
+            const emailData = {};
+            const stages = ['initial', 'followup1', 'followup2'];
+            context.emails.forEach((email, idx) => {
+              if (idx < 3) {
+                emailData[stages[idx]] = {
+                  subject: email.subject || '',
+                  body: email.body || email.fullBody || ''
+                };
+              }
+            });
+            setEditedEmails(emailData);
+            setGeneratedEmails(emailData);
+          }
+          // Store campaign timestamp for replacing old nodes on deploy
+          if (context.campaignTimestamp) {
+            setEditingCampaignTimestamp(context.campaignTimestamp);
+          }
+          // Set workflow state
+          setSendType('manual');
+          setCurrentStep(context.emails && context.emails.length > 0 ? 3 : 1); // Go to Review if has emails, else Recipient
+          // Clear the edit context
+          localStorage.removeItem('unity-outreach-edit-context');
+        }
+      } catch (e) {
+        console.error('Failed to load edit context:', e);
+      }
+    }
+  }, [searchParams]);
+
+  // CSV parsing function for batch upload
+  const parseCSV = (csvText) => {
+    const lines = csvText.trim().split('\n');
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+    const headerMap = {
+      company: headers.findIndex(h => h.includes('company') || h === 'organization'),
+      firstName: headers.findIndex(h => h.includes('first') || h === 'firstname'),
+      lastName: headers.findIndex(h => h.includes('last') || h === 'lastname'),
+      email: headers.findIndex(h => h.includes('email') || h === 'mail'),
+      title: headers.findIndex(h => h.includes('title') || h.includes('position') || h === 'role'),
+      industry: headers.findIndex(h => h.includes('industry') || h === 'sector'),
+      trigger: headers.findIndex(h => h.includes('trigger') || h === 'reason'),
+      triggerDetails: headers.findIndex(h => h.includes('detail') || h.includes('context') || h === 'notes')
+    };
+
+    const recipients = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+      if (values.length < 3) continue; // Skip invalid rows
+
+      recipients.push({
+        id: `batch-${Date.now()}-${i}`,
+        company: headerMap.company >= 0 ? values[headerMap.company] : '',
+        firstName: headerMap.firstName >= 0 ? values[headerMap.firstName] : '',
+        lastName: headerMap.lastName >= 0 ? values[headerMap.lastName] : '',
+        email: headerMap.email >= 0 ? values[headerMap.email] : '',
+        title: headerMap.title >= 0 ? values[headerMap.title] : '',
+        industry: headerMap.industry >= 0 ? values[headerMap.industry] : 'B2B SaaS',
+        trigger: headerMap.trigger >= 0 ? values[headerMap.trigger] : '',
+        triggerDetails: headerMap.triggerDetails >= 0 ? values[headerMap.triggerDetails] : ''
+      });
+    }
+    return recipients.filter(r => r.email && r.firstName); // Must have email and firstName
+  };
+
+  // Handle CSV file upload
+  const handleCSVUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        const recipients = parseCSV(text);
+        setBatchRecipients(recipients);
+        if (recipients.length > 0) {
+          setSuccessMessage(`Loaded ${recipients.length} recipients from CSV`);
+          setTimeout(() => setSuccessMessage(null), 3000);
+        } else {
+          setError('No valid recipients found in CSV. Required columns: email, firstName');
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Process batch recipients
+  const processBatchGeneration = async () => {
+    if (batchRecipients.length === 0) return;
+
+    setBatchProgress({ current: 0, total: batchRecipients.length, results: [] });
+    setIsGenerating(true);
+
+    const results = [];
+    for (let i = 0; i < batchRecipients.length; i++) {
+      const recipient = batchRecipients[i];
+      setBatchProgress(prev => ({ ...prev, current: i + 1 }));
+
+      try {
+        // Generate email for this recipient
+        const recipientFormData = {
+          ...recipient,
+          industry: recipient.industry || 'B2B SaaS'
+        };
+
+        // Use existing generation logic (generateEmail function)
+        const motion = OUTREACH_MOTIONS[selectedMotion];
+        const promptContent = selectedMotion === 'sales' ? `
+RECIPIENT:
+- Company: ${recipientFormData.company}
+- Name: ${recipientFormData.firstName} ${recipientFormData.lastName || ''}
+- Title: ${recipientFormData.title || 'Unknown'}
+- Industry: ${recipientFormData.industry}
+- Trigger: ${recipientFormData.trigger || 'None'}
+- Trigger Details: ${recipientFormData.triggerDetails || 'None'}` : `
+RECIPIENT:
+- Company: ${recipientFormData.company}
+- Name: ${recipientFormData.firstName}
+- Title: ${recipientFormData.title || 'Unknown'}
+- Industry: ${recipientFormData.industry}`;
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.groqApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: settings.selectedModel,
+            messages: [
+              { role: 'system', content: motion.systemPrompt },
+              { role: 'user', content: `${promptContent}\n\nGenerate a personalized initial email.` }
+            ],
+            temperature: 0.7,
+            max_tokens: 500
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content || '';
+          const subjectMatch = content.match(/Subject:\s*(.+?)(?:\n|$)/i);
+          const bodyMatch = content.match(/(?:Body:|Email:)\s*([\s\S]+)/i);
+
+          results.push({
+            recipient,
+            success: true,
+            email: {
+              subject: subjectMatch ? subjectMatch[1].trim() : `Quick note for ${recipientFormData.company}`,
+              body: bodyMatch ? bodyMatch[1].trim() : content
+            }
+          });
+        } else {
+          results.push({ recipient, success: false, error: 'API call failed' });
+        }
+      } catch (err) {
+        results.push({ recipient, success: false, error: err.message });
+      }
+
+      // Small delay between requests to avoid rate limiting
+      if (i < batchRecipients.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    setBatchProgress(prev => ({ ...prev, results }));
+    setIsGenerating(false);
+
+    const successCount = results.filter(r => r.success).length;
+    setSuccessMessage(`Generated ${successCount}/${batchRecipients.length} emails successfully`);
+  };
 
   // Auth handlers (hash comparison)
   const handlePasswordSubmit = (e) => {
@@ -876,7 +1139,7 @@ Provide an improved version. Return ONLY a JSON object:
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
+          model: 'sonar',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.5,
           max_tokens: 1000
@@ -907,6 +1170,190 @@ Provide an improved version. Return ONLY a JSON object:
       setIsRefining(false);
       setRefinementFeedback('');
     }
+  };
+
+  // Generate subject line variants with AI
+  const generateSubjectVariants = async () => {
+    if (!settings.groqApiKey) {
+      setError('Please configure your Groq API key first');
+      return;
+    }
+
+    setIsGeneratingVariants(true);
+    setError(null);
+
+    try {
+      const stages = ['initial', 'followup1', 'followup2'];
+      const stage = stages[selectedEmailIndex];
+      const currentSubject = editedEmails[stage].subject;
+      const currentBody = editedEmails[stage].body;
+      const motion = OUTREACH_MOTIONS[selectedMotion];
+
+      const prompt = `You are an expert email marketer. Generate 3 alternative subject lines for this ${selectedMotion === 'sales' ? 'cold outreach' : 'marketing'} email.
+
+CURRENT SUBJECT: ${currentSubject}
+EMAIL BODY PREVIEW: ${currentBody.substring(0, 300)}...
+RECIPIENT: ${formData.firstName} at ${formData.company} (${formData.industry})
+
+REQUIREMENTS:
+- Keep under 50 characters each
+- Vary the approach: curiosity, value prop, personalization
+- ${selectedMotion === 'sales' ? 'No clickbait, be direct and professional' : 'Can be more creative and engaging'}
+- Consider A/B testing angles
+
+Return ONLY a JSON array with exactly 3 strings:
+["Subject variant 1", "Subject variant 2", "Subject variant 3"]`;
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.groqApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: settings.selectedModel,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.8,
+          max_tokens: 300
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error?.message || 'API request failed');
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+
+      if (jsonMatch) {
+        const variants = JSON.parse(jsonMatch[0]);
+        setSubjectVariants(prev => ({
+          ...prev,
+          [stage]: variants
+        }));
+        setSuccessMessage('Generated 3 subject variants!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (err) {
+      setError(`Failed to generate variants: ${err.message}`);
+    } finally {
+      setIsGeneratingVariants(false);
+    }
+  };
+
+  // Apply subject variant
+  const applySubjectVariant = (variant) => {
+    const stages = ['initial', 'followup1', 'followup2'];
+    const stage = stages[selectedEmailIndex];
+    handleEmailEdit('subject', variant);
+  };
+
+  // Toggle A/B variant selection
+  const toggleAbVariant = (index) => {
+    setSelectedAbVariants(prev => {
+      if (prev.includes(index)) {
+        return prev.filter(i => i !== index);
+      } else if (prev.length < 2) {
+        return [...prev, index];
+      }
+      return prev; // Max 2 variants
+    });
+  };
+
+  // Available merge variables
+  const MERGE_VARIABLES = [
+    { key: '{{firstName}}', label: 'First Name', example: formData.firstName || 'Jane' },
+    { key: '{{lastName}}', label: 'Last Name', example: formData.lastName || 'Smith' },
+    { key: '{{company}}', label: 'Company', example: formData.company || 'Acme Corp' },
+    { key: '{{title}}', label: 'Title', example: formData.title || 'VP Marketing' },
+    { key: '{{industry}}', label: 'Industry', example: formData.industry || 'B2B SaaS' },
+    { key: '{{senderName}}', label: 'Sender Name', example: settings.fromName },
+    { key: '{{calendarLink}}', label: 'Calendar Link', example: BRAND.links.calendar }
+  ];
+
+  // Insert variable at cursor position
+  const insertVariable = (variable) => {
+    const stages = ['initial', 'followup1', 'followup2'];
+    const stage = stages[selectedEmailIndex];
+    const currentBody = editedEmails[stage].body;
+    handleEmailEdit('body', currentBody + variable);
+    setShowVariablePicker(false);
+  };
+
+  // Snippet library content
+  const SNIPPETS = [
+    {
+      name: 'Social Proof',
+      content: 'Companies like [Company A] and [Company B] have seen [X%] improvement in their GTM efficiency.'
+    },
+    {
+      name: 'Quick Stat',
+      content: 'Did you know that 73% of B2B companies struggle with GTM alignment?'
+    },
+    {
+      name: 'Soft CTA',
+      content: 'Would love to hear your thoughts on this. Feel free to reply or grab 15 minutes here: {{calendarLink}}'
+    },
+    {
+      name: 'Value Prop',
+      content: 'I help companies like {{company}} streamline their marketing operations and reduce wasted spend.'
+    },
+    {
+      name: 'Breakup Line',
+      content: 'I know you\'re busy, so I\'ll keep this brief. If this isn\'t relevant, just let me know and I\'ll stop reaching out.'
+    },
+    {
+      name: 'Trigger Reference',
+      content: 'I noticed {{company}} recently [trigger event]. That usually signals [pain point].'
+    }
+  ];
+
+  // Insert snippet
+  const insertSnippet = (content) => {
+    const stages = ['initial', 'followup1', 'followup2'];
+    const stage = stages[selectedEmailIndex];
+    const currentBody = editedEmails[stage].body;
+    handleEmailEdit('body', currentBody + '\n\n' + content);
+    setShowSnippetLibrary(false);
+  };
+
+  // Deploy to UnityMAP
+  const deployToUnityMap = () => {
+    // Save email sequence to localStorage for UnityMAP to pick up
+    const deployment = {
+      id: `outreach-${Date.now()}`,
+      timestamp: Date.now(),
+      motion: selectedMotion,
+      prospect: formData,
+      emails: editedEmails,
+      originPath: '/outreach', // Track where campaign originated for bi-directional editing
+      // Include editing timestamp for replacing old nodes when editing
+      editingTimestamp: editingCampaignTimestamp || null,
+      abTest: abTestEnabled ? {
+        enabled: true,
+        variants: selectedAbVariants.map(i => {
+          const stages = ['initial', 'followup1', 'followup2'];
+          return subjectVariants[stages[selectedEmailIndex]]?.[i];
+        })
+      } : null
+    };
+
+    localStorage.setItem(`unity-outreach-deployment-${deployment.id}`, JSON.stringify(deployment));
+    localStorage.setItem('unity-last-outreach-deployment', Date.now().toString());
+    // Store origin for quick lookup
+    localStorage.setItem('unity-outreach-origin', '/outreach');
+
+    // Clear editing state after deploy
+    if (editingCampaignTimestamp) {
+      setEditingCampaignTimestamp(null);
+    }
+
+    setSuccessMessage('Deploying to UnityMAP...');
+    setTimeout(() => {
+      navigate('/unity-notes?from=outreach&mode=map');
+    }, 1000);
   };
 
   // Generate Resend API payload (for CLI use)
@@ -1248,15 +1695,19 @@ Provide an improved version. Return ONLY a JSON object:
           {/* Header */}
           <div style={{ marginBottom: '20px', animation: 'fadeInUp 0.6s ease-out' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h1 style={{ ...TYPOGRAPHY.h1Scaled, color: COLORS.yellow, ...EFFECTS.blurLight, display: 'inline-block', margin: 0 }}>OUTREACH PRO</h1>
+              <h1 style={{ ...TYPOGRAPHY.h1Scaled, color: COLORS.yellow, ...EFFECTS.blurLight, display: 'inline-block', margin: 0 }}>UNITY HUB</h1>
+              <UserMenu />
             </div>
             <p style={{ fontSize: '14px', color: '#4b5563', backgroundColor: 'rgba(255, 255, 255, 0.8)', display: 'inline-block', padding: '4px 8px', borderRadius: '4px', marginBottom: '12px' }}>
-              AI-powered outreach with templates and direct sending
+              Internal outreach platform with AI generation, refinement, and direct sending
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               <button onClick={handleLogout} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px', backgroundColor: '#f3f4f6', color: '#6b7280' }}>Logout</button>
               <button onClick={() => setShowSettings(!showSettings)} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
                 ⚙️ Settings {showSettings ? '▲' : '▼'}
+              </button>
+              <button onClick={() => setShowSampleData(!showSampleData)} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px', backgroundColor: 'rgba(251, 191, 36, 0.1)' }}>
+                📊 Sample Data {showSampleData ? '▲' : '▼'}
               </button>
               {currentStep > 0 && (
                 <button onClick={resetWorkflow} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
@@ -1323,6 +1774,45 @@ Provide an improved version. Return ONLY a JSON object:
                 </div>
               </div>
 
+              {/* API Toggles */}
+              <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: '600', color: '#065f46', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  API Toggles
+                </h3>
+                <div style={{ display: 'flex', gap: '24px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      name="enableGeneration"
+                      checked={settings.enableGeneration}
+                      onChange={handleSettingsChange}
+                      style={{ width: '16px', height: '16px', accentColor: COLORS.yellow }}
+                    />
+                    <span style={{ fontSize: '13px', color: '#374151' }}>Generation (Groq)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      name="enableRefinement"
+                      checked={settings.enableRefinement}
+                      onChange={handleSettingsChange}
+                      style={{ width: '16px', height: '16px', accentColor: COLORS.yellow }}
+                    />
+                    <span style={{ fontSize: '13px', color: '#374151' }}>Refinement (Perplexity)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      name="enableSending"
+                      checked={settings.enableSending}
+                      onChange={handleSettingsChange}
+                      style={{ width: '16px', height: '16px', accentColor: COLORS.yellow }}
+                    />
+                    <span style={{ fontSize: '13px', color: '#374151' }}>Sending (Resend)</span>
+                  </label>
+                </div>
+              </div>
+
               {/* Security Notice */}
               <div style={{ marginTop: '20px', padding: '12px 16px', backgroundColor: '#fef3c7', borderRadius: '8px', border: '1px solid #fcd34d' }}>
                 <p style={{ margin: 0, fontSize: '12px', color: '#92400e' }}>
@@ -1333,13 +1823,84 @@ Provide an improved version. Return ONLY a JSON object:
               {/* Status */}
               <div style={{ display: 'flex', gap: '16px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
                 {[
-                  { label: 'Groq', configured: !!settings.groqApiKey },
-                  { label: 'Perplexity', configured: !!settings.perplexityApiKey },
-                  { label: 'Resend', configured: !!settings.resendApiKey }
+                  { label: 'Generation', configured: settings.enableGeneration && !!settings.groqApiKey },
+                  { label: 'Refinement', configured: settings.enableRefinement && !!settings.perplexityApiKey },
+                  { label: 'Sending', configured: settings.enableSending && !!settings.resendApiKey }
                 ].map((item, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: item.configured ? 'rgb(251, 191, 36)' : '#9ca3af' }}>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.configured ? 'rgb(251, 191, 36)' : '#e5e7eb' }} />
-                    {item.label} {item.configured ? 'ready' : 'not configured'}
+                    {item.label} {item.configured ? 'active' : 'inactive'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sample Data Panel */}
+          {showSampleData && (
+            <div style={{ ...cardStyle, borderColor: COLORS.yellow, animation: 'fadeInUp 0.3s ease-out', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h2 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Sample Prospect Data</h2>
+                <button onClick={() => setShowSampleData(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#9ca3af' }}>×</button>
+              </div>
+              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+                Click on a sample prospect to load their data into the form. Useful for testing the workflow.
+              </p>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {SAMPLE_PROSPECTS.map((prospect) => (
+                  <div
+                    key={prospect.id}
+                    onClick={() => {
+                      setFormData({
+                        company: prospect.company,
+                        firstName: prospect.firstName,
+                        lastName: prospect.lastName,
+                        email: prospect.email,
+                        title: prospect.title,
+                        industry: prospect.industry,
+                        trigger: prospect.trigger,
+                        triggerDetails: prospect.triggerDetails,
+                        contentTitle: '',
+                        contentUrl: ''
+                      });
+                      setShowSampleData(false);
+                      if (currentStep === 0 && sendType) setCurrentStep(1);
+                      setSuccessMessage(`Loaded sample data for ${prospect.firstName} at ${prospect.company}`);
+                      setTimeout(() => setSuccessMessage(null), 3000);
+                    }}
+                    style={{
+                      padding: '16px',
+                      backgroundColor: '#f9fafb',
+                      borderRadius: '8px',
+                      border: '1px solid #e5e7eb',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.borderColor = COLORS.yellow;
+                      e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.05)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.borderColor = '#e5e7eb';
+                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                          {prospect.firstName} {prospect.lastName}
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                          {prospect.title} at {prospect.company}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '11px', backgroundColor: COLORS.yellow, padding: '2px 8px', borderRadius: '12px', color: '#000', fontWeight: '500' }}>
+                        {prospect.industry}
+                      </span>
+                    </div>
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#9ca3af' }}>
+                      <strong>Trigger:</strong> {prospect.triggerDetails.substring(0, 80)}...
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1519,91 +2080,327 @@ Provide an improved version. Return ONLY a JSON object:
             </div>
           )}
 
-          {/* Step 1: Recipient Information */}
+          {/* Step 1: Recipient Information (varies by send type) */}
           {currentStep === 1 && (
             <div style={{ ...cardStyle, animation: 'fadeInUp 0.5s ease-out' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px', color: '#111827' }}>
-                {selectedMotion === 'sales' ? 'Prospect' : 'Recipient'} Information
-              </h2>
+              {/* MANUAL: Single recipient form */}
+              {sendType === 'manual' && (
+                <>
+                  <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px', color: '#111827' }}>
+                    {selectedMotion === 'sales' ? 'Prospect' : 'Recipient'} Information
+                  </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>Company *</label>
-                  <input type="text" name="company" value={formData.company} onChange={handleInputChange} placeholder="Acme Corp" style={inputStyle} required />
-                </div>
-                <div>
-                  <label style={labelStyle}>Industry</label>
-                  <select name="industry" value={formData.industry} onChange={handleInputChange} style={inputStyle}>
-                    <option value="B2B SaaS">B2B SaaS</option>
-                    <option value="Fintech">Fintech</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="E-commerce">E-commerce</option>
-                    <option value="Agency">Agency</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>First Name *</label>
-                  <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Jane" style={inputStyle} required />
-                </div>
-                <div>
-                  <label style={labelStyle}>Last Name</label>
-                  <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Smith" style={inputStyle} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>Email *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="jane@acme.com" style={inputStyle} required />
-                </div>
-                <div>
-                  <label style={labelStyle}>Title</label>
-                  <input type="text" name="title" value={formData.title} onChange={handleInputChange} placeholder="VP Marketing" style={inputStyle} />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>{selectedMotion === 'sales' ? 'Trigger Type' : 'Content Type'}</label>
-                <select name="trigger" value={formData.trigger} onChange={handleInputChange} style={inputStyle}>
-                  <option value="">Select...</option>
-                  {triggerOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-              </div>
-
-              {selectedMotion === 'brand' && formData.trigger && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                  <div>
-                    <label style={labelStyle}>Content Title</label>
-                    <input type="text" name="contentTitle" value={formData.contentTitle} onChange={handleInputChange} placeholder="Why Your GTM Sucks" style={inputStyle} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label style={labelStyle}>Company *</label>
+                      <input type="text" name="company" value={formData.company} onChange={handleInputChange} placeholder="Acme Corp" style={inputStyle} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Industry</label>
+                      <select name="industry" value={formData.industry} onChange={handleInputChange} style={inputStyle}>
+                        <option value="B2B SaaS">B2B SaaS</option>
+                        <option value="Fintech">Fintech</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="E-commerce">E-commerce</option>
+                        <option value="Agency">Agency</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label style={labelStyle}>Content URL</label>
-                    <input type="url" name="contentUrl" value={formData.contentUrl} onChange={handleInputChange} placeholder={BRAND.links.article} style={inputStyle} />
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label style={labelStyle}>First Name *</label>
+                      <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Jane" style={inputStyle} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Last Name</label>
+                      <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Smith" style={inputStyle} />
+                    </div>
                   </div>
-                </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label style={labelStyle}>Email *</label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="jane@acme.com" style={inputStyle} required />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Title</label>
+                      <input type="text" name="title" value={formData.title} onChange={handleInputChange} placeholder="VP Marketing" style={inputStyle} />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={labelStyle}>{selectedMotion === 'sales' ? 'Trigger Type' : 'Content Type'}</label>
+                    <select name="trigger" value={formData.trigger} onChange={handleInputChange} style={inputStyle}>
+                      <option value="">Select...</option>
+                      {triggerOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                  </div>
+
+                  {selectedMotion === 'brand' && formData.trigger && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                      <div>
+                        <label style={labelStyle}>Content Title</label>
+                        <input type="text" name="contentTitle" value={formData.contentTitle} onChange={handleInputChange} placeholder="Why Your GTM Sucks" style={inputStyle} />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Content URL</label>
+                        <input type="url" name="contentUrl" value={formData.contentUrl} onChange={handleInputChange} placeholder={BRAND.links.article} style={inputStyle} />
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.trigger && (
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={labelStyle}>{selectedMotion === 'sales' ? 'Trigger Details' : 'Additional Context'}</label>
+                      <textarea name="triggerDetails" value={formData.triggerDetails} onChange={handleInputChange} placeholder={selectedMotion === 'sales' ? "e.g., Series B funding announced last week..." : "e.g., They recently posted about GTM challenges..."} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+                    <button onClick={() => setCurrentStep(0)} style={secondaryButtonStyle}>← Back</button>
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      disabled={!formData.company || !formData.firstName || !formData.email}
+                      style={{ ...primaryButtonStyle, ...disabledStyle(!formData.company || !formData.firstName || !formData.email) }}
+                    >
+                      Generate →
+                    </button>
+                  </div>
+                </>
               )}
 
-              {formData.trigger && (
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={labelStyle}>{selectedMotion === 'sales' ? 'Trigger Details' : 'Additional Context'}</label>
-                  <textarea name="triggerDetails" value={formData.triggerDetails} onChange={handleInputChange} placeholder={selectedMotion === 'sales' ? "e.g., Series B funding announced last week..." : "e.g., They recently posted about GTM challenges..."} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
-                </div>
+              {/* BATCH: CSV Upload + Recipient List */}
+              {sendType === 'batch' && (
+                <>
+                  <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px', color: '#111827' }}>
+                    Batch Upload Recipients
+                  </h2>
+
+                  {/* CSV Upload Area */}
+                  <div style={{
+                    border: '2px dashed #d1d5db',
+                    borderRadius: '12px',
+                    padding: '32px',
+                    textAlign: 'center',
+                    marginBottom: '24px',
+                    backgroundColor: '#f9fafb',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = COLORS.yellow; }}
+                    onDragLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = '#d1d5db';
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.name.endsWith('.csv')) {
+                        const reader = new FileReader();
+                        reader.onload = (evt) => {
+                          const text = evt.target?.result;
+                          if (typeof text === 'string') {
+                            const recipients = parseCSV(text);
+                            setBatchRecipients(recipients);
+                            if (recipients.length > 0) {
+                              setSuccessMessage(`Loaded ${recipients.length} recipients from CSV`);
+                              setTimeout(() => setSuccessMessage(null), 3000);
+                            }
+                          }
+                        };
+                        reader.readAsText(file);
+                      }
+                    }}
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept=".csv"
+                      style={{ display: 'none' }}
+                      onChange={handleCSVUpload}
+                    />
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                      Drop CSV file here or click to upload
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
+                      Required columns: email, firstName • Optional: company, lastName, title, industry, trigger, triggerDetails
+                    </p>
+                  </div>
+
+                  {/* Recipient List */}
+                  {batchRecipients.length > 0 && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
+                          Recipients ({batchRecipients.length})
+                        </h3>
+                        <button
+                          onClick={() => setBatchRecipients([])}
+                          style={{ fontSize: '12px', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                      <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead style={{ backgroundColor: '#f9fafb', position: 'sticky', top: 0 }}>
+                            <tr>
+                              <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Name</th>
+                              <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Email</th>
+                              <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Company</th>
+                              <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Title</th>
+                              <th style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #e5e7eb', width: '40px' }}>×</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {batchRecipients.map((r, idx) => (
+                              <tr key={r.id || idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                <td style={{ padding: '10px' }}>{r.firstName} {r.lastName}</td>
+                                <td style={{ padding: '10px', color: '#6b7280' }}>{r.email}</td>
+                                <td style={{ padding: '10px' }}>{r.company}</td>
+                                <td style={{ padding: '10px', color: '#6b7280' }}>{r.title}</td>
+                                <td style={{ padding: '10px', textAlign: 'center' }}>
+                                  <button
+                                    onClick={() => setBatchRecipients(prev => prev.filter((_, i) => i !== idx))}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '14px' }}
+                                  >×</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Batch Progress */}
+                  {batchProgress.total > 0 && (
+                    <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#16a34a' }}>
+                          Processing: {batchProgress.current} / {batchProgress.total}
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                          {batchProgress.results.filter(r => r.success).length} successful
+                        </span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', backgroundColor: '#d1fae5', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{
+                          width: `${(batchProgress.current / batchProgress.total) * 100}%`,
+                          height: '100%',
+                          backgroundColor: '#16a34a',
+                          transition: 'width 0.3s ease'
+                        }} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+                    <button onClick={() => setCurrentStep(0)} style={secondaryButtonStyle}>← Back</button>
+                    <button
+                      onClick={processBatchGeneration}
+                      disabled={batchRecipients.length === 0 || isGenerating}
+                      style={{ ...primaryButtonStyle, ...disabledStyle(batchRecipients.length === 0 || isGenerating) }}
+                    >
+                      {isGenerating ? `Generating (${batchProgress.current}/${batchProgress.total})...` : `Generate ${batchRecipients.length} Emails →`}
+                    </button>
+                  </div>
+                </>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
-                <button onClick={() => setCurrentStep(0)} style={secondaryButtonStyle}>← Back</button>
-                <button
-                  onClick={() => setCurrentStep(2)}
-                  disabled={!formData.company || !formData.firstName || !formData.email}
-                  style={{ ...primaryButtonStyle, ...disabledStyle(!formData.company || !formData.firstName || !formData.email) }}
-                >
-                  Generate →
-                </button>
-              </div>
+              {/* TRIGGER: Automation Rules */}
+              {sendType === 'trigger' && (
+                <>
+                  <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px', color: '#111827' }}>
+                    Trigger-Based Automation
+                  </h2>
+
+                  <div style={{ backgroundColor: '#fefce8', border: '1px solid #fef08a', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                    <p style={{ fontSize: '14px', color: '#854d0e', margin: 0 }}>
+                      <strong>Coming Soon:</strong> Configure rules to automatically generate and send emails based on triggers like:
+                    </p>
+                    <ul style={{ fontSize: '13px', color: '#a16207', marginTop: '12px', marginBottom: 0, paddingLeft: '20px' }}>
+                      <li>New lead added to CRM</li>
+                      <li>Website form submission</li>
+                      <li>Webhook from external service</li>
+                      <li>Scheduled campaign launch</li>
+                    </ul>
+                  </div>
+
+                  {/* Trigger Rule Builder */}
+                  <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '20px', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '16px' }}>
+                      Create Trigger Rule
+                    </h3>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                      <div>
+                        <label style={labelStyle}>Trigger Type</label>
+                        <select style={inputStyle} defaultValue="">
+                          <option value="">Select trigger...</option>
+                          <option value="webhook">Webhook Received</option>
+                          <option value="form">Form Submission</option>
+                          <option value="crm">CRM Lead Created</option>
+                          <option value="schedule">Scheduled Time</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Action</label>
+                        <select style={inputStyle} defaultValue="generate">
+                          <option value="generate">Generate Email Only</option>
+                          <option value="generate_send">Generate & Send</option>
+                          <option value="queue">Add to Queue</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={labelStyle}>Email Template</label>
+                      <select style={inputStyle} defaultValue="">
+                        <option value="">Use motion defaults</option>
+                        <option value="sales_cold">Sales - Cold Outreach</option>
+                        <option value="brand_newsletter">Brand - Newsletter</option>
+                      </select>
+                    </div>
+
+                    <button
+                      style={{ ...secondaryButtonStyle, width: '100%' }}
+                      onClick={() => {
+                        setSuccessMessage('Trigger rules will be available in a future update');
+                        setTimeout(() => setSuccessMessage(null), 3000);
+                      }}
+                    >
+                      + Add Trigger Rule
+                    </button>
+                  </div>
+
+                  {/* Existing Rules */}
+                  {triggerRules.length > 0 ? (
+                    <div style={{ marginBottom: '24px' }}>
+                      <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>
+                        Active Rules ({triggerRules.length})
+                      </h3>
+                      {/* Rule list would go here */}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af', fontSize: '14px' }}>
+                      No trigger rules configured yet
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+                    <button onClick={() => setCurrentStep(0)} style={secondaryButtonStyle}>← Back</button>
+                    <button
+                      style={{ ...primaryButtonStyle, opacity: 0.5, cursor: 'not-allowed' }}
+                      disabled
+                    >
+                      Save & Activate Rules
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1691,23 +2488,276 @@ Provide an improved version. Return ONLY a JSON object:
 
                 {previewMode === 'text' ? (
                   <>
-                    <div style={{ marginBottom: '16px' }}>
-                      <label style={labelStyle}>Subject</label>
+                    {/* Enhanced Subject Line Section */}
+                    <div style={{ marginBottom: '16px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <label style={{ ...labelStyle, margin: 0 }}>Subject Line</label>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <button
+                            onClick={generateSubjectVariants}
+                            disabled={isGeneratingVariants}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              backgroundColor: COLORS.yellow,
+                              color: '#000',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: isGeneratingVariants ? 'wait' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {isGeneratingVariants ? (
+                              <span style={{ display: 'inline-block', width: '10px', height: '10px', border: '2px solid #000', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                            ) : '✨'} AI Variants
+                          </button>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#6b7280', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={abTestEnabled}
+                              onChange={(e) => {
+                                setAbTestEnabled(e.target.checked);
+                                if (!e.target.checked) setSelectedAbVariants([]);
+                              }}
+                              style={{ width: '14px', height: '14px', accentColor: COLORS.yellow }}
+                            />
+                            A/B Test
+                          </label>
+                        </div>
+                      </div>
                       <input
                         type="text"
                         value={editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject}
                         onChange={(e) => handleEmailEdit('subject', e.target.value)}
-                        style={inputStyle}
+                        style={{ ...inputStyle, marginBottom: '8px' }}
+                        placeholder="Enter subject line..."
                       />
+                      <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                        {editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject.length} characters
+                        {editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].subject.length > 50 && (
+                          <span style={{ color: '#f59e0b', marginLeft: '8px' }}>(consider shortening for mobile)</span>
+                        )}
+                      </div>
+
+                      {/* Subject Variants */}
+                      {subjectVariants[['initial', 'followup1', 'followup2'][selectedEmailIndex]]?.length > 0 && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #e5e7eb' }}>
+                          <div style={{ fontSize: '10px', fontWeight: '600', color: '#374151', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            AI Generated Variants {abTestEnabled && '(select 2 for A/B test)'}
+                          </div>
+                          {subjectVariants[['initial', 'followup1', 'followup2'][selectedEmailIndex]].map((variant, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 12px',
+                                marginBottom: '4px',
+                                backgroundColor: selectedAbVariants.includes(i) ? 'rgba(251, 191, 36, 0.2)' : '#fff',
+                                border: `1px solid ${selectedAbVariants.includes(i) ? COLORS.yellow : '#e5e7eb'}`,
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                              onClick={() => abTestEnabled ? toggleAbVariant(i) : applySubjectVariant(variant)}
+                            >
+                              {abTestEnabled && (
+                                <input
+                                  type="checkbox"
+                                  checked={selectedAbVariants.includes(i)}
+                                  onChange={() => toggleAbVariant(i)}
+                                  style={{ width: '14px', height: '14px', accentColor: COLORS.yellow }}
+                                />
+                              )}
+                              <span style={{ flex: 1, fontSize: '13px', color: '#111827' }}>{variant}</span>
+                              <span style={{ fontSize: '10px', color: '#9ca3af' }}>{variant.length} chars</span>
+                              {!abTestEnabled && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); applySubjectVariant(variant); }}
+                                  style={{
+                                    padding: '2px 8px',
+                                    fontSize: '9px',
+                                    backgroundColor: '#f3f4f6',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Use
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          {abTestEnabled && selectedAbVariants.length === 2 && (
+                            <div style={{ marginTop: '8px', padding: '8px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderRadius: '6px', fontSize: '11px', color: '#92400e' }}>
+                              A/B test configured: {selectedAbVariants.length}/2 variants selected
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <label style={labelStyle}>Body</label>
+
+                    {/* Preview Text / Preheader */}
+                    {OUTREACH_MOTIONS[selectedMotion].templateType === 'designed' && (
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={labelStyle}>Preview Text (Preheader)</label>
+                        <input
+                          type="text"
+                          value={preheaderText}
+                          onChange={(e) => setPreheaderText(e.target.value)}
+                          placeholder="Text shown after subject in inbox preview..."
+                          style={inputStyle}
+                        />
+                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>
+                          {preheaderText.length}/100 characters (aim for 40-100 for best results)
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Body Editor with Tools */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ ...labelStyle, margin: 0 }}>Body</label>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={() => setShowVariablePicker(!showVariablePicker)}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '10px',
+                              fontWeight: '500',
+                              backgroundColor: showVariablePicker ? COLORS.yellow : '#f3f4f6',
+                              color: '#111827',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {'{{x}}'} Variables
+                          </button>
+                          <button
+                            onClick={() => setShowSnippetLibrary(true)}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '10px',
+                              fontWeight: '500',
+                              backgroundColor: '#f3f4f6',
+                              color: '#111827',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            📝 Snippets
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Variable Picker Dropdown */}
+                      {showVariablePicker && (
+                        <div style={{
+                          marginBottom: '8px',
+                          padding: '12px',
+                          backgroundColor: '#fefce8',
+                          border: '1px solid #fef08a',
+                          borderRadius: '8px'
+                        }}>
+                          <div style={{ fontSize: '10px', fontWeight: '600', color: '#713f12', marginBottom: '8px', textTransform: 'uppercase' }}>
+                            Click to insert merge variable
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {MERGE_VARIABLES.map((v, i) => (
+                              <button
+                                key={i}
+                                onClick={() => insertVariable(v.key)}
+                                style={{
+                                  padding: '4px 10px',
+                                  fontSize: '11px',
+                                  backgroundColor: '#fff',
+                                  border: '1px solid #fcd34d',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'flex-start'
+                                }}
+                                title={`Example: ${v.example}`}
+                              >
+                                <span style={{ fontWeight: '600', color: '#111827' }}>{v.key}</span>
+                                <span style={{ fontSize: '9px', color: '#6b7280' }}>{v.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <textarea
                         value={editedEmails[['initial', 'followup1', 'followup2'][selectedEmailIndex]].body}
                         onChange={(e) => handleEmailEdit('body', e.target.value)}
-                        style={{ ...inputStyle, minHeight: '300px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6' }}
+                        style={{ ...inputStyle, minHeight: '250px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6' }}
                       />
                     </div>
+
+                    {/* CTA Builder for Brand Emails */}
+                    {OUTREACH_MOTIONS[selectedMotion].templateType === 'designed' && (
+                      <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                          CTA Button
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
+                          <div>
+                            <label style={{ ...labelStyle, fontSize: '10px' }}>Button Text</label>
+                            <input
+                              type="text"
+                              value={ctaConfig.text}
+                              onChange={(e) => setCtaConfig(prev => ({ ...prev, text: e.target.value }))}
+                              style={{ ...inputStyle, fontSize: '13px' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ ...labelStyle, fontSize: '10px' }}>Button URL</label>
+                            <input
+                              type="url"
+                              value={ctaConfig.url}
+                              onChange={(e) => setCtaConfig(prev => ({ ...prev, url: e.target.value }))}
+                              placeholder={BRAND.links.calendar}
+                              style={{ ...inputStyle, fontSize: '13px' }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ marginTop: '12px' }}>
+                          <label style={{ ...labelStyle, fontSize: '10px' }}>Button Style</label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {[
+                              { id: 'primary', label: 'Primary', bg: COLORS.yellow, color: '#000' },
+                              { id: 'secondary', label: 'Secondary', bg: 'transparent', color: '#000', border: true },
+                              { id: 'dark', label: 'Dark', bg: '#000', color: '#fff' }
+                            ].map(style => (
+                              <button
+                                key={style.id}
+                                onClick={() => setCtaConfig(prev => ({ ...prev, style: style.id }))}
+                                style={{
+                                  padding: '8px 16px',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  backgroundColor: style.bg,
+                                  color: style.color,
+                                  border: ctaConfig.style === style.id ? `2px solid ${COLORS.yellow}` : style.border ? '2px solid #000' : '2px solid transparent',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                {style.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1952,6 +3002,19 @@ Provide an improved version. Return ONLY a JSON object:
                   {OUTREACH_MOTIONS[selectedMotion].templateType === 'designed' && (
                     <button onClick={handleCopyHTML} style={{ ...secondaryButtonStyle, padding: '8px 12px', fontSize: '12px' }}>📋 HTML</button>
                   )}
+                  <button
+                    onClick={deployToUnityMap}
+                    style={{
+                      ...secondaryButtonStyle,
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                      borderColor: COLORS.yellow
+                    }}
+                    title="Deploy this email sequence to UnityMAP for journey building"
+                  >
+                    🗺️ Deploy to MAP
+                  </button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   <button onClick={handleSendTest} disabled={isSending || !settings.resendApiKey} style={{ ...secondaryButtonStyle, padding: '8px 12px', fontSize: '12px', ...disabledStyle(isSending || !settings.resendApiKey) }}>
@@ -2172,6 +3235,122 @@ Provide an improved version. Return ONLY a JSON object:
               to { transform: translateX(0); }
             }
           `}</style>
+        </>
+      )}
+
+      {/* Snippet Library Slide Panel */}
+      {showSnippetLibrary && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={() => setShowSnippetLibrary(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 200,
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          />
+          {/* Panel */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            width: '400px',
+            maxWidth: '90vw',
+            height: '100vh',
+            backgroundColor: '#ffffff',
+            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.15)',
+            zIndex: 201,
+            display: 'flex',
+            flexDirection: 'column',
+            animation: 'slideInRight 0.3s ease-out'
+          }}>
+            {/* Panel Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                📝 Snippet Library
+              </h2>
+              <button
+                onClick={() => setShowSnippetLibrary(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Panel Content */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+                Click any snippet to insert it at the end of your email body. Variables like {'{{company}}'} will be replaced with recipient data.
+              </p>
+
+              {/* Snippet List */}
+              {SNIPPETS.map((snippet, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => insertSnippet(snippet.content)}
+                  style={{
+                    marginBottom: '12px',
+                    padding: '16px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.yellow;
+                    e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.05)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                  }}
+                >
+                  <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: '600', color: COLORS.yellow }}>
+                    {snippet.name}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#4b5563', lineHeight: '1.5' }}>
+                    {snippet.content}
+                  </p>
+                </div>
+              ))}
+
+              {/* Custom Snippet Section */}
+              <div style={{
+                marginTop: '24px',
+                padding: '16px',
+                backgroundColor: '#ecfdf5',
+                borderRadius: '8px',
+                border: '1px solid #a7f3d0'
+              }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '600', color: '#065f46' }}>
+                  Pro Tip
+                </h4>
+                <p style={{ margin: 0, fontSize: '12px', color: '#047857', lineHeight: '1.5' }}>
+                  Use merge variables like {'{{firstName}}'}, {'{{company}}'}, or {'{{calendarLink}}'} in your snippets for automatic personalization.
+                </p>
+              </div>
+            </div>
+          </div>
         </>
       )}
     </Layout>

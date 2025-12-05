@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LayoutProvider } from './contexts/LayoutContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Eagerly loaded pages (critical for initial render)
 import HomePage from './pages/HomePage';
@@ -79,10 +80,11 @@ const PageLoader = () => (
 
 function RouterApp() {
   return (
-    <LayoutProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+    <AuthProvider>
+      <LayoutProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/home-17" element={<Home17Page />} />
 
@@ -129,7 +131,7 @@ function RouterApp() {
             {/* Directory - Navigation & Testing */}
             <Route path="/directory" element={<DirectoryPage />} />
 
-            {/* Unity Notes - Second Brain App */}
+            {/* UnityNotes - Second Brain App */}
             <Route path="/unity-notes" element={<UnityNotesPage />} />
 
             {/* Placeholder routes for future sub-pages */}
@@ -149,10 +151,11 @@ function RouterApp() {
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </Router>
-    </LayoutProvider>
+            </Routes>
+          </Suspense>
+        </Router>
+      </LayoutProvider>
+    </AuthProvider>
   );
 }
 
