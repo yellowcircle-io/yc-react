@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Lottie from 'lottie-react';
+import LottieIcon from '../shared/LottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
 
 /**
@@ -25,6 +25,15 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
     expandedSection,
     setExpandedSection
   } = useLayout();
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Slide-over state
   const [slideOverOpen, setSlideOverOpen] = useState(false);
@@ -238,15 +247,13 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             font: 'inherit'
           }}
         >
-          {/* Icon - Lottie animation or static image */}
-          {/* Greyscale when not hovered, animate only on hover */}
+          {/* Icon - Uses LottieIcon for unified Lottie/dotLottie support */}
+          {/* Supports: lottieData (local JSON), dotLottieSrc (remote .lottie), or static icon URL */}
           <div style={{
             position: sidebarOpen ? 'relative' : 'absolute',
             left: sidebarOpen ? '0' : '40px',
             top: sidebarOpen ? 'auto' : '50%',
-            transform: isHovered
-              ? (sidebarOpen ? 'scale(1.05)' : 'translate(-50%, -50%) scale(1.05)')
-              : (sidebarOpen ? 'scale(1)' : 'translate(-50%, -50%) scale(1)'),
+            transform: sidebarOpen ? 'none' : 'translate(-50%, -50%)',
             width: '28px',
             height: '28px',
             display: 'flex',
@@ -254,19 +261,14 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             justifyContent: 'center',
             zIndex: 2,
             pointerEvents: 'none',
-            transition: 'transform 0.2s ease-out, filter 0.3s ease-out',
-            filter: isHovered ? 'grayscale(0)' : 'grayscale(1)',
             flexShrink: 0
           }}>
             {lottieData ? (
-              <Lottie
+              <LottieIcon
                 animationData={lottieData}
-                loop={isHovered}
-                autoplay={isHovered}
-                style={{
-                  width: 28,
-                  height: 28
-                }}
+                size={28}
+                isHovered={isHovered}
+                alt={label}
               />
             ) : (
               <img
@@ -276,7 +278,10 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                 height="28"
                 style={{
                   display: 'block',
-                  objectFit: 'contain'
+                  objectFit: 'contain',
+                  transition: 'transform 0.2s ease-out, filter 0.3s ease-out',
+                  transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                  filter: isHovered ? 'grayscale(0)' : 'grayscale(1)'
                 }}
               />
             )}
@@ -474,46 +479,55 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       }}>
 
         {/* HEADER SECTION - HOME Label */}
+        {/* Hide on mobile when slide-over is open to avoid overlap */}
         <div style={{
           flexShrink: 0,
           height: '100px',
           position: 'relative',
-          opacity: showBackground ? 1 : 0,
-          transition: 'opacity 0.3s ease-out'
+          opacity: showBackground && !(isMobile && slideOverOpen) ? 1 : 0,
+          transition: 'opacity 0.3s ease-out',
+          pointerEvents: (isMobile && slideOverOpen) ? 'none' : 'auto'
         }}>
-          <div
-            className="clickable-element"
-            onClick={handleHomeClick}
-            style={{
-              position: 'absolute',
-              top: '280px',
-              left: '40px',
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'left center',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              transition: 'background-color 0.2s ease-out'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <span style={{
-              color: scrollOffset === 0 ? 'rgb(251, 191, 36)' : 'black',
-              fontWeight: scrollOffset === 0 ? '700' : '600',
-              letterSpacing: '0.1em',
-              fontSize: '11px',
-              transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
-              maxWidth: '180px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: 'block'
-            }}>{pageLabel}</span>
+          {/* Breadcrumb wrapper - positioned above navigation items */}
+          <div style={{
+            position: 'absolute',
+            top: isMobile ? '80px' : '140px',
+            left: 0,
+            width: '80px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <div
+              className="clickable-element"
+              onClick={handleHomeClick}
+              style={{
+                transform: 'rotate(-90deg)',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'background-color 0.2s ease-out, opacity 0.3s ease-out'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <span style={{
+                color: scrollOffset === 0 ? 'rgb(251, 191, 36)' : 'black',
+                fontWeight: scrollOffset === 0 ? '700' : '600',
+                letterSpacing: '0.1em',
+                fontSize: isMobile ? '10px' : '11px',
+                transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
+                maxWidth: isMobile ? '100px' : '180px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: 'block'
+              }}>{pageLabel}</span>
+            </div>
           </div>
         </div>
 

@@ -2,11 +2,229 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 3, 2025 at 2:00 AM PST
+**Updated:** December 4, 2025 at 4:30 PM PST
 **Machine:** Mac Mini
-**Status:** 🟢 DEPLOYED - Analytics + Retargeting Ready
+**Status:** 🔧 UI/UX FIXES + CLIENT ACCESS SCOPING
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+
+---
+
+## 📋 PROJECT STATUS REVIEW
+
+### Current Status (Dec 3, 2025)
+
+- **Day 8** since Rho exit (Nov 25, 2025)
+- **Status:** 🚀 LAUNCH PREPARATION - Mobile optimizations complete
+- **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
+
+---
+
+### ✅ Phase 0: Immediate Blockers - COMPLETE
+
+| Task | Status |
+|------|--------|
+| Google Tag Manager (GTM-T4D8CCDC) | ✅ |
+| Cal.com calendar integration | ✅ |
+| Domain migration (yellowcircle.io) | ✅ |
+| Favicon update | ✅ |
+| Production deployment | ✅ |
+
+---
+
+### 🔄 Current Phase: Phase 1 (Day 3-7)
+
+**Infrastructure Work - Scoped but Not Started:**
+- Prospect database (Airtable → Supabase path)
+- Form → DB → Notification pipeline
+- Prospect enrichment (Apollo.io free tier)
+- Outreach approval workflow
+
+---
+
+### ✅ Recently Completed (Dec 4 - Current Session)
+
+1. **Color Consistency Fixed** - Unified to `rgb(251, 191, 36)` (#fbbf24)
+   - Updated COLORS.yellow in constants.js
+   - Fixed NavigationCircle.jsx (circle + shadows)
+   - Fixed UnityCircleNav.jsx (circle + menu)
+   - Fixed UnityNotesPage.jsx (8 instances)
+
+2. **UnityNotes Mode Selection Redesign**
+   - Removed UnityModeSelector tabs above CircleNav
+   - Mode selection now via zoom controls slideout only
+   - Auto-opens slideout when coming from Outreach
+   - Redirects to Outreach when MAP selected without campaign
+
+3. **Outreach Generator Tiered Credits System**
+   - Free tier: 3 generations
+   - API key tier: 10 generations
+   - Client tier: Unlimited
+   - Always-visible credits badge with tier-specific styling
+   - Credits used on generation (not on send)
+
+4. **Footer Layout Updated**
+   - Social links (LinkedIn, Instagram) on separate row
+   - Legal links (Feedback, Privacy, Terms) on separate row below
+   - Email input on first row, buttons below
+
+5. **Breadcrumb Repositioned** - Moved from 280px to 140px (desktop)
+
+6. **CompanyDetailPage Column Alignment** - Fixed alignment so KEY HIGHLIGHTS aligns with H1
+   - Container: `alignItems: 'flex-start'` with 80px top padding
+   - Right column: `maxHeight: calc(100vh - 280px)` with `overflowY: 'auto'`
+   - Breakpoint moved from 900px to 1024px for earlier mobile layout
+
+7. **Works Page Arrow Navigation** - Moved arrows from right to left side
+
+8. **ESP Swappable Integration Scoped** - See detailed scope below
+
+9. **Client Access Scoping Complete** - See below for implementation plan
+
+---
+
+### 🔴 CLIENT ACCESS - IMPLEMENTATION PENDING
+
+**Decision:** Implement Option 4 (Hybrid Code + Server Verification)
+**Future:** Option 2 (Firebase Auth) for full professional login
+
+**Option 4 Implementation Steps:**
+1. Create Firebase Function to verify access codes
+2. Add access code input UI (modal or settings)
+3. Server returns signed JWT on valid code
+4. Token stored in localStorage
+5. Token verified on each sensitive action
+
+**Known Limitation - Credits Reset:**
+Credits are stored in localStorage and WILL reset if user clears cache/storage.
+Fix requires: Firebase Firestore + user authentication
+
+---
+
+### 🔴 ESP SWAPPABLE INTEGRATION - SCOPED
+
+**Location:** `src/adapters/esp/`
+
+**Current Architecture:**
+- Factory pattern with `VITE_ESP_PROVIDER` environment variable
+- Hot-swapping at runtime via `getESPAdapter()` and `getESPAdapterByName()`
+- Common interface: `sendEmail()`, `sendBatch()`, `isConfigured()`, `getInfo()`
+
+**Provider Status:**
+
+| Provider | Status | Free Tier | Implementation |
+|----------|--------|-----------|----------------|
+| **Resend** | ✅ COMPLETE | 100/day, 3K/month | Full implementation |
+| **SendGrid** | ⏳ STUB | 100/day | Needs implementation |
+| **HubSpot** | ⏳ STUB | Requires Marketing Hub | Needs implementation |
+| **Mailchimp** | ⏳ STUB | Transactional via Mandrill | Needs implementation |
+
+**Implementation Needed:**
+
+**1. SendGrid Adapter (`esp/sendgrid.js`)**
+```javascript
+// API: https://api.sendgrid.com/v3/mail/send
+// Docs: https://docs.sendgrid.com/api-reference/mail-send
+// Free: 100 emails/day
+// Env: VITE_SENDGRID_API_KEY
+```
+
+**2. HubSpot Adapter (`esp/hubspot.js`)**
+```javascript
+// API: https://api.hubapi.com/marketing/v3/transactional/single-email/send
+// Docs: https://developers.hubspot.com/docs/api/marketing/transactional-emails
+// Requires: Marketing Hub Professional+
+// Env: VITE_HUBSPOT_API_KEY
+// Note: Uses HubL templating
+```
+
+**3. Mailchimp/Mandrill Adapter (`esp/mailchimp.js`)**
+```javascript
+// API: https://mandrillapp.com/api/1.0/messages/send
+// Docs: https://mailchimp.com/developer/transactional/api/messages/
+// Note: Transactional emails require Mandrill add-on
+// Env: VITE_MAILCHIMP_API_KEY (actually Mandrill key)
+```
+
+**4. UI Enhancement (Outreach Generator)**
+- Add ESP selector dropdown in settings panel
+- Show current ESP status (configured/not configured)
+- Display free tier limits for selected ESP
+- Quick links to each provider's dashboard for API key generation
+
+**User Setup Guides (To Create):**
+
+| Provider | Setup URL | Steps |
+|----------|-----------|-------|
+| Resend | https://resend.com/api-keys | 1. Sign up → 2. Create API key → 3. Add to .env |
+| SendGrid | https://app.sendgrid.com/settings/api_keys | 1. Sign up → 2. Create API key (Full Access) → 3. Verify sender |
+| HubSpot | https://app.hubspot.com/developer | 1. Create private app → 2. Enable Transactional Email scope → 3. Get access token |
+| Mailchimp | https://mandrillapp.com/settings | 1. Enable Mandrill add-on → 2. Create API key → 3. Verify sending domain |
+
+**Priority Order:**
+1. SendGrid (most common, simple API, generous free tier)
+2. HubSpot (many enterprise users have existing accounts)
+3. Mailchimp/Mandrill (common but requires paid add-on)
+
+**Estimated Effort:**
+- SendGrid: 2 hours (simple REST API)
+- HubSpot: 3 hours (OAuth + template system)
+- Mailchimp: 2 hours (Mandrill API)
+- UI Enhancement: 2 hours
+- Documentation: 1 hour
+
+**Total: ~10 hours for complete ESP swappable system**
+
+---
+
+### ✅ Recently Completed (Dec 2-4)
+
+1. **Talk Bubble + Mobile Layout** - HomePage design refinements
+2. **Legal Pages** - Privacy Policy + Terms of Service
+3. **Blog Toggle** - LIST/CAROUSEL view modes
+4. **Breadcrumb Fixes** - Sidebar positioning
+5. **Tracking Verified:** GTM, GA4, Google Ads all active
+6. **Infrastructure Docs Updated for n8n** - Replaced Zapier with self-hosted n8n
+7. **Adapter Layer Implemented** - Hot-swappable LLM/ESP/Storage providers
+   - `src/adapters/llm/` - Groq (free), OpenAI, Claude
+   - `src/adapters/esp/` - Resend (free), SendGrid, HubSpot stubs
+   - `src/adapters/storage/` - Firestore, Airtable, LocalStorage
+8. **Outreach Generator Refactored** - Uses adapter pattern, saves prospects to storage
+9. **Unity Platform Architecture** - Full closed-loop lifecycle scoped
+   - Document: `dev-context/UNITY_PLATFORM_ARCHITECTURE.md`
+
+---
+
+### 🎯 Immediate Next Steps
+
+**Revenue Focus (P0):**
+- LinkedIn transition announcement
+- Network activation (10 warmest contacts)
+- Share Article 1 across channels
+- Schedule 3-5 discovery calls
+
+**Platform Development (P1):**
+- Phase 1 infrastructure (Airtable/prospect pipeline)
+- Unity Notes cost optimization (free tier gating)
+- Assessment → Services funnel integration
+
+---
+
+### 📊 Key Metrics
+
+- **60-Day Target:** $15K-20K consulting + $10K severance = $25K-30K
+- **Site Status:** Launch-ready with all critical blockers resolved
+- **Content:** Article 1 "Why Your GTM Sucks" is LIVE
+- **Services:** 7 offerings listed with detail pages
+
+---
+
+### 📁 Key Files for Reference
+
+- `dev-context/CONSULTING_PORTFOLIO_AUDIT.md` - Case studies
+- `dev-context/GTM_ASSESSMENT_SERVICE_PAGE.md` - Service copy
+- `dev-context/LINKEDIN_CONTENT_CALENDAR.md` - 8-week plan
+- `dev-context/OUTREACH_TEMPLATES.md` - Ready-to-send messages
 
 ---
 
@@ -45,6 +263,32 @@
 - **LIVE:** https://yellowcircle.io
 - **Backup:** https://yellowcircle-app.web.app
 - **Commit:** `02f91b9`
+
+---
+
+## ✅ DEC 3, 2025 - MOBILE LAYOUT + TRACKING COMPLETE
+
+### All Issues Resolved/Accepted
+
+**1. Talk Bubble** ✅ ACCEPTED
+- Sharp corner design (`borderRadius: '12px 12px 12px 0'`) approved
+- Full copy with two sentences
+
+**2. Breadcrumb** ✅ ACCEPTED
+- Flexbox wrapper design approved
+
+**3. Tracking Pixels** ✅ VERIFIED
+- GTM: `GTM-T4D8CCDC` - Active
+- GA4: `G-F88P3Y7QNE` - Active
+- Google Ads: `AW-17772974519` - Active
+
+**Files Modified:**
+- `src/pages/HomePage.jsx` - Talk bubble + buttons
+- `src/components/global/Sidebar.jsx` - Breadcrumb
+- `src/components/global/HamburgerMenu.jsx` - Mobile positioning
+
+**Build Status:** ✅ Successful
+**Deployed:** ✅ https://yellowcircle-app.web.app
 
 ---
 
@@ -115,23 +359,24 @@
 | **MongoDB Atlas** | Free 512MB | Flexible schema | New integration |
 | **Airtable** | Free 1,200 records | Easy UI, Zapier native | Limited records |
 
-**Recommendation:** Airtable for MVP (easy triggers, Zapier/Make integration) → migrate to Supabase if scale needed
+**Recommendation:** Airtable for MVP + n8n self-hosted (Railway ~$5/mo) for unlimited automations → migrate to Supabase if scale needed
 
 ### 1.2 Form Submit → Database → Notification Pipeline
 ```
 Contact Form Submit
     ↓
-Web3Forms (current) → Airtable webhook
+Web3Forms (current) → n8n webhook (self-hosted)
     ↓
-Airtable: New prospect row
-    ↓
-Zapier/Make trigger:
-    1. Slack notification to #prospects
-    2. Draft Outreach email via API
-    3. Queue for approval in Notion/Slack
+n8n workflow:
+    1. Create Airtable prospect row
+    2. Slack notification to #prospects
+    3. AI outreach draft (OpenAI)
+    4. Queue for approval
     ↓
 Manual approval → Send via Resend
 ```
+
+**n8n Setup:** See `dev-context/PROSPECT_INFRASTRUCTURE_SETUP.md` (v2.0)
 
 ### 1.3 Prospect Enrichment (Clay Alternative Scope)
 **Free/Low-Cost Options:**

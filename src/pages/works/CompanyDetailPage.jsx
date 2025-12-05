@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
@@ -14,10 +14,10 @@ const COMPANY_DATA = {
     engagement: 'Embedded Partnership',
     description: 'Marketing operations transformation for identity resolution and programmatic advertising platform serving publishers and advertisers globally.',
     highlights: [
-      'Built and scaled email marketing infrastructure',
-      'Implemented HubSpot-Salesforce integration',
+      'Built and scaled email marketing infrastructure in Marketo',
       'Developed attribution and reporting frameworks',
-      'Designed marketing automation architecture'
+      'Designed marketing automation architecture',
+      'Created demand generation programs'
     ]
   },
   tunecore: {
@@ -182,9 +182,17 @@ function CompanyDetailPage() {
   const navigate = useNavigate();
   const { companyId } = useParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle, openContactModal } = useLayout();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   // Get company data or redirect to 404
   const company = COMPANY_DATA[companyId];
+
+  // Handle responsive - breakpoint at 1024px for earlier mobile layout
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Inject stagger animation
   useEffect(() => {
@@ -194,14 +202,8 @@ function CompanyDetailPage() {
       style.id = styleId;
       style.textContent = `
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `;
       document.head.appendChild(style);
@@ -225,7 +227,7 @@ function CompanyDetailPage() {
   };
 
   if (!company) {
-    return null; // Will redirect
+    return null;
   }
 
   return (
@@ -245,147 +247,117 @@ function CompanyDetailPage() {
         height: '100dvh',
         background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(255, 255, 255, 1) 50%, rgba(251, 191, 36, 0.1) 100%)',
         zIndex: 1
-      }}></div>
+      }} />
 
-      {/* Main Content */}
+      {/* Two-Column Layout Container */}
       <div style={{
         position: 'fixed',
-        bottom: '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        top: '80px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        right: 0,
+        bottom: footerOpen ? '320px' : '20px',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: 'flex-start',
+        gap: isMobile ? '20px' : '40px',
+        padding: isMobile ? '20px' : '80px 40px 40px 40px',
         zIndex: 61,
-        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
+        overflow: isMobile ? 'auto' : 'hidden'
       }}>
+        {/* Left Column - Fixed Info */}
         <div style={{
-          ...TYPOGRAPHY.container
+          flex: isMobile ? 'none' : '0 0 45%',
+          maxWidth: isMobile ? '100%' : '500px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          paddingRight: isMobile ? 0 : '20px'
         }}>
+          {/* Back Link */}
+          <a
+            href="/works"
+            onClick={(e) => { e.preventDefault(); handleBackToWorks(); }}
+            style={{
+              fontSize: isMobile ? '10px' : '12px',
+              fontWeight: '500',
+              letterSpacing: '0.1em',
+              color: 'rgba(0,0,0,0.4)',
+              textDecoration: 'none',
+              marginBottom: isMobile ? '8px' : '16px',
+              cursor: 'pointer',
+              transition: 'color 0.2s ease',
+              animation: 'fadeInUp 0.6s ease-in-out 0.1s both'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = COLORS.yellow}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(0,0,0,0.4)'}
+          >
+            ← BACK TO CLIENTS
+          </a>
+
           {/* Company Name */}
           <h1 style={{
-            ...TYPOGRAPHY.h1,
+            fontSize: isMobile ? 'clamp(24px, 8vw, 32px)' : 'clamp(36px, 5vw, 56px)',
+            fontWeight: '700',
+            lineHeight: '1.1',
             color: COLORS.yellow,
-            ...EFFECTS.blurLight,
-            display: 'inline-block',
+            margin: isMobile ? '0 0 8px 0' : '0 0 16px 0',
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
           }}>
             {company.name}
           </h1>
 
-          {/* Back Link - Under H1 */}
-          <a
-            href="/works"
-            onClick={(e) => {
-              e.preventDefault();
-              handleBackToWorks();
-            }}
-            style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: '500',
-              letterSpacing: '0.05em',
-              color: COLORS.yellow,
-              textDecoration: 'none',
-              marginTop: '8px',
-              marginBottom: '16px',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s ease',
-              animation: 'fadeInUp 0.6s ease-in-out 0.3s both'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            ← Back to Clients
-          </a>
-
-          {/* Role & Category */}
-          <div style={{ position: 'relative', minHeight: '80px' }}>
-            <p style={{
-              ...TYPOGRAPHY.h2,
-              color: COLORS.black,
-              backgroundColor: COLORS.backgroundLight,
-              ...EFFECTS.blur,
-              display: 'inline-block',
-              padding: '2px 6px',
-              animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
-            }}>
-              {company.engagement}
-            </p>
-          </div>
-
-          {/* Year & Category */}
+          {/* Engagement Type */}
           <p style={{
-            ...TYPOGRAPHY.body,
-            margin: '10px 0 0 0',
-            backgroundColor: COLORS.backgroundLight,
-            ...EFFECTS.blur,
-            display: 'inline-block',
-            padding: '4px 8px',
-            animation: 'fadeInUp 0.6s ease-in-out 0.5s both'
+            fontSize: isMobile ? '14px' : '18px',
+            fontWeight: '500',
+            color: 'black',
+            margin: isMobile ? '0 0 4px 0' : '0 0 8px 0',
+            animation: 'fadeInUp 0.6s ease-in-out 0.3s both'
+          }}>
+            {company.engagement}
+          </p>
+
+          {/* Category & Year */}
+          <p style={{
+            fontSize: isMobile ? '12px' : '14px',
+            color: 'rgba(0,0,0,0.5)',
+            margin: isMobile ? '0 0 12px 0' : '0 0 20px 0',
+            animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
           }}>
             {company.category} • {company.year}
           </p>
 
-          {/* Description */}
-          <p style={{
-            ...TYPOGRAPHY.body,
-            margin: '20px 0 0 0',
-            backgroundColor: COLORS.backgroundLight,
-            ...EFFECTS.blur,
-            display: 'inline-block',
-            padding: '8px 12px',
-            maxWidth: '500px',
-            lineHeight: '1.6',
-            animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
-          }}>
-            {company.description}
-          </p>
-
-          {/* Highlights */}
-          <div style={{
-            margin: '30px 0 0 0',
-            animation: 'fadeInUp 0.6s ease-in-out 0.7s both'
-          }}>
+          {/* Description - hide on mobile to save space */}
+          {!isMobile && (
             <p style={{
-              ...TYPOGRAPHY.small,
-              color: 'rgba(0, 0, 0, 0.4)',
-              fontWeight: '700',
-              letterSpacing: '0.15em',
-              marginBottom: '12px'
+              fontSize: '15px',
+              lineHeight: '1.7',
+              color: 'rgba(0,0,0,0.7)',
+              margin: '0 0 24px 0',
+              maxWidth: '440px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.5s both'
             }}>
-              KEY HIGHLIGHTS
+              {company.description}
             </p>
-            {company.highlights.map((highlight, index) => (
-              <p key={index} style={{
-                ...TYPOGRAPHY.body,
-                margin: '8px 0',
-                backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                ...EFFECTS.blur,
-                display: 'inline-block',
-                padding: '6px 12px',
-                fontSize: '14px'
-              }}>
-                • {highlight}
-              </p>
-            ))}
-          </div>
+          )}
 
           {/* CTA Buttons */}
           <div style={{
-            marginTop: '30px',
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '12px',
-            animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
+            gap: isMobile ? '8px' : '12px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
           }}>
             <button
               onClick={() => openContactModal('', `Inquiry from ${company.name} case study`)}
               style={{
-                padding: '14px 28px',
+                padding: isMobile ? '10px 16px' : '14px 28px',
                 backgroundColor: COLORS.yellow,
                 color: 'black',
                 border: 'none',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: isMobile ? '10px' : '12px',
                 fontWeight: '700',
                 letterSpacing: '0.1em',
                 cursor: 'pointer',
@@ -394,12 +366,10 @@ function CompanyDetailPage() {
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'black';
                 e.currentTarget.style.color = 'white';
-                e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = COLORS.yellow;
                 e.currentTarget.style.color = 'black';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               GET IN TOUCH
@@ -407,12 +377,12 @@ function CompanyDetailPage() {
             <button
               onClick={() => navigate('/assessment')}
               style={{
-                padding: '14px 28px',
+                padding: isMobile ? '10px 16px' : '14px 28px',
                 backgroundColor: 'black',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: isMobile ? '10px' : '12px',
                 fontWeight: '700',
                 letterSpacing: '0.1em',
                 cursor: 'pointer',
@@ -421,12 +391,10 @@ function CompanyDetailPage() {
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = COLORS.yellow;
                 e.currentTarget.style.color = 'black';
-                e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'black';
                 e.currentTarget.style.color = 'white';
-                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               GROWTH HEALTH CHECK
@@ -435,12 +403,12 @@ function CompanyDetailPage() {
               <button
                 onClick={() => navigate('/portfolio')}
                 style={{
-                  padding: '14px 28px',
+                  padding: isMobile ? '10px 16px' : '14px 28px',
                   backgroundColor: 'transparent',
                   color: 'black',
                   border: '2px solid rgba(0,0,0,0.2)',
                   borderRadius: '4px',
-                  fontSize: '12px',
+                  fontSize: isMobile ? '10px' : '12px',
                   fontWeight: '700',
                   letterSpacing: '0.1em',
                   cursor: 'pointer',
@@ -450,32 +418,69 @@ function CompanyDetailPage() {
                   e.currentTarget.style.backgroundColor = 'black';
                   e.currentTarget.style.color = 'white';
                   e.currentTarget.style.borderColor = 'black';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                   e.currentTarget.style.color = 'black';
                   e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)';
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 VIEW PORTFOLIO
               </button>
             )}
           </div>
+        </div>
 
-          {/* Case Study Section */}
-          {company.caseStudy ? (
-            <div style={{
-              marginTop: '30px',
-              animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
+        {/* Right Column - Scrollable Details (aligned with H1) */}
+        <div style={{
+          flex: 1,
+          maxHeight: isMobile ? 'none' : 'calc(100vh - 280px)',
+          overflowY: isMobile ? 'visible' : 'auto',
+          paddingRight: '20px',
+          paddingBottom: '40px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          maxWidth: isMobile ? '100%' : '600px'
+        }}>
+          {/* Highlights */}
+          <div style={{
+            marginBottom: '32px',
+            animation: 'fadeInUp 0.6s ease-in-out 0.7s both'
+          }}>
+            <p style={{
+              fontSize: '11px',
+              fontWeight: '700',
+              letterSpacing: '0.15em',
+              color: 'rgba(0,0,0,0.4)',
+              marginBottom: '16px'
             }}>
-              {/* Timeline & Scope */}
+              KEY HIGHLIGHTS
+            </p>
+            {company.highlights.map((highlight, index) => (
+              <p key={index} style={{
+                fontSize: '14px',
+                lineHeight: '1.6',
+                margin: '0 0 10px 0',
+                padding: '8px 14px',
+                backgroundColor: 'rgba(251, 191, 36, 0.08)',
+                borderRadius: '4px',
+                color: 'rgba(0,0,0,0.8)'
+              }}>
+                • {highlight}
+              </p>
+            ))}
+          </div>
+
+          {/* Case Study Content */}
+          {company.caseStudy && (
+            <>
+              {/* Timeline & Scope Tags */}
               <div style={{
                 display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                marginBottom: '20px'
+                gap: '10px',
+                marginBottom: '24px',
+                animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
               }}>
                 <span style={{
                   backgroundColor: 'black',
@@ -483,8 +488,7 @@ function CompanyDetailPage() {
                   padding: '6px 14px',
                   borderRadius: '4px',
                   fontSize: '11px',
-                  fontWeight: '600',
-                  letterSpacing: '0.05em'
+                  fontWeight: '600'
                 }}>
                   {company.caseStudy.timeline}
                 </span>
@@ -494,58 +498,58 @@ function CompanyDetailPage() {
                   padding: '6px 14px',
                   borderRadius: '4px',
                   fontSize: '11px',
-                  fontWeight: '600',
-                  letterSpacing: '0.05em'
+                  fontWeight: '600'
                 }}>
                   {company.caseStudy.scope}
                 </span>
               </div>
 
-              {/* Challenge & Solution */}
+              {/* Challenge */}
               {company.caseStudy.challenge && (
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '24px', animation: 'fadeInUp 0.6s ease-in-out 0.9s both' }}>
                   <p style={{
-                    ...TYPOGRAPHY.small,
-                    color: 'rgba(0, 0, 0, 0.4)',
+                    fontSize: '11px',
                     fontWeight: '700',
                     letterSpacing: '0.15em',
-                    marginBottom: '8px'
+                    color: 'rgba(0,0,0,0.4)',
+                    marginBottom: '10px'
                   }}>
                     THE CHALLENGE
                   </p>
                   <p style={{
-                    ...TYPOGRAPHY.body,
-                    backgroundColor: COLORS.backgroundLight,
-                    ...EFFECTS.blur,
-                    padding: '8px 12px',
-                    maxWidth: '500px',
-                    lineHeight: '1.6',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    lineHeight: '1.7',
+                    color: 'rgba(0,0,0,0.7)',
+                    margin: 0,
+                    padding: '12px 16px',
+                    backgroundColor: 'rgba(0,0,0,0.03)',
+                    borderRadius: '6px'
                   }}>
                     {company.caseStudy.challenge}
                   </p>
                 </div>
               )}
 
+              {/* Solution */}
               {company.caseStudy.solution && (
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '24px', animation: 'fadeInUp 0.6s ease-in-out 1.0s both' }}>
                   <p style={{
-                    ...TYPOGRAPHY.small,
-                    color: 'rgba(0, 0, 0, 0.4)',
+                    fontSize: '11px',
                     fontWeight: '700',
                     letterSpacing: '0.15em',
-                    marginBottom: '8px'
+                    color: 'rgba(0,0,0,0.4)',
+                    marginBottom: '10px'
                   }}>
                     THE SOLUTION
                   </p>
                   <p style={{
-                    ...TYPOGRAPHY.body,
-                    backgroundColor: COLORS.backgroundLight,
-                    ...EFFECTS.blur,
-                    padding: '8px 12px',
-                    maxWidth: '500px',
-                    lineHeight: '1.6',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    lineHeight: '1.7',
+                    color: 'rgba(0,0,0,0.7)',
+                    margin: 0,
+                    padding: '12px 16px',
+                    backgroundColor: 'rgba(0,0,0,0.03)',
+                    borderRadius: '6px'
                   }}>
                     {company.caseStudy.solution}
                   </p>
@@ -555,33 +559,34 @@ function CompanyDetailPage() {
               {/* Testimonial */}
               {company.caseStudy.testimonial && (
                 <div style={{
-                  marginTop: '24px',
+                  marginBottom: '24px',
                   padding: '20px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.03)',
-                  borderLeft: `3px solid ${COLORS.yellow}`,
-                  maxWidth: '520px'
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  borderLeft: `4px solid ${COLORS.yellow}`,
+                  borderRadius: '0 8px 8px 0',
+                  animation: 'fadeInUp 0.6s ease-in-out 1.1s both'
                 }}>
                   <p style={{
-                    ...TYPOGRAPHY.body,
-                    fontStyle: 'italic',
                     fontSize: '14px',
-                    lineHeight: '1.7',
-                    marginBottom: '12px',
-                    color: 'rgba(0, 0, 0, 0.8)'
+                    fontStyle: 'italic',
+                    lineHeight: '1.8',
+                    marginBottom: '16px',
+                    color: 'rgba(0, 0, 0, 0.75)'
                   }}>
                     "{company.caseStudy.testimonial.quote}"
                   </p>
                   <p style={{
-                    ...TYPOGRAPHY.small,
+                    fontSize: '13px',
                     fontWeight: '600',
-                    margin: 0
+                    margin: 0,
+                    color: 'black'
                   }}>
                     — {company.caseStudy.testimonial.author}
                   </p>
                   <p style={{
-                    ...TYPOGRAPHY.small,
+                    fontSize: '12px',
                     color: 'rgba(0, 0, 0, 0.5)',
-                    margin: '2px 0 0 0'
+                    margin: '4px 0 0 0'
                   }}>
                     {company.caseStudy.testimonial.title}
                   </p>
@@ -591,16 +596,16 @@ function CompanyDetailPage() {
               {/* Technologies */}
               {company.caseStudy.technologies && (
                 <div style={{
-                  marginTop: '20px',
                   display: 'flex',
                   flexWrap: 'wrap',
-                  gap: '8px'
+                  gap: '8px',
+                  animation: 'fadeInUp 0.6s ease-in-out 1.2s both'
                 }}>
                   {company.caseStudy.technologies.map((tech, index) => (
                     <span key={index} style={{
                       backgroundColor: 'rgba(251, 191, 36, 0.15)',
                       color: 'rgba(0, 0, 0, 0.7)',
-                      padding: '4px 10px',
+                      padding: '6px 12px',
                       borderRadius: '4px',
                       fontSize: '11px',
                       fontWeight: '500'
@@ -610,29 +615,24 @@ function CompanyDetailPage() {
                   ))}
                 </div>
               )}
-            </div>
-          ) : (
+            </>
+          )}
+
+          {/* Coming Soon for non-case-study companies */}
+          {!company.caseStudy && (
             <div style={{
-              marginTop: '20px',
-              animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
+              padding: '40px 0',
+              textAlign: 'center',
+              animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
             }}>
-              <button
-                disabled
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: 'transparent',
-                  color: 'rgba(0, 0, 0, 0.3)',
-                  border: '1px dashed rgba(0, 0, 0, 0.2)',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  letterSpacing: '0.1em',
-                  cursor: 'not-allowed'
-                }}
-                title="Case study coming soon"
-              >
-                VIEW FULL CASE STUDY — COMING SOON
-              </button>
+              <p style={{
+                fontSize: '12px',
+                color: 'rgba(0,0,0,0.3)',
+                letterSpacing: '0.1em',
+                fontWeight: '600'
+              }}>
+                FULL CASE STUDY COMING SOON
+              </p>
             </div>
           )}
         </div>
