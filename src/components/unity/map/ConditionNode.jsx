@@ -15,7 +15,8 @@ const ConditionNode = memo(({ id, data, selected }) => {
     operator = 'equals', // 'equals', 'contains', 'greater_than'
     value = true,
     waitDays = 3, // Days to wait before evaluating
-    onInlineEdit // Edit handler
+    onInlineEdit, // Edit handler
+    onDelete // Delete this node
   } = data;
 
   const [isHovered, setIsHovered] = useState(false);
@@ -153,20 +154,52 @@ const ConditionNode = memo(({ id, data, selected }) => {
         </span>
       </div>
 
-      {/* Edit hint on hover */}
+      {/* Edit hint and delete button on hover */}
       {isHovered && (
-        <div style={{
-          position: 'absolute',
-          bottom: '-24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '9px',
-          fontWeight: '600',
-          color: '#f59e0b',
-          whiteSpace: 'nowrap'
-        }}>
-          Click to edit
-        </div>
+        <>
+          <div style={{
+            position: 'absolute',
+            bottom: '-24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '9px',
+            fontWeight: '600',
+            color: '#f59e0b',
+            whiteSpace: 'nowrap'
+          }}>
+            Click to edit
+          </div>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(id);
+              }}
+              style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
+                width: '22px',
+                height: '22px',
+                borderRadius: '50%',
+                backgroundColor: '#fee2e2',
+                border: '2px solid #dc2626',
+                color: '#dc2626',
+                fontSize: '10px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)',
+                zIndex: 10
+              }}
+              title="Delete node"
+            >
+              ✕
+            </button>
+          )}
+        </>
       )}
 
       {/* Output Handle - Left (No) */}

@@ -466,6 +466,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         data: {
           title: 'New Note',
           content: '',
+          cardType: 'note',
           color: CARD_TYPES.note.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
@@ -482,7 +483,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         },
         data: {
           title: 'New Link',
-          content: 'Link cards coming soon...',
+          content: '',
+          url: '',
+          cardType: 'link',
           color: CARD_TYPES.link.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
@@ -499,7 +502,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         },
         data: {
           title: 'AI Chat',
-          content: 'AI chat integration coming soon...',
+          content: '',
+          cardType: 'ai',
           color: CARD_TYPES.ai.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
@@ -516,7 +520,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         },
         data: {
           title: 'New Video',
-          content: 'Video embeds coming soon...',
+          content: '',
+          url: '',
+          cardType: 'video',
           color: CARD_TYPES.video.color,
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
@@ -1502,36 +1508,74 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onClick={handleStartPublish}
             disabled={isSavingJourney || journeyStatus === 'active'}
             style={{
-              width: '36px',
+              minWidth: '36px',
               height: '36px',
+              padding: '0 10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: journeyStatus === 'active' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(0, 0, 0, 0.05)',
-              border: `1px solid ${journeyStatus === 'active' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
-              borderRadius: '6px',
+              gap: '6px',
+              backgroundColor: journeyStatus === 'active'
+                ? 'rgba(16, 185, 129, 0.15)'
+                : journeyStatus === 'paused'
+                  ? 'rgba(245, 158, 11, 0.15)'
+                  : 'rgba(139, 92, 246, 0.1)',
+              border: `2px solid ${
+                journeyStatus === 'active'
+                  ? 'rgba(16, 185, 129, 0.5)'
+                  : journeyStatus === 'paused'
+                    ? 'rgba(245, 158, 11, 0.5)'
+                    : 'rgba(139, 92, 246, 0.4)'
+              }`,
+              borderRadius: '8px',
               cursor: journeyStatus === 'active' ? 'default' : 'pointer',
-              fontSize: '14px',
-              color: journeyStatus === 'active' ? '#8b5cf6' : 'black',
+              fontSize: '11px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              color: journeyStatus === 'active'
+                ? '#059669'
+                : journeyStatus === 'paused'
+                  ? '#d97706'
+                  : '#7c3aed',
               transition: 'all 0.2s ease',
-              marginTop: '4px',
-              opacity: journeyStatus === 'active' ? 0.8 : 1
+              marginTop: '4px'
             }}
             onMouseEnter={(e) => {
               if (journeyStatus !== 'active') {
-                e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.2)';
-                e.target.style.transform = 'scale(1.05)';
+                e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.2)';
+                e.currentTarget.style.transform = 'scale(1.03)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.25)';
               }
             }}
             onMouseLeave={(e) => {
               if (journeyStatus !== 'active') {
-                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-                e.target.style.transform = 'scale(1)';
+                e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
               }
             }}
-            title={journeyStatus === 'active' ? 'Journey Active' : 'Publish Journey'}
+            title={
+              journeyStatus === 'active' ? 'Journey Running - Emails being sent'
+              : journeyStatus === 'paused' ? 'Journey Paused'
+              : 'Start Journey - Send emails to prospects'
+            }
           >
-            {journeyStatus === 'active' ? '✓' : '▶'}
+            {journeyStatus === 'active' ? (
+              <>
+                <span style={{ fontSize: '12px' }}>🟢</span>
+                <span>LIVE</span>
+              </>
+            ) : journeyStatus === 'paused' ? (
+              <>
+                <span style={{ fontSize: '12px' }}>⏸️</span>
+                <span>PAUSED</span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '14px' }}>🚀</span>
+                <span>RUN</span>
+              </>
+            )}
           </button>
         )}
 

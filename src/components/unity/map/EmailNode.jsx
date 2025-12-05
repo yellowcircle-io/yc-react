@@ -17,7 +17,8 @@ const EmailNode = memo(({ id, data, selected }) => {
     stats = { sent: 0, opened: 0, clicked: 0, replied: 0 },
     onInlineEdit, // Open inline edit modal (preferred)
     onEditInOutreach, // Navigate to Outreach Generator (fallback)
-    onPreview // Show email preview modal
+    onPreview, // Show email preview modal
+    onDelete // Delete this node
   } = data;
 
   const [isHovered, setIsHovered] = useState(false);
@@ -235,6 +236,31 @@ const EmailNode = memo(({ id, data, selected }) => {
           >
             Preview
           </button>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(id);
+              }}
+              style={{
+                width: '28px',
+                padding: '6px',
+                fontSize: '12px',
+                fontWeight: '600',
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Delete node"
+            >
+              🗑️
+            </button>
+          )}
         </div>
       )}
 
