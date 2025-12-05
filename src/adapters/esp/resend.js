@@ -2,25 +2,21 @@
  * Resend ESP Adapter
  * FREE tier: 100 emails/day, 3,000/month
  *
+ * Uses Firebase Function proxy to avoid CORS issues.
  * Docs: https://resend.com/docs
  */
 
-const RESEND_API_URL = 'https://api.resend.com/emails';
+// Firebase Function URL (deployed gen1 function)
+const FIREBASE_SEND_EMAIL_URL = 'https://us-central1-yellowcircle-app.cloudfunctions.net/sendEmail';
 
 const DEFAULT_FROM = 'yellowCircle <hello@yellowcircle.io>';
 
 /**
- * Send a single email via Resend
+ * Send a single email via Firebase Function (proxies to Resend)
  * @param {object} options - Email options
  * @returns {Promise<{ id, status }>}
  */
 const sendEmail = async (options) => {
-  const apiKey = options.apiKey || import.meta.env.VITE_RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('Resend API key not configured. Set VITE_RESEND_API_KEY in .env');
-  }
-
   const {
     to,
     from = DEFAULT_FROM,
@@ -32,11 +28,10 @@ const sendEmail = async (options) => {
   } = options;
 
   try {
-    const response = await fetch(RESEND_API_URL, {
+    const response = await fetch(FIREBASE_SEND_EMAIL_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         from,
@@ -44,53 +39,64 @@ const sendEmail = async (options) => {
         subject,
         html,
         text,
-        reply_to: replyTo,
+        replyTo,
         tags: tags.map(tag => ({ name: tag.name || tag, value: tag.value || tag })),
       }),
     });
 
+    // Handle non-OK responses
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Resend API error: ${error.message || response.statusText}`);
+      let errorMessage = `Send failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        // Response wasn't JSON (e.g., 404 page)
+        if (response.status === 404) {
+          errorMessage = 'Email service not deployed. Run: firebase deploy --only functions:sendEmail';
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
     return {
       id: data.id,
-      status: 'sent',
+      status: data.status || 'sent',
       provider: 'resend',
     };
   } catch (error) {
     console.error('Resend send error:', error);
+
+    // Check for network errors (function not deployed)
+    const isNetworkError = error.message?.includes('NetworkError') ||
+                           error.message?.includes('Failed to fetch');
+
     return {
       id: null,
       status: 'failed',
-      error: error.message,
+      error: isNetworkError
+        ? 'Email service unavailable. Firebase Function needs to be deployed.'
+        : error.message,
       provider: 'resend',
     };
   }
 };
 
 /**
- * Send batch emails via Resend
+ * Send batch emails via Firebase Function (proxies to Resend)
  * @param {Array} emails - Array of email options
  * @returns {Promise<{ sent, failed }>}
  */
-const sendBatch = async (emails, options = {}) => {
-  const apiKey = options.apiKey || import.meta.env.VITE_RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('Resend API key not configured');
-  }
-
+const sendBatch = async (emails) => {
   const results = {
     sent: [],
     failed: [],
   };
 
-  // Resend supports batch API, but for simplicity, send sequentially
+  // Send sequentially through Firebase Function
   for (const email of emails) {
-    const result = await sendEmail({ ...email, apiKey });
+    const result = await sendEmail(email);
     if (result.status === 'sent') {
       results.sent.push(result);
     } else {
@@ -102,9 +108,9 @@ const sendBatch = async (emails, options = {}) => {
 };
 
 /**
- * Check if API key is configured
+ * Check if sending is configured (always true - uses server-side key)
  */
-const isConfigured = () => !!import.meta.env.VITE_RESEND_API_KEY;
+const isConfigured = () => true;
 
 /**
  * Get provider info

@@ -835,70 +835,119 @@ Return ONLY a JSON object with this exact format:
     URL.revokeObjectURL(url);
   };
 
-  // Deploy to UnityNotes - creates a journey/campaign
+  // Deploy to UnityMAP - creates a visual journey with proper MAP node types
   const deployToUnityNotes = () => {
     if (!generatedEmails) return;
 
     const UNITY_STORAGE_KEY = 'unity-notes-data';
     const timestamp = Date.now();
 
-    // Create nodes for the outreach campaign (using textNode type for editability)
+    // Create proper UnityMAP journey nodes using the new node types
     const campaignNodes = [
-      // Campaign header node
+      // Prospect Entry Node
       {
-        id: `outreach-${timestamp}-header`,
-        type: 'textNode',
-        position: { x: 100, y: 50 },
+        id: `prospect-${timestamp}`,
+        type: 'prospectNode',
+        position: { x: 300, y: 50 },
         data: {
-          title: `📧 ${formData.company} Outreach`,
-          content: `**Prospect:** ${formData.firstName} ${formData.lastName || ''}\n**Email:** ${formData.email}\n**Title:** ${formData.title || 'N/A'}\n**Industry:** ${formData.industry}\n${formData.trigger ? `**Trigger:** ${triggerOptions.find(t => t.value === formData.trigger)?.label}` : ''}\n\n*Generated ${new Date().toLocaleDateString()}*`,
-          color: '#EECF00',
-          createdAt: timestamp
+          label: formData.company || 'Prospects',
+          count: 1,
+          segment: sendMode === SEND_MODES.PROSPECT ? 'Cold Outreach' : 'Marketing',
+          source: 'manual',
+          tags: [formData.industry, formData.trigger].filter(Boolean)
         }
       },
-      // Day 0 - Initial Email
+      // Day 0 - Initial Email Node
       {
-        id: `outreach-${timestamp}-day0`,
-        type: 'textNode',
-        position: { x: 100, y: 250 },
+        id: `email-${timestamp}-0`,
+        type: 'emailNode',
+        position: { x: 300, y: 200 },
         data: {
-          title: '📬 Day 0: Initial Email',
-          content: `**Subject:** ${generatedEmails.initial.subject}\n\n${generatedEmails.initial.body}`,
-          color: '#10b981',
-          createdAt: timestamp
+          label: 'Day 0: Initial',
+          subject: generatedEmails.initial.subject,
+          preview: generatedEmails.initial.body?.substring(0, 100) + '...',
+          delay: 0,
+          delayUnit: 'days',
+          status: 'draft',
+          fullBody: generatedEmails.initial.body,
+          stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
         }
       },
-      // Day 3 - Follow-up #1
+      // Wait Node - 3 days
       {
-        id: `outreach-${timestamp}-day3`,
-        type: 'textNode',
-        position: { x: 100, y: 450 },
+        id: `wait-${timestamp}-1`,
+        type: 'waitNode',
+        position: { x: 300, y: 380 },
         data: {
-          title: '📬 Day 3: Follow-up #1',
-          content: `**Subject:** ${generatedEmails.followup1.subject}\n\n${generatedEmails.followup1.body}`,
-          color: '#3b82f6',
-          createdAt: timestamp
+          label: 'Wait',
+          duration: 3,
+          unit: 'days'
         }
       },
-      // Day 10 - Follow-up #2
+      // Day 3 - Follow-up #1 Node
       {
-        id: `outreach-${timestamp}-day10`,
-        type: 'textNode',
-        position: { x: 100, y: 650 },
+        id: `email-${timestamp}-1`,
+        type: 'emailNode',
+        position: { x: 300, y: 520 },
         data: {
-          title: '📬 Day 10: Follow-up #2',
-          content: `**Subject:** ${generatedEmails.followup2.subject}\n\n${generatedEmails.followup2.body}`,
-          color: '#8b5cf6',
-          createdAt: timestamp
+          label: 'Day 3: Follow-up',
+          subject: generatedEmails.followup1.subject,
+          preview: generatedEmails.followup1.body?.substring(0, 100) + '...',
+          delay: 3,
+          delayUnit: 'days',
+          status: 'draft',
+          fullBody: generatedEmails.followup1.body,
+          stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+        }
+      },
+      // Wait Node - 7 days (Day 10 total)
+      {
+        id: `wait-${timestamp}-2`,
+        type: 'waitNode',
+        position: { x: 300, y: 700 },
+        data: {
+          label: 'Wait',
+          duration: 7,
+          unit: 'days'
+        }
+      },
+      // Day 10 - Follow-up #2 Node
+      {
+        id: `email-${timestamp}-2`,
+        type: 'emailNode',
+        position: { x: 300, y: 840 },
+        data: {
+          label: 'Day 10: Break-up',
+          subject: generatedEmails.followup2.subject,
+          preview: generatedEmails.followup2.body?.substring(0, 100) + '...',
+          delay: 7,
+          delayUnit: 'days',
+          status: 'draft',
+          fullBody: generatedEmails.followup2.body,
+          stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+        }
+      },
+      // Exit Node - Sequence Complete
+      {
+        id: `exit-${timestamp}`,
+        type: 'exitNode',
+        position: { x: 300, y: 1000 },
+        data: {
+          exitType: 'completed',
+          label: 'Sequence End',
+          count: 0
         }
       }
     ];
 
-    // Create edges connecting the sequence
+    // Create edges connecting the journey flow
     const campaignEdges = [
-      { id: `e-${timestamp}-0`, source: `outreach-${timestamp}-header`, target: `outreach-${timestamp}-day0` },
-      { id: `e-${timestamp}-1`, source: `outreach-${timestamp}-day0`, target: `outreach-${timestamp}-day3` },
-      { id: `e-${timestamp}-2`, source: `outreach-${timestamp}-day3`, target: `outreach-${timestamp}-day10` }
+      { id: `e-${timestamp}-0`, source: `prospect-${timestamp}`, target: `email-${timestamp}-0` },
+      { id: `e-${timestamp}-1`, source: `email-${timestamp}-0`, target: `wait-${timestamp}-1` },
+      { id: `e-${timestamp}-2`, source: `wait-${timestamp}-1`, target: `email-${timestamp}-1` },
+      { id: `e-${timestamp}-3`, source: `email-${timestamp}-1`, target: `wait-${timestamp}-2` },
+      { id: `e-${timestamp}-4`, source: `wait-${timestamp}-2`, target: `email-${timestamp}-2` },
+      { id: `e-${timestamp}-5`, source: `email-${timestamp}-2`, target: `exit-${timestamp}` }
     ];
 
     // Get existing UnityNotes data or create new
@@ -1238,8 +1287,9 @@ Return ONLY a JSON object with this exact format:
                 ...secondaryButtonStyle,
                 padding: '10px 16px',
                 fontSize: '13px',
-                borderColor: resendApiKey ? '#10b981' : undefined,
-                color: resendApiKey ? '#10b981' : undefined
+                borderColor: resendApiKey ? '#10b981' : '#e5e7eb',
+                color: resendApiKey ? '#10b981' : '#374151',
+                opacity: resendApiKey ? 1 : 0.7
               }}
             >
               📧 Send Key {resendApiKey ? '✓' : ''} {showResendKeyInput ? '▲' : '▼'}
@@ -1547,9 +1597,12 @@ Return ONLY a JSON object with this exact format:
             ...cardStyle,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: isMobile ? 'flex-start' : 'center',
             gap: '0',
-            animation: 'fadeInUp 0.5s ease-out'
+            animation: 'fadeInUp 0.5s ease-out',
+            overflowX: isMobile ? 'auto' : 'visible',
+            padding: isMobile ? '16px 12px' : cardStyle.padding,
+            WebkitOverflowScrolling: 'touch'
           }}>
             {['Prospect Info', 'Generate', 'Review & Copy'].map((label, idx) => (
               <React.Fragment key={idx}>
@@ -1557,13 +1610,13 @@ Return ONLY a JSON object with this exact format:
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: isMobile ? '6px' : '10px',
                   flex: '0 0 auto'
                 }}>
                   <div style={{
-                    width: '36px',
-                    height: '36px',
-                    minWidth: '36px',
+                    width: isMobile ? '28px' : '36px',
+                    height: isMobile ? '28px' : '36px',
+                    minWidth: isMobile ? '28px' : '36px',
                     borderRadius: '50%',
                     backgroundColor: currentStep > idx + 1 ? COLORS.yellow : currentStep === idx + 1 ? COLORS.yellow : '#e5e7eb',
                     color: currentStep >= idx + 1 ? '#000' : '#9ca3af',
@@ -1571,19 +1624,19 @@ Return ONLY a JSON object with this exact format:
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: '600',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '12px' : '14px',
                     transition: 'all 0.3s',
                     boxShadow: currentStep === idx + 1 ? '0 0 0 3px rgba(238, 207, 0, 0.3)' : 'none'
                   }}>
                     {currentStep > idx + 1 ? '✓' : idx + 1}
                   </div>
                   <span style={{
-                    fontSize: '13px',
+                    fontSize: isMobile ? '11px' : '13px',
                     fontWeight: currentStep === idx + 1 ? '600' : '400',
                     color: currentStep === idx + 1 ? '#000' : currentStep > idx + 1 ? '#374151' : '#6b7280',
                     whiteSpace: 'nowrap'
                   }}>
-                    {label}
+                    {isMobile ? label.split(' ')[0] : label}
                   </span>
                 </div>
                 {/* Connector Line */}
@@ -1591,10 +1644,10 @@ Return ONLY a JSON object with this exact format:
                   <div style={{
                     flex: '1 1 auto',
                     height: '2px',
-                    minWidth: '40px',
-                    maxWidth: '120px',
+                    minWidth: isMobile ? '20px' : '40px',
+                    maxWidth: isMobile ? '40px' : '120px',
                     backgroundColor: currentStep > idx + 1 ? COLORS.yellow : '#e5e7eb',
-                    margin: '0 16px',
+                    margin: isMobile ? '0 8px' : '0 16px',
                     transition: 'background-color 0.3s'
                   }} />
                 )}
