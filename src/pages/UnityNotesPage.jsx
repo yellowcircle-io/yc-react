@@ -44,10 +44,10 @@ const STORAGE_KEY = 'unity-notes-data';
 // Card type configuration (same as UnityNotes Plus)
 const CARD_TYPES = {
   photo: { label: 'Photo', icon: '🖼️', color: 'rgb(251, 191, 36)' },
-  note: { label: 'Note', icon: '📝', color: '#3B82F6' },
-  link: { label: 'Link', icon: '🔗', color: '#8B5CF6' },
-  ai: { label: 'AI Chat', icon: '🤖', color: '#10B981' },
-  video: { label: 'Video', icon: '📹', color: '#EF4444' },
+  note: { label: 'Note', icon: '📝', color: 'rgb(251, 191, 36)' },
+  link: { label: 'Link', icon: '🔗', color: '#b45309' },
+  ai: { label: 'AI Chat', icon: '🤖', color: '#d97706' },
+  video: { label: 'Video', icon: '📹', color: '#f59e0b' },
 };
 
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle }) => {
@@ -1281,8 +1281,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         }}>
           {[
             { key: 'notes', label: 'NOTES', icon: '📝', color: 'rgb(251, 191, 36)' },
-            { key: 'map', label: 'MAP', icon: '🗺️', color: '#8b5cf6' },
-            { key: 'studio', label: 'STUDIO', icon: '🎨', color: '#3b82f6', disabled: true }
+            { key: 'map', label: 'MAP', icon: '🗺️', color: '#f59e0b' },
+            { key: 'studio', label: 'STUDIO', icon: '🎨', color: '#d97706', disabled: true }
           ].map((mode) => (
             <button
               key={mode.key}
@@ -1474,19 +1474,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: currentJourneyId ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.05)',
-              border: `1px solid ${currentJourneyId ? 'rgba(16, 185, 129, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
+              backgroundColor: currentJourneyId ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.05)',
+              border: `1px solid ${currentJourneyId ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
               borderRadius: '6px',
               cursor: isSavingJourney ? 'wait' : 'pointer',
               fontSize: '14px',
-              color: currentJourneyId ? '#10b981' : 'black',
+              color: currentJourneyId ? '#b45309' : 'black',
               transition: 'all 0.2s ease',
               marginTop: '4px',
               opacity: isSavingJourney ? 0.6 : 1
             }}
             onMouseEnter={(e) => {
               if (!isSavingJourney) {
-                e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.3)';
                 e.target.style.transform = 'scale(1.05)';
               }
             }}
@@ -1533,23 +1533,23 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               fontWeight: '700',
               letterSpacing: '0.05em',
               color: journeyStatus === 'active'
-                ? '#059669'
+                ? '#b45309'
                 : journeyStatus === 'paused'
                   ? '#d97706'
-                  : '#7c3aed',
+                  : '#92400e',
               transition: 'all 0.2s ease',
               marginTop: '4px'
             }}
             onMouseEnter={(e) => {
               if (journeyStatus !== 'active') {
-                e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.2)';
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.2)';
                 e.currentTarget.style.transform = 'scale(1.03)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.25)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.25)';
               }
             }}
             onMouseLeave={(e) => {
               if (journeyStatus !== 'active') {
-                e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.boxShadow = 'none';
               }
@@ -1591,17 +1591,17 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: showModePanel ? 'rgba(139, 92, 246, 0.2)' : 'rgba(0, 0, 0, 0.05)',
-            border: `1px solid ${showModePanel ? 'rgba(139, 92, 246, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
+            backgroundColor: showModePanel ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.05)',
+            border: `1px solid ${showModePanel ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
             borderRadius: '6px',
             cursor: 'pointer',
             fontSize: '14px',
-            color: showModePanel ? '#8b5cf6' : 'black',
+            color: showModePanel ? '#b45309' : 'black',
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
             if (!showModePanel) {
-              e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+              e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
               e.target.style.transform = 'scale(1.05)';
             }
           }}

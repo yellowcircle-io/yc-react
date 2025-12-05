@@ -150,15 +150,15 @@ const TailwindSidebar = ({ isOpen, onClose, expandedItems, onToggleItem, current
                     }
                   }}
                   className={`w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex items-center justify-between ${
-                    isActive ? 'bg-purple-50 border border-purple-200' : ''
+                    isActive ? 'bg-yellow-50 border border-yellow-200' : ''
                   }`}
-                  style={isActive ? { backgroundColor: 'rgba(139, 92, 246, 0.1)' } : {}}
+                  style={isActive ? { backgroundColor: 'rgba(251, 191, 36, 0.1)' } : {}}
                 >
                   <div className="flex items-center space-x-3">
-                    <span style={isActive ? { color: '#8b5cf6' } : {}}>
+                    <span style={isActive ? { color: '#b45309' } : {}}>
                       {item.icon}
                     </span>
-                    <span style={isActive ? { color: '#8b5cf6' } : {}}>
+                    <span style={isActive ? { color: '#b45309' } : {}}>
                       {item.label}
                     </span>
                   </div>
@@ -170,7 +170,7 @@ const TailwindSidebar = ({ isOpen, onClose, expandedItems, onToggleItem, current
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
-                      style={isActive ? { color: '#8b5cf6' } : {}}
+                      style={isActive ? { color: '#b45309' } : {}}
                       className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
                     >
                       <polyline points="6,9 12,15 18,9"></polyline>
