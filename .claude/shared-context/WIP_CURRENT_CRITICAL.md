@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 4, 2025 at 4:30 PM PST
+**Updated:** December 5, 2025 at 10:30 AM PST
 **Machine:** Mac Mini
-**Status:** 🔧 UI/UX FIXES + CLIENT ACCESS SCOPING
+**Status:** ✅ FIREBASE AUTH COMPLETE - SSO + CREDITS SYSTEM
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -42,7 +42,26 @@
 
 ---
 
-### ✅ Recently Completed (Dec 4 - Current Session)
+### ✅ Recently Completed (Dec 5 - Current Session)
+
+1. **Firebase Auth / SSO Implementation Complete**
+   - Created `src/contexts/AuthContext.jsx` - Firebase Auth with Google/GitHub OAuth
+   - Created `src/hooks/useCredits.js` - Firestore-backed credits (free 3, premium unlimited)
+   - Created `src/components/auth/AuthModal.jsx` - Login/signup UI with SSO buttons
+   - Created `src/components/auth/UserMenu.jsx` - User avatar, credits display, dropdown
+   - Updated `src/RouterApp.jsx` - Wrapped app in AuthProvider
+   - Updated `src/pages/experiments/OutreachBusinessPage.jsx` - Added UserMenu to Hub header
+   - **Features:** Google OAuth, GitHub OAuth, email/password, password reset, Firestore user profiles
+
+2. **UnityMAP MVP Complete (From Previous Session)**
+   - Fixed edit campaign duplication bug (functional state updates)
+   - Removed ambiguous "Edit Campaign" button from MAP Actions
+   - Fixed "New Campaign" routing (Hub→Hub, Generator→Generator)
+   - Committed and deployed as `f1997ab`
+
+---
+
+### ✅ Previously Completed (Dec 4)
 
 1. **Color Consistency Fixed** - Unified to `rgb(251, 191, 36)` (#fbbf24)
    - Updated COLORS.yellow in constants.js
@@ -174,6 +193,74 @@ Fix requires: Firebase Firestore + user authentication
 - Documentation: 1 hour
 
 **Total: ~10 hours for complete ESP swappable system**
+
+---
+
+### 🔴 OPTION C: BACKEND PROXY FOR HOSTED GENERATION - SCOPED
+
+**Goal:** Provide truly free generation without exposing API keys in frontend
+
+**Problem:**
+- Current "3 free credits" is misleading - still requires user's own Groq API key
+- VITE_ env vars are bundled into frontend JavaScript (security risk if real keys used)
+- No way to offer free tier generation without key exposure
+
+**Solution Architecture:**
+
+```
+Frontend (OutreachGenerator)
+    ↓ POST /api/generate
+Firebase Cloud Function (proxy)
+    ├── Verify request (rate limit, origin check)
+    ├── Read GROQ_API_KEY from Firebase config (never exposed)
+    ├── Forward request to Groq API
+    └── Return response to frontend
+```
+
+**Implementation Steps:**
+
+1. **Firebase Cloud Function** (`functions/src/generate.js`)
+   - Accept POST with prompt, context
+   - Rate limit by IP (3/day for anonymous, 10/day for identified)
+   - Call Groq API with server-side key
+   - Return generated content
+
+2. **Firebase Config for Secrets**
+   ```bash
+   firebase functions:config:set groq.api_key="gsk_..."
+   ```
+
+3. **Frontend Update**
+   - Check for user's key first (bypass proxy)
+   - If no key + credits remaining → call proxy
+   - If no key + no credits → prompt for API key
+
+**Rate Limiting Strategy:**
+| Tier | Limit | Identification |
+|------|-------|----------------|
+| Anonymous | 3/day | IP + fingerprint |
+| Registered | 10/day | Firebase Auth UID |
+| Client | Unlimited | Access code verification |
+
+**Cost Impact:**
+- Groq FREE tier: 14,400 requests/day (shared across all users)
+- Firebase Functions: 2M invocations/month free
+- Estimated cost at 100 users/day: $0 (within free tier)
+
+**Estimated Effort:**
+- Firebase Function: 3 hours
+- Rate limiting logic: 2 hours
+- Frontend integration: 2 hours
+- Testing: 1 hour
+- **Total: ~8 hours**
+
+**Files to Create:**
+- `functions/src/generate.js` - Proxy function
+- `functions/src/rateLimit.js` - Rate limiting utility
+
+**Files to Modify:**
+- `src/pages/experiments/OutreachGeneratorPage.jsx` - Add proxy fallback
+- `firebase.json` - Add functions config
 
 ---
 

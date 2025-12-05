@@ -1,20 +1,20 @@
 # Project Roadmap - December 2025
 
-**Date:** December 2, 2025
-**Status:** 🚀 LAUNCH PREPARATION - Phased Execution Plan
-**Days Since Rho Exit:** 7 (Nov 25, 2025)
+**Date:** December 5, 2025
+**Status:** 🔐 FIREBASE AUTH COMPLETE - SSO + Credits System
+**Days Since Rho Exit:** 10 (Nov 25, 2025)
 
 ---
 
 ## 🔴 PHASED LAUNCH PLAN (5 Phases, 30 Days)
 
-### PHASE 0: IMMEDIATE BLOCKERS (Day 1-2)
+### PHASE 0: IMMEDIATE BLOCKERS (Day 1-2) ✅ COMPLETE
 | Task | Status | Owner |
 |------|--------|-------|
-| Google Tag Manager (GTM-T4D8CCDC) | 🔲 Ready | Claude Code |
-| Cal.com setup (vs Calendly - free tier better) | 🔲 Pending | Self |
-| Firebase re-auth + domain support ticket | 🔲 Pending | Self |
-| Favicon update from legacy assets | 🔲 Ready | Claude Code |
+| Google Tag Manager (GTM-T4D8CCDC) | ✅ Done | Claude Code |
+| Cal.com setup (integrated, not Calendly) | ✅ Done | Self |
+| Domain migration (yellowcircle.io) | ✅ Done | Self |
+| Favicon update from legacy assets | ✅ Done | Claude Code |
 
 ### PHASE 1: INFRASTRUCTURE (Day 3-7)
 | Task | Status | Owner |
@@ -27,10 +27,12 @@
 ### PHASE 2: PRODUCT OPTIMIZATION (Day 8-14)
 | Task | Status | Owner |
 |------|--------|-------|
-| P0-1: Unity Notes cost optimization | 🔲 Scoped | Claude Code |
+| P0-1: Unity Notes v1 | ✅ Done | Claude Code |
+| Unity Notes UI refinements (gear, pagination, deletion) | ✅ Done | Claude Code |
+| Unity Notes cost optimization (free tier gating) | 🔲 Scoped | Claude Code |
 | P0-2: Assessment → Services funnel | 🔲 Scoped | Claude Code |
 | Component Library global components | 🔲 Planned | Claude Code |
-| Mobile responsiveness audit | 🔲 Planned | Self + Claude Code |
+| Mobile responsiveness audit | 🔲 In Progress | Self + Claude Code |
 
 ### PHASE 3: DISTRIBUTION & ADS (Day 15-21)
 | Task | Status | Owner |
@@ -52,6 +54,85 @@
 | GA4 goals/conversions | 🔲 Planned | Self |
 | GTM event tracking | 🔲 Planned | Claude Code |
 | Remarketing audiences | 🔲 Planned | Self |
+
+---
+
+## ✅ DECEMBER 5, 2025 - FIREBASE AUTH / SSO IMPLEMENTATION - COMPLETE
+
+### Mac Mini Session: Firebase Auth with SSO and Firestore-backed Credits
+
+**Deployed:** ✅ https://yellowcircle-app.web.app
+
+#### 1. Firebase Auth Context ✅ COMPLETE
+- `src/contexts/AuthContext.jsx` - Core authentication with Google/GitHub OAuth
+- Email/password login and signup
+- Password reset flow
+- User profile sync to Firestore on login
+
+#### 2. Credits System ✅ COMPLETE
+- `src/hooks/useCredits.js` - Tiered credit management
+- Firestore-backed for authenticated users
+- localStorage fallback for anonymous users
+- Premium tier support (unlimited credits)
+
+#### 3. Auth UI Components ✅ COMPLETE
+- `src/components/auth/AuthModal.jsx` - Login/signup modal with SSO buttons
+- `src/components/auth/UserMenu.jsx` - User avatar, credits display, dropdown menu
+
+#### 4. App Integration ✅ COMPLETE
+- `src/RouterApp.jsx` - Wrapped app in AuthProvider
+- `src/pages/experiments/OutreachBusinessPage.jsx` - Added UserMenu to Hub header
+
+**Files Created:**
+- `src/contexts/AuthContext.jsx` - Firebase Auth context (243 lines)
+- `src/hooks/useCredits.js` - Credits management hook (175 lines)
+- `src/components/auth/AuthModal.jsx` - Login modal (320 lines)
+- `src/components/auth/UserMenu.jsx` - User menu component (200 lines)
+
+**Files Modified:**
+- `src/RouterApp.jsx` - AuthProvider wrapper
+- `src/pages/experiments/OutreachBusinessPage.jsx` - UserMenu import + header
+
+**Features:**
+- Google OAuth (select_account prompt)
+- GitHub OAuth
+- Email/password authentication
+- Password reset via Firebase
+- User profiles stored in Firestore (`users` collection)
+- Credit system: 3 free for all, synced to Firestore for authenticated
+- Premium tier: unlimited credits
+
+---
+
+## ✅ DECEMBER 3, 2025 - TALK BUBBLE + MOBILE LAYOUT REFINEMENT - COMPLETE
+
+### Mac Mini Session: HomePage Talk Bubble Design + Button Layout Fix
+
+**Deployed:** ✅ https://yellowcircle-app.web.app
+
+#### 1. Talk Bubble Description ✅ ACCEPTED
+- ✅ Description in upper-right as speech bubble
+- ✅ Right-justified text with blur effect
+- ✅ Full copy with two sentences
+- ✅ Sharp corner design (`borderRadius: '12px 12px 12px 0'`)
+
+#### 2. Buttons - Single Row ✅ COMPLETE
+- ✅ `flexWrap: 'nowrap'` prevents wrapping
+- ✅ Separated into own fixed container
+
+#### 3. H1/Subtitle Position ✅ COMPLETE
+- ✅ Consistent across all scroll states
+
+#### 4. Sidebar Breadcrumb ✅ ACCEPTED
+- ✅ Flexbox wrapper centered
+
+#### 5. HamburgerMenu ✅ COMPLETE
+- ✅ Mobile positioning correct
+
+**Files Modified:**
+- `src/pages/HomePage.jsx` - Talk bubble + buttons
+- `src/components/global/Sidebar.jsx` - Breadcrumb
+- `src/components/global/HamburgerMenu.jsx` - Mobile positioning
 
 ---
 
@@ -1122,7 +1203,7 @@ h1.your-circle {
 
 ---
 
-**Last Updated:** December 2, 2025
-**Next Review:** December 7, 2025 (Week 2 of 60-Day Plan)
+**Last Updated:** December 5, 2025
+**Next Review:** December 10, 2025 (Week 2 of 60-Day Plan)
 **Owner:** Christopher Cooper
-**Version:** 2.1 (Dec 2 Session Update)
+**Version:** 2.3 (Dec 5 Firebase Auth / SSO Session)

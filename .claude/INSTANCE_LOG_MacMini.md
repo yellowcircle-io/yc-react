@@ -3,7 +3,7 @@
 **Machine:** Mac Mini
 **Instance ID:** mac-mini-primary
 **Created:** November 2, 2025
-**Last Updated:** November 28, 2025
+**Last Updated:** December 5, 2025
 
 ---
 
@@ -507,6 +507,89 @@ User clarified Unity MAP should be built in STEALTH mode as Rho may not be long-
 
 ---
 
+### Session 8: Mobile Optimizations + Layout Fixes
+**Date:** December 3, 2025 at 4:30 AM PST
+**Context:** Mobile layout polish for HomePage, Sidebar, HamburgerMenu
+
+**Tasks Completed:**
+
+1. **HomePage Layout Restructured** ✅
+   - Description moved to separate fixed container (positioned absolutely above main content)
+   - Subtitle position now consistent across all scroll states
+   - Buttons changed to single row layout (always `flexDirection: 'row'`)
+   - Button labels shortened: "SERVICES", "JOURNEYS", "CONTACT"
+   - Mobile button sizing: smaller padding (8px 12px), smaller font (9px)
+   - Max-width constrained to prevent overlap with CircleNav
+
+2. **Sidebar Breadcrumb Mobile Alignment Fixed** ✅
+   - Mobile position adjusted: `top: 140px → 120px`
+   - Mobile centering: `left: 40px` with `translateX(-50%)` transform
+   - Transform origin changed to `center center` for proper centering
+   - Mobile maxWidth: `120px → 100px`
+
+3. **HamburgerMenu Mobile Positioning Fixed** ✅
+   - Added mobile detection state
+   - Hamburger button: `right: 50px → 20px` on mobile
+   - Menu overlay paddingRight: `max(50px, 5vw) → 20px` on mobile
+   - Slide-over panel: full width (`100vw`) on mobile with `20px` paddingRight
+
+**Files Modified:**
+- `src/pages/HomePage.jsx` - Layout restructure
+- `src/components/global/Sidebar.jsx` - Breadcrumb mobile centering
+- `src/components/global/HamburgerMenu.jsx` - Mobile positioning
+
+**Build Status:** ✅ Successful (2.60s, no errors)
+**Deployed:** ✅ https://yellowcircle-app.web.app
+
+---
+
+### Session 8 (Continued): Talk Bubble + Button Fix - ISSUES PENDING
+**Date:** December 3, 2025 at 5:00 AM - 6:30 AM PST
+**Context:** Mobile refinement - Talk bubble + breadcrumb alignment
+
+**Tasks Completed:**
+
+1. **Talk Bubble Description Design** ⚠️ CHEVRON NOT WORKING
+   - ✅ Description repositioned to upper-right as speech bubble
+   - ✅ Right-justified text with blur effect
+   - ✅ Full copy with two sentences restored
+   - ❌ **CHEVRON FAILED** - 4 approaches attempted:
+     - CSS border triangle (`border-top/left/right`) - Not visible
+     - SVG polygon element - Not visible
+     - Unicode triangle character (▼) - Not visible
+     - Current: Sharp corner via `borderRadius: '12px 12px 12px 0'`
+
+2. **Buttons - Single Row Fix** ✅ WORKING
+   - `flexWrap: 'nowrap'` to prevent wrapping on all devices
+   - `flexShrink: 0` on each button
+   - Separated into own fixed container at `bottom: 40px`
+   - H1/subtitle in separate container at `bottom: 80px`
+
+3. **Breadcrumb Alignment** ⚠️ STILL MISALIGNED
+   - Multiple approaches attempted:
+     - `left: 40px` with `transformOrigin: center center` - Misaligned
+     - `left: 28px` with `transformOrigin: left center` - Misaligned
+     - `left: 40px` simplified - Misaligned
+     - Current: Flexbox wrapper (80px wide, centered) - Testing
+
+**Files Modified:**
+- `src/pages/HomePage.jsx` - Talk bubble + buttons
+- `src/components/global/Sidebar.jsx` - Breadcrumb (needs more work)
+
+**Build Status:** ✅ Successful
+**Deployed:** ✅ https://yellowcircle-app.web.app
+
+**PENDING ISSUES:**
+1. Talk bubble chevron not rendering (4 approaches failed)
+2. Desktop breadcrumb misaligned (4 approaches failed)
+
+**Approaches NOT Yet Tried:**
+- Image/SVG file for chevron
+- CSS `::after` pseudo-element for chevron
+- Absolute pixel positioning based on viewport inspection
+
+---
+
 ## Files Created by This Instance
 
 ### Analysis Documents (Session 1)
@@ -739,6 +822,49 @@ Location: `.claude/shared-context/`
 **Next Scheduled Cleanup:** December 1, 2025
 
 **Machine Note:** This maintenance system is Mac Mini specific due to different storage patterns on MacBook Air.
+
+---
+
+### Session 9: Firebase Auth / SSO Implementation
+**Date:** December 5, 2025 at 10:30 AM PST
+**Context:** Complete Firebase Auth with SSO and Firestore-backed credits
+
+**Tasks Completed:**
+
+1. **Firebase Auth Context** ✅
+   - Created `src/contexts/AuthContext.jsx` (243 lines)
+   - Google OAuth with `select_account` prompt
+   - GitHub OAuth
+   - Email/password authentication
+   - Password reset via Firebase
+   - User profile sync to Firestore on login
+
+2. **Credits System Hook** ✅
+   - Created `src/hooks/useCredits.js` (175 lines)
+   - Firestore-backed credits for authenticated users
+   - localStorage fallback for anonymous users
+   - Tiered system: free (3), premium (unlimited)
+   - Methods: useCredit, addCredits, hasCredits
+
+3. **Auth UI Components** ✅
+   - Created `src/components/auth/AuthModal.jsx` (320 lines)
+     - Google/GitHub SSO buttons with icons
+     - Email/password form
+     - Login/signup/password-reset modes
+   - Created `src/components/auth/UserMenu.jsx` (200 lines)
+     - User avatar with initials fallback
+     - Credits badge showing remaining
+     - Dropdown with tier and sign out
+
+4. **App Integration** ✅
+   - Updated `src/RouterApp.jsx` - AuthProvider wrapper
+   - Updated `src/pages/experiments/OutreachBusinessPage.jsx` - UserMenu in Hub header
+
+**Commits Made:**
+- Feature: Firebase Auth with SSO and Firestore-backed credits
+
+**Build Status:** ✅ Successful
+**Deployed:** ✅ https://yellowcircle-app.web.app
 
 ---
 
