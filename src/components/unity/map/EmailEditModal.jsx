@@ -187,7 +187,7 @@ const EmailEditModal = ({ isOpen, onClose, emailData, onSave }) => {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#e5e7eb';
-              e.currentTarget.style.borderColor = '#8b5cf6';
+              e.currentTarget.style.borderColor = 'rgb(251, 191, 36)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#f3f4f6';
@@ -200,9 +200,9 @@ const EmailEditModal = ({ isOpen, onClose, emailData, onSave }) => {
               color: '#6b7280',
               lineHeight: '1.5'
             }}>
-              <strong style={{ color: '#8b5cf6' }}>Need AI assistance?</strong> Use the Outreach Generator to create
+              <strong style={{ color: '#b45309' }}>Need AI assistance?</strong> Use the Outreach Generator to create
               AI-powered email sequences with personalization variables.
-              <span style={{ color: '#8b5cf6', marginLeft: '8px' }}>Go to Outreach →</span>
+              <span style={{ color: '#b45309', marginLeft: '8px' }}>Go to Outreach →</span>
             </p>
           </button>
         </div>
@@ -237,8 +237,8 @@ const EmailEditModal = ({ isOpen, onClose, emailData, onSave }) => {
               padding: '10px 24px',
               border: 'none',
               borderRadius: '6px',
-              backgroundColor: '#8b5cf6',
-              color: '#fff',
+              backgroundColor: 'rgb(251, 191, 36)',
+              color: '#111827',
               fontSize: '13px',
               fontWeight: '600',
               cursor: isSaving ? 'not-allowed' : 'pointer',

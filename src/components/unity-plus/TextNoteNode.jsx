@@ -24,7 +24,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
      id?.startsWith('video-') ? 'video' : 'note');
 
   const isDarkTheme = data.theme === 'dark';
-  const accentColor = data.color || '#3B82F6'; // Default blue
+  const accentColor = data.color || 'rgb(251, 191, 36)'; // Default yellow
 
   // Card type configurations
   const cardTypeConfig = {
@@ -329,8 +329,8 @@ const TextNoteNode = memo(({ data, id, selected }) => {
                 width: '100%',
                 padding: '8px',
                 marginBottom: '8px',
-                backgroundColor: isAiLoading ? '#d1d5db' : '#10b981',
-                color: 'white',
+                backgroundColor: isAiLoading ? '#d1d5db' : 'rgb(251, 191, 36)',
+                color: isAiLoading ? 'white' : '#111827',
                 border: 'none',
                 borderRadius: '4px',
                 fontSize: '11px',
@@ -445,9 +445,9 @@ const TextNoteNode = memo(({ data, id, selected }) => {
               }}
               style={{
                 padding: '6px 10px',
-                backgroundColor: 'rgba(139, 92, 246, 0.9)',
-                color: 'white',
-                border: '2px solid #8b5cf6',
+                backgroundColor: 'rgba(251, 191, 36, 0.9)',
+                color: '#111827',
+                border: '2px solid rgb(251, 191, 36)',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '10px',
@@ -460,11 +460,11 @@ const TextNoteNode = memo(({ data, id, selected }) => {
                 userSelect: 'none'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#7c3aed';
+                e.target.style.backgroundColor = 'rgb(245, 176, 0)';
                 e.target.style.transform = 'scale(1.05)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.9)';
+                e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.9)';
                 e.target.style.transform = 'scale(1)';
               }}
             >
@@ -574,9 +574,9 @@ const TextNoteNode = memo(({ data, id, selected }) => {
             }}
             style={{
               padding: '6px 10px',
-              backgroundColor: 'rgba(220, 38, 38, 0.9)',
+              backgroundColor: '#374151',
               color: 'white',
-              border: '2px solid #dc2626',
+              border: '2px solid #374151',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '10px',
@@ -589,15 +589,15 @@ const TextNoteNode = memo(({ data, id, selected }) => {
               userSelect: 'none'
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#b91c1c';
+              e.target.style.backgroundColor = '#1f2937';
               e.target.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';
+              e.target.style.backgroundColor = '#374151';
               e.target.style.transform = 'scale(1)';
             }}
           >
-            🗑️ DELETE
+            × DELETE
           </button>
         </div>
       )}

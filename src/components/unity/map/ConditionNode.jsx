@@ -177,26 +177,39 @@ const ConditionNode = memo(({ id, data, selected }) => {
               }}
               style={{
                 position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                width: '22px',
-                height: '22px',
+                top: '-6px',
+                right: '-6px',
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                minHeight: '24px',
+                padding: 0,
                 borderRadius: '50%',
-                backgroundColor: '#fee2e2',
-                border: '2px solid #dc2626',
-                color: '#dc2626',
-                fontSize: '10px',
-                fontWeight: '700',
+                backgroundColor: '#374151',
+                border: '2px solid white',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '400',
+                lineHeight: 1,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)',
-                zIndex: 10
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                zIndex: 10,
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1f2937';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#374151';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
               title="Delete node"
             >
-              ✕
+              ×
             </button>
           )}
         </>

@@ -40,13 +40,13 @@ const EmailNode = memo(({ id, data, selected }) => {
       onMouseLeave={() => setIsHovered(false)}
       style={{
         backgroundColor: '#fff',
-        border: selected ? '3px solid #8b5cf6' : `2px solid ${colors.border}`,
+        border: selected ? '3px solid rgb(251, 191, 36)' : `2px solid ${colors.border}`,
         borderRadius: '12px',
         padding: '16px',
         minWidth: '220px',
         maxWidth: '280px',
         boxShadow: selected
-          ? '0 8px 24px rgba(139, 92, 246, 0.3)'
+          ? '0 8px 24px rgba(251, 191, 36, 0.4)'
           : '0 4px 12px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.2s ease'
       }}
@@ -58,7 +58,7 @@ const EmailNode = memo(({ id, data, selected }) => {
         style={{
           width: '12px',
           height: '12px',
-          backgroundColor: '#8b5cf6',
+          backgroundColor: 'rgb(251, 191, 36)',
           border: '2px solid #fff',
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
         }}
@@ -160,7 +160,7 @@ const EmailNode = memo(({ id, data, selected }) => {
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', fontWeight: '700', color: '#8b5cf6' }}>
+            <div style={{ fontSize: '14px', fontWeight: '700', color: '#b45309' }}>
               {stats.replied}
             </div>
             <div style={{ fontSize: '9px', color: '#6b7280', textTransform: 'uppercase' }}>
@@ -198,7 +198,7 @@ const EmailNode = memo(({ id, data, selected }) => {
               padding: '6px',
               fontSize: '10px',
               fontWeight: '600',
-              backgroundColor: '#8b5cf6',
+              backgroundColor: 'rgb(251, 191, 36)',
               color: '#fff',
               border: 'none',
               borderRadius: '4px',
@@ -244,21 +244,29 @@ const EmailNode = memo(({ id, data, selected }) => {
               }}
               style={{
                 width: '28px',
-                padding: '6px',
-                fontSize: '12px',
-                fontWeight: '600',
-                backgroundColor: '#fee2e2',
-                color: '#dc2626',
+                height: '28px',
+                padding: 0,
+                fontSize: '14px',
+                fontWeight: '400',
+                backgroundColor: '#374151',
+                color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1f2937';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#374151';
               }}
               title="Delete node"
             >
-              🗑️
+              ×
             </button>
           )}
         </div>
@@ -271,7 +279,7 @@ const EmailNode = memo(({ id, data, selected }) => {
         style={{
           width: '12px',
           height: '12px',
-          backgroundColor: '#8b5cf6',
+          backgroundColor: 'rgb(251, 191, 36)',
           border: '2px solid #fff',
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
         }}
