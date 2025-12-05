@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Lottie from 'lottie-react';
+import LottieIcon from '../shared/LottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
+// Import Lottie JSON files directly for reliability
+import arrowAnimation from '../../assets/lottie/arrow.json';
+import placeholderAnimation from '../../assets/lottie/placeholder.json';
 
 // Random page destinations for "Forward" when no action is mapped
 const RANDOM_DESTINATIONS = [
@@ -12,8 +15,6 @@ const RANDOM_DESTINATIONS = [
   { path: '/assessment', label: 'Assessment' },
   { path: '/experiments/golden-unknown', label: 'Golden Unknown' }
 ];
-import arrowAnimation from '../../assets/lottie/arrow.json';
-import placeholderAnimation from '../../assets/lottie/placeholder.json';
 
 /**
  * NavigationCircle - Bottom-right navigation circle with Lottie icons
@@ -46,8 +47,8 @@ const LottieCircle = ({ size = 78, isHovered = false, scrollOffset = 0, isHomePa
       position: 'relative',
       overflow: 'hidden',
       boxShadow: isHovered
-        ? '0 8px 24px rgba(238, 207, 0, 0.5)'
-        : '0 4px 12px rgba(238, 207, 0, 0.3)',
+        ? '0 8px 24px rgba(251, 191, 36, 0.5)'
+        : '0 4px 12px rgba(251, 191, 36, 0.3)',
       transition: 'box-shadow 0.3s ease, transform 0.2s ease',
       transform: isHovered ? 'scale(1.05)' : 'scale(1)'
     }}>
@@ -72,11 +73,12 @@ const LottieCircle = ({ size = 78, isHovered = false, scrollOffset = 0, isHomePa
           width: '48px',
           height: '48px'
         }}>
-          <Lottie
+          <LottieIcon
             animationData={arrowAnimation}
-            loop={isHovered}
-            autoplay={isHovered && showArrow}
-            style={{ width: 48, height: 48 }}
+            size={48}
+            isHovered={isHovered && showArrow}
+            useGrayscale={false}
+            alt="Navigate"
           />
         </div>
 
@@ -88,11 +90,12 @@ const LottieCircle = ({ size = 78, isHovered = false, scrollOffset = 0, isHomePa
           width: '48px',
           height: '48px'
         }}>
-          <Lottie
+          <LottieIcon
             animationData={placeholderAnimation}
-            loop={isHovered}
-            autoplay={isHovered && !showArrow}
-            style={{ width: 48, height: 48 }}
+            size={48}
+            isHovered={isHovered && !showArrow}
+            useGrayscale={false}
+            alt="Menu"
           />
         </div>
       </div>
@@ -109,7 +112,8 @@ const CircleContextMenu = ({
   onContact,
   onScrollNext,
   onHome,
-  onWorks
+  onWorks,
+  isMobile = false
 }) => {
   if (!isOpen) return null;
 
@@ -129,32 +133,32 @@ const CircleContextMenu = ({
 
   const buttonStyle = (item) => ({
     flex: 1,
-    padding: '8px 6px',
+    padding: isMobile ? '6px 4px' : '8px 6px',
     backgroundColor: item.color,
     color: 'white',
     border: 'none',
     borderRadius: '2px',
     cursor: 'pointer',
-    fontSize: '8px',
+    fontSize: isMobile ? '7px' : '8px',
     fontWeight: '700',
     letterSpacing: '0.03em',
     transition: 'background-color 0.2s',
-    minWidth: '58px'
+    minWidth: isMobile ? '48px' : '58px'
   });
 
   return (
     <div style={{
       position: 'fixed',
-      bottom: '140px',
-      right: '25px',
+      bottom: isMobile ? '90px' : '140px',
+      right: isMobile ? '12px' : '25px',
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       backdropFilter: 'blur(8px)',
       WebkitBackdropFilter: 'blur(8px)',
-      padding: '6px',
+      padding: isMobile ? '4px' : '6px',
       borderRadius: '4px',
       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
       zIndex: 360,
-      width: '130px',
+      width: isMobile ? '105px' : '130px',
       animation: 'menuSlideUp 0.2s ease-out'
     }}>
       <style>{`
@@ -218,6 +222,18 @@ function NavigationCircle({
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const circleRef = useRef(null);
+
+  // Mobile detection for smaller size
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Size based on device
+  const circleSize = isMobile ? 60 : 78;
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -327,11 +343,11 @@ function NavigationCircle({
         onMouseLeave={() => setIsHovered(false)}
         style={{
           position: 'fixed',
-          bottom: '50px',
-          right: '50px',
+          bottom: isMobile ? '20px' : '50px',
+          right: isMobile ? '16px' : '50px',
           zIndex: 350,  // Above everything - sidebar (50), menu overlay (250), slide-over (270), hamburger (260)
-          width: '78px',
-          height: '78px',
+          width: `${circleSize}px`,
+          height: `${circleSize}px`,
           cursor: 'pointer',
           transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
           transition: 'transform 0.5s ease-out',
@@ -339,7 +355,7 @@ function NavigationCircle({
         }}
         title="Click for menu"
       >
-        <LottieCircle size={78} isHovered={isHovered} scrollOffset={scrollOffset} isHomePage={isHomePage} />
+        <LottieCircle size={circleSize} isHovered={isHovered} scrollOffset={scrollOffset} isHomePage={isHomePage} />
       </div>
 
       {/* Context Menu */}
@@ -352,6 +368,7 @@ function NavigationCircle({
         onScrollNext={handleScrollNext}
         onHome={handleHome}
         onWorks={handleWorks}
+        isMobile={isMobile}
       />
     </div>
   );

@@ -104,7 +104,7 @@ const COMPANIES = [
     stage: 'Series C',
     year: '2013-2016',
     headline: 'Marketing ops transformation',
-    highlights: ['HubSpot-Salesforce integration', 'Attribution frameworks']
+    highlights: ['Marketo infrastructure', 'Attribution frameworks']
   }
 ];
 
@@ -112,17 +112,32 @@ function WorksPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Cards per view: 1 on mobile, 3 on desktop
+  const cardsPerView = isMobile ? 1 : 3;
+  const totalGroups = Math.ceil(COMPANIES.length / cardsPerView);
+
   // Scrolling state - mirroring HomePage pattern
   const [scrollOffset, setScrollOffset] = useState(0);
   const touchStartRef = useRef({ x: 0, y: 0 });
 
-  // Calculate which company is currently in view (0-10 for 11 companies)
-  // scrollOffset 0-200 maps across all companies
-  const currentCompanyIndex = Math.min(
-    COMPANIES.length - 1,
-    Math.floor((scrollOffset / 200) * COMPANIES.length)
+  // Calculate which group is currently in view
+  const currentGroupIndex = Math.min(
+    totalGroups - 1,
+    Math.floor((scrollOffset / 200) * totalGroups)
   );
-  const currentCompany = COMPANIES[currentCompanyIndex];
+
+  // Get current companies to display (1 on mobile, 3 on desktop)
+  const startIndex = currentGroupIndex * cardsPerView;
+  const currentCompanies = COMPANIES.slice(startIndex, startIndex + cardsPerView);
 
   // Inject stagger animation
   useEffect(() => {
@@ -278,18 +293,18 @@ function WorksPage() {
     navigate('/');
   };
 
-  // Handle scroll jump to next company (NEXT button in CircleNav menu)
-  const handleScrollNext = () => {
+  // Handle scroll jump to next group (NEXT button in CircleNav menu)
+  const handleScrollNext = useCallback(() => {
     if (scrollOffset >= 200) {
       // Already at end, open footer
       handleFooterToggle();
     } else {
-      // Jump to next company
-      const nextIndex = Math.min(COMPANIES.length - 1, currentCompanyIndex + 1);
-      const nextOffset = (nextIndex / (COMPANIES.length - 1)) * 200;
+      // Jump to next group
+      const nextIndex = Math.min(totalGroups - 1, currentGroupIndex + 1);
+      const nextOffset = totalGroups > 1 ? (nextIndex / (totalGroups - 1)) * 200 : 0;
       setScrollOffset(nextOffset);
     }
-  };
+  }, [scrollOffset, totalGroups, currentGroupIndex, handleFooterToggle]);
 
   // Handle company click - navigate to company detail page
   const handleCompanyClick = (companyId) => {
@@ -321,7 +336,7 @@ function WorksPage() {
         transition: 'background 0.3s ease-out'
       }}></div>
 
-      {/* Company Progress Indicator - Left side vertical dots */}
+      {/* Group Progress Indicator - Left side vertical dots */}
       <div style={{
         position: 'fixed',
         left: '20px',
@@ -332,18 +347,18 @@ function WorksPage() {
         gap: '8px',
         zIndex: 100
       }}>
-        {COMPANIES.map((company, index) => (
+        {Array.from({ length: totalGroups }).map((_, index) => (
           <button
-            key={company.id}
+            key={index}
             onClick={() => {
-              const targetOffset = (index / (COMPANIES.length - 1)) * 200;
+              const targetOffset = (index / (totalGroups - 1)) * 200;
               setScrollOffset(targetOffset);
             }}
             style={{
-              width: index === currentCompanyIndex ? '12px' : '8px',
-              height: index === currentCompanyIndex ? '12px' : '8px',
+              width: index === currentGroupIndex ? '12px' : '8px',
+              height: index === currentGroupIndex ? '12px' : '8px',
               borderRadius: '50%',
-              backgroundColor: index === currentCompanyIndex
+              backgroundColor: index === currentGroupIndex
                 ? COLORS.yellow
                 : 'rgba(0, 0, 0, 0.2)',
               border: 'none',
@@ -351,7 +366,7 @@ function WorksPage() {
               transition: 'all 0.2s ease',
               padding: 0
             }}
-            title={company.name}
+            title={`Group ${index + 1}`}
           />
         ))}
       </div>
@@ -361,10 +376,10 @@ function WorksPage() {
         position: 'fixed',
         bottom: '40px',
         left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        right: '40px',
         zIndex: 61,
         transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
+        transition: 'left 0.5s ease-out, transform 0.5s ease-out'
       }}>
         <div style={{
           ...TYPOGRAPHY.container
@@ -380,124 +395,212 @@ function WorksPage() {
             CLIENTS
           </h1>
 
-          {/* Company Card */}
+          {/* Company Cards - 1 on mobile, 3 on desktop */}
           <div
-            key={`company-card-${currentCompany.id}`}
+            key={`group-${currentGroupIndex}`}
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `2px solid ${COLORS.yellow}`,
-              borderRadius: '12px',
-              padding: '24px',
+              display: 'flex',
+              gap: '20px',
               marginTop: '16px',
-              maxWidth: '400px',
               animation: 'fadeInUp 0.4s ease-in-out both',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+              flexDirection: isMobile ? 'column' : 'row'
             }}
           >
-            {/* Company Name */}
-            <h2 style={{
-              fontSize: 'clamp(1.2rem, 3vw, 1.6rem)',
-              fontWeight: '700',
-              color: COLORS.black,
-              margin: '0 0 4px 0',
-              letterSpacing: '-0.5px'
-            }}>
-              {currentCompany.name.toUpperCase()}
-            </h2>
-
-            {/* Category • Stage • Year */}
-            <p style={{
-              fontSize: '13px',
-              color: 'rgba(0, 0, 0, 0.6)',
-              margin: '0 0 16px 0',
-              fontWeight: '500'
-            }}>
-              {currentCompany.category} • {currentCompany.stage} • {currentCompany.year}
-            </p>
-
-            {/* Divider */}
-            <div style={{
-              height: '1px',
-              backgroundColor: 'rgba(251, 191, 36, 0.3)',
-              margin: '0 0 16px 0'
-            }}></div>
-
-            {/* Headline */}
-            <p style={{
-              fontSize: '15px',
-              color: COLORS.black,
-              margin: '0 0 16px 0',
-              lineHeight: '1.5',
-              fontWeight: '500'
-            }}>
-              {currentCompany.headline}
-            </p>
-
-            {/* Highlights */}
-            <div style={{ marginBottom: '20px' }}>
-              {currentCompany.highlights.map((highlight, idx) => (
-                <div key={idx} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px'
+            {currentCompanies.map((company, idx) => (
+              <div
+                key={company.id}
+                onClick={() => handleCompanyClick(company.id)}
+                style={{
+                  flex: isMobile ? 'none' : '1 1 0',
+                  maxWidth: isMobile ? '100%' : '320px',
+                  width: isMobile ? '100%' : 'auto',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: `2px solid ${COLORS.yellow}`,
+                  borderRadius: '12px',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                  animation: `fadeInUp 0.4s ease-in-out ${0.1 * idx}s both`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 8px 30px rgba(251, 191, 36, 0.25)';
+                  e.currentTarget.style.borderColor = 'black';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.borderColor = COLORS.yellow;
+                }}
+              >
+                {/* Company Name */}
+                <h2 style={{
+                  fontSize: 'clamp(1rem, 2vw, 1.3rem)',
+                  fontWeight: '700',
+                  color: COLORS.black,
+                  margin: '0 0 4px 0',
+                  letterSpacing: '-0.5px'
                 }}>
-                  <span style={{
-                    color: COLORS.yellow,
-                    fontSize: '14px',
-                    fontWeight: '700'
-                  }}>✓</span>
-                  <span style={{
-                    fontSize: '14px',
-                    color: 'rgba(0, 0, 0, 0.75)'
-                  }}>{highlight}</span>
-                </div>
-              ))}
-            </div>
+                  {company.name.toUpperCase()}
+                </h2>
 
-            {/* CTA Button */}
-            <button
-              onClick={() => handleCompanyClick(currentCompany.id)}
-              style={{
-                width: '100%',
-                padding: '12px 20px',
-                backgroundColor: COLORS.yellow,
-                color: COLORS.black,
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: '700',
-                letterSpacing: '0.08em',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = COLORS.black;
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = COLORS.yellow;
-                e.currentTarget.style.color = COLORS.black;
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              READ CASE STUDY →
-            </button>
+                {/* Category • Stage • Year */}
+                <p style={{
+                  fontSize: '11px',
+                  color: 'rgba(0, 0, 0, 0.6)',
+                  margin: '0 0 12px 0',
+                  fontWeight: '500'
+                }}>
+                  {company.category} • {company.stage} • {company.year}
+                </p>
+
+                {/* Divider */}
+                <div style={{
+                  height: '1px',
+                  backgroundColor: 'rgba(251, 191, 36, 0.3)',
+                  margin: '0 0 12px 0'
+                }}></div>
+
+                {/* Headline */}
+                <p style={{
+                  fontSize: '13px',
+                  color: COLORS.black,
+                  margin: '0 0 12px 0',
+                  lineHeight: '1.4',
+                  fontWeight: '500'
+                }}>
+                  {company.headline}
+                </p>
+
+                {/* Highlights */}
+                <div style={{ marginBottom: '16px' }}>
+                  {company.highlights.map((highlight, hidx) => (
+                    <div key={hidx} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '6px'
+                    }}>
+                      <span style={{
+                        color: COLORS.yellow,
+                        fontSize: '12px',
+                        fontWeight: '700'
+                      }}>✓</span>
+                      <span style={{
+                        fontSize: '12px',
+                        color: 'rgba(0, 0, 0, 0.75)'
+                      }}>{highlight}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCompanyClick(company.id);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    backgroundColor: COLORS.yellow,
+                    color: COLORS.black,
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.08em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = COLORS.black;
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = COLORS.yellow;
+                    e.currentTarget.style.color = COLORS.black;
+                  }}
+                >
+                  READ CASE STUDY →
+                </button>
+              </div>
+            ))}
           </div>
 
-          {/* Progress Counter */}
-          <p style={{
-            ...TYPOGRAPHY.small,
-            margin: '16px 0 0 0',
-            color: 'rgba(0, 0, 0, 0.4)',
-            fontWeight: '600',
-            letterSpacing: '0.1em'
+          {/* Navigation + Progress Counter */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: '16px'
           }}>
-            {currentCompanyIndex + 1} / {COMPANIES.length}
-          </p>
+            {/* Navigation Arrows - Left side */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  const prevIndex = Math.max(0, currentGroupIndex - 1);
+                  const prevOffset = totalGroups > 1 ? (prevIndex / (totalGroups - 1)) * 200 : 0;
+                  setScrollOffset(prevOffset);
+                }}
+                disabled={currentGroupIndex === 0}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: currentGroupIndex === 0 ? 'rgba(0,0,0,0.1)' : COLORS.yellow,
+                  color: currentGroupIndex === 0 ? 'rgba(0,0,0,0.3)' : 'black',
+                  fontSize: '16px',
+                  cursor: currentGroupIndex === 0 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ←
+              </button>
+              <button
+                onClick={() => {
+                  const nextIndex = Math.min(totalGroups - 1, currentGroupIndex + 1);
+                  const nextOffset = totalGroups > 1 ? (nextIndex / (totalGroups - 1)) * 200 : 0;
+                  setScrollOffset(nextOffset);
+                }}
+                disabled={currentGroupIndex === totalGroups - 1}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: currentGroupIndex === totalGroups - 1 ? 'rgba(0,0,0,0.1)' : COLORS.yellow,
+                  color: currentGroupIndex === totalGroups - 1 ? 'rgba(0,0,0,0.3)' : 'black',
+                  fontSize: '16px',
+                  cursor: currentGroupIndex === totalGroups - 1 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                →
+              </button>
+            </div>
+
+            {/* Progress Counter - Right side */}
+            <p style={{
+              ...TYPOGRAPHY.small,
+              margin: 0,
+              color: 'rgba(0, 0, 0, 0.4)',
+              fontWeight: '600',
+              letterSpacing: '0.1em'
+            }}>
+              {currentGroupIndex + 1} / {totalGroups}
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

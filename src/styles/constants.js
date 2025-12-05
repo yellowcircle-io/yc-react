@@ -5,9 +5,11 @@
 
 // Primary Colors
 export const COLORS = {
-  // Brand Colors
-  yellow: '#fbbf24',        // Primary yellow (buttons, accents, H1)
+  // Brand Colors - STANDARDIZED to rgb(251, 191, 36) / #fbbf24 (warm yellow-orange)
+  yellow: 'rgb(251, 191, 36)',        // Primary brand yellow (buttons, accents, H1)
+  yellowHex: '#fbbf24',               // Hex version for color pickers
   yellowTransparent: 'rgba(251, 191, 36, 0.7)',  // H1 text with transparency
+  yellowLight: 'rgba(251, 191, 36, 0.15)',  // Light yellow for backgrounds
   black: '#000000',          // Text, backgrounds
   white: '#FFFFFF',          // Backgrounds, text on dark
   grey: '#333333',           // Body text (4.6:1 contrast on white)
@@ -27,8 +29,8 @@ export const COLORS = {
   backgroundLight: 'rgba(241, 239, 232, 0.38)',  // Text background with blur
   sidebarBg: 'rgba(242, 242, 242, 0.44)',
   footerBlack: 'rgba(0,0,0,0.9)',
-  footerYellow: 'rgb(251, 191, 36)',
-  menuOverlay: 'rgb(251, 191, 36)'
+  footerYellow: 'rgb(238, 207, 0)',  // Brand yellow
+  menuOverlay: 'rgb(238, 207, 0)'    // Brand yellow
 };
 
 // Typography Styles

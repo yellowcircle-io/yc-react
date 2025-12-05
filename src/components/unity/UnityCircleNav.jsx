@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Lottie from 'lottie-react';
+import LottieIcon from '../shared/LottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
+// Import Lottie JSON files directly for reliability
 import settingsAnimation from '../../assets/lottie/settings-gear.json';
 import addAnimation from '../../assets/lottie/add.json';
 
@@ -25,23 +26,21 @@ const AddIconCircle = ({ size = 78, isHovered = false }) => {
       position: 'relative',
       overflow: 'hidden',
       boxShadow: isHovered
-        ? '0 8px 24px rgba(238, 207, 0, 0.5)'
-        : '0 4px 12px rgba(238, 207, 0, 0.3)',
+        ? '0 8px 24px rgba(251, 191, 36, 0.5)'
+        : '0 4px 12px rgba(251, 191, 36, 0.3)',
       transition: 'box-shadow 0.3s ease, transform 0.2s ease',
       transform: isHovered ? 'scale(1.05)' : 'scale(1)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      {/* Add Lottie Animation */}
-      <Lottie
+      {/* Add Lottie Animation - using LottieIcon for unified approach */}
+      <LottieIcon
         animationData={addAnimation}
-        loop={isHovered}
-        autoplay={isHovered}
-        style={{
-          width: size * 0.75,
-          height: size * 0.75
-        }}
+        size={size * 0.75}
+        isHovered={isHovered}
+        useGrayscale={false}
+        alt="Add note"
       />
     </div>
   );
@@ -91,15 +90,12 @@ const SettingsGear = ({ onClick, isHovered, onHover }) => {
         justifyContent: 'center',
         filter: 'invert(1) brightness(2)'
       }}>
-        <Lottie
-          key={`gear-${isHovered ? 'playing' : 'stopped'}`}
+        <LottieIcon
           animationData={settingsAnimation}
-          loop={isHovered}
-          autoplay={isHovered}
-          style={{
-            width: 20,
-            height: 20
-          }}
+          size={20}
+          isHovered={isHovered}
+          useGrayscale={false}
+          alt="Settings"
         />
       </div>
     </button>
@@ -122,7 +118,7 @@ const OptionsMenu = ({
   if (!isOpen) return null;
 
   const menuItems = [
-    { label: '+ ADD NOTE', action: onAddNote, color: '#EECF00', textColor: 'black', hoverColor: '#fbbf24' },
+    { label: '+ ADD NOTE', action: onAddNote, color: 'rgb(251, 191, 36)', textColor: 'black', hoverColor: '#d4a000' },
     { label: 'EXPORT', action: onExport, color: '#3b82f6', textColor: 'white', hoverColor: '#2563eb' },
     { label: 'IMPORT', action: onImport, color: '#8b5cf6', textColor: 'white', hoverColor: '#7c3aed' },
     {
