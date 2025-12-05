@@ -6,14 +6,18 @@ import { Handle, Position } from '@xyflow/react';
  *
  * Represents a prospect list or segment that starts a campaign journey.
  * Only has output handle (prospects flow out to email sequences).
+ *
+ * The prospect node is the "source of truth" for the campaign - clicking
+ * "Edit Campaign" returns to Hub/Generator to modify the entire sequence.
  */
-const ProspectNode = memo(({ data, selected }) => {
+const ProspectNode = memo(({ id, data, selected }) => {
   const {
     label = 'Prospects',
     count = 0,
     segment = 'All',
     tags = [],
-    source = 'manual' // 'manual', 'airtable', 'firebase', 'csv'
+    source = 'manual', // 'manual', 'airtable', 'firebase', 'csv'
+    onEditCampaign // Callback to edit entire campaign in Hub/Generator
   } = data;
 
   const sourceIcons = {
@@ -129,6 +133,46 @@ const ProspectNode = memo(({ data, selected }) => {
             </span>
           ))}
         </div>
+      )}
+
+      {/* Edit Campaign Button - Always visible when callback is available */}
+      {onEditCampaign && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditCampaign(id, data);
+          }}
+          style={{
+            width: '100%',
+            marginTop: '12px',
+            padding: '8px 12px',
+            fontSize: '11px',
+            fontWeight: '600',
+            color: selected ? '#EECF00' : '#6b7280',
+            backgroundColor: selected ? 'rgba(238, 207, 0, 0.15)' : 'rgba(107, 114, 128, 0.1)',
+            border: `1px solid ${selected ? 'rgba(238, 207, 0, 0.4)' : 'rgba(107, 114, 128, 0.2)'}`,
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+            e.currentTarget.style.borderColor = '#EECF00';
+            e.currentTarget.style.color = '#EECF00';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = selected ? 'rgba(238, 207, 0, 0.15)' : 'rgba(107, 114, 128, 0.1)';
+            e.currentTarget.style.borderColor = selected ? 'rgba(238, 207, 0, 0.4)' : 'rgba(107, 114, 128, 0.2)';
+            e.currentTarget.style.color = selected ? '#EECF00' : '#6b7280';
+          }}
+        >
+          <span>✏️</span>
+          <span>Edit Campaign</span>
+        </button>
       )}
 
       {/* Output Handle - Bottom */}
