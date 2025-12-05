@@ -27,8 +27,10 @@ import { mapNodeTypes, createJourneyFromOutreach } from '../components/unity/map
 import EmailEditModal from '../components/unity/map/EmailEditModal';
 import WaitEditModal from '../components/unity/map/WaitEditModal';
 import ConditionEditModal from '../components/unity/map/ConditionEditModal';
+import ProspectInputModal from '../components/unity/map/ProspectInputModal';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
+import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -103,6 +105,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Firebase hook for UnityMAP journey persistence
+  const { saveJourney, loadJourney, updateJourney, publishJourney, listJourneys, isSaving: isSavingJourney, isLoading: isLoadingJourney } = useFirebaseJourney();
+  const [currentJourneyId, setCurrentJourneyId] = useState(null);
+  const [journeyTitle, setJourneyTitle] = useState('Untitled Journey');
+  const [journeyStatus, setJourneyStatus] = useState('draft'); // draft, active, paused, completed
+  const [showProspectModal, setShowProspectModal] = useState(false);
 
   // Check if user has pro/admin access for cloud features
   const hasProAccess = () => {
@@ -667,6 +676,69 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [zoomIn, zoomOut, fitView]);
 
+  // Auto-layout function to organize nodes
+  const handleAutoLayout = useCallback(() => {
+    if (nodes.length === 0) return;
+
+    const NODE_WIDTH = 250;
+    const NODE_HEIGHT = 150;
+    const VERTICAL_GAP = 60;
+    const HORIZONTAL_GAP = 80;
+    const START_X = 100;
+    const START_Y = 100;
+
+    // Separate MAP nodes from regular nodes
+    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
+    const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
+    const regularNodes = nodes.filter(n => !mapNodeTypes.includes(n.type));
+
+    let updatedNodes = [];
+
+    // Layout MAP nodes in vertical flow
+    if (mapNodes.length > 0) {
+      // Sort by original position to maintain order
+      const sortedMapNodes = [...mapNodes].sort((a, b) => a.position.y - b.position.y);
+
+      // Center X position for vertical flow
+      const centerX = 400;
+
+      sortedMapNodes.forEach((node, index) => {
+        updatedNodes.push({
+          ...node,
+          position: {
+            x: centerX,
+            y: START_Y + (index * (NODE_HEIGHT + VERTICAL_GAP))
+          }
+        });
+      });
+    }
+
+    // Layout regular notes in grid
+    if (regularNodes.length > 0) {
+      const COLS = Math.ceil(Math.sqrt(regularNodes.length));
+      const offsetX = mapNodes.length > 0 ? 800 : START_X; // Offset right if MAP nodes exist
+
+      regularNodes.forEach((node, index) => {
+        const row = Math.floor(index / COLS);
+        const col = index % COLS;
+        updatedNodes.push({
+          ...node,
+          position: {
+            x: offsetX + (col * (NODE_WIDTH + HORIZONTAL_GAP)),
+            y: START_Y + (row * (NODE_HEIGHT + VERTICAL_GAP))
+          }
+        });
+      });
+    }
+
+    setNodes(updatedNodes);
+
+    // Fit view after layout
+    setTimeout(() => {
+      fitView({ duration: 400, padding: 0.2 });
+    }, 100);
+  }, [nodes, setNodes, fitView]);
+
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -917,6 +989,142 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setNodes([]);
       setEdges([]);
       localStorage.removeItem(STORAGE_KEY);
+      setCurrentJourneyId(null);
+    }
+  };
+
+  // Save UnityMAP journey to cloud (Pro feature)
+  const handleSaveJourney = async () => {
+    // Gate cloud saving for pro/admin users only
+    if (!hasProAccess()) {
+      alert(
+        '☁️ Cloud Save - Pro Feature\n\n' +
+        'Cloud saving is available for Pro users.\n\n' +
+        '✅ Your work is saved locally automatically\n' +
+        '✅ Use EXPORT to save as JSON file\n\n' +
+        'Contact us for Pro access.'
+      );
+      return;
+    }
+
+    // Check for MAP nodes
+    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
+    const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
+
+    if (mapNodes.length === 0) {
+      alert('⚠️ No MAP nodes to save.\n\nCreate a journey in Outreach Generator first.');
+      return;
+    }
+
+    try {
+      let journeyId;
+
+      if (currentJourneyId) {
+        // Update existing journey
+        await updateJourney(currentJourneyId, nodes, edges, {
+          title: journeyTitle,
+          status: 'draft'
+        });
+        journeyId = currentJourneyId;
+        alert('✅ Journey updated successfully!');
+      } else {
+        // Save new journey
+        journeyId = await saveJourney(nodes, edges, {
+          title: journeyTitle,
+          status: 'draft'
+        });
+        setCurrentJourneyId(journeyId);
+        alert(`✅ Journey saved!\n\nID: ${journeyId}`);
+      }
+
+      console.log('Journey saved:', journeyId);
+    } catch (error) {
+      console.error('❌ Save journey failed:', error);
+
+      if (error.message.includes('quota') || error.message.includes('exceeded')) {
+        alert(
+          '🔴 FIREBASE QUOTA EXCEEDED\n\n' +
+          'The free tier limit has been reached.\n\n' +
+          '✅ Your work is still saved locally\n' +
+          '✅ Use EXPORT to save as JSON file'
+        );
+      } else {
+        alert(`❌ Save failed: ${error.message}`);
+      }
+    }
+  };
+
+  // Handle opening publish modal
+  const handleStartPublish = async () => {
+    if (!hasProAccess()) {
+      alert(
+        '☁️ Publish Journey - Pro Feature\n\n' +
+        'Publishing journeys is available for Pro users.\n\n' +
+        'Contact us for Pro access.'
+      );
+      return;
+    }
+
+    // Check for MAP nodes
+    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
+    const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
+
+    if (mapNodes.length === 0) {
+      alert('⚠️ No MAP nodes to publish.\n\nCreate a journey in Outreach Generator first.');
+      return;
+    }
+
+    const emailNodes = nodes.filter(n => n.type === 'emailNode');
+    if (emailNodes.length === 0) {
+      alert('⚠️ No email nodes in journey.\n\nAdd at least one email to publish.');
+      return;
+    }
+
+    // Save journey first if not saved
+    if (!currentJourneyId) {
+      try {
+        const journeyId = await saveJourney(nodes, edges, {
+          title: journeyTitle,
+          status: 'draft'
+        });
+        setCurrentJourneyId(journeyId);
+      } catch (error) {
+        alert(`❌ Failed to save journey: ${error.message}`);
+        return;
+      }
+    }
+
+    // Open prospect modal
+    setShowProspectModal(true);
+  };
+
+  // Handle publishing with prospects
+  const handlePublishWithProspects = async (prospects) => {
+    if (!currentJourneyId) {
+      alert('❌ Journey must be saved first');
+      return;
+    }
+
+    try {
+      // Update journey with current nodes/edges first
+      await updateJourney(currentJourneyId, nodes, edges, {
+        title: journeyTitle
+      });
+
+      // Publish with prospects
+      const result = await publishJourney(currentJourneyId, prospects);
+
+      setJourneyStatus('active');
+      setShowProspectModal(false);
+
+      alert(
+        `✅ Journey Published!\n\n` +
+        `${result.prospectCount} prospect(s) added.\n\n` +
+        `The Cloud Scheduler will process emails every 15 minutes.`
+      );
+    } catch (error) {
+      console.error('❌ Publish failed:', error);
+      alert(`❌ Publish failed: ${error.message}`);
     }
   };
 
@@ -1218,6 +1426,115 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           ⊙
         </button>
 
+        {/* Auto-Layout Button */}
+        <button
+          onClick={handleAutoLayout}
+          style={{
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            border: '1px solid rgba(0, 0, 0, 0.15)',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: 'black',
+            transition: 'background-color 0.2s, transform 0.2s',
+            marginTop: '4px'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+            e.target.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+            e.target.style.transform = 'scale(1)';
+          }}
+          title="Auto-Organize Nodes"
+        >
+          ⊞
+        </button>
+
+        {/* Cloud Save Button (MAP mode only) */}
+        {hasJourneyContent && (
+          <button
+            onClick={handleSaveJourney}
+            disabled={isSavingJourney}
+            style={{
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: currentJourneyId ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.05)',
+              border: `1px solid ${currentJourneyId ? 'rgba(16, 185, 129, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
+              borderRadius: '6px',
+              cursor: isSavingJourney ? 'wait' : 'pointer',
+              fontSize: '14px',
+              color: currentJourneyId ? '#10b981' : 'black',
+              transition: 'all 0.2s ease',
+              marginTop: '4px',
+              opacity: isSavingJourney ? 0.6 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!isSavingJourney) {
+                e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
+                e.target.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSavingJourney) {
+                e.target.style.backgroundColor = currentJourneyId ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.05)';
+                e.target.style.transform = 'scale(1)';
+              }
+            }}
+            title={currentJourneyId ? 'Update Journey in Cloud' : 'Save Journey to Cloud'}
+          >
+            {isSavingJourney ? '⏳' : '☁️'}
+          </button>
+        )}
+
+        {/* Publish Journey Button (MAP mode only) */}
+        {hasJourneyContent && (
+          <button
+            onClick={handleStartPublish}
+            disabled={isSavingJourney || journeyStatus === 'active'}
+            style={{
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: journeyStatus === 'active' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(0, 0, 0, 0.05)',
+              border: `1px solid ${journeyStatus === 'active' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
+              borderRadius: '6px',
+              cursor: journeyStatus === 'active' ? 'default' : 'pointer',
+              fontSize: '14px',
+              color: journeyStatus === 'active' ? '#8b5cf6' : 'black',
+              transition: 'all 0.2s ease',
+              marginTop: '4px',
+              opacity: journeyStatus === 'active' ? 0.8 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (journeyStatus !== 'active') {
+                e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.2)';
+                e.target.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (journeyStatus !== 'active') {
+                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+                e.target.style.transform = 'scale(1)';
+              }
+            }}
+            title={journeyStatus === 'active' ? 'Journey Active' : 'Publish Journey'}
+          >
+            {journeyStatus === 'active' ? '✓' : '▶'}
+          </button>
+        )}
+
         {/* Divider */}
         <div style={{ width: '24px', height: '1px', backgroundColor: '#e5e7eb', margin: '4px 0' }} />
 
@@ -1397,6 +1714,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         }}
         conditionData={editingConditionData}
         onSave={handleConditionEditSave}
+      />
+
+      {/* Prospect Input Modal */}
+      <ProspectInputModal
+        isOpen={showProspectModal}
+        onClose={() => setShowProspectModal(false)}
+        onSubmit={handlePublishWithProspects}
+        isLoading={isSavingJourney}
       />
 
       {/* Email Preview Modal */}

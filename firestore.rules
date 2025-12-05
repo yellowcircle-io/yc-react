@@ -27,6 +27,25 @@ service cloud.firestore {
       }
     }
 
+    // Journeys collection - UnityMAP canvas persistence (embedded model)
+    match /journeys/{journeyId} {
+      // Allow public read for shared journeys
+      allow read: if true;
+
+      // Allow create with validation
+      allow create: if request.resource.data.keys().hasAll(['title', 'createdAt', 'status', 'nodes', 'edges'])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() <= 200
+                    && request.resource.data.nodes is list
+                    && request.resource.data.edges is list;
+
+      // Allow updates (for editing journey, publishing, status changes)
+      allow update: if true;
+
+      // Allow delete
+      allow delete: if true;
+    }
+
     // Capsules collection - public read, controlled write
     match /capsules/{capsuleId} {
       // Allow anyone to read capsules (for shared links)
