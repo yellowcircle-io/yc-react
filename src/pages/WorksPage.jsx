@@ -336,13 +336,13 @@ function WorksPage() {
         transition: 'background 0.3s ease-out'
       }}></div>
 
-      {/* Group Progress Indicator - Left side vertical dots */}
+      {/* Group Progress Indicator - Left side vertical dots (hidden on mobile) */}
       <div style={{
         position: 'fixed',
         left: '20px',
         top: '50%',
         transform: 'translateY(-50%)',
-        display: 'flex',
+        display: isMobile ? 'none' : 'flex',
         flexDirection: 'column',
         gap: '8px',
         zIndex: 100
@@ -449,7 +449,7 @@ function WorksPage() {
 
                 {/* Category • Stage • Year */}
                 <p style={{
-                  fontSize: '11px',
+                  fontSize: isMobile ? '12px' : '11px',
                   color: 'rgba(0, 0, 0, 0.6)',
                   margin: '0 0 12px 0',
                   fontWeight: '500'
@@ -466,7 +466,7 @@ function WorksPage() {
 
                 {/* Headline */}
                 <p style={{
-                  fontSize: '13px',
+                  fontSize: isMobile ? '14px' : '13px',
                   color: COLORS.black,
                   margin: '0 0 12px 0',
                   lineHeight: '1.4',
@@ -505,12 +505,13 @@ function WorksPage() {
                   }}
                   style={{
                     width: '100%',
-                    padding: '10px 16px',
+                    padding: isMobile ? '12px 16px' : '10px 16px',
+                    minHeight: '44px',
                     backgroundColor: COLORS.yellow,
                     color: COLORS.black,
                     border: 'none',
                     borderRadius: '6px',
-                    fontSize: '11px',
+                    fontSize: isMobile ? '13px' : '11px',
                     fontWeight: '700',
                     letterSpacing: '0.08em',
                     cursor: 'pointer',

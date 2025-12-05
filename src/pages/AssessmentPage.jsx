@@ -443,8 +443,8 @@ function AssessmentPage() {
               <div style={{
                 backgroundColor: 'rgba(0,0,0,0.9)',
                 borderRadius: '12px',
-                padding: '30px',
-                marginBottom: '20px'
+                padding: isMobile ? '16px' : '30px',
+                marginBottom: isMobile ? '12px' : '20px'
               }}>
                 <p style={{
                   fontSize: '11px',
@@ -474,13 +474,14 @@ function AssessmentPage() {
                     key={idx}
                     onClick={() => handleAnswer(option.value)}
                     style={{
-                      padding: '16px 20px',
+                      padding: isMobile ? '14px 16px' : '16px 20px',
+                      minHeight: '44px',
                       backgroundColor: 'white',
                       border: '2px solid rgba(0,0,0,0.1)',
                       borderRadius: '8px',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      fontSize: '15px',
+                      fontSize: isMobile ? '14px' : '15px',
                       fontWeight: '500',
                       color: 'black',
                       transition: 'all 0.2s ease'
@@ -528,23 +529,23 @@ function AssessmentPage() {
               <div style={{
                 backgroundColor: 'rgba(0,0,0,0.9)',
                 borderRadius: '12px',
-                padding: '30px',
-                marginBottom: '24px',
+                padding: isMobile ? '20px' : '30px',
+                marginBottom: isMobile ? '16px' : '24px',
                 textAlign: 'center'
               }}>
                 <div style={{
-                  width: '100px',
-                  height: '100px',
+                  width: isMobile ? '80px' : '100px',
+                  height: isMobile ? '80px' : '100px',
                   borderRadius: '50%',
                   backgroundColor: result.color,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 20px',
+                  margin: isMobile ? '0 auto 16px' : '0 auto 20px',
                   animation: 'pulse 2s ease-in-out infinite'
                 }}>
                   <span style={{
-                    fontSize: '32px',
+                    fontSize: isMobile ? '24px' : '32px',
                     fontWeight: '700',
                     color: level === 'warning' ? 'black' : 'white'
                   }}>{score}</span>
