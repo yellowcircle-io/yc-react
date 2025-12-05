@@ -12,8 +12,10 @@ const PhotoUploadModal = ({
   onAddEmail,
   onAddWait,
   onAddCondition,
+  onEditCampaign,
   emailCount = 0,
-  emailLimit = 3
+  emailLimit = 3,
+  hasCampaign = false
 }) => {
   const [step, setStep] = useState('method');
   const [uploadMethod, setUploadMethod] = useState(null);
@@ -600,7 +602,7 @@ const PhotoUploadModal = ({
                             style={{
                               width: '100%',
                               padding: '20px',
-                              backgroundColor: '#f59e0b',
+                              backgroundColor: 'rgba(238, 207, 0, 0.85)',
                               color: 'black',
                               border: 'none',
                               borderRadius: '0',
@@ -647,8 +649,8 @@ const PhotoUploadModal = ({
                             style={{
                               width: '100%',
                               padding: '20px',
-                              backgroundColor: '#3b82f6',
-                              color: 'white',
+                              backgroundColor: 'rgba(238, 207, 0, 0.7)',
+                              color: 'black',
                               border: 'none',
                               borderRadius: '0',
                               cursor: 'pointer',
@@ -679,6 +681,55 @@ const PhotoUploadModal = ({
                                 opacity: 0.8
                               }}>
                                 Branch based on engagement
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* Divider */}
+                          <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.2)', margin: '8px 0' }} />
+
+                          {/* New Campaign - goes back to origin (Hub or Generator) */}
+                          <button
+                            onClick={() => {
+                              const origin = localStorage.getItem('unity-outreach-origin') || '/outreach';
+                              window.location.href = `${origin}?from=unity-map`;
+                              handleClose();
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '20px',
+                              backgroundColor: 'rgba(238, 207, 0, 0.5)',
+                              color: 'black',
+                              border: 'none',
+                              borderRadius: '0',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              letterSpacing: '0.1em',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              transition: 'all 0.2s ease',
+                              textAlign: 'left'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.opacity = '0.9';
+                              e.currentTarget.style.transform = 'translateX(4px)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.opacity = '1';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                            }}
+                          >
+                            <span style={{ fontSize: '24px' }}>🚀</span>
+                            <div>
+                              <span style={{ display: 'block' }}>NEW CAMPAIGN</span>
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: '500',
+                                opacity: 0.8
+                              }}>
+                                Create in Generator
                               </span>
                             </div>
                           </button>

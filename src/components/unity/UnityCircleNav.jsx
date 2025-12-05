@@ -118,8 +118,10 @@ const OptionsMenu = ({
   onAddEmail,
   onAddWait,
   onAddCondition,
+  onEditCampaign,
   emailCount = 0,
-  emailLimit = 3
+  emailLimit = 3,
+  hasCampaign = false
 }) => {
   if (!isOpen) return null;
 
@@ -146,14 +148,25 @@ const OptionsMenu = ({
     {
       label: canAddEmail ? `+ ADD EMAIL (${emailCount}/${emailLimit})` : `LIMIT REACHED (${emailLimit})`,
       action: onAddEmail,
-      color: canAddEmail ? '#8b5cf6' : 'rgba(139, 92, 246, 0.3)',
-      textColor: 'white',
-      hoverColor: '#7c3aed',
+      color: canAddEmail ? 'rgb(251, 191, 36)' : 'rgba(251, 191, 36, 0.3)',
+      textColor: 'black',
+      hoverColor: '#d4a000',
       disabled: !canAddEmail
     },
-    { label: '+ ADD WAIT', action: onAddWait, color: '#f59e0b', textColor: 'black', hoverColor: '#d97706' },
-    { label: '+ ADD CONDITION', action: onAddCondition, color: '#3b82f6', textColor: 'white', hoverColor: '#2563eb' },
-    { label: 'EXPORT', action: onExport, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true },
+    { label: '+ ADD WAIT', action: onAddWait, color: 'rgba(238, 207, 0, 0.85)', textColor: 'black', hoverColor: '#d4a000' },
+    { label: '+ ADD CONDITION', action: onAddCondition, color: 'rgba(238, 207, 0, 0.7)', textColor: 'black', hoverColor: '#d4a000', separator: true },
+    {
+      label: 'NEW CAMPAIGN',
+      action: () => {
+        // Navigate back to origin (Hub or Generator) to create new campaign
+        const origin = localStorage.getItem('unity-outreach-origin') || '/outreach';
+        window.location.href = `${origin}?from=unity-map`;
+      },
+      color: 'rgba(238, 207, 0, 0.5)',
+      textColor: 'black',
+      hoverColor: '#d4a000'
+    },
+    { label: 'EXPORT', action: onExport, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563' },
     { label: 'CLEAR', action: onClear, color: '#dc2626', textColor: 'white', hoverColor: '#b91c1c' },
     { label: 'FOOTER', action: onFooter, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true }
   ];
@@ -250,8 +263,10 @@ function UnityCircleNav({
   onAddEmail,
   onAddWait,
   onAddCondition,
+  onEditCampaign,
   emailCount = 0,
-  emailLimit = 3
+  emailLimit = 3,
+  hasCampaign = false
 }) {
   const { footerOpen } = useLayout();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -389,8 +404,10 @@ function UnityCircleNav({
         onAddEmail={onAddEmail}
         onAddWait={onAddWait}
         onAddCondition={onAddCondition}
+        onEditCampaign={onEditCampaign}
         emailCount={emailCount}
         emailLimit={emailLimit}
+        hasCampaign={hasCampaign}
       />
     </div>
   );

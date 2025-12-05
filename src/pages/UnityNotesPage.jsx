@@ -82,9 +82,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Handle mode change
   const handleModeChange = useCallback((newMode) => {
-    // If selecting MAP mode but no campaign exists, redirect to Outreach Generator
+    // If selecting MAP mode but no campaign exists, redirect to UnityMAP Hub
     if (newMode === 'map' && !hasJourneyContent) {
-      navigate('/experiments/outreach-generator?from=unity-map');
+      navigate('/outreach?from=unity-map');
       return;
     }
 
@@ -170,6 +170,128 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setIsInitialized(true);
     }
   }, [setNodes, setEdges]);
+
+  // Import outreach deployment from UnityMAP Hub
+  useEffect(() => {
+    if (fromOutreach && isInitialized) {
+      try {
+        // Check for deployment timestamp
+        const lastDeployment = localStorage.getItem('unity-last-outreach-deployment');
+        if (lastDeployment) {
+          // Find the corresponding deployment data
+          const deploymentKeys = Object.keys(localStorage).filter(k => k.startsWith('unity-outreach-deployment-'));
+          if (deploymentKeys.length > 0) {
+            // Get the most recent deployment
+            const mostRecentKey = deploymentKeys.sort().pop();
+            const deploymentData = JSON.parse(localStorage.getItem(mostRecentKey));
+
+            if (deploymentData?.emails) {
+              // CRITICAL: Clear localStorage FIRST to prevent re-processing on state change
+              localStorage.removeItem('unity-last-outreach-deployment');
+              localStorage.removeItem(mostRecentKey);
+
+              // Transform deployment data for createJourneyFromOutreach
+              const emails = [
+                { label: 'Initial Email (Day 0)', subject: deploymentData.emails.initial?.subject, body: deploymentData.emails.initial?.body },
+                { label: 'Follow-up #1 (Day 3)', subject: deploymentData.emails.followup1?.subject, body: deploymentData.emails.followup1?.body },
+                { label: 'Follow-up #2 (Day 10)', subject: deploymentData.emails.followup2?.subject, body: deploymentData.emails.followup2?.body }
+              ].filter(e => e.subject && e.body);
+
+              // Check if we're editing an existing campaign (has editingTimestamp from Hub/Generator)
+              const editingTimestamp = deploymentData.editingTimestamp;
+
+              console.log('🔍 Deployment data:', {
+                id: deploymentData.id,
+                editingTimestamp: editingTimestamp,
+                hasEditingTimestamp: !!editingTimestamp
+              });
+
+              // Base outreach data (offset will be calculated inside setNodes)
+              const outreachData = {
+                prospect: deploymentData.prospect,
+                emails,
+                mode: deploymentData.motion === 'sales' ? 'consultant' : 'brand',
+                waitDays: [3, 7]
+              };
+
+              // Use functional update to access CURRENT nodes state
+              // This ensures we get the latest nodes, not a stale closure value
+              setNodes(prev => {
+                console.log('🔍 Processing deployment with current nodes:', prev.length);
+                console.log('🔍 All node IDs:', prev.map(n => n.id));
+
+                let offsetX = 0;
+                let filteredNodes = prev;
+
+                if (editingTimestamp) {
+                  // EDITING: Find original position and filter out old nodes
+                  const tsString = String(editingTimestamp);
+                  const originalProspect = prev.find(n =>
+                    n.type === 'prospectNode' && n.id.includes(tsString)
+                  );
+
+                  console.log('🔍 Looking for prospect with timestamp:', tsString);
+                  console.log('🔍 All prospect nodes:', prev.filter(n => n.type === 'prospectNode').map(n => n.id));
+
+                  if (originalProspect) {
+                    offsetX = (originalProspect.position?.x || 400) - 400;
+                    console.log('📝 Found original prospect at:', originalProspect.position, 'offsetX:', offsetX);
+                  } else {
+                    console.log('⚠️ Original prospect not found - using default position');
+                  }
+
+                  // Filter out old campaign nodes
+                  filteredNodes = prev.filter(node => {
+                    const matchesDash = node.id.includes(`-${tsString}`);
+                    const matchesPrefix = node.id.includes(`${tsString}-`);
+                    if (matchesDash || matchesPrefix) {
+                      console.log('🗑️ Removing node:', node.id);
+                    }
+                    return !matchesDash && !matchesPrefix;
+                  });
+
+                  console.log('🗑️ Removed', prev.length - filteredNodes.length, 'old nodes');
+                } else {
+                  // NEW CAMPAIGN: Count existing prospect nodes to offset
+                  const existingProspectNodes = prev.filter(n => n.type === 'prospectNode');
+                  offsetX = existingProspectNodes.length * 350;
+                  console.log('🆕 New campaign, offset:', offsetX, 'existing campaigns:', existingProspectNodes.length);
+                }
+
+                // Create journey nodes with calculated offset
+                const { nodes: journeyNodes, edges: journeyEdges } = createJourneyFromOutreach(outreachData, offsetX);
+                console.log('🆕 Created', journeyNodes.length, 'new nodes with IDs:', journeyNodes.map(n => n.id));
+
+                // Store edges for the edge update (via closure)
+                setTimeout(() => {
+                  setEdges(prevEdges => {
+                    if (editingTimestamp) {
+                      const filtered = prevEdges.filter(edge =>
+                        !edge.id.includes(`-${editingTimestamp}`) &&
+                        !edge.id.includes(`${editingTimestamp}-`)
+                      );
+                      return [...filtered, ...journeyEdges];
+                    }
+                    return [...prevEdges, ...journeyEdges];
+                  });
+                }, 0);
+
+                return [...filteredNodes, ...journeyNodes];
+              });
+
+              // Set mode to map
+              setCurrentMode('map');
+              setShowModePanel(true);
+
+              console.log('✅ Imported outreach deployment:', deploymentData.id, editingTimestamp ? '(edit)' : '(new)');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to import outreach deployment:', error);
+      }
+    }
+  }, [fromOutreach, isInitialized, setNodes, setEdges]);
 
   // Handle photo resize
   const handlePhotoResize = useCallback((nodeId, newSize) => {
@@ -308,17 +430,21 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Handle "Edit in Outreach" - Navigate back to Outreach Generator with context
   const handleEditInOutreach = useCallback((nodeId, nodeData) => {
+    console.log('📝 MAP Edit: nodeId =', nodeId);
+
     // Find all related campaign nodes (same timestamp prefix)
     // Handles both old format (outreach-xxx) and new UnityMAP format (email-xxx, prospect-xxx)
     const timestampMatch = nodeId?.match(/(?:outreach|email|prospect|wait|exit)-(\d+)/) ||
                           (typeof nodeId === 'object' && nodeId?.id?.match(/(?:outreach|email|prospect|wait|exit)-(\d+)/));
     if (!timestampMatch) {
+      console.log('⚠️ MAP Edit: No timestamp match found in nodeId');
       // If no match, just navigate to Outreach Generator
       navigate('/outreach');
       return;
     }
 
     const campaignTimestamp = timestampMatch[1];
+    console.log('📝 MAP Edit: Extracted campaignTimestamp =', campaignTimestamp);
     // Use ref to get current nodes without dependency
     const currentNodes = nodesRef.current;
     // Find all related nodes with the same timestamp (handles both old and new formats)
@@ -366,18 +492,81 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       // Note: New format doesn't store full prospect details, user will enter in Outreach Generator
     }
 
-    // Store context for Outreach Generator
-    localStorage.setItem('outreach-edit-context', JSON.stringify({
+    // Collect email nodes for the campaign
+    const emailNodes = campaignNodes
+      .filter(n => n.id.includes('email-') || n.id.includes('-email'))
+      .sort((a, b) => {
+        // Sort by position or index in id
+        const aIdx = parseInt(a.id.match(/-(\d+)$/)?.[1] || '0', 10);
+        const bIdx = parseInt(b.id.match(/-(\d+)$/)?.[1] || '0', 10);
+        return aIdx - bIdx;
+      })
+      .map(n => ({
+        subject: n.data?.subject || '',
+        body: n.data?.fullBody || n.data?.preview || '',
+        label: n.data?.label || ''
+      }));
+
+    // Store context for UnityMAP Hub/Generator (use the key expected by Hub)
+    const editContext = {
       campaignTimestamp,
-      prospectInfo,
+      prospect: prospectInfo,
+      emails: emailNodes,
       sourceNodeId: nodeId,
       fromUnityMAP: true,
       editedAt: new Date().toISOString()
-    }));
+    };
 
-    // Navigate to Outreach Generator with edit context
-    navigate('/experiments/outreach-generator?from=unity-map&edit=true');
+    console.log('📝 MAP Edit: Storing edit context with campaignTimestamp:', campaignTimestamp);
+
+    // Store with the key that Hub/Generator expects
+    localStorage.setItem('unity-outreach-edit-context', JSON.stringify(editContext));
+
+    // Get the origin path to return to the correct page (Hub or Generator)
+    // Check multiple sources: stored origin, context, or default to Generator
+    let originPath = localStorage.getItem('unity-outreach-origin');
+
+    if (!originPath) {
+      // Try to find origin from deployment data or context
+      try {
+        const context = localStorage.getItem('unity-outreach-context');
+        if (context) {
+          const parsed = JSON.parse(context);
+          originPath = parsed.originPath;
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    // Default to Generator if no origin found
+    if (!originPath) {
+      originPath = '/experiments/outreach-generator';
+    }
+
+    // Navigate back to the origin with edit context
+    navigate(`${originPath}?from=unity-map&edit=true`);
   }, [navigate]);
+
+  // Handle Edit Campaign from MAP Actions menu
+  // If campaign exists (prospectNode), edit it; otherwise create new
+  const handleMenuEditCampaign = useCallback(() => {
+    // Find any prospectNode to get campaign info
+    const prospectNode = nodes.find(n => n.type === 'prospectNode');
+
+    if (prospectNode) {
+      // Edit existing campaign - use handleEditInOutreach
+      handleEditInOutreach(prospectNode.id, prospectNode.data);
+    } else {
+      // No campaign exists - navigate to Hub to create one
+      navigate('/outreach?from=unity-map');
+    }
+  }, [nodes, handleEditInOutreach, navigate]);
+
+  // Check if a campaign exists (has prospectNode)
+  const hasCampaign = useMemo(() => {
+    return nodes.some(n => n.type === 'prospectNode');
+  }, [nodes]);
 
   // Handle edit save
   const handleEditSave = useCallback((updatedData) => {
@@ -567,6 +756,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onPreview: handleEmailPreview,
             onInlineEdit: inlineEditHandler,
             onEditInOutreach: handleEditInOutreach,
+            // ProspectNode uses onEditCampaign to edit the entire campaign
+            onEditCampaign: node.type === 'prospectNode' ? handleEditInOutreach : undefined,
           }
         };
       })
@@ -1632,8 +1823,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         onAddEmail={handleAddEmail}
         onAddWait={handleAddWait}
         onAddCondition={handleAddCondition}
+        onEditCampaign={handleMenuEditCampaign}
         emailCount={emailNodeCount}
         emailLimit={emailLimit}
+        hasCampaign={hasCampaign}
       />
 
       {/* Empty State */}
@@ -1688,8 +1881,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         onAddEmail={handleAddEmail}
         onAddWait={handleAddWait}
         onAddCondition={handleAddCondition}
+        onEditCampaign={handleMenuEditCampaign}
         emailCount={emailNodeCount}
         emailLimit={emailLimit}
+        hasCampaign={hasCampaign}
       />
 
       {/* Share Modal */}

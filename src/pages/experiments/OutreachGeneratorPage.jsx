@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import LeadGate from '../../components/shared/LeadGate';
@@ -104,6 +104,7 @@ ${brand.sender.name ? `- Sign off as "— ${brand.sender.name.split(' ')[0]}"` :
 
 function OutreachGeneratorPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
 
   // Mobile detection
@@ -136,6 +137,9 @@ function OutreachGeneratorPage() {
   const [formError, setFormError] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+
+  // Track if editing an existing campaign (store timestamp for replacement)
+  const [editingCampaignTimestamp, setEditingCampaignTimestamp] = useState(null);
   const [resendApiKey, setResendApiKey] = useState('');
   const [showResendKeyInput, setShowResendKeyInput] = useState(false);
   const [showBrandSettings, setShowBrandSettings] = useState(false);
@@ -216,25 +220,69 @@ function OutreachGeneratorPage() {
 
     // Check if coming from UnityMAP with edit context
     const urlParams = new URLSearchParams(window.location.search);
+    console.log('🔍 Generator: URL params - from:', urlParams.get('from'), 'edit:', urlParams.get('edit'));
+
     if (urlParams.get('from') === 'unity-map' && urlParams.get('edit') === 'true') {
-      const editContext = localStorage.getItem('outreach-edit-context');
+      // Try new key first, then fall back to old key
+      const editContext = localStorage.getItem('unity-outreach-edit-context') ||
+                          localStorage.getItem('outreach-edit-context');
+      console.log('🔍 Generator: Edit context from localStorage:', editContext ? 'found' : 'not found');
+
       if (editContext) {
         try {
           const context = JSON.parse(editContext);
-          if (context.prospectInfo) {
+          console.log('🔍 Generator: Parsed context:', {
+            campaignTimestamp: context.campaignTimestamp,
+            hasProspect: !!context.prospect,
+            emailCount: context.emails?.length
+          });
+
+          // Support both old (prospectInfo) and new (prospect) formats
+          const prospectData = context.prospect || context.prospectInfo;
+          if (prospectData) {
             setFormData(prev => ({
               ...prev,
-              ...context.prospectInfo
+              ...prospectData
             }));
           }
+          // Store campaign timestamp for replacing old nodes on deploy
+          if (context.campaignTimestamp) {
+            console.log('✅ Generator: Setting editingCampaignTimestamp:', context.campaignTimestamp);
+            setEditingCampaignTimestamp(context.campaignTimestamp);
+          } else {
+            console.log('⚠️ Generator: No campaignTimestamp in context!');
+          }
+          // Pre-populate emails if available
+          if (context.emails && context.emails.length > 0) {
+            const emailData = {
+              initial: context.emails[0] ? {
+                subject: context.emails[0].subject || '',
+                body: context.emails[0].body || ''
+              } : null,
+              followup1: context.emails[1] ? {
+                subject: context.emails[1].subject || '',
+                body: context.emails[1].body || ''
+              } : null,
+              followup2: context.emails[2] ? {
+                subject: context.emails[2].subject || '',
+                body: context.emails[2].body || ''
+              } : null
+            };
+            // Filter out nulls
+            const filteredEmails = {};
+            Object.entries(emailData).forEach(([k, v]) => {
+              if (v && v.subject) filteredEmails[k] = v;
+            });
+            if (Object.keys(filteredEmails).length > 0) {
+              setGeneratedEmails(filteredEmails);
+              setCurrentStep(2); // Go to review step if we have emails
+            }
+          }
           // Clear the edit context after loading
+          localStorage.removeItem('unity-outreach-edit-context');
           localStorage.removeItem('outreach-edit-context');
-          // Show a brief notification
-          setTimeout(() => {
-            setFormError('');
-          }, 100);
         } catch (e) {
-          console.error('Failed to parse edit context');
+          console.error('Failed to parse edit context:', e);
         }
       }
     }
@@ -648,7 +696,7 @@ Return ONLY a JSON object with this exact format:
             </td>
           </tr>
         </table>
-        <p style="margin: 24px 0 0; font-size: 10px; color: #9ca3af;">Cold Outreach • ${brand.name || 'Outreach Generator'}</p>
+        <p style="margin: 24px 0 0; font-size: 10px; color: #9ca3af;">Cold Outreach • ${brand.name || 'UnityMAP Generator'}</p>
       </td>
     </tr>
   </table>
@@ -835,154 +883,19 @@ Return ONLY a JSON object with this exact format:
     URL.revokeObjectURL(url);
   };
 
-  // Deploy to UnityMAP - creates a visual journey with proper MAP node types
+  // Deploy to UnityMAP - uses deployment pattern (same as Hub) for proper handling
   const deployToUnityNotes = () => {
     if (!generatedEmails) return;
 
-    const UNITY_STORAGE_KEY = 'unity-notes-data';
     const timestamp = Date.now();
 
-    // Create proper UnityMAP journey nodes using the new node types
-    const campaignNodes = [
-      // Prospect Entry Node
-      {
-        id: `prospect-${timestamp}`,
-        type: 'prospectNode',
-        position: { x: 300, y: 50 },
-        data: {
-          label: formData.company || 'Prospects',
-          count: 1,
-          segment: sendMode === SEND_MODES.PROSPECT ? 'Cold Outreach' : 'Marketing',
-          source: 'manual',
-          tags: [formData.industry, formData.trigger].filter(Boolean)
-        }
-      },
-      // Day 0 - Initial Email Node
-      {
-        id: `email-${timestamp}-0`,
-        type: 'emailNode',
-        position: { x: 300, y: 200 },
-        data: {
-          label: 'Day 0: Initial',
-          subject: generatedEmails.initial.subject,
-          preview: generatedEmails.initial.body?.substring(0, 100) + '...',
-          delay: 0,
-          delayUnit: 'days',
-          status: 'draft',
-          fullBody: generatedEmails.initial.body,
-          stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
-        }
-      },
-      // Wait Node - 3 days
-      {
-        id: `wait-${timestamp}-1`,
-        type: 'waitNode',
-        position: { x: 300, y: 380 },
-        data: {
-          label: 'Wait',
-          duration: 3,
-          unit: 'days'
-        }
-      },
-      // Day 3 - Follow-up #1 Node
-      {
-        id: `email-${timestamp}-1`,
-        type: 'emailNode',
-        position: { x: 300, y: 520 },
-        data: {
-          label: 'Day 3: Follow-up',
-          subject: generatedEmails.followup1.subject,
-          preview: generatedEmails.followup1.body?.substring(0, 100) + '...',
-          delay: 3,
-          delayUnit: 'days',
-          status: 'draft',
-          fullBody: generatedEmails.followup1.body,
-          stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
-        }
-      },
-      // Wait Node - 7 days (Day 10 total)
-      {
-        id: `wait-${timestamp}-2`,
-        type: 'waitNode',
-        position: { x: 300, y: 700 },
-        data: {
-          label: 'Wait',
-          duration: 7,
-          unit: 'days'
-        }
-      },
-      // Day 10 - Follow-up #2 Node
-      {
-        id: `email-${timestamp}-2`,
-        type: 'emailNode',
-        position: { x: 300, y: 840 },
-        data: {
-          label: 'Day 10: Break-up',
-          subject: generatedEmails.followup2.subject,
-          preview: generatedEmails.followup2.body?.substring(0, 100) + '...',
-          delay: 7,
-          delayUnit: 'days',
-          status: 'draft',
-          fullBody: generatedEmails.followup2.body,
-          stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
-        }
-      },
-      // Exit Node - Sequence Complete
-      {
-        id: `exit-${timestamp}`,
-        type: 'exitNode',
-        position: { x: 300, y: 1000 },
-        data: {
-          exitType: 'completed',
-          label: 'Sequence End',
-          count: 0
-        }
-      }
-    ];
+    console.log('🚀 Generator Deploy: editingCampaignTimestamp =', editingCampaignTimestamp);
 
-    // Create edges connecting the journey flow
-    const campaignEdges = [
-      { id: `e-${timestamp}-0`, source: `prospect-${timestamp}`, target: `email-${timestamp}-0` },
-      { id: `e-${timestamp}-1`, source: `email-${timestamp}-0`, target: `wait-${timestamp}-1` },
-      { id: `e-${timestamp}-2`, source: `wait-${timestamp}-1`, target: `email-${timestamp}-1` },
-      { id: `e-${timestamp}-3`, source: `email-${timestamp}-1`, target: `wait-${timestamp}-2` },
-      { id: `e-${timestamp}-4`, source: `wait-${timestamp}-2`, target: `email-${timestamp}-2` },
-      { id: `e-${timestamp}-5`, source: `email-${timestamp}-2`, target: `exit-${timestamp}` }
-    ];
-
-    // Get existing UnityNotes data or create new
-    let existingData = { nodes: [], edges: [] };
-    try {
-      const saved = localStorage.getItem(UNITY_STORAGE_KEY);
-      if (saved) {
-        existingData = JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to parse UnityNotes data');
-    }
-
-    // Offset new nodes if there are existing ones
-    if (existingData.nodes.length > 0) {
-      const offsetX = 400; // Place new campaign to the right
-      campaignNodes.forEach(node => {
-        node.position.x += offsetX;
-      });
-    }
-
-    // Merge with existing data
-    const mergedData = {
-      nodes: [...existingData.nodes, ...campaignNodes],
-      edges: [...existingData.edges, ...campaignEdges]
-    };
-
-    // Save to UnityNotes storage
-    localStorage.setItem(UNITY_STORAGE_KEY, JSON.stringify(mergedData));
-
-    // Set deployment timestamp for progressive disclosure in UnityModeSelector
-    localStorage.setItem('unity-last-outreach-deployment', timestamp.toString());
-
-    // Store context for slide-in panel in UnityMAP
-    localStorage.setItem('unity-outreach-context', JSON.stringify({
+    // Create deployment data (same format as Hub) for UnityNotesPage to process
+    const deployment = {
+      id: `generator-${timestamp}`,
+      timestamp: timestamp,
+      motion: sendMode === SEND_MODES.PROSPECT ? 'cold' : 'marketing',
       prospect: {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -990,15 +903,42 @@ Return ONLY a JSON object with this exact format:
         company: formData.company,
         title: formData.title,
         industry: formData.industry,
+        trigger: formData.trigger,
+        triggerDetails: formData.triggerDetails,
       },
-      sendMode: sendMode,
-      pathway: pathway,
-      trigger: formData.trigger,
-      triggerDetails: formData.triggerDetails,
-      generatedAt: new Date().toISOString(),
-    }));
+      emails: {
+        initial: {
+          subject: generatedEmails.initial.subject,
+          body: generatedEmails.initial.body
+        },
+        followup1: {
+          subject: generatedEmails.followup1.subject,
+          body: generatedEmails.followup1.body
+        },
+        followup2: {
+          subject: generatedEmails.followup2.subject,
+          body: generatedEmails.followup2.body
+        }
+      },
+      originPath: '/experiments/outreach-generator', // Track where campaign originated
+      editingTimestamp: editingCampaignTimestamp || null,
+    };
+
+    console.log('🚀 Generator Deploy: deployment.editingTimestamp =', deployment.editingTimestamp);
+
+    // Store deployment data (same pattern as Hub)
+    localStorage.setItem(`unity-outreach-deployment-${deployment.id}`, JSON.stringify(deployment));
+    localStorage.setItem('unity-last-outreach-deployment', timestamp.toString());
+    localStorage.setItem('unity-outreach-origin', '/experiments/outreach-generator');
+
+    // Clear editing state after deploy
+    if (editingCampaignTimestamp) {
+      console.log('✅ Generator: Clearing editingCampaignTimestamp after deploy');
+      setEditingCampaignTimestamp(null);
+    }
 
     // Navigate to UnityNotes with mode=map and from=outreach
+    // UnityNotesPage will pick up the deployment and create nodes
     navigate('/unity-notes?mode=map&from=outreach');
   };
 
@@ -1065,8 +1005,8 @@ Return ONLY a JSON object with this exact format:
 
   return (
     <LeadGate
-      toolName="Outreach Generator"
-      toolDescription="Generate personalized cold outreach emails with AI. Enter your email to get instant access."
+      toolName="UnityMAP Generator"
+      toolDescription="Generate personalized cold outreach emails with machine assistance. Enter your email to get instant access."
       storageKey="yc_outreach_lead"
     >
     <Layout
@@ -1101,7 +1041,7 @@ Return ONLY a JSON object with this exact format:
                   display: 'inline-block',
                   marginBottom: '12px'
                 }}>
-                  OUTREACH GENERATOR
+                  UNITY GENERATOR
                 </h1>
                 <p style={{
                   fontSize: '16px',
@@ -1115,7 +1055,7 @@ Return ONLY a JSON object with this exact format:
                     ? 'Generate & send a single email'
                     : pathway === PATHWAYS.JOURNEY
                       ? 'Generate sequence for campaign orchestration'
-                      : 'AI-powered email sequence generation'}
+                      : 'Machine-assisted email sequence generation'}
                 </p>
               </div>
             </div>
