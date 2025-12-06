@@ -161,6 +161,14 @@ function ServicesPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle, openContactModal } = useLayout();
   const [selectedService, setSelectedService] = React.useState(null);
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Inject animations
   React.useEffect(() => {
@@ -216,9 +224,11 @@ function ServicesPage() {
         position: 'fixed',
         top: '80px',
         bottom: footerOpen ? '320px' : '20px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        right: '80px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        right: 0,
+        padding: isMobile ? '0 16px' : '0 80px',
         overflow: 'auto',
+        overflowX: 'hidden',
         zIndex: 61,
         transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
@@ -256,11 +266,56 @@ function ServicesPage() {
             display: 'inline-block',
             padding: '4px 8px',
             animation: 'fadeInUp 0.6s ease-in-out 0.5s both',
-            marginBottom: '40px',
+            marginBottom: isMobile ? '20px' : '40px',
             maxWidth: '600px'
           }}>
             Stop buying tools to fix organizational problems. Get strategic clarity on your go-to-market infrastructure.
           </p>
+
+          {/* Mobile Quick CTAs */}
+          {isMobile && (
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              marginBottom: '24px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.55s both'
+            }}>
+              <button
+                onClick={() => navigate('/assessment')}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  backgroundColor: COLORS.yellow,
+                  color: 'black',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  letterSpacing: '0.08em',
+                  cursor: 'pointer'
+                }}
+              >
+                START ASSESSMENT
+              </button>
+              <button
+                onClick={() => openCalendarBooking(() => openContactModal('', 'Discovery Call Request'))}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  backgroundColor: 'rgba(0,0,0,0.9)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  letterSpacing: '0.08em',
+                  cursor: 'pointer'
+                }}
+              >
+                BOOK A CALL
+              </button>
+            </div>
+          )}
 
           {/* DIAGNOSTIC SERVICES Section */}
           <h2 style={{

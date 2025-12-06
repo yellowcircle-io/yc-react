@@ -43,8 +43,8 @@ const MODES = [
     key: 'studio',
     label: 'STUDIO',
     icon: '🎨',
-    description: 'Asset creation suite',
-    available: false, // Coming soon
+    description: 'Email templates, ads, social posts',
+    available: true, // ACTIVE - asset creation suite
     route: '/unity-notes?mode=studio',
     color: '#d97706', // Dark amber
     badge: null

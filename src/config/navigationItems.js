@@ -4,7 +4,7 @@
  * Centralized navigation configuration for the Sidebar component.
  * This ensures consistent navigation across ALL pages.
  *
- * Only pages that need different sidebar behavior (like Unity Notes)
+ * Only pages that need different sidebar behavior (like UnityNotes)
  * should use the sidebarVariant prop - not different navigationItems.
  */
 
@@ -82,7 +82,7 @@ export const navigationItems = [
       { label: "divider", key: "divider-1", isDivider: true },
       { label: "ONGOING STORIES", key: "ongoing-header", isSectionHeader: true, isSubheader: true },
       { label: "GOLDEN UNKNOWN", key: "golden-unknown", route: "/experiments/golden-unknown" },
-      { label: "CATH3DRAL", key: "cath3dral" },
+      { label: "CATH3DRAL", key: "cath3dral", route: "/experiments/cath3dral" },
       { label: "THOUGHTS", key: "thoughts", route: "/thoughts" }
     ]
   },
@@ -91,8 +91,8 @@ export const navigationItems = [
     label: "JOURNEYS",
     itemKey: "journeys",
     subItems: [
-      { label: "OUTREACH GENERATOR", key: "outreach-generator", route: "/experiments/outreach-generator" },
-      { label: "UNITY NOTES", key: "unity-notes", route: "/unity-notes" }
+      { label: "UNITYMAP GENERATOR", key: "outreach-generator", route: "/experiments/outreach-generator" },
+      { label: "UNITYNOTES", key: "unity-notes", route: "/unity-notes" }
       // Note: OUTREACH hidden from nav but accessible via /outreach and in sitemap
     ]
   }

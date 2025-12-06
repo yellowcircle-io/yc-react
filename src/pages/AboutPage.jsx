@@ -9,6 +9,15 @@ function AboutPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle, openContactModal } = useLayout();
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Inject stagger animation
   React.useEffect(() => {
     const styleId = 'text-stagger-animations';
@@ -73,15 +82,15 @@ function AboutPage() {
       {/* Main Content - Scrollable */}
       <div style={{
         position: 'fixed',
-        top: '100px',
-        bottom: footerOpen ? '400px' : '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        right: '100px',
+        top: '80px',
+        bottom: footerOpen ? '320px' : '40px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        right: 0,
+        padding: isMobile ? '0 20px' : '0 80px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
-        transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
-        paddingRight: '20px'
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
         <div style={{
           ...TYPOGRAPHY.container,

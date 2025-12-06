@@ -14,6 +14,7 @@ const WaitNode = memo(({ id, data, selected }) => {
     duration = 3,
     unit = 'days', // 'hours', 'days', 'weeks'
     reason = '', // Optional: "Let them think", "Weekend buffer", etc.
+    prospectsAtNode = 0, // Number of prospects waiting at this node
     onInlineEdit, // Edit handler
     onDelete // Delete this node
   } = data;
@@ -101,6 +102,29 @@ const WaitNode = memo(({ id, data, selected }) => {
       }}>
         {label}
       </span>
+
+      {/* Prospects waiting badge */}
+      {prospectsAtNode > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '-8px',
+          left: '-8px',
+          backgroundColor: '#EECF00',
+          color: '#111827',
+          borderRadius: '50%',
+          width: '24px',
+          height: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '11px',
+          fontWeight: '700',
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        }}>
+          {prospectsAtNode}
+        </div>
+      )}
 
       {/* Edit hint and delete button on hover */}
       {isHovered && (

@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
+import { CALENDAR_ENABLED, openCalendarBooking } from '../../config/calendarConfig';
 
 // Service data - yellowCircle service offerings
 const SERVICE_DATA = {
@@ -119,6 +120,15 @@ function ServiceDetailPage() {
   const { serviceId } = useParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle, openContactModal } = useLayout();
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Get service data or redirect to 404
   const service = SERVICE_DATA[serviceId];
 
@@ -190,12 +200,14 @@ function ServiceDetailPage() {
       {/* Main Content */}
       <div style={{
         position: 'fixed',
-        bottom: '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        top: '80px',
+        bottom: footerOpen ? '320px' : '40px',
+        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        right: 0,
+        padding: isMobile ? '0 20px' : '0 80px',
         zIndex: 61,
-        transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
-        transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
+        overflow: 'auto',
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
         <div style={{
           ...TYPOGRAPHY.container
@@ -335,9 +347,12 @@ function ServiceDetailPage() {
             </p>
           </div>
 
-          {/* CTA */}
+          {/* CTAs */}
           <div style={{
             margin: '30px 0 0 0',
+            display: 'flex',
+            gap: '12px',
+            flexWrap: 'wrap',
             animation: 'fadeInUp 0.6s ease-in-out 0.9s both'
           }}>
             <button
@@ -366,6 +381,33 @@ function ServiceDetailPage() {
               }}
             >
               GET STARTED
+            </button>
+            <button
+              onClick={() => openCalendarBooking(() => openContactModal('', `Discovery Call - ${service.name}`))}
+              style={{
+                padding: '14px 28px',
+                backgroundColor: 'transparent',
+                color: 'black',
+                border: '2px solid black',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'black';
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'black';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              BOOK A CALL
             </button>
           </div>
         </div>

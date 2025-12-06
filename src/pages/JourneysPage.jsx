@@ -7,7 +7,7 @@ import { navigationItems } from '../config/navigationItems';
 
 /**
  * JourneysPage - Interactive tools and guided experiences
- * Holistic page for GTM Health Assessment, Outreach Generator, Unity Notes
+ * Holistic page for GTM Health Assessment, Outreach Generator, UnityNotes
  */
 function JourneysPage() {
   const navigate = useNavigate();

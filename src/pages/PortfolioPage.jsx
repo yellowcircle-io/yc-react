@@ -15,19 +15,14 @@ const PORTFOLIO_PROJECTS = {
     caseStudyLink: '/works/auditboard',
     images: [
       {
-        src: 'https://res.cloudinary.com/yellowcircle-io/image/upload/v1733200000/portfolio/auditboard-email-1.png',
-        alt: 'AuditBoard Email Template - Header Module',
-        caption: 'Modular header with configurable logo and navigation'
+        src: '/portfolio/auditboard-email-template.png',
+        alt: 'AuditBoard Newsletter Email Template',
+        caption: 'Risk in Focus 2024 newsletter with hero, content cards, and modular footer'
       },
       {
-        src: 'https://res.cloudinary.com/yellowcircle-io/image/upload/v1733200000/portfolio/auditboard-email-2.png',
-        alt: 'AuditBoard Email Template - Content Cards',
-        caption: 'Two-column content cards with editable styling'
-      },
-      {
-        src: 'https://res.cloudinary.com/yellowcircle-io/image/upload/v1733200000/portfolio/auditboard-email-3.png',
-        alt: 'AuditBoard Email Template - CTA Section',
-        caption: 'Call-to-action modules with brand-compliant buttons'
+        src: '/portfolio/auditboard-design-spec.png',
+        alt: 'AuditBoard Email Design Specification',
+        caption: 'Modular template design with spacing annotations and component specs'
       }
     ],
     tags: ['Marketo', 'Email', 'Enterprise']
@@ -36,10 +31,16 @@ const PORTFOLIO_PROJECTS = {
     name: 'LiveIntent',
     category: 'Marketing Operations',
     year: '2013-2016',
-    description: 'Marketing infrastructure and HubSpot-Salesforce integration for identity resolution and programmatic advertising platform.',
+    description: 'Marketing infrastructure and Marketo email automation for identity resolution and programmatic advertising platform.',
     caseStudyLink: '/works/liveintent',
-    images: [],
-    tags: ['HubSpot', 'Salesforce', 'Marketing Automation']
+    images: [
+      {
+        src: '/portfolio/liveintent-email-myths.jpg',
+        alt: 'LiveIntent 5 Myths About Sending Email',
+        caption: 'Educational infographic addressing common email advertising misconceptions'
+      }
+    ],
+    tags: ['Marketo', 'Email', 'Marketing Automation']
   },
   tunecore: {
     name: 'TuneCore',
@@ -90,6 +91,15 @@ function PortfolioPage() {
 
   const project = PORTFOLIO_PROJECTS[selectedProject];
   const projectKeys = Object.keys(PORTFOLIO_PROJECTS);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Handle horizontal scrolling
   const handleScroll = useCallback((direction) => {
@@ -151,27 +161,33 @@ function PortfolioPage() {
       navigationItems={navigationItems}
       pageLabel="PORTFOLIO"
     >
-      {/* Two-Column Container */}
+      {/* Two-Column Container - extends full viewport */}
       <div style={{
         position: 'fixed',
         top: 0,
-        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
         right: 0,
-        bottom: 0,
+        bottom: footerOpen ? '320px' : 0,
         display: 'flex',
-        transition: 'left 0.5s ease-out',
-        zIndex: 50
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: 0,
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
+        zIndex: 50,
+        overflow: isMobile ? 'auto' : 'hidden'
       }}>
-        {/* Left Panel - Yellow (40%) */}
+        {/* Left Panel - Yellow (20% on desktop, full width on mobile) */}
         <div style={{
-          width: '40%',
-          minWidth: '300px',
+          width: isMobile ? '100%' : '20%',
+          minWidth: isMobile ? 'auto' : '220px',
+          maxWidth: isMobile ? 'none' : '280px',
           backgroundColor: COLORS.yellow,
-          padding: '60px 40px 40px 40px',
+          padding: isMobile ? '100px 20px 20px 20px' : '100px 20px 30px 20px',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
-          borderRight: '2px solid white'
+          overflow: isMobile ? 'visible' : 'auto',
+          borderRight: isMobile ? 'none' : 'none',
+          borderBottom: isMobile ? '2px solid rgba(0,0,0,0.1)' : 'none',
+          flexShrink: 0
         }}>
           {/* Project Selector Dropdown */}
           <div style={{ marginBottom: '30px' }}>
@@ -210,12 +226,12 @@ function PortfolioPage() {
           </div>
 
           {/* Project Details */}
-          <div style={{ flex: 1, overflow: 'auto' }}>
+          <div style={{ flex: 1, overflow: isMobile ? 'visible' : 'auto' }}>
             <h1 style={{
-              fontSize: 'clamp(28px, 4vw, 42px)',
+              fontSize: isMobile ? '24px' : 'clamp(20px, 2vw, 28px)',
               fontWeight: '700',
-              lineHeight: '1.1',
-              margin: '0 0 12px 0',
+              lineHeight: '1.2',
+              margin: '0 0 10px 0',
               color: 'black'
             }}>
               {project.name}
@@ -223,16 +239,16 @@ function PortfolioPage() {
 
             <div style={{
               display: 'flex',
-              gap: '8px',
+              gap: '6px',
               flexWrap: 'wrap',
-              marginBottom: '16px'
+              marginBottom: '12px'
             }}>
               <span style={{
                 backgroundColor: 'black',
                 color: 'white',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                fontSize: '11px',
+                padding: '3px 8px',
+                borderRadius: '3px',
+                fontSize: '10px',
                 fontWeight: '600'
               }}>
                 {project.category}
@@ -240,9 +256,9 @@ function PortfolioPage() {
               <span style={{
                 backgroundColor: 'rgba(0,0,0,0.1)',
                 color: 'black',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                fontSize: '11px',
+                padding: '3px 8px',
+                borderRadius: '3px',
+                fontSize: '10px',
                 fontWeight: '600'
               }}>
                 {project.year}
@@ -250,10 +266,10 @@ function PortfolioPage() {
             </div>
 
             <p style={{
-              fontSize: '15px',
-              lineHeight: '1.6',
+              fontSize: '13px',
+              lineHeight: '1.5',
               color: 'rgba(0,0,0,0.8)',
-              marginBottom: '24px'
+              marginBottom: '16px'
             }}>
               {project.description}
             </p>
@@ -261,17 +277,17 @@ function PortfolioPage() {
             {/* Tags */}
             <div style={{
               display: 'flex',
-              gap: '6px',
+              gap: '4px',
               flexWrap: 'wrap',
-              marginBottom: '24px'
+              marginBottom: '16px'
             }}>
               {project.tags.map((tag, i) => (
                 <span key={i} style={{
                   backgroundColor: 'rgba(255,255,255,0.6)',
                   color: 'black',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  fontSize: '10px',
+                  padding: '3px 8px',
+                  borderRadius: '3px',
+                  fontSize: '9px',
                   fontWeight: '500'
                 }}>
                   {tag}
@@ -280,18 +296,18 @@ function PortfolioPage() {
             </div>
 
             {/* CTA Buttons */}
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 onClick={() => navigate(project.caseStudyLink)}
                 style={{
-                  padding: '12px 24px',
+                  padding: '10px 16px',
                   backgroundColor: 'black',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: '700',
-                  letterSpacing: '0.1em',
+                  letterSpacing: '0.08em',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
@@ -309,14 +325,14 @@ function PortfolioPage() {
               <button
                 onClick={() => openContactModal('', `Inquiry about ${project.name} project`)}
                 style={{
-                  padding: '12px 24px',
+                  padding: '10px 16px',
                   backgroundColor: 'transparent',
                   color: 'black',
                   border: '2px solid black',
                   borderRadius: '4px',
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: '700',
-                  letterSpacing: '0.1em',
+                  letterSpacing: '0.08em',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
@@ -329,29 +345,31 @@ function PortfolioPage() {
                   e.currentTarget.style.color = 'black';
                 }}
               >
-                GET IN TOUCH
+                CONTACT
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Panel - Black (60%) with Image Carousel */}
+        {/* Right Panel - Black (80% on desktop) with Image Carousel */}
         <div
           ref={carouselRef}
           style={{
             flex: 1,
             backgroundColor: 'black',
-            padding: '60px 40px',
+            padding: isMobile ? '20px' : '100px 40px 30px 40px',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden'
+            overflow: isMobile ? 'visible' : 'hidden',
+            minHeight: isMobile ? '400px' : 'auto',
+            position: 'relative'
           }}
         >
           {/* Filter Tabs */}
           <div style={{
             display: 'flex',
             gap: '8px',
-            marginBottom: '30px',
+            marginBottom: isMobile ? '20px' : '24px',
             flexWrap: 'wrap'
           }}>
             {FILTER_OPTIONS.map(filter => (
@@ -433,51 +451,6 @@ function PortfolioPage() {
                 ))}
               </div>
 
-              {/* Scroll Indicators */}
-              <div style={{
-                position: 'absolute',
-                bottom: '40px',
-                right: '40px',
-                display: 'flex',
-                gap: '10px'
-              }}>
-                <button
-                  onClick={() => handleScroll('left')}
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    color: 'white',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.yellow}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => handleScroll('right')}
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    color: 'white',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.yellow}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-                >
-                  →
-                </button>
-              </div>
             </div>
           ) : (
             <div style={{
@@ -509,20 +482,80 @@ function PortfolioPage() {
             </div>
           )}
 
-          {/* Keyboard hints */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            color: 'rgba(255,255,255,0.3)',
-            fontSize: '11px',
-            display: 'flex',
-            gap: '20px'
-          }}>
-            <span>← → or A D to scroll</span>
-            <span>Click image to enlarge</span>
-          </div>
+          {/* Navigation Footer - arrows on LEFT aligned with helper text */}
+          {!isMobile && (
+            <div style={{
+              position: 'absolute',
+              bottom: '16px',
+              left: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handleScroll('left')}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    color: 'white',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = COLORS.yellow;
+                    e.currentTarget.style.color = 'black';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => handleScroll('right')}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    color: 'white',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = COLORS.yellow;
+                    e.currentTarget.style.color = 'black';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                >
+                  →
+                </button>
+              </div>
+              <span style={{
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: '10px'
+              }}>
+                ← → to scroll • Click to enlarge
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

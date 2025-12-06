@@ -14,7 +14,7 @@ import { useLayout } from '../../contexts/LayoutContext';
  *
  * Variants:
  * - "standard": 80px when closed (default)
- * - "hidden": 0px when closed (Unity Notes variant)
+ * - "hidden": 0px when closed (UnityNotes variant)
  */
 function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffset = 0, pageLabel = "HOME", variant = "standard" }) {
   const navigate = useNavigate();

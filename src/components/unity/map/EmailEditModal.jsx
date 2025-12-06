@@ -172,7 +172,9 @@ const EmailEditModal = ({ isOpen, onClose, emailData, onSave }) => {
           <button
             onClick={() => {
               onClose();
-              navigate('/outreach');
+              // Navigate to origin (Hub or Generator) - default to Generator
+              const originPath = localStorage.getItem('unity-outreach-origin') || '/experiments/outreach-generator';
+              navigate(originPath);
             }}
             style={{
               width: '100%',
@@ -200,9 +202,9 @@ const EmailEditModal = ({ isOpen, onClose, emailData, onSave }) => {
               color: '#6b7280',
               lineHeight: '1.5'
             }}>
-              <strong style={{ color: '#b45309' }}>Need AI assistance?</strong> Use the Outreach Generator to create
-              AI-powered email sequences with personalization variables.
-              <span style={{ color: '#b45309', marginLeft: '8px' }}>Go to Outreach →</span>
+              <strong style={{ color: '#b45309' }}>Need help?</strong> Use UnityMAP Generator to speed up and refine
+              messages with machine assistance.
+              <span style={{ color: '#b45309', marginLeft: '8px' }}>Start with Generation →</span>
             </p>
           </button>
         </div>

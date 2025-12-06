@@ -101,7 +101,7 @@ const globalContent = {
           route: '/services'
         },
         {
-          text: 'OUTREACH GENERATOR',
+          text: 'UNITYMAP GENERATOR',
           url: '#',
           route: '/experiments/outreach-generator'
         },
