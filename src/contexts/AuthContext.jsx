@@ -121,7 +121,14 @@ export function AuthProvider({ children }) {
       return result.user;
     } catch (err) {
       console.error('Google sign-in error:', err);
-      setError(err.message);
+      // Provide helpful error messages
+      if (err.code === 'auth/configuration-not-found') {
+        setError('Google Sign-In not configured. Enable it in Firebase Console → Authentication → Sign-in method → Google.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Sign-in cancelled');
+      } else {
+        setError(err.message);
+      }
       throw err;
     }
   };
@@ -135,7 +142,14 @@ export function AuthProvider({ children }) {
       return result.user;
     } catch (err) {
       console.error('GitHub sign-in error:', err);
-      setError(err.message);
+      // Provide helpful error messages
+      if (err.code === 'auth/configuration-not-found') {
+        setError('GitHub Sign-In not configured. Enable it in Firebase Console → Authentication → Sign-in method → GitHub.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Sign-in cancelled');
+      } else {
+        setError(err.message);
+      }
       throw err;
     }
   };

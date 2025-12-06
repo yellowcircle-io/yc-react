@@ -1,5 +1,6 @@
 import React, { useState, useCallback, memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { getLLMAdapter } from '../../adapters/llm';
 
 /**
  * TextNoteNode - Draggable text note card for Unity Note Plus
@@ -66,35 +67,35 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     return null;
   }, []);
 
-  // Handle AI query
+  // Handle AI query - uses configured LLM adapter
   const handleAiQuery = useCallback(async () => {
     if (!content.trim() || isAiLoading) return;
 
     setIsAiLoading(true);
     try {
-      const response = await fetch('https://us-central1-yellowcircle-app.cloudfunctions.net/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: content,
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 1024
-        })
+      // Get the configured LLM adapter (async - OpenAI, Groq, Claude, etc.)
+      const adapter = await getLLMAdapter();
+
+      if (!adapter || !adapter.isConfigured()) {
+        throw new Error('No AI provider configured. Add API key in .env (VITE_OPENAI_API_KEY, VITE_GROQ_API_KEY, or VITE_CLAUDE_API_KEY)');
+      }
+
+      // Generate response using the adapter
+      const aiResponse = await adapter.generate(content, {
+        systemPrompt: 'You are a helpful assistant in a note-taking app. Keep responses concise and helpful.',
+        maxTokens: 1024
       });
 
-      if (!response.ok) throw new Error('AI request failed');
-
-      const result = await response.json();
-      const aiResponse = result.content?.[0]?.text || result.text || 'No response';
-
-      setContent(prev => `${prev}\n\n---\n🤖 AI: ${aiResponse}`);
+      const newContent = `${content}\n\n---\n🤖 AI: ${aiResponse}`;
+      setContent(newContent);
 
       if (data.onUpdate) {
-        data.onUpdate(id, { title, content: `${content}\n\n---\n🤖 AI: ${aiResponse}`, cardType });
+        data.onUpdate(id, { title, content: newContent, cardType });
       }
     } catch (error) {
       console.error('AI query error:', error);
-      setContent(prev => `${prev}\n\n---\n⚠️ AI error: ${error.message}`);
+      const errorContent = `${content}\n\n---\n⚠️ AI error: ${error.message}`;
+      setContent(errorContent);
     } finally {
       setIsAiLoading(false);
     }
