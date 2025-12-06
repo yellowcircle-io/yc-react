@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 5, 2025 at 2:30 PM PST
-**Machine:** MacBook Air
-**Status:** ✅ CUSTOM CONDITIONS + AI VISION COMPLETE
+**Updated:** December 6, 2025 at 6:00 PM PST
+**Machine:** Mac Mini
+**Status:** ✅ UnitySTUDIO MVP + AI CHAT THREAD UI COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -12,10 +12,10 @@
 
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 3, 2025)
+### Current Status (Dec 6, 2025)
 
-- **Day 8** since Rho exit (Nov 25, 2025)
-- **Status:** 🚀 LAUNCH PREPARATION - Mobile optimizations complete
+- **Day 11** since Rho exit (Nov 25, 2025)
+- **Status:** 🚀 UnitySTUDIO MVP READY - Asset creation suite built
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
 
 ---
@@ -42,9 +42,58 @@
 
 ---
 
-### ✅ Recently Completed (Dec 5 - Current Session)
+### ✅ Recently Completed (Dec 6 - Current Session)
 
-1. **Custom Conditions for ConditionNode** ✅
+1. **UnitySTUDIO MVP** ✅ NEW
+   - Third mode in Unity platform ecosystem (NOTES → MAP → STUDIO)
+   - Asset creation suite for GTM campaigns
+   - **Files Created:**
+     - `src/components/unity-studio/UnityStudioCanvas.jsx` - Main container
+     - `src/components/unity-studio/EmailTemplateBuilder.jsx` - Email template editor
+     - `dev-context/UNITY_STUDIO_SCOPE.md` - Scope document
+   - **Features:**
+     - 5 pre-built email templates
+     - Section-based editing (Subject, Greeting, Body, CTA, Signature)
+     - Variable placeholders ({{firstName}}, {{company}}, etc.)
+     - Real-time preview with sample data
+     - Export options: Save, Send to MAP, Copy HTML, Download HTML
+
+2. **AI Chat Thread UI** ✅ NEW
+   - Replaced single textarea with proper threaded conversation
+   - Chat bubbles for user/AI messages
+   - Auto-scroll to newest messages
+   - Conversation history persisted to node data
+   - Clear conversation button
+
+3. **UnityMAP Deploy Button + Architecture** ✅
+   - Created `dev-context/ARCHITECTURE_UNITY_PLATFORM.md` - Complete platform architecture doc
+     - Authentication architecture (Hub passcode, Generator SSO, UnityNOTE optional)
+     - Campaign lifecycle: Create → Iterate → Deploy → Send
+     - Node-based journey progression with prospect tracking
+     - Email sending flow via Firebase Functions + Resend ESP
+     - Data flow diagrams and implementation priorities
+   - Added Deploy button to `src/components/unity/map/ProspectNode.jsx`
+     - Primary yellow "Deploy" button (changes to "Add Prospects" when deployed)
+     - Status badges: draft/deployed/active/paused with color coding
+     - "Edit Campaign" secondary button wired to handleEditInOutreach
+   - Added `handleDeployFromNode` to `src/pages/UnityNotesPage.jsx`
+     - Validates campaign has email nodes
+     - Saves journey to Firestore if not saved
+     - Updates prospect node status to 'deployed'
+     - Opens prospect modal for adding contacts
+   - Fixed hook ordering issue (moved handleDeployFromNode before useEffect that uses it)
+
+2. **Dev Tools Panel for UnityNOTE** ✅
+   - Added Cmd+Shift+D keyboard shortcut to toggle dev tools
+   - Quick actions: Clear localStorage, Clear canvas, Clear credits, Toggle bypass, Toggle client access, Clear Hub settings, View state
+   - Yellow-themed floating panel with close button
+
+3. **AI API Key Flow Fixed** ✅
+   - Updated `src/components/unity-plus/TextNoteNode.jsx` to decrypt Hub's settings
+   - Hub stores keys as `groqApiKey`/`perplexityApiKey` (not nested in apiKeys object)
+   - Added AES-GCM decryption utilities to access encrypted localStorage
+
+4. **Custom Conditions for ConditionNode** ✅
    - Updated `src/components/unity/map/ConditionEditModal.jsx`
      - Added custom condition builder UI (field/operator/value)
      - Field categories: Contact Properties, Engagement Metrics, Segmentation
@@ -308,13 +357,19 @@ Firebase Cloud Function (proxy)
 
 ### 🎯 Immediate Next Steps
 
-**Revenue Focus (P0):**
+**UnityMAP Email Sending (P0):**
+- Enable Google Auth in Firebase Console (Authentication → Sign-in method)
+- Deploy Firebase Function `sendEmail` if not already deployed
+- Test email sending end-to-end with Resend ESP
+- Verify prospect initialization when deploying (status: 'active', currentNodeId set)
+
+**Revenue Focus (P1):**
 - LinkedIn transition announcement
 - Network activation (10 warmest contacts)
 - Share Article 1 across channels
 - Schedule 3-5 discovery calls
 
-**Platform Development (P1):**
+**Platform Development (P2):**
 - Phase 1 infrastructure (Airtable/prospect pipeline)
 - Unity Notes cost optimization (free tier gating)
 - Assessment → Services funnel integration

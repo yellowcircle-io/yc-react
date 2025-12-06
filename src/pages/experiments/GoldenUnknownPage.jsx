@@ -44,7 +44,7 @@ function GoldenUnknownPage() {
       navigationItems={navigationItems}
       pageLabel="GOLDEN UNKNOWN"
     >
-      {/* Main Content - Matches HomePage positioning */}
+      {/* Main Content - Matches Cath3dral positioning */}
       <div style={{
         position: 'fixed',
         bottom: '40px',

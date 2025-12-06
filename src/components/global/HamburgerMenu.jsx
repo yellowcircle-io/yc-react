@@ -15,8 +15,17 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
   // eslint-disable-next-line no-unused-vars
   const [hoveredItem, setHoveredItem] = React.useState(null);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Auto-detect dark background pages
-  const darkPages = ['/thoughts/why-your-gtm-sucks', '/experiments/golden-unknown'];
+  const darkPages = ['/thoughts/why-your-gtm-sucks'];
   const isDarkPage = darkBackground || darkPages.some(path => location.pathname.startsWith(path));
   const [slideOverOpen, setSlideOverOpen] = React.useState(false);
   const [slideOverItems, setSlideOverItems] = React.useState([]);
@@ -51,8 +60,8 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
       hasSubItems: true,
       subItems: [
         { label: 'GROWTH HEALTH CHECK', route: '/assessment' },
-        { label: 'OUTREACH GENERATOR', route: '/experiments/outreach-generator' },
-        { label: 'UNITY NOTES', route: '/unity-notes' }
+        { label: 'UNITYMAP GENERATOR', route: '/experiments/outreach-generator' },
+        { label: 'UNITYNOTES', route: '/unity-notes' }
       ]
     },
     CLIENTS: { hasSubItems: false, isButton: true },
@@ -135,7 +144,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
         onClick={handleMenuClick}
         style={{
           position: 'fixed',
-          right: '50px',
+          right: isMobile ? '20px' : '50px',
           top: '20px',
           padding: '10px',
           backgroundColor: isDarkPage && !menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
@@ -194,7 +203,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
           flexDirection: 'column',
           alignItems: 'flex-end',
           justifyContent: 'center',
-          paddingRight: 'max(50px, 5vw)',
+          paddingRight: isMobile ? '20px' : 'max(50px, 5vw)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           animation: 'slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -334,7 +343,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
               position: 'fixed',
               top: 0,
               right: 0,
-              width: 'min(500px, 85vw)',
+              width: isMobile ? '100vw' : 'min(500px, 85vw)',
               height: '100vh',
               backgroundColor: 'rgb(251, 191, 36)',
               zIndex: 270,
@@ -342,7 +351,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
               flexDirection: 'column',
               alignItems: 'flex-end',
               justifyContent: 'center',
-              paddingRight: 'max(50px, 5vw)',
+              paddingRight: isMobile ? '20px' : 'max(50px, 5vw)',
               animation: 'slideInRight 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.15)'
             }}>

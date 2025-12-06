@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import globalContent from '../../config/globalContent';
+import { CALENDAR_ENABLED, openCalendarBooking } from '../../config/calendarConfig';
 
 // Social Media Icons
 const SocialIcon = ({ type, size = 16, color = 'currentColor' }) => {
@@ -187,11 +188,11 @@ function Footer({ onFooterToggle }) {
             ))}
           </div>
 
-          {/* Social links + internal links on their own line */}
+          {/* Row 1: Social links (LinkedIn, Instagram) */}
           <div style={{
             display: 'flex',
             gap: '20px',
-            marginBottom: '20px',
+            marginBottom: '8px',
             flexWrap: 'wrap'
           }}>
             {contactConfig.links.filter(link => link.type === 'social').map((link, index) => (
@@ -222,7 +223,15 @@ function Footer({ onFooterToggle }) {
                 <span>{link.text}</span>
               </a>
             ))}
-            {/* Internal navigation links (like Feedback) */}
+          </div>
+
+          {/* Row 2: Legal/navigation links (Feedback, Privacy, Terms) */}
+          <div style={{
+            display: 'flex',
+            gap: '20px',
+            marginBottom: '20px',
+            flexWrap: 'wrap'
+          }}>
             {contactConfig.links.filter(link => link.type === 'link').map((link, index) => (
               <a
                 key={`link-${index}`}
@@ -234,17 +243,20 @@ function Footer({ onFooterToggle }) {
                 style={{
                   color: contactConfig.colors.linkColor,
                   textDecoration: 'none',
-                  fontSize: 'clamp(11px, 2.5vw, 14px)',
+                  fontSize: 'clamp(10px, 2vw, 12px)',
                   fontWeight: '500',
                   letterSpacing: '0.1em',
                   transition: 'color 0.3s ease',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  opacity: 0.7
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = contactConfig.colors.linkHoverColor;
+                  e.currentTarget.style.opacity = '1';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.color = contactConfig.colors.linkColor;
+                  e.currentTarget.style.opacity = '0.7';
                 }}
               >
                 {link.text}
@@ -252,12 +264,13 @@ function Footer({ onFooterToggle }) {
             ))}
           </div>
 
-          {/* Contact Capture Module - Email Input */}
-          <div>
+          {/* Contact Capture Module - Email on Row 1, Buttons on Row 2 */}
+          <div style={{ maxWidth: '400px' }}>
+            {/* Row 1: Email input */}
             <form onSubmit={handleEmailSubmit} style={{
               display: 'flex',
-              gap: '8px',
-              maxWidth: '320px'
+              flexDirection: 'column',
+              gap: '10px'
             }}>
               <input
                 type="email"
@@ -265,7 +278,7 @@ function Footer({ onFooterToggle }) {
                 value={footerEmail}
                 onChange={(e) => setFooterEmail(e.target.value)}
                 style={{
-                  flex: 1,
+                  width: '100%',
                   padding: '12px 14px',
                   backgroundColor: 'rgba(255,255,255,0.1)',
                   border: '1px solid rgba(255,255,255,0.3)',
@@ -273,7 +286,8 @@ function Footer({ onFooterToggle }) {
                   color: 'white',
                   fontSize: '13px',
                   outline: 'none',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  boxSizing: 'border-box'
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = 'rgb(251, 191, 36)';
@@ -285,32 +299,64 @@ function Footer({ onFooterToggle }) {
                 }}
                 required
               />
-              <button
-                type="submit"
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: 'rgb(251, 191, 36)',
-                  color: 'black',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  letterSpacing: '0.1em',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                GET IN TOUCH
-              </button>
+              {/* Row 2: Buttons - Get In Touch + Book A Call */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: 'rgb(251, 191, 36)',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  GET IN TOUCH
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openCalendarBooking(() => openContactModal('', 'Discovery Call Request'))}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    color: 'rgb(251, 191, 36)',
+                    border: '1px solid rgb(251, 191, 36)',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
+                    e.currentTarget.style.color = 'black';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'rgb(251, 191, 36)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  BOOK A CALL
+                </button>
+              </div>
             </form>
           </div>
         </div>

@@ -32,6 +32,7 @@ import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
+import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -111,11 +112,23 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [showShareModal, setShowShareModal] = useState(false);
 
   // Firebase hook for UnityMAP journey persistence
-  const { saveJourney, loadJourney, updateJourney, publishJourney, listJourneys, isSaving: isSavingJourney, isLoading: isLoadingJourney } = useFirebaseJourney();
+  const {
+    saveJourney,
+    loadJourney,
+    updateJourney,
+    publishJourney,
+    listJourneys,
+    sendEmailNow,
+    sendJourneyNow,
+    isSaving: isSavingJourney,
+    isLoading: isLoadingJourney
+  } = useFirebaseJourney();
   const [currentJourneyId, setCurrentJourneyId] = useState(null);
   const [journeyTitle, setJourneyTitle] = useState('Untitled Journey');
   const [journeyStatus, setJourneyStatus] = useState('draft'); // draft, active, paused, completed
   const [showProspectModal, setShowProspectModal] = useState(false);
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
+  const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
 
   // Check if user has pro/admin access for cloud features
   const hasProAccess = () => {
@@ -154,6 +167,67 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   // Mode panel slideout state
   // Auto-open mode panel when coming from Outreach Generator
   const [showModePanel, setShowModePanel] = useState(fromOutreach);
+
+  // Dev tools panel state (Cmd+Shift+D to toggle)
+  const [showDevTools, setShowDevTools] = useState(false);
+
+  // Dev tools keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Cmd+Shift+D (Mac) or Ctrl+Shift+D (Windows)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'd') {
+        e.preventDefault();
+        setShowDevTools(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Dev tools actions
+  const devToolsActions = {
+    clearLocalStorage: () => {
+      localStorage.clear();
+      alert('localStorage cleared. Refresh to see changes.');
+    },
+    clearCanvasOnly: () => {
+      localStorage.removeItem(STORAGE_KEY);
+      setNodes([]);
+      setEdges([]);
+      alert('Canvas cleared.');
+    },
+    clearCredits: () => {
+      localStorage.removeItem('yc_credits');
+      localStorage.removeItem('yc_credits_used');
+      alert('Credits cleared.');
+    },
+    toggleBypass: () => {
+      const current = localStorage.getItem('yc_bypass_active') === 'true';
+      localStorage.setItem('yc_bypass_active', (!current).toString());
+      alert(`Bypass ${!current ? 'ENABLED' : 'DISABLED'}. Refresh to apply.`);
+    },
+    toggleClientAccess: () => {
+      const current = localStorage.getItem('yc_client_access') === 'true';
+      localStorage.setItem('yc_client_access', (!current).toString());
+      alert(`Client access ${!current ? 'ENABLED' : 'DISABLED'}. Refresh to apply.`);
+    },
+    clearHubSettings: () => {
+      localStorage.removeItem('outreach_business_settings_v4');
+      localStorage.removeItem('outreach_business_auth');
+      alert('Hub settings cleared.');
+    },
+    viewState: () => {
+      console.log('=== DEV STATE ===');
+      console.log('Bypass:', localStorage.getItem('yc_bypass_active'));
+      console.log('Client:', localStorage.getItem('yc_client_access'));
+      console.log('Hub Auth:', localStorage.getItem('outreach_business_auth'));
+      console.log('Journey ID:', currentJourneyId);
+      console.log('Journey Status:', journeyStatus);
+      console.log('Nodes:', nodes.length);
+      console.log('Edges:', edges.length);
+      alert('State logged to console (F12)');
+    }
+  };
 
   // Load from localStorage
   useEffect(() => {
@@ -505,11 +579,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setEditingConditionData(null);
   }, [editingConditionNodeId, setNodes]);
 
-  // Ref to access current nodes without causing re-renders
+  // Refs to access current nodes/edges without causing re-renders
   const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
   useEffect(() => {
     nodesRef.current = nodes;
-  }, [nodes]);
+    edgesRef.current = edges;
+  }, [nodes, edges]);
 
   // Handle "Edit in Outreach" - Navigate back to Outreach Generator with context
   const handleEditInOutreach = useCallback((nodeId, nodeData) => {
@@ -811,6 +887,60 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   }, [nodes.length, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen]);
 
+  // Handle Deploy from ProspectNode - opens prospect modal
+  // Uses refs to avoid circular dependency with useEffect that injects callbacks
+  const handleDeployFromNode = useCallback(async (nodeId, nodeData) => {
+    if (!hasProAccess()) {
+      alert(
+        '☁️ Deploy Campaign - Pro Feature\n\n' +
+        'Deploying campaigns is available for Pro users.\n\n' +
+        'Contact us for Pro access.'
+      );
+      return;
+    }
+
+    // Use refs to get current state without causing re-renders
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+
+    // Check for email nodes connected to this campaign
+    const emailNodes = currentNodes.filter(n => n.type === 'emailNode');
+    if (emailNodes.length === 0) {
+      alert('⚠️ No email nodes in campaign.\n\nAdd at least one email to deploy.');
+      return;
+    }
+
+    // Save journey first if not saved
+    if (!currentJourneyId) {
+      try {
+        const journeyId = await saveJourney(currentNodes, currentEdges, {
+          title: journeyTitle || nodeData.label || 'Campaign Journey',
+          status: 'draft'
+        });
+        setCurrentJourneyId(journeyId);
+      } catch (error) {
+        alert(`❌ Failed to save journey: ${error.message}`);
+        return;
+      }
+    }
+
+    // Update prospect node status
+    setNodes(nds => nds.map(n =>
+      n.id === nodeId
+        ? { ...n, data: { ...n.data, status: 'deployed' } }
+        : n
+    ));
+
+    // Open prospect modal
+    setShowProspectModal(true);
+  }, [currentJourneyId, journeyTitle, saveJourney, setNodes]);
+
+  // Helper: Count prospects at each node
+  const getProspectsAtNode = useCallback((nodeId) => {
+    if (!journeyProspects || journeyProspects.length === 0) return 0;
+    return journeyProspects.filter(p => p.currentNodeId === nodeId && p.status === 'active').length;
+  }, [journeyProspects]);
+
   // Ensure all nodes have callbacks
   useEffect(() => {
     if (!isInitialized) return;
@@ -827,6 +957,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           inlineEditHandler = handleInlineConditionEdit;
         }
 
+        // Count prospects at this node for visual display
+        const prospectsAtNode = getProspectsAtNode(node.id);
+
         return {
           ...node,
           data: {
@@ -841,13 +974,17 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onEditInOutreach: handleEditInOutreach,
             // ProspectNode uses onEditCampaign to edit the entire campaign
             onEditCampaign: node.type === 'prospectNode' ? handleEditInOutreach : undefined,
+            // ProspectNode uses onDeploy to deploy/add prospects
+            onDeploy: node.type === 'prospectNode' ? handleDeployFromNode : undefined,
             // AI image analysis for photo nodes
             onAnalyze: node.type === 'photoNode' ? handleImageAnalyze : undefined,
+            // Prospect count at this node (for visual tracking)
+            prospectsAtNode: prospectsAtNode,
           }
         };
       })
     );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleImageAnalyze, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, getProspectsAtNode, setNodes]);
 
   // Save to localStorage
   useEffect(() => {
@@ -1381,7 +1518,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setShowProspectModal(true);
   };
 
-  // Handle publishing with prospects
+  // Handle publishing with prospects - adds prospects AND sends emails immediately
   const handlePublishWithProspects = async (prospects) => {
     if (!currentJourneyId) {
       alert('❌ Journey must be saved first');
@@ -1394,20 +1531,175 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         title: journeyTitle
       });
 
-      // Publish with prospects
+      // Publish with prospects (adds them to journey)
       const result = await publishJourney(currentJourneyId, prospects);
 
       setJourneyStatus('active');
       setShowProspectModal(false);
 
-      alert(
-        `✅ Journey Published!\n\n` +
-        `${result.prospectCount} prospect(s) added.\n\n` +
-        `The Cloud Scheduler will process emails every 15 minutes.`
-      );
+      // Immediately send emails to the new prospects
+      setIsSendingEmails(true);
+      console.log('🚀 Starting sendJourneyNow for journey:', currentJourneyId);
+      const sendResults = await sendJourneyNow(currentJourneyId);
+      console.log('📊 sendJourneyNow complete:', sendResults);
+      setIsSendingEmails(false);
+
+      // Refresh prospect state for visual tracking (reload from Firestore)
+      try {
+        const journeyData = await loadJourney(currentJourneyId);
+        if (journeyData?.prospects) {
+          setJourneyProspects(journeyData.prospects);
+          console.log('👥 Updated prospect positions:', journeyData.prospects.map(p => ({
+            email: p.email,
+            currentNodeId: p.currentNodeId,
+            status: p.status
+          })));
+        }
+      } catch (e) {
+        console.warn('Could not refresh prospect positions:', e);
+      }
+
+      // Show results
+      let message = `✅ Campaign Deployed!\n\n`;
+      message += `${result.prospectCount} prospect(s) added.\n`;
+      if (sendResults.sent > 0) {
+        message += `📧 ${sendResults.sent} email(s) sent!\n`;
+      }
+      if (sendResults.failed > 0) {
+        message += `❌ ${sendResults.failed} email(s) failed.\n`;
+        // Show error details
+        const failedDetails = sendResults.details?.filter(d => d.status !== 'sent');
+        if (failedDetails?.length > 0) {
+          message += `\nErrors:\n`;
+          failedDetails.forEach(d => {
+            message += `- ${d.to}: ${d.error || 'Unknown error'}\n`;
+          });
+        }
+      }
+      if (sendResults.sent === 0 && sendResults.failed === 0) {
+        message += `⚠️ No emails were processed.\nCheck browser console (F12) for details.`;
+      }
+      message += `\nUse RUN to send follow-up emails.`;
+
+      alert(message);
     } catch (error) {
       console.error('❌ Publish failed:', error);
+      setIsSendingEmails(false);
       alert(`❌ Publish failed: ${error.message}`);
+    }
+  };
+
+  // Send emails directly from canvas (immediate send via ESP/Resend)
+  const handleSendEmailsNow = async () => {
+    if (!hasProAccess()) {
+      alert(
+        '☁️ Send Emails - Pro Feature\n\n' +
+        'Sending emails is available for Pro users.\n\n' +
+        'Contact us for Pro access.'
+      );
+      return;
+    }
+
+    // Get email nodes from canvas
+    const emailNodes = nodes.filter(n => n.type === 'emailNode');
+    if (emailNodes.length === 0) {
+      alert('⚠️ No email nodes found.\n\nAdd at least one email to send.');
+      return;
+    }
+
+    // Get prospect node for recipient info
+    const prospectNode = nodes.find(n => n.type === 'prospectNode');
+    if (!prospectNode) {
+      alert('⚠️ No prospect found.\n\nCreate a campaign in Outreach Generator first, or add prospects via Publish.');
+      return;
+    }
+
+    // Check if journey is saved - if not, save and prompt for prospects
+    if (!currentJourneyId) {
+      try {
+        setIsSendingEmails(true);
+        const journeyId = await saveJourney(nodes, edges, {
+          title: journeyTitle,
+          status: 'draft'
+        });
+        setCurrentJourneyId(journeyId);
+        setIsSendingEmails(false);
+
+        // Show helpful message and open prospect modal
+        alert(
+          '📧 Journey Saved!\n\n' +
+          'Now add email recipients to send your campaign.\n\n' +
+          'Click OK to add prospects.'
+        );
+        setShowProspectModal(true);
+        return;
+      } catch (error) {
+        setIsSendingEmails(false);
+        console.error('Save journey failed:', error);
+        alert(`❌ Failed to save journey: ${error.message}`);
+        return;
+      }
+    }
+
+    // Journey exists - try to send emails
+    try {
+      setIsSendingEmails(true);
+
+      // Send emails via ESP (Resend)
+      const results = await sendJourneyNow(currentJourneyId);
+
+      if (results.sent === 0 && results.failed === 0) {
+        // No prospects - open modal to add them
+        alert(
+          '📧 No Recipients\n\n' +
+          'Add email addresses to send your campaign.\n\n' +
+          'Click OK to add prospects.'
+        );
+        setShowProspectModal(true);
+        return;
+      }
+
+      setJourneyStatus('active');
+
+      // Show detailed results
+      let resultMessage = `📧 Email Campaign Sent!\n\n`;
+      resultMessage += `✅ Successfully sent: ${results.sent}\n`;
+      if (results.failed > 0) {
+        resultMessage += `❌ Failed: ${results.failed}\n`;
+      }
+      resultMessage += `\nEmails sent via Resend ESP.`;
+
+      // Log details to console
+      console.log('📧 Send results:', results);
+      if (results.details) {
+        results.details.forEach((d, i) => {
+          console.log(`  ${i + 1}. ${d.to}: ${d.status}${d.error ? ` - ${d.error}` : ''}`);
+        });
+      }
+
+      alert(resultMessage);
+
+    } catch (error) {
+      console.error('❌ Send emails failed:', error);
+
+      if (error.message.includes('No prospects')) {
+        alert(
+          '📧 No Recipients\n\n' +
+          'Add email addresses to send your campaign.\n\n' +
+          'Click OK to add prospects.'
+        );
+        setShowProspectModal(true);
+      } else if (error.message.includes('service unavailable') || error.message.includes('Function')) {
+        alert(
+          '❌ Email Service Unavailable\n\n' +
+          'The Firebase email function needs to be deployed.\n\n' +
+          'Run: firebase deploy --only functions:sendEmail'
+        );
+      } else {
+        alert(`❌ Send failed: ${error.message}`);
+      }
+    } finally {
+      setIsSendingEmails(false);
     }
   };
 
@@ -1497,35 +1789,52 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         transition: 'left 0.5s ease-out',
         zIndex: 1
       }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-          panOnDrag={[1, 2]}
-          selectionOnDrag={false}
-          panOnScroll={true}
-          zoomOnScroll={false}
-          zoomOnPinch={true}
-          zoomOnDoubleClick={false}
-          preventScrolling={false}
-          minZoom={0.1}
-          maxZoom={4}
-          nodesDraggable={true}
-          nodesConnectable={true}
-          elementsSelectable={true}
-        >
-          <Background
-            variant="dots"
-            gap={24}
-            size={2}
-            color="#aaa"
-            style={{ opacity: 0.3 }}
+        {/* STUDIO Mode - Asset Creation Suite */}
+        {currentMode === 'studio' ? (
+          <UnityStudioCanvas
+            isDarkTheme={false}
+            onExportToMAP={(asset) => {
+              // Save template to localStorage for MAP to pick up
+              const templates = JSON.parse(localStorage.getItem('unity-studio-templates') || '[]');
+              templates.push({
+                ...asset,
+                id: `template-${Date.now()}`,
+                createdAt: new Date().toISOString()
+              });
+              localStorage.setItem('unity-studio-templates', JSON.stringify(templates));
+            }}
           />
-        </ReactFlow>
+        ) : (
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            panOnDrag={[1, 2]}
+            selectionOnDrag={false}
+            panOnScroll={true}
+            zoomOnScroll={false}
+            zoomOnPinch={true}
+            zoomOnDoubleClick={false}
+            preventScrolling={false}
+            minZoom={0.1}
+            maxZoom={4}
+            nodesDraggable={true}
+            nodesConnectable={true}
+            elementsSelectable={true}
+          >
+            <Background
+              variant="dots"
+              gap={24}
+              size={2}
+              color="#aaa"
+              style={{ opacity: 0.3 }}
+            />
+          </ReactFlow>
+        )}
       </div>
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
@@ -1559,7 +1868,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           {[
             { key: 'notes', label: 'NOTES', icon: '📝', color: 'rgb(251, 191, 36)' },
             { key: 'map', label: 'MAP', icon: '🗺️', color: '#f59e0b' },
-            { key: 'studio', label: 'STUDIO', icon: '🎨', color: '#d97706', disabled: true }
+            { key: 'studio', label: 'STUDIO', icon: '🎨', color: '#d97706' }
           ].map((mode) => (
             <button
               key={mode.key}
@@ -1779,11 +2088,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           </button>
         )}
 
-        {/* Publish Journey Button (MAP mode only) */}
+        {/* RUN ALL / PAUSE ALL Toggle (MAP mode only) */}
         {hasJourneyContent && (
           <button
-            onClick={handleStartPublish}
-            disabled={isSavingJourney || journeyStatus === 'active'}
+            onClick={journeyStatus === 'paused' ? handleSendEmailsNow : (journeyStatus === 'active' ? () => setJourneyStatus('paused') : handleSendEmailsNow)}
+            disabled={isSavingJourney || isSendingEmails}
             style={{
               minWidth: '36px',
               height: '36px',
@@ -1792,65 +2101,77 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
-              backgroundColor: journeyStatus === 'active'
-                ? 'rgba(16, 185, 129, 0.15)'
+              backgroundColor: isSendingEmails
+                ? 'rgba(245, 158, 11, 0.2)'
                 : journeyStatus === 'paused'
                   ? 'rgba(245, 158, 11, 0.15)'
-                  : 'rgba(139, 92, 246, 0.1)',
+                  : journeyStatus === 'active'
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : 'rgba(251, 191, 36, 0.1)',
               border: `2px solid ${
-                journeyStatus === 'active'
-                  ? 'rgba(16, 185, 129, 0.5)'
+                isSendingEmails
+                  ? 'rgba(245, 158, 11, 0.5)'
                   : journeyStatus === 'paused'
                     ? 'rgba(245, 158, 11, 0.5)'
-                    : 'rgba(139, 92, 246, 0.4)'
+                    : journeyStatus === 'active'
+                      ? 'rgba(16, 185, 129, 0.5)'
+                      : 'rgba(251, 191, 36, 0.4)'
               }`,
               borderRadius: '8px',
-              cursor: journeyStatus === 'active' ? 'default' : 'pointer',
+              cursor: isSendingEmails ? 'wait' : 'pointer',
               fontSize: '11px',
               fontWeight: '700',
               letterSpacing: '0.05em',
-              color: journeyStatus === 'active'
-                ? '#b45309'
+              color: isSendingEmails
+                ? '#d97706'
                 : journeyStatus === 'paused'
                   ? '#d97706'
-                  : '#92400e',
+                  : journeyStatus === 'active'
+                    ? '#059669'
+                    : '#92400e',
               transition: 'all 0.2s ease',
               marginTop: '4px'
             }}
             onMouseEnter={(e) => {
-              if (journeyStatus !== 'active') {
-                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.2)';
+              if (!isSendingEmails) {
+                e.currentTarget.style.backgroundColor = journeyStatus === 'active' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(251, 191, 36, 0.2)';
                 e.currentTarget.style.transform = 'scale(1.03)';
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.25)';
               }
             }}
             onMouseLeave={(e) => {
-              if (journeyStatus !== 'active') {
-                e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
+              if (!isSendingEmails) {
+                e.currentTarget.style.backgroundColor = journeyStatus === 'paused' ? 'rgba(245, 158, 11, 0.15)' : journeyStatus === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(251, 191, 36, 0.1)';
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.boxShadow = 'none';
               }
             }}
             title={
-              journeyStatus === 'active' ? 'Journey Running - Emails being sent'
-              : journeyStatus === 'paused' ? 'Journey Paused'
-              : 'Start Journey - Send emails to prospects'
+              isSendingEmails ? 'Sending emails...'
+              : journeyStatus === 'paused' ? 'Resume sending emails'
+              : journeyStatus === 'active' ? 'Pause all campaigns'
+              : 'Run all campaigns'
             }
           >
-            {journeyStatus === 'active' ? (
+            {isSendingEmails ? (
               <>
-                <span style={{ fontSize: '12px' }}>🟢</span>
-                <span>LIVE</span>
+                <span style={{ fontSize: '12px' }}>⏳</span>
+                <span>SENDING</span>
               </>
             ) : journeyStatus === 'paused' ? (
               <>
+                <span style={{ fontSize: '12px' }}>▶️</span>
+                <span>RESUME</span>
+              </>
+            ) : journeyStatus === 'active' ? (
+              <>
                 <span style={{ fontSize: '12px' }}>⏸️</span>
-                <span>PAUSED</span>
+                <span>PAUSE</span>
               </>
             ) : (
               <>
                 <span style={{ fontSize: '14px' }}>🚀</span>
-                <span>RUN</span>
+                <span>RUN ALL</span>
               </>
             )}
           </button>
@@ -2210,8 +2531,121 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           </div>
         </div>
       )}
+
+      {/* Dev Tools Panel - Cmd+Shift+D to toggle */}
+      {showDevTools && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '80px',
+            left: '20px',
+            width: '280px',
+            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: '12px',
+            padding: '16px',
+            zIndex: 9999,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+            fontFamily: 'monospace'
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+            paddingBottom: '8px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <span style={{ color: 'rgb(251, 191, 36)', fontWeight: '700', fontSize: '12px' }}>
+              🛠️ DEV TOOLS
+            </span>
+            <button
+              onClick={() => setShowDevTools(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Status indicators */}
+          <div style={{ marginBottom: '12px', fontSize: '10px', color: '#9ca3af' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>Bypass:</span>
+              <span style={{ color: localStorage.getItem('yc_bypass_active') === 'true' ? '#22c55e' : '#ef4444' }}>
+                {localStorage.getItem('yc_bypass_active') === 'true' ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>Client:</span>
+              <span style={{ color: localStorage.getItem('yc_client_access') === 'true' ? '#22c55e' : '#ef4444' }}>
+                {localStorage.getItem('yc_client_access') === 'true' ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>Hub Auth:</span>
+              <span style={{ color: localStorage.getItem('outreach_business_auth') === 'true' ? '#22c55e' : '#ef4444' }}>
+                {localStorage.getItem('outreach_business_auth') === 'true' ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Nodes:</span>
+              <span style={{ color: '#60a5fa' }}>{nodes.length}</span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <button onClick={devToolsActions.toggleBypass} style={devBtnStyle}>
+              Toggle Bypass
+            </button>
+            <button onClick={devToolsActions.toggleClientAccess} style={devBtnStyle}>
+              Toggle Client Access
+            </button>
+            <button onClick={devToolsActions.clearCredits} style={devBtnStyle}>
+              Clear Credits
+            </button>
+            <button onClick={devToolsActions.clearCanvasOnly} style={{ ...devBtnStyle, backgroundColor: '#dc2626' }}>
+              Clear Canvas
+            </button>
+            <button onClick={devToolsActions.clearHubSettings} style={{ ...devBtnStyle, backgroundColor: '#f59e0b' }}>
+              Clear Hub Settings
+            </button>
+            <button onClick={devToolsActions.clearLocalStorage} style={{ ...devBtnStyle, backgroundColor: '#ef4444' }}>
+              Clear ALL localStorage
+            </button>
+            <button onClick={devToolsActions.viewState} style={{ ...devBtnStyle, backgroundColor: '#3b82f6' }}>
+              Log State (F12)
+            </button>
+          </div>
+
+          <div style={{ marginTop: '12px', fontSize: '9px', color: '#6b7280', textAlign: 'center' }}>
+            Cmd+Shift+D to toggle
+          </div>
+        </div>
+      )}
     </div>
   );
+};
+
+// Dev button style
+const devBtnStyle = {
+  padding: '8px 12px',
+  backgroundColor: '#374151',
+  color: 'white',
+  border: 'none',
+  borderRadius: '6px',
+  fontSize: '11px',
+  cursor: 'pointer',
+  textAlign: 'left',
+  transition: 'background-color 0.2s'
 };
 
 function UnityNotesPage() {

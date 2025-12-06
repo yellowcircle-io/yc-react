@@ -1,6 +1,78 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { getLLMAdapter } from '../../adapters/llm';
+import { getLLMAdapter, getLLMAdapterByName } from '../../adapters/llm';
+
+// ============================================================================
+// ENCRYPTION UTILITIES - To read Hub's encrypted settings
+// ============================================================================
+const ENCRYPTION_SALT = 'yellowcircle-outreach-2025';
+
+async function deriveEncryptionKey(password) {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: encoder.encode(ENCRYPTION_SALT),
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+}
+
+async function decryptSettings(encryptedObj, password) {
+  try {
+    if (!encryptedObj?.encrypted) return encryptedObj;
+    const key = await deriveEncryptionKey(password);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: new Uint8Array(encryptedObj.iv) },
+      key,
+      new Uint8Array(encryptedObj.data)
+    );
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  } catch {
+    return null;
+  }
+}
+
+// Get API keys from Hub's encrypted settings or environment
+async function getHubApiKeys() {
+  try {
+    const savedSettings = localStorage.getItem('outreach_business_settings_v4');
+    if (savedSettings) {
+      const parsed = JSON.parse(savedSettings);
+      // Try to decrypt with the known password hash
+      const decrypted = await decryptSettings(parsed, atob('eWMyMDI1b3V0cmVhY2g='));
+      if (decrypted) {
+        // Hub stores keys directly as groqApiKey, perplexityApiKey
+        return {
+          groq: decrypted.groqApiKey || '',
+          perplexity: decrypted.perplexityApiKey || '',
+          resend: decrypted.resendApiKey || ''
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to decrypt Hub settings:', e);
+  }
+
+  // Fall back to environment variables
+  return {
+    groq: import.meta.env.VITE_GROQ_API_KEY || '',
+    perplexity: import.meta.env.VITE_PERPLEXITY_API_KEY || '',
+    openai: import.meta.env.VITE_OPENAI_API_KEY || ''
+  };
+}
 
 /**
  * TextNoteNode - Draggable text note card for Unity Note Plus
@@ -10,13 +82,42 @@ import { getLLMAdapter } from '../../adapters/llm';
  * - Color accent selection
  * - Resizable width
  * - Dark/light theme support
+ * - AI assistance using Hub's configured LLM (Groq/Perplexity)
  */
 const TextNoteNode = memo(({ data, id, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(data.title || 'New Note');
-  const [content, setContent] = useState(data.content || '');
-  const [url, setUrl] = useState(data.url || '');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Local state that syncs with data prop
+  const [localTitle, setLocalTitle] = useState(data.title || 'New Note');
+  const [localContent, setLocalContent] = useState(data.content || '');
+  const [localUrl, setLocalUrl] = useState(data.url || '');
+
+  // AI Chat thread state (Phase 1 UX improvement)
+  const [aiMessages, setAiMessages] = useState(data.aiMessages || []);
+  const [aiInput, setAiInput] = useState('');
+  const threadRef = useRef(null);
+
+  // Link preview state
+  const [linkPreview, setLinkPreview] = useState(null);
+
+  // Sync local state when data changes from parent
+  useEffect(() => {
+    setLocalTitle(data.title || 'New Note');
+    setLocalContent(data.content || '');
+    setLocalUrl(data.url || '');
+    if (data.aiMessages) {
+      setAiMessages(data.aiMessages);
+    }
+  }, [data.title, data.content, data.url, data.aiMessages]);
+
+  // Auto-scroll thread to bottom when new messages arrive
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }
+  }, [aiMessages]);
 
   // Determine card type from id prefix or explicit type
   const cardType = data.cardType ||
@@ -25,7 +126,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
      id?.startsWith('video-') ? 'video' : 'note');
 
   const isDarkTheme = data.theme === 'dark';
-  const accentColor = data.color || 'rgb(251, 191, 36)'; // Default yellow
+  const accentColor = data.color || 'rgb(251, 191, 36)';
 
   // Card type configurations
   const cardTypeConfig = {
@@ -37,75 +138,211 @@ const TextNoteNode = memo(({ data, id, selected }) => {
 
   const config = cardTypeConfig[cardType] || cardTypeConfig.note;
 
-  const handleDoubleClick = useCallback(() => {
+  // Start editing
+  const startEditing = useCallback((e) => {
+    if (e) e.stopPropagation();
     setIsEditing(true);
   }, []);
 
-  const handleBlur = useCallback(() => {
+  // Save changes and exit editing
+  const saveAndClose = useCallback(() => {
     setIsEditing(false);
     if (data.onUpdate) {
-      data.onUpdate(id, { title, content, url, cardType });
+      data.onUpdate(id, {
+        title: localTitle,
+        content: localContent,
+        url: localUrl,
+        cardType
+      });
     }
-  }, [id, title, content, url, cardType, data]);
+  }, [id, localTitle, localContent, localUrl, cardType, data]);
+
+  // Handle key events
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') {
+      saveAndClose();
+    }
+    // Don't propagate to prevent node dragging while typing
+    e.stopPropagation();
+  }, [saveAndClose]);
 
   // Extract video embed info
   const getVideoEmbed = useCallback((videoUrl) => {
     if (!videoUrl) return null;
-
-    // YouTube
     const youtubeMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
-    if (youtubeMatch) {
-      return { type: 'youtube', id: youtubeMatch[1] };
-    }
-
-    // Vimeo
+    if (youtubeMatch) return { type: 'youtube', id: youtubeMatch[1] };
     const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
-    if (vimeoMatch) {
-      return { type: 'vimeo', id: vimeoMatch[1] };
-    }
-
+    if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
     return null;
   }, []);
 
-  // Handle AI query - uses configured LLM adapter
-  const handleAiQuery = useCallback(async () => {
-    if (!content.trim() || isAiLoading) return;
+  // Extract domain and favicon from URL for link preview
+  const getLinkPreviewData = useCallback((url) => {
+    if (!url) return null;
+    try {
+      const urlObj = new URL(url);
+      return {
+        domain: urlObj.hostname.replace('www.', ''),
+        favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`,
+        isSecure: urlObj.protocol === 'https:'
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Gather context from localStorage (other notes/nodes on the page)
+  const gatherPageContext = useCallback(() => {
+    try {
+      const savedData = localStorage.getItem('unity-notes-data');
+      if (!savedData) return '';
+
+      const { nodes: savedNodes } = JSON.parse(savedData);
+      if (!savedNodes || savedNodes.length === 0) return '';
+
+      // Build context from other nodes (excluding current node)
+      const contextParts = [];
+      let noteCount = 0;
+
+      savedNodes.forEach((node) => {
+        if (node.id === id) return; // Skip current node
+
+        const nodeData = node.data || {};
+        const nodeType = node.type || 'unknown';
+
+        // Extract relevant content based on node type
+        if (nodeType === 'textNode' || nodeType === 'photoNode') {
+          const title = nodeData.title || nodeData.label || '';
+          const content = nodeData.content || nodeData.description || '';
+          const url = nodeData.url || '';
+
+          if (title || content) {
+            noteCount++;
+            let nodeContext = `[Note ${noteCount}]`;
+            if (title) nodeContext += ` Title: ${title}`;
+            if (content) nodeContext += ` | Content: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`;
+            if (url) nodeContext += ` | URL: ${url}`;
+            contextParts.push(nodeContext);
+          }
+        }
+      });
+
+      if (contextParts.length === 0) return '';
+
+      return `\n\n--- Context from your notes (${contextParts.length} items) ---\n${contextParts.join('\n')}`;
+    } catch (error) {
+      console.warn('Failed to gather page context:', error);
+      return '';
+    }
+  }, [id]);
+
+  // Handle AI query - uses Hub's configured LLM or falls back to env
+  // Updated for Phase 1 Thread UI - uses message array instead of appending to textarea
+  const handleAiQuery = useCallback(async (inputText) => {
+    const queryText = inputText || aiInput;
+    if (!queryText.trim()) return;
+    if (isAiLoading) return;
+
+    // Add user message to thread immediately
+    const userMessage = {
+      role: 'user',
+      content: queryText.trim(),
+      timestamp: Date.now()
+    };
+    const updatedMessages = [...aiMessages, userMessage];
+    setAiMessages(updatedMessages);
+    setAiInput(''); // Clear input
 
     setIsAiLoading(true);
     try {
-      // Get the configured LLM adapter (async - OpenAI, Groq, Claude, etc.)
-      const adapter = await getLLMAdapter();
+      // First try to get API keys from Hub's encrypted settings
+      const hubKeys = await getHubApiKeys();
+      let adapter = null;
+      let providerUsed = '';
 
-      if (!adapter || !adapter.isConfigured()) {
-        throw new Error('No AI provider configured. Add API key in .env (VITE_OPENAI_API_KEY, VITE_GROQ_API_KEY, or VITE_CLAUDE_API_KEY)');
+      // Try Groq first (fastest/cheapest)
+      if (hubKeys.groq) {
+        adapter = await getLLMAdapterByName('groq');
+        if (adapter) {
+          // Temporarily set the API key for this request
+          adapter._hubApiKey = hubKeys.groq;
+          providerUsed = 'Groq';
+        }
       }
 
-      // Generate response using the adapter
-      const aiResponse = await adapter.generate(content, {
-        systemPrompt: 'You are a helpful assistant in a note-taking app. Keep responses concise and helpful.',
+      // Fall back to standard adapter if Hub keys not available
+      if (!adapter) {
+        adapter = await getLLMAdapter();
+        providerUsed = 'default';
+      }
+
+      if (!adapter) {
+        throw new Error('No AI configured. Set up API keys in UnityMAP Hub settings.');
+      }
+
+      // Check if configured - for Hub keys, we have them; for default, check isConfigured
+      if (providerUsed === 'default' && adapter.isConfigured && !adapter.isConfigured()) {
+        throw new Error('No AI API key found. Configure in UnityMAP Hub or add VITE_GROQ_API_KEY to .env');
+      }
+
+      // Gather context from other notes on the page
+      const pageContext = gatherPageContext();
+
+      // Build conversation history for context (last 6 messages)
+      const recentHistory = updatedMessages.slice(-6).map(m =>
+        `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
+      ).join('\n\n');
+
+      // Build enhanced prompt with conversation history and page context
+      const enhancedPrompt = `${recentHistory ? `Previous conversation:\n${recentHistory}\n\n` : ''}Current question: ${queryText}${pageContext}`;
+
+      // Generate with Hub's API key if available
+      const generateOptions = {
+        systemPrompt: 'You are a helpful assistant integrated into a note-taking app. You have access to the user\'s other notes as context. Keep responses concise and relevant. Reference their notes when applicable. Continue the conversation naturally.',
         maxTokens: 1024
-      });
+      };
 
-      const newContent = `${content}\n\n---\n🤖 AI: ${aiResponse}`;
-      setContent(newContent);
+      // If using Hub's API key, pass it to the adapter
+      if (adapter._hubApiKey) {
+        generateOptions.apiKey = adapter._hubApiKey;
+      }
 
+      const aiResponse = await adapter.generate(enhancedPrompt, generateOptions);
+
+      // Add AI response to thread
+      const assistantMessage = {
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: Date.now()
+      };
+      const finalMessages = [...updatedMessages, assistantMessage];
+      setAiMessages(finalMessages);
+
+      // Save to node data
       if (data.onUpdate) {
-        data.onUpdate(id, { title, content: newContent, cardType });
+        data.onUpdate(id, {
+          title: localTitle,
+          content: localContent,
+          url: localUrl,
+          cardType,
+          aiMessages: finalMessages
+        });
       }
     } catch (error) {
-      console.error('AI query error:', error);
-      const errorContent = `${content}\n\n---\n⚠️ AI error: ${error.message}`;
-      setContent(errorContent);
+      console.error('AI error:', error);
+      // Add error as system message
+      const errorMessage = {
+        role: 'assistant',
+        content: `⚠️ Error: ${error.message}`,
+        timestamp: Date.now(),
+        isError: true
+      };
+      const finalMessages = [...updatedMessages, errorMessage];
+      setAiMessages(finalMessages);
     } finally {
       setIsAiLoading(false);
     }
-  }, [content, isAiLoading, id, title, cardType, data]);
-
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      setIsEditing(false);
-    }
-  }, []);
+  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext]);
 
   const baseStyles = {
     backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
@@ -115,6 +352,8 @@ const TextNoteNode = memo(({ data, id, selected }) => {
 
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         position: 'relative',
         minWidth: data.width || 280,
@@ -128,320 +367,415 @@ const TextNoteNode = memo(({ data, id, selected }) => {
         overflow: 'visible',
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
       }}
-      onDoubleClick={handleDoubleClick}
     >
       {/* Connection handles */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{
-          background: accentColor,
-          width: 10,
-          height: 10,
-          border: '2px solid white',
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{
-          background: accentColor,
-          width: 10,
-          height: 10,
-          border: '2px solid white',
-        }}
-      />
+      <Handle type="target" position={Position.Top} style={{ background: accentColor, width: 10, height: 10, border: '2px solid white' }} />
+      <Handle type="source" position={Position.Bottom} style={{ background: accentColor, width: 10, height: 10, border: '2px solid white' }} />
 
-      {/* Header with accent color */}
-      <div style={{
-        height: '6px',
-        backgroundColor: accentColor,
-      }} />
+      {/* Header accent */}
+      <div style={{ height: '6px', backgroundColor: accentColor }} />
 
       {/* Card type label */}
-      <div style={{
-        padding: '8px 12px 4px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-      }}>
+      <div style={{ padding: '8px 12px 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span style={{ fontSize: '12px' }}>{config.icon}</span>
-        <span style={{
-          fontSize: '10px',
-          fontWeight: '700',
-          letterSpacing: '0.1em',
-          color: accentColor,
-          textTransform: 'uppercase',
-        }}>
+        <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: accentColor, textTransform: 'uppercase' }}>
           {config.label}
         </span>
       </div>
 
-      {/* Title */}
+      {/* Title - Always editable inline */}
       <div style={{ padding: '0 12px 8px' }}>
-        {isEditing ? (
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            style={{
-              width: '100%',
-              fontSize: '15px',
-              fontWeight: '700',
-              color: baseStyles.color,
-              backgroundColor: 'transparent',
-              border: 'none',
-              outline: 'none',
-              padding: '4px 0',
-            }}
-          />
-        ) : (
-          <h3 style={{
+        <input
+          type="text"
+          value={localTitle}
+          onChange={(e) => setLocalTitle(e.target.value)}
+          onBlur={saveAndClose}
+          onKeyDown={handleKeyDown}
+          className="nodrag nopan"
+          style={{
+            width: '100%',
             fontSize: '15px',
             fontWeight: '700',
             color: baseStyles.color,
-            margin: 0,
+            backgroundColor: 'transparent',
+            border: 'none',
+            outline: 'none',
             padding: '4px 0',
             cursor: 'text',
-          }}>
-            {title || 'Untitled'}
-          </h3>
-        )}
+          }}
+        />
       </div>
 
-      {/* Type-specific content areas */}
+      {/* LINK: URL Input + Preview */}
       {cardType === 'link' && (
         <div style={{ padding: '0 12px 8px' }}>
-          {isEditing ? (
+          {/* URL Input */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px',
+            backgroundColor: isDarkTheme ? '#111827' : '#eff6ff',
+            borderRadius: '4px',
+            border: `1px solid ${isDarkTheme ? '#374151' : '#bfdbfe'}`,
+            marginBottom: localUrl ? '8px' : '0',
+          }}>
             <input
               type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onBlur={handleBlur}
+              value={localUrl}
+              onChange={(e) => setLocalUrl(e.target.value)}
+              onBlur={saveAndClose}
+              onKeyDown={handleKeyDown}
               placeholder="https://example.com"
-              autoFocus
               className="nodrag nopan"
               style={{
-                width: '100%',
+                flex: 1,
                 fontSize: '12px',
                 color: isDarkTheme ? '#93c5fd' : '#2563eb',
-                backgroundColor: isDarkTheme ? '#111827' : '#eff6ff',
-                border: `1px solid ${isDarkTheme ? '#374151' : '#bfdbfe'}`,
-                borderRadius: '4px',
-                padding: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
                 outline: 'none',
-                boxSizing: 'border-box',
               }}
             />
-          ) : (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
+            {localUrl && (
+              <a
+                href={localUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{ fontSize: '16px', textDecoration: 'none' }}
+                title="Open link"
+              >
+                ↗️
+              </a>
+            )}
+          </div>
+          {/* Link Preview */}
+          {localUrl && getLinkPreviewData(localUrl) && (
+            <a
+              href={localUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="nodrag nopan"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px',
-                backgroundColor: isDarkTheme ? '#111827' : '#eff6ff',
-                borderRadius: '4px',
-                cursor: 'text',
+                gap: '10px',
+                padding: '10px 12px',
+                backgroundColor: isDarkTheme ? '#1f2937' : '#f8fafc',
+                borderRadius: '6px',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e2e8f0'}`,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
               }}
             >
-              {url ? (
-                <>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      fontSize: '12px',
-                      color: isDarkTheme ? '#93c5fd' : '#2563eb',
-                      textDecoration: 'underline',
-                      wordBreak: 'break-all',
-                      flex: 1,
-                    }}
-                  >
-                    {url}
-                  </a>
-                  <span style={{ fontSize: '16px' }}>🔗</span>
-                </>
-              ) : (
-                <span style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
-                  Click to add URL...
-                </span>
-              )}
-            </div>
+              <img
+                src={getLinkPreviewData(localUrl).favicon}
+                alt=""
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '4px',
+                  flexShrink: 0,
+                }}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: isDarkTheme ? '#f3f4f6' : '#1e293b',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {localTitle !== 'New Link' ? localTitle : getLinkPreviewData(localUrl).domain}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: isDarkTheme ? '#9ca3af' : '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}>
+                  {getLinkPreviewData(localUrl).isSecure && (
+                    <span style={{ color: '#22c55e' }}>🔒</span>
+                  )}
+                  {getLinkPreviewData(localUrl).domain}
+                </div>
+              </div>
+              <span style={{ fontSize: '14px', color: isDarkTheme ? '#6b7280' : '#94a3b8' }}>→</span>
+            </a>
           )}
         </div>
       )}
 
+      {/* VIDEO: URL Input + Preview */}
       {cardType === 'video' && (
         <div style={{ padding: '0 12px 8px' }}>
-          {isEditing ? (
+          <div style={{
+            padding: '8px',
+            backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+            borderRadius: '4px',
+            border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+            marginBottom: '8px',
+          }}>
             <input
               type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onBlur={handleBlur}
+              value={localUrl}
+              onChange={(e) => setLocalUrl(e.target.value)}
+              onBlur={saveAndClose}
+              onKeyDown={handleKeyDown}
               placeholder="YouTube or Vimeo URL"
-              autoFocus
               className="nodrag nopan"
               style={{
                 width: '100%',
                 fontSize: '12px',
                 color: isDarkTheme ? '#d1d5db' : '#4b5563',
-                backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
-                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
-                borderRadius: '4px',
-                padding: '8px',
+                backgroundColor: 'transparent',
+                border: 'none',
                 outline: 'none',
-                boxSizing: 'border-box',
               }}
             />
-          ) : getVideoEmbed(url) ? (
-            <div style={{ position: 'relative' }}>
-              <div style={{
-                position: 'relative',
-                width: '100%',
-                paddingBottom: '56.25%',
-                backgroundColor: '#000',
-                borderRadius: '4px',
-                overflow: 'hidden',
-              }}>
-                <iframe
-                  src={
-                    getVideoEmbed(url).type === 'youtube'
-                      ? `https://www.youtube.com/embed/${getVideoEmbed(url).id}`
-                      : `https://player.vimeo.com/video/${getVideoEmbed(url).id}`
-                  }
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                  }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              {/* Edit URL button */}
-              <button
-                className="nodrag nopan"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                style={{
-                  marginTop: '6px',
-                  padding: '4px 8px',
-                  fontSize: '10px',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  color: '#6b7280',
-                }}
-              >
-                ✏️ Edit URL
-              </button>
+          </div>
+          {getVideoEmbed(localUrl) && (
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              paddingBottom: '56.25%',
+              backgroundColor: '#000',
+              borderRadius: '4px',
+              overflow: 'hidden',
+            }}>
+              <iframe
+                src={
+                  getVideoEmbed(localUrl).type === 'youtube'
+                    ? `https://www.youtube.com/embed/${getVideoEmbed(localUrl).id}`
+                    : `https://player.vimeo.com/video/${getVideoEmbed(localUrl).id}`
+                }
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
-          ) : (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              style={{
-                padding: '16px',
-                backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
-                borderRadius: '4px',
-                cursor: 'text',
-                textAlign: 'center',
-              }}
-            >
-              {url ? (
-                <span style={{ fontSize: '11px', color: '#dc2626' }}>
-                  Invalid video URL. Click to edit.
-                </span>
-              ) : (
-                <>
-                  <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>📹</span>
-                  <span style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
-                    Click to add YouTube or Vimeo URL
-                  </span>
-                </>
-              )}
+          )}
+          {localUrl && !getVideoEmbed(localUrl) && (
+            <div style={{ fontSize: '11px', color: '#dc2626', padding: '8px' }}>
+              Invalid URL. Use YouTube or Vimeo links.
             </div>
           )}
         </div>
       )}
 
+      {/* AI Card: Thread-based chat UI */}
       {cardType === 'ai' && (
-        <div style={{ padding: '0 12px 8px' }}>
-          <button
+        <div style={{ padding: '0 12px 12px' }}>
+          {/* Thread view - scrollable message history */}
+          <div
+            ref={threadRef}
             className="nodrag nopan"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (content.trim()) {
-                handleAiQuery();
-              } else {
-                // If no content, enter edit mode so user can type
-                setIsEditing(true);
-              }
-            }}
-            disabled={isAiLoading}
             style={{
-              width: '100%',
-              padding: '10px',
+              maxHeight: '200px',
+              minHeight: aiMessages.length > 0 ? '100px' : '40px',
+              overflowY: 'auto',
               marginBottom: '8px',
-              backgroundColor: isAiLoading ? '#d1d5db' : 'rgb(251, 191, 36)',
-              color: isAiLoading ? 'white' : '#111827',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '700',
-              cursor: isAiLoading ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              opacity: isAiLoading ? 0.7 : 1,
+              padding: aiMessages.length > 0 ? '8px' : '12px',
+              backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+              borderRadius: '6px',
+              border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
             }}
           >
-            {isAiLoading ? (
-              <>⏳ Thinking...</>
+            {aiMessages.length === 0 ? (
+              <div style={{
+                fontSize: '12px',
+                color: isDarkTheme ? '#6b7280' : '#9ca3af',
+                textAlign: 'center',
+              }}>
+                Ask me anything! I can see your other notes.
+              </div>
             ) : (
-              <>🤖 Assistance</>
+              aiMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: idx < aiMessages.length - 1 ? '10px' : 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <div style={{
+                    maxWidth: '90%',
+                    padding: '8px 12px',
+                    borderRadius: msg.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                    backgroundColor: msg.role === 'user'
+                      ? 'rgb(251, 191, 36)'
+                      : msg.isError
+                        ? (isDarkTheme ? '#7f1d1d' : '#fef2f2')
+                        : (isDarkTheme ? '#1f2937' : '#ffffff'),
+                    color: msg.role === 'user'
+                      ? '#111827'
+                      : msg.isError
+                        ? (isDarkTheme ? '#fca5a5' : '#dc2626')
+                        : (isDarkTheme ? '#e5e7eb' : '#374151'),
+                    fontSize: '12px',
+                    lineHeight: '1.5',
+                    border: msg.role === 'assistant' && !msg.isError
+                      ? `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`
+                      : 'none',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                  }}>
+                    <div style={{
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      marginBottom: '4px',
+                      opacity: 0.7,
+                    }}>
+                      {msg.role === 'user' ? '💬 You' : '🤖 AI'}
+                    </div>
+                    <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {msg.content}
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
-          </button>
+            {/* Loading indicator */}
+            {isAiLoading && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: aiMessages.length > 0 ? '10px' : 0,
+                padding: '8px 12px',
+                backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+                borderRadius: '12px 12px 12px 4px',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                width: 'fit-content',
+              }}>
+                <span style={{ fontSize: '12px' }}>🤖</span>
+                <span style={{
+                  fontSize: '12px',
+                  color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                }}>
+                  Thinking...
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Input row */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'flex-end',
+          }}>
+            <input
+              type="text"
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter' && !e.shiftKey && aiInput.trim() && !isAiLoading) {
+                  handleAiQuery();
+                }
+              }}
+              placeholder="Ask a question..."
+              className="nodrag nopan"
+              disabled={isAiLoading}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                fontSize: '12px',
+                color: isDarkTheme ? '#e5e7eb' : '#374151',
+                backgroundColor: isDarkTheme ? '#111827' : '#ffffff',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                borderRadius: '8px',
+                outline: 'none',
+              }}
+            />
+            <button
+              className="nodrag nopan"
+              onClick={() => handleAiQuery()}
+              disabled={isAiLoading || !aiInput.trim()}
+              style={{
+                width: '36px',
+                height: '36px',
+                padding: 0,
+                backgroundColor: isAiLoading || !aiInput.trim()
+                  ? (isDarkTheme ? '#374151' : '#e5e7eb')
+                  : 'rgb(251, 191, 36)',
+                color: isAiLoading || !aiInput.trim()
+                  ? (isDarkTheme ? '#6b7280' : '#9ca3af')
+                  : '#111827',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: isAiLoading ? 'wait' : !aiInput.trim() ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+              }}
+              title="Send message"
+            >
+              {isAiLoading ? '⏳' : '→'}
+            </button>
+          </div>
+
+          {/* Clear history button (when there are messages) */}
+          {aiMessages.length > 0 && (
+            <button
+              className="nodrag nopan"
+              onClick={() => {
+                setAiMessages([]);
+                if (data.onUpdate) {
+                  data.onUpdate(id, {
+                    title: localTitle,
+                    content: localContent,
+                    url: localUrl,
+                    cardType,
+                    aiMessages: []
+                  });
+                }
+              }}
+              style={{
+                marginTop: '8px',
+                padding: '4px 8px',
+                fontSize: '10px',
+                color: isDarkTheme ? '#6b7280' : '#9ca3af',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: 0.7,
+              }}
+            >
+              Clear conversation
+            </button>
+          )}
         </div>
       )}
 
-      {/* Content (shown for all types) */}
-      <div style={{ padding: '0 12px 12px' }}>
-        {isEditing ? (
+      {/* Content textarea - For non-AI cards only */}
+      {cardType !== 'ai' && (
+        <div style={{ padding: '0 12px 12px' }}>
           <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onBlur={handleBlur}
+            value={localContent}
+            onChange={(e) => setLocalContent(e.target.value)}
+            onBlur={saveAndClose}
             onKeyDown={handleKeyDown}
             placeholder={
-              cardType === 'ai' ? 'Type your question for AI...' :
               cardType === 'link' ? 'Add notes about this link...' :
               cardType === 'video' ? 'Add notes about this video...' :
               'Add your note content...'
             }
+            className="nodrag nopan"
             style={{
               width: '100%',
-              minHeight: cardType === 'ai' ? '60px' : '80px',
+              minHeight: '80px',
               fontSize: '13px',
               lineHeight: '1.5',
               color: isDarkTheme ? '#d1d5db' : '#4b5563',
@@ -455,233 +789,63 @@ const TextNoteNode = memo(({ data, id, selected }) => {
               boxSizing: 'border-box',
             }}
           />
-        ) : (
-          <p
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            style={{
-              fontSize: '13px',
-              lineHeight: '1.5',
-              color: content ? (isDarkTheme ? '#d1d5db' : '#6b7280') : '#9ca3af',
-              margin: 0,
-              whiteSpace: 'pre-wrap',
-              cursor: 'text',
-              minHeight: '40px',
-              padding: '8px',
-              backgroundColor: isDarkTheme ? 'rgba(17, 24, 39, 0.5)' : 'rgba(249, 250, 251, 0.5)',
-              borderRadius: '4px',
-              fontStyle: content ? 'normal' : 'italic',
-            }}>
-            {content || (
-              cardType === 'ai' ? 'Click to type a question...' :
-              cardType === 'link' ? 'Add notes about this link...' :
-              cardType === 'video' ? 'Add notes about this video...' :
-              'Add your note content...'
-            )}
-          </p>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Footer with timestamp */}
+      {/* Footer */}
       <div style={{
         padding: '8px 12px',
         borderTop: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
         fontSize: '10px',
         color: isDarkTheme ? '#6b7280' : '#9ca3af',
       }}>
-        {data.updatedAt ? (
-          <span>Updated {new Date(data.updatedAt).toLocaleDateString()}</span>
-        ) : (
-          <span>Created {new Date(data.createdAt || Date.now()).toLocaleDateString()}</span>
-        )}
+        {data.updatedAt
+          ? `Updated ${new Date(data.updatedAt).toLocaleDateString()}`
+          : `Created ${new Date(data.createdAt || Date.now()).toLocaleDateString()}`
+        }
       </div>
 
-      {/* Action Buttons - Only show when selected */}
-      {selected && (
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          display: 'flex',
-          gap: '6px',
-          zIndex: 25,
-        }}>
-          {/* Preview Button - Show for email/outreach nodes */}
-          {(id?.includes('outreach') || content?.includes('**Subject:**')) && (
-            <button
-              className="nodrag nopan"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (data.onPreview) {
-                  data.onPreview(id, { title, content, color: accentColor });
-                }
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                if (data.onPreview) {
-                  data.onPreview(id, { title, content, color: accentColor });
-                }
-              }}
-              style={{
-                padding: '6px 10px',
-                backgroundColor: 'rgba(251, 191, 36, 0.9)',
-                color: '#111827',
-                border: '2px solid rgb(251, 191, 36)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '10px',
-                fontWeight: '700',
-                letterSpacing: '0.05em',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                transition: 'all 0.2s ease',
-                pointerEvents: 'auto',
-                WebkitTapHighlightColor: 'transparent',
-                userSelect: 'none'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'rgb(245, 176, 0)';
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.9)';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              👁️ PREVIEW
-            </button>
-          )}
-
-          {/* Edit in Outreach Button - Show for outreach campaign nodes */}
-          {id?.includes('outreach') && data.onEditInOutreach && (
-            <button
-              className="nodrag nopan"
-              onClick={(e) => {
-                e.stopPropagation();
-                data.onEditInOutreach(id, { title, content, color: accentColor });
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                data.onEditInOutreach(id, { title, content, color: accentColor });
-              }}
-              style={{
-                padding: '6px 10px',
-                backgroundColor: 'rgba(238, 207, 0, 0.9)',
-                color: 'black',
-                border: '2px solid #EECF00',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '10px',
-                fontWeight: '700',
-                letterSpacing: '0.05em',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                transition: 'all 0.2s ease',
-                pointerEvents: 'auto',
-                WebkitTapHighlightColor: 'transparent',
-                userSelect: 'none'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#f5b000';
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.9)';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              ⚡ OUTREACH
-            </button>
-          )}
-
-          {/* Edit Button */}
-          <button
-            className="nodrag nopan"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setIsEditing(true);
-            }}
-            style={{
-              padding: '6px 10px',
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              color: 'white',
-              border: `2px solid ${accentColor}`,
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s ease',
-              pointerEvents: 'auto',
-              WebkitTapHighlightColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = accentColor;
-              e.target.style.color = '#000000';
-              e.target.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-              e.target.style.color = 'white';
-              e.target.style.transform = 'scale(1)';
-            }}
-          >
-            ✏️ EDIT
-          </button>
-
-          {/* Delete Button */}
-          <button
-            className="nodrag nopan"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (data.onDelete) {
-                data.onDelete(id);
-              }
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              if (data.onDelete) {
-                data.onDelete(id);
-              }
-            }}
-            style={{
-              padding: '6px 10px',
-              backgroundColor: '#374151',
-              color: 'white',
-              border: '2px solid #374151',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s ease',
-              pointerEvents: 'auto',
-              WebkitTapHighlightColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#1f2937';
-              e.target.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#374151';
-              e.target.style.transform = 'scale(1)';
-            }}
-          >
-            × DELETE
-          </button>
-        </div>
+      {/* Delete button - Circle, black, shows on hover or when selected */}
+      {(isHovered || selected) && (
+        <button
+          className="nodrag nopan"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (data.onDelete) data.onDelete(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            maxWidth: '24px',
+            maxHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: '#1f2937',
+            color: 'white',
+            border: '2px solid white',
+            fontSize: '16px',
+            lineHeight: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            zIndex: 10,
+            opacity: isHovered && !selected ? 0.85 : 1,
+            transition: 'opacity 0.2s ease, transform 0.15s ease',
+            boxSizing: 'border-box',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+          title="Delete"
+        >
+          ×
+        </button>
       )}
     </div>
   );

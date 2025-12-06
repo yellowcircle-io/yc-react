@@ -1,8 +1,8 @@
 # Project Roadmap - December 2025
 
-**Date:** December 5, 2025
-**Status:** 🔐 FIREBASE AUTH COMPLETE - SSO + Credits System
-**Days Since Rho Exit:** 10 (Nov 25, 2025)
+**Date:** December 6, 2025
+**Status:** ✅ UnitySTUDIO MVP + AI CHAT THREAD UI COMPLETE
+**Days Since Rho Exit:** 11 (Nov 25, 2025)
 
 ---
 
@@ -54,6 +54,79 @@
 | GA4 goals/conversions | 🔲 Planned | Self |
 | GTM event tracking | 🔲 Planned | Claude Code |
 | Remarketing audiences | 🔲 Planned | Self |
+
+---
+
+## ✅ DECEMBER 6, 2025 - UnitySTUDIO MVP + AI CHAT THREAD UI
+
+### Mac Mini Session: UnitySTUDIO Asset Creation Suite
+
+**Build Status:** ✅ Successful
+
+#### 1. UnitySTUDIO MVP ✅ COMPLETE
+- Third mode in Unity platform ecosystem (NOTES → MAP → STUDIO)
+- Asset creation suite for GTM campaigns
+- **Files Created:**
+  - `src/components/unity-studio/UnityStudioCanvas.jsx` - Main container
+  - `src/components/unity-studio/EmailTemplateBuilder.jsx` - Email template editor
+  - `dev-context/UNITY_STUDIO_SCOPE.md` - Scope document
+
+- **Features:**
+  - 5 pre-built email templates (Outreach Initial, Follow-up Nudge, Value Proposition, Case Study, Meeting Request)
+  - Section-based editing (Subject, Greeting, Body, CTA, Signature)
+  - Variable placeholders ({{firstName}}, {{company}}, etc.)
+  - Real-time preview with sample data
+  - Export options: Save, Send to MAP, Copy HTML, Download HTML
+  - Asset library with localStorage persistence
+
+#### 2. AI Chat Thread UI ✅ COMPLETE
+- Replaced single textarea with proper threaded conversation
+- Chat bubbles for user/AI messages
+- Auto-scroll to newest messages
+- Conversation history persisted to node data
+- Input field with send button at bottom
+- Clear conversation button
+- **Files Modified:**
+  - `src/components/unity-plus/TextNoteNode.jsx` - Thread UI implementation
+
+#### 3. Earlier Session Achievements
+- UnityMAP Deploy button architecture complete
+- Email sending debug logging added
+- Prospect progression through journey nodes
+- Visual tracking of prospect positions on nodes
+- Cloud Scheduler scope document created
+
+---
+
+## ✅ DECEMBER 5-6, 2025 - CUSTOM CONDITIONS + AI VISION + REACT UPDATE
+
+### MacBook Air Session: Custom Conditions, AI Vision, React 19.2.1
+
+**Commits:**
+- `8acd574` - Feature: Custom Conditions + AI Computer Vision for UnityNotes
+- `aac2a66` - Fix: Firebase auth error messages + AI Chat LLM integration
+- `8a6a11c` - Fix: React 19.2.1 security update + UnityNotes card functionality
+
+#### 1. Custom Conditions for ConditionNode ✅ COMPLETE
+- Updated `ConditionEditModal.jsx` with custom condition builder UI
+- Field categories: Contact Properties, Engagement Metrics, Segmentation
+- Operators: Text (equals, contains, starts_with), Number (>, <, ≥, ≤), Existence
+- Auto-generates human-readable labels
+
+#### 2. AI Computer Vision Integration ✅ COMPLETE
+- Created `src/hooks/useImageAnalysis.js` - AI-powered image analysis
+- Analysis types: describe, tags, travel, ocr, detailed, creative
+- Updated `src/adapters/llm/openai.js` with vision API support
+- Added AI button to DraggablePhotoNode with dropdown menu
+
+#### 3. React 19.2.1 Security Update ✅ COMPLETE
+- Updated react and react-dom to 19.2.1
+- All tests passing
+- No breaking changes
+
+#### 4. AI Chat LLM Integration ✅ COMPLETE
+- Updated AIChatNode with adapter pattern for LLM providers
+- Supports Groq (free) and OpenAI
 
 ---
 
@@ -1203,7 +1276,7 @@ h1.your-circle {
 
 ---
 
-**Last Updated:** December 5, 2025
+**Last Updated:** December 6, 2025
 **Next Review:** December 10, 2025 (Week 2 of 60-Day Plan)
 **Owner:** Christopher Cooper
-**Version:** 2.3 (Dec 5 Firebase Auth / SSO Session)
+**Version:** 2.4 (Dec 6 Custom Conditions + AI Vision + React 19.2.1)

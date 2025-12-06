@@ -15,6 +15,7 @@ const EmailNode = memo(({ id, data, selected }) => {
     fullBody = '', // Full email body for preview
     status = 'draft', // 'draft', 'scheduled', 'sent'
     stats = { sent: 0, opened: 0, clicked: 0, replied: 0 },
+    prospectsAtNode = 0, // Number of prospects currently at this node
     onInlineEdit, // Open inline edit modal (preferred)
     onEditInOutreach, // Navigate to Outreach Generator (fallback)
     onPreview, // Show email preview modal
@@ -131,6 +132,29 @@ const EmailNode = memo(({ id, data, selected }) => {
           WebkitBoxOrient: 'vertical'
         }}>
           {preview}
+        </div>
+      )}
+
+      {/* Prospects at this node indicator */}
+      {prospectsAtNode > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginTop: '8px',
+          padding: '6px 10px',
+          backgroundColor: 'rgba(251, 191, 36, 0.15)',
+          borderRadius: '6px',
+          border: '1px solid rgba(251, 191, 36, 0.3)'
+        }}>
+          <span style={{ fontSize: '14px' }}>👤</span>
+          <span style={{
+            fontSize: '12px',
+            fontWeight: '600',
+            color: '#92400e'
+          }}>
+            {prospectsAtNode} waiting
+          </span>
         </div>
       )}
 

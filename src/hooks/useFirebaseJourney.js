@@ -27,6 +27,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { getESPAdapter } from '../adapters/esp';
 
 // MAP-specific node types
 const MAP_NODE_TYPES = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
@@ -501,6 +502,294 @@ export const useFirebaseJourney = () => {
   }, []);
 
   /**
+   * Send email immediately via ESP adapter (Resend)
+   * @param {object} emailData - { to, subject, body, from? }
+   * @returns {Promise<{ id, status, error? }>}
+   */
+  const sendEmailNow = useCallback(async (emailData) => {
+    console.log('📤 sendEmailNow called with:', {
+      to: emailData.to,
+      subject: emailData.subject,
+      bodyLength: emailData.body?.length || 0,
+      bodyPreview: emailData.body?.substring(0, 100)
+    });
+
+    try {
+      const esp = await getESPAdapter();
+      console.log('📧 ESP adapter loaded:', esp?.name || 'unknown');
+
+      // Validate we have content to send
+      if (!emailData.body || emailData.body.trim().length === 0) {
+        console.error('❌ Email body is empty!');
+        return {
+          id: null,
+          status: 'failed',
+          error: 'Email body is empty'
+        };
+      }
+
+      // Convert plain text to HTML
+      const htmlBody = emailData.body
+        .split('\n\n')
+        .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+        .join('');
+
+      console.log('📝 HTML body generated, length:', htmlBody.length);
+
+      const espPayload = {
+        to: emailData.to,
+        subject: emailData.subject,
+        html: htmlBody,
+        text: emailData.body,
+        replyTo: emailData.replyTo || undefined,
+        tags: [
+          { name: 'source', value: 'unity-map' },
+          { name: 'type', value: 'outreach' }
+        ]
+      };
+      console.log('📨 Calling ESP sendEmail with:', {
+        to: espPayload.to,
+        subject: espPayload.subject,
+        htmlLength: espPayload.html?.length,
+        textLength: espPayload.text?.length
+      });
+
+      const result = await esp.sendEmail(espPayload);
+
+      console.log('📧 ESP result:', result);
+      return result;
+    } catch (err) {
+      console.error('❌ Send email failed:', err);
+      return {
+        id: null,
+        status: 'failed',
+        error: err.message
+      };
+    }
+  }, []);
+
+  /**
+   * Send all emails in journey immediately (bypasses scheduler)
+   * @param {string} journeyId
+   * @param {object} options - { dryRun?: boolean }
+   * @returns {Promise<{ sent: number, failed: number, results: array }>}
+   */
+  const sendJourneyNow = useCallback(async (journeyId, options = {}) => {
+    console.log('📧 sendJourneyNow called with journeyId:', journeyId);
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const journeyRef = doc(db, 'journeys', journeyId);
+      const journeySnap = await getDoc(journeyRef);
+
+      if (!journeySnap.exists()) {
+        console.error('❌ Journey not found in Firestore:', journeyId);
+        throw new Error('Journey not found');
+      }
+
+      const journeyData = journeySnap.data();
+      const { nodes, prospects } = journeyData;
+
+      console.log('📋 Journey data retrieved:', {
+        title: journeyData.title,
+        status: journeyData.status,
+        nodeCount: nodes?.length || 0,
+        prospectCount: prospects?.length || 0
+      });
+
+      if (!prospects || prospects.length === 0) {
+        console.error('❌ No prospects in journey');
+        throw new Error('No prospects in journey. Add prospects first.');
+      }
+
+      // Log prospect details
+      console.log('👥 Prospects:', prospects.map(p => ({
+        email: p.email,
+        status: p.status,
+        currentNodeId: p.currentNodeId
+      })));
+
+      // Get email nodes
+      const emailNodes = nodes.filter(n => n.type === 'emailNode');
+      console.log('📧 Email nodes found:', emailNodes.length);
+      emailNodes.forEach((en, i) => {
+        console.log(`  Email ${i + 1}:`, {
+          id: en.id,
+          subject: en.data?.subject,
+          hasFullBody: !!en.data?.fullBody,
+          fullBodyLength: en.data?.fullBody?.length || 0,
+          preview: en.data?.preview?.substring(0, 50)
+        });
+      });
+
+      if (emailNodes.length === 0) {
+        console.error('❌ No email nodes in journey');
+        throw new Error('No email nodes in journey');
+      }
+
+      // Get edges for node traversal
+      const { edges } = journeyData;
+      console.log('🔗 Edges:', edges?.length || 0);
+
+      const results = {
+        sent: 0,
+        failed: 0,
+        details: []
+      };
+
+      // Helper: Find email node from current position (might not be at email node directly)
+      const findEmailForProspect = (currentNodeId, visitedNodes = new Set()) => {
+        if (visitedNodes.has(currentNodeId)) return null; // Prevent loops
+        visitedNodes.add(currentNodeId);
+
+        // Check if current node is an email node
+        const currentNode = nodes.find(n => n.id === currentNodeId);
+        if (currentNode?.type === 'emailNode') return currentNode;
+
+        // If not, traverse to next node
+        const nextNodeId = findNextNode(currentNodeId, edges);
+        if (nextNodeId) {
+          return findEmailForProspect(nextNodeId, visitedNodes);
+        }
+        return null;
+      };
+
+      // For each active prospect, send their current email
+      for (const prospect of prospects) {
+        console.log(`\n👤 Processing prospect: ${prospect.email}`);
+        console.log(`   Status: ${prospect.status}, CurrentNodeId: ${prospect.currentNodeId}`);
+
+        if (prospect.status !== 'active') {
+          console.log(`   ⏭️ Skipping - status is not active`);
+          continue;
+        }
+
+        // Try direct match first, then traverse
+        let emailNode = emailNodes.find(n => n.id === prospect.currentNodeId);
+        console.log(`   Direct match for ${prospect.currentNodeId}:`, emailNode ? 'found' : 'not found');
+
+        if (!emailNode) {
+          // Current node isn't an email - find next email in chain
+          console.log(`   🔍 Traversing from ${prospect.currentNodeId} to find email...`);
+          emailNode = findEmailForProspect(prospect.currentNodeId);
+          console.log(`   Traversal result:`, emailNode ? `found ${emailNode.id}` : 'not found');
+        }
+        if (!emailNode) {
+          // Still no email found, use first email node
+          emailNode = emailNodes[0];
+          console.warn(`   ⚠️ No email found for prospect ${prospect.email}, using first email: ${emailNode?.id}`);
+        }
+        if (!emailNode) {
+          console.error(`   ❌ No email node available, skipping`);
+          continue;
+        }
+
+        console.log(`   📧 Using email node: ${emailNode.id}`);
+        console.log(`      Subject: "${emailNode.data.subject}"`);
+        console.log(`      Body length: ${(emailNode.data.fullBody || emailNode.data.preview || '').length}`);
+
+        if (options.dryRun) {
+          results.details.push({
+            to: prospect.email,
+            subject: emailNode.data.subject,
+            status: 'dry_run'
+          });
+          results.sent++;
+          continue;
+        }
+
+        const emailPayload = {
+          to: prospect.email,
+          subject: emailNode.data.subject,
+          body: emailNode.data.fullBody || emailNode.data.preview || ''
+        };
+        console.log(`   📤 Sending email:`, {
+          to: emailPayload.to,
+          subject: emailPayload.subject,
+          bodyLength: emailPayload.body.length
+        });
+
+        const result = await sendEmailNow(emailPayload);
+        console.log(`   📬 Send result:`, result);
+
+        results.details.push({
+          to: prospect.email,
+          subject: emailNode.data.subject,
+          prospectId: prospect.id,
+          ...result
+        });
+
+        if (result.status === 'sent') {
+          results.sent++;
+          console.log(`   ✅ Email sent successfully!`);
+
+          // Advance prospect to next node
+          const nextNodeId = findNextNode(emailNode.id, edges);
+          if (nextNodeId) {
+            prospect.currentNodeId = nextNodeId;
+            prospect.history = [
+              ...(prospect.history || []),
+              {
+                nodeId: emailNode.id,
+                action: 'sent',
+                at: new Date().toISOString(),
+                messageId: result.id
+              }
+            ];
+            console.log(`   ➡️ Prospect advanced to next node: ${nextNodeId}`);
+          } else {
+            // No next node - mark as completed
+            prospect.status = 'completed';
+            prospect.history = [
+              ...(prospect.history || []),
+              {
+                nodeId: emailNode.id,
+                action: 'completed',
+                at: new Date().toISOString(),
+                messageId: result.id
+              }
+            ];
+            console.log(`   🏁 Prospect journey completed`);
+          }
+        } else {
+          results.failed++;
+          console.log(`   ❌ Email failed:`, result.error);
+          // Record failure in history but don't advance
+          prospect.history = [
+            ...(prospect.history || []),
+            {
+              nodeId: emailNode.id,
+              action: 'failed',
+              at: new Date().toISOString(),
+              error: result.error
+            }
+          ];
+        }
+      }
+
+      // Update journey with modified prospects and stats
+      await updateDoc(journeyRef, {
+        updatedAt: serverTimestamp(),
+        prospects: prospects,
+        'stats.sent': journeyData.stats.sent + results.sent,
+        'stats.completed': prospects.filter(p => p.status === 'completed').length
+      });
+
+      console.log(`\n📊 Final results: ${results.sent} sent, ${results.failed} failed`);
+      console.log('📋 Details:', results.details);
+      return results;
+
+    } catch (err) {
+      console.error('❌ Send journey failed:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [sendEmailNow]);
+
+  /**
    * Get journey execution status
    */
   const getJourneyStatus = useCallback(async (journeyId) => {
@@ -561,6 +850,10 @@ export const useFirebaseJourney = () => {
     addProspects,
     setJourneyStatus,
     getJourneyStatus,
+
+    // Direct Email Sending (via ESP/Resend)
+    sendEmailNow,
+    sendJourneyNow,
 
     // State
     isSaving,

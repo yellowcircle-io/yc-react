@@ -286,12 +286,12 @@ export const PAGES_CONFIG = [
     icon: '📦'
   },
   {
-    name: 'Outreach Generator',
+    name: 'UnityMAP Generator',
     path: '/experiments/outreach-generator',
     category: 'Experiments',
     status: 'live',
-    lastUpdated: '2025-11-30',
-    description: 'AI-powered outreach message generator',
+    lastUpdated: '2025-12-05',
+    description: 'Machine-assisted outreach message generator',
     icon: '📨'
   },
 
@@ -317,7 +317,7 @@ export const PAGES_CONFIG = [
     icon: '🩺'
   },
   {
-    name: 'Unity Notes',
+    name: 'UnityNotes',
     path: '/unity-notes',
     category: 'Labs',
     status: 'live',
@@ -326,12 +326,12 @@ export const PAGES_CONFIG = [
     icon: '🧠'
   },
   {
-    name: 'Outreach Pro',
+    name: 'UnityMAP Hub',
     path: '/outreach',
     category: 'Labs',
     status: 'live',
-    lastUpdated: '2025-11-30',
-    description: 'AI-powered email outreach with templates and sending',
+    lastUpdated: '2025-12-05',
+    description: 'Machine-assisted email outreach with templates and sending',
     icon: '🤝'
   },
   // ARCHIVED: UK-Memories (Travel Time Capsule)
