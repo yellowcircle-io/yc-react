@@ -31,6 +31,7 @@ import ProspectInputModal from '../components/unity/map/ProspectInputModal';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
+import { useImageAnalysis } from '../hooks/useImageAnalysis';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -57,6 +58,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [searchParams] = useSearchParams();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  // AI Image Analysis hook
+  const { analyzeImage, isAnalyzing: isAIAnalyzing, error: aiError, isConfigured: aiConfigured } = useImageAnalysis();
   const [isInitialized, setIsInitialized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
@@ -322,6 +326,85 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setEditingMemory(photoData);
     setShowEditModal(true);
   }, []);
+
+  // Handle AI image analysis
+  const handleImageAnalyze = useCallback(async (nodeId, imageUrl, analysisType) => {
+    if (!aiConfigured) {
+      alert('AI analysis requires an OpenAI API key. Add VITE_OPENAI_API_KEY to your .env file.');
+      return;
+    }
+
+    try {
+      const result = await analyzeImage(imageUrl, analysisType);
+
+      if (!result) {
+        throw new Error(aiError || 'Analysis failed');
+      }
+
+      // Update node data based on analysis type
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id !== nodeId) return node;
+
+          let updatedData = { ...node.data };
+
+          switch (analysisType) {
+            case 'describe':
+              // Update description with AI-generated text
+              updatedData.description = result;
+              break;
+
+            case 'tags':
+              // Add AI-suggested tags
+              updatedData.tags = result;
+              break;
+
+            case 'travel':
+              // Update location/travel context
+              if (result.location) {
+                updatedData.location = result.location;
+              }
+              if (result.suggestedCaption) {
+                updatedData.description = result.suggestedCaption;
+              }
+              break;
+
+            case 'ocr':
+              // Store extracted text
+              if (result) {
+                updatedData.extractedText = result;
+                // If no description, use extracted text
+                if (!updatedData.description) {
+                  updatedData.description = `Text: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`;
+                }
+              }
+              break;
+
+            default:
+              break;
+          }
+
+          return {
+            ...node,
+            data: updatedData
+          };
+        })
+      );
+
+      // Show success notification (simple alert for now)
+      const messages = {
+        describe: 'Description updated!',
+        tags: `${Array.isArray(result) ? result.length : 0} tags suggested`,
+        travel: result?.location ? `Location identified: ${result.location}` : 'Location analysis complete',
+        ocr: result ? 'Text extracted!' : 'No text found in image'
+      };
+      console.log('✅ AI Analysis:', messages[analysisType] || 'Analysis complete');
+
+    } catch (error) {
+      console.error('AI Analysis error:', error);
+      alert(`AI analysis failed: ${error.message}`);
+    }
+  }, [analyzeImage, aiConfigured, aiError, setNodes]);
 
   // Handle email preview for outreach nodes
   const handleEmailPreview = useCallback((nodeId, nodeData) => {
@@ -758,11 +841,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onEditInOutreach: handleEditInOutreach,
             // ProspectNode uses onEditCampaign to edit the entire campaign
             onEditCampaign: node.type === 'prospectNode' ? handleEditInOutreach : undefined,
+            // AI image analysis for photo nodes
+            onAnalyze: node.type === 'photoNode' ? handleImageAnalyze : undefined,
           }
         };
       })
     );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleImageAnalyze, setNodes]);
 
   // Save to localStorage
   useEffect(() => {
@@ -1163,7 +1248,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             size,
             onResize: handlePhotoResize,
             onLightbox: handleLightbox,
-            onEdit: handleEdit
+            onEdit: handleEdit,
+            onAnalyze: handleImageAnalyze
           }
         };
       });

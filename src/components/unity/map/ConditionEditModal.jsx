@@ -2,17 +2,34 @@ import React, { useState, useEffect } from 'react';
 
 /**
  * ConditionEditModal - Inline editor for UnityMAP condition nodes
+ *
+ * Supports standard conditions (opened, clicked, replied) and
+ * custom conditions with field/operator/value configuration.
  */
 const ConditionEditModal = ({ isOpen, onClose, conditionData, onSave }) => {
   const [conditionType, setConditionType] = useState('opened');
   const [waitDays, setWaitDays] = useState(3);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Custom condition state
+  const [customField, setCustomField] = useState('email_domain');
+  const [customOperator, setCustomOperator] = useState('equals');
+  const [customValue, setCustomValue] = useState('');
+  const [customLabel, setCustomLabel] = useState('');
+
   // Populate form when modal opens
   useEffect(() => {
     if (isOpen && conditionData) {
       setConditionType(conditionData.conditionType || 'opened');
       setWaitDays(conditionData.waitDays || 3);
+
+      // Load custom condition data if present
+      if (conditionData.customCondition) {
+        setCustomField(conditionData.customCondition.field || 'email_domain');
+        setCustomOperator(conditionData.customCondition.operator || 'equals');
+        setCustomValue(conditionData.customCondition.value || '');
+        setCustomLabel(conditionData.customCondition.label || '');
+      }
     }
   }, [isOpen, conditionData]);
 
@@ -23,20 +40,68 @@ const ConditionEditModal = ({ isOpen, onClose, conditionData, onSave }) => {
         opened: 'Email Opened?',
         clicked: 'Link Clicked?',
         replied: 'Got Reply?',
-        custom: 'Custom Condition'
+        custom: customLabel || buildCustomLabel()
       };
-      await onSave({
+
+      const saveData = {
         ...conditionData,
         conditionType,
         waitDays,
         label: conditionLabels[conditionType] || 'Condition'
-      });
+      };
+
+      // Include custom condition data if type is custom
+      if (conditionType === 'custom') {
+        saveData.customCondition = {
+          field: customField,
+          operator: customOperator,
+          value: customValue,
+          label: customLabel || buildCustomLabel()
+        };
+      }
+
+      await onSave(saveData);
       onClose();
     } catch (error) {
       console.error('Failed to save condition:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Build a human-readable label from custom condition parts
+  const buildCustomLabel = () => {
+    const fieldLabels = {
+      email_domain: 'Email Domain',
+      company_size: 'Company Size',
+      industry: 'Industry',
+      engagement_score: 'Engagement Score',
+      open_count: 'Open Count',
+      click_count: 'Click Count',
+      days_since_last_activity: 'Days Since Activity',
+      tag: 'Has Tag',
+      list_membership: 'In List'
+    };
+    const operatorLabels = {
+      equals: 'is',
+      not_equals: 'is not',
+      contains: 'contains',
+      not_contains: 'does not contain',
+      greater_than: '>',
+      less_than: '<',
+      greater_or_equal: '≥',
+      less_or_equal: '≤',
+      is_empty: 'is empty',
+      is_not_empty: 'is not empty'
+    };
+
+    const field = fieldLabels[customField] || customField;
+    const operator = operatorLabels[customOperator] || customOperator;
+
+    if (['is_empty', 'is_not_empty'].includes(customOperator)) {
+      return `${field} ${operator}`;
+    }
+    return `${field} ${operator} ${customValue}`;
   };
 
   if (!isOpen) return null;
@@ -166,6 +231,208 @@ const ConditionEditModal = ({ isOpen, onClose, conditionData, onSave }) => {
               </button>
             ))}
           </div>
+
+          {/* Custom Condition Builder - Only show when custom is selected */}
+          {conditionType === 'custom' && (
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f9fafb',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              border: '1px solid #e5e7eb'
+            }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '12px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Custom Condition Builder
+              </label>
+
+              {/* Field Selector */}
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: '500',
+                  color: '#6b7280',
+                  marginBottom: '6px'
+                }}>
+                  Field
+                </label>
+                <select
+                  value={customField}
+                  onChange={(e) => setCustomField(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    backgroundColor: '#fff',
+                    color: '#111827',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <optgroup label="Contact Properties">
+                    <option value="email_domain">Email Domain</option>
+                    <option value="company_size">Company Size</option>
+                    <option value="industry">Industry</option>
+                    <option value="job_title">Job Title</option>
+                    <option value="location">Location</option>
+                  </optgroup>
+                  <optgroup label="Engagement Metrics">
+                    <option value="engagement_score">Engagement Score</option>
+                    <option value="open_count">Open Count</option>
+                    <option value="click_count">Click Count</option>
+                    <option value="reply_count">Reply Count</option>
+                    <option value="days_since_last_activity">Days Since Last Activity</option>
+                  </optgroup>
+                  <optgroup label="Segmentation">
+                    <option value="tag">Has Tag</option>
+                    <option value="list_membership">In List</option>
+                    <option value="source">Lead Source</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Operator Selector */}
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: '500',
+                  color: '#6b7280',
+                  marginBottom: '6px'
+                }}>
+                  Operator
+                </label>
+                <select
+                  value={customOperator}
+                  onChange={(e) => setCustomOperator(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    backgroundColor: '#fff',
+                    color: '#111827',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <optgroup label="Text Operators">
+                    <option value="equals">Equals</option>
+                    <option value="not_equals">Does Not Equal</option>
+                    <option value="contains">Contains</option>
+                    <option value="not_contains">Does Not Contain</option>
+                    <option value="starts_with">Starts With</option>
+                    <option value="ends_with">Ends With</option>
+                  </optgroup>
+                  <optgroup label="Number Operators">
+                    <option value="greater_than">Greater Than (&gt;)</option>
+                    <option value="less_than">Less Than (&lt;)</option>
+                    <option value="greater_or_equal">Greater or Equal (≥)</option>
+                    <option value="less_or_equal">Less or Equal (≤)</option>
+                  </optgroup>
+                  <optgroup label="Existence">
+                    <option value="is_empty">Is Empty</option>
+                    <option value="is_not_empty">Is Not Empty</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Value Input - Hide for is_empty/is_not_empty */}
+              {!['is_empty', 'is_not_empty'].includes(customOperator) && (
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    color: '#6b7280',
+                    marginBottom: '6px'
+                  }}>
+                    Value
+                  </label>
+                  <input
+                    type="text"
+                    value={customValue}
+                    onChange={(e) => setCustomValue(e.target.value)}
+                    placeholder="Enter comparison value..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      backgroundColor: '#fff',
+                      color: '#111827',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Custom Label (optional) */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '11px',
+                  fontWeight: '500',
+                  color: '#6b7280',
+                  marginBottom: '6px'
+                }}>
+                  Display Label (optional)
+                </label>
+                <input
+                  type="text"
+                  value={customLabel}
+                  onChange={(e) => setCustomLabel(e.target.value)}
+                  placeholder={buildCustomLabel() || 'Auto-generated from condition'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    backgroundColor: '#fff',
+                    color: '#111827',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Preview */}
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                backgroundColor: '#fef3c7',
+                borderRadius: '6px',
+                border: '1px solid #fcd34d'
+              }}>
+                <div style={{
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  color: '#92400e',
+                  textTransform: 'uppercase',
+                  marginBottom: '4px'
+                }}>
+                  Condition Preview
+                </div>
+                <div style={{
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#78350f'
+                }}>
+                  {customLabel || buildCustomLabel() || 'Configure condition above'}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Wait Days */}
           <label style={{

@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 5, 2025 at 10:30 AM PST
-**Machine:** Mac Mini
-**Status:** ✅ FIREBASE AUTH COMPLETE - SSO + CREDITS SYSTEM
+**Updated:** December 5, 2025 at 2:30 PM PST
+**Machine:** MacBook Air
+**Status:** ✅ CUSTOM CONDITIONS + AI VISION COMPLETE
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -44,19 +44,43 @@
 
 ### ✅ Recently Completed (Dec 5 - Current Session)
 
-1. **Firebase Auth / SSO Implementation Complete**
+1. **Custom Conditions for ConditionNode** ✅
+   - Updated `src/components/unity/map/ConditionEditModal.jsx`
+     - Added custom condition builder UI (field/operator/value)
+     - Field categories: Contact Properties, Engagement Metrics, Segmentation
+     - Operators: Text (equals, contains, starts_with), Number (>, <, ≥, ≤), Existence (is_empty)
+     - Auto-generates human-readable labels
+     - Live preview of condition
+   - Updated `src/components/unity/map/ConditionNode.jsx`
+     - Displays custom condition label when set
+     - Stores customCondition data: { field, operator, value, label }
+
+2. **AI Computer Vision Integration** ✅
+   - Created `src/hooks/useImageAnalysis.js` - AI-powered image analysis hook
+     - Analysis types: describe, tags, travel, ocr, detailed, creative
+     - Uses OpenAI Vision API (gpt-4o-mini)
+     - Structured JSON responses for complex analysis
+   - Updated `src/adapters/llm/openai.js`
+     - Added `analyzeImage()` for vision API calls
+     - Added `analyzeImageJSON()` for structured responses
+     - Supports all vision-capable models (gpt-4o, gpt-4o-mini, gpt-4-turbo)
+   - Updated `src/components/travel/DraggablePhotoNode.jsx`
+     - Added AI button with dropdown menu
+     - Options: Describe, Tags, Location, Text (OCR)
+     - Loading state with spinner
+   - Updated `src/pages/UnityNotesPage.jsx`
+     - Added `handleImageAnalyze` callback
+     - Updates node data based on analysis type
+     - Requires VITE_OPENAI_API_KEY in .env
+
+3. **Firebase Auth / SSO Implementation Complete** (Earlier session)
    - Created `src/contexts/AuthContext.jsx` - Firebase Auth with Google/GitHub OAuth
    - Created `src/hooks/useCredits.js` - Firestore-backed credits (free 3, premium unlimited)
    - Created `src/components/auth/AuthModal.jsx` - Login/signup UI with SSO buttons
    - Created `src/components/auth/UserMenu.jsx` - User avatar, credits display, dropdown
-   - Updated `src/RouterApp.jsx` - Wrapped app in AuthProvider
-   - Updated `src/pages/experiments/OutreachBusinessPage.jsx` - Added UserMenu to Hub header
-   - **Features:** Google OAuth, GitHub OAuth, email/password, password reset, Firestore user profiles
 
-2. **UnityMAP MVP Complete (From Previous Session)**
-   - Fixed edit campaign duplication bug (functional state updates)
-   - Removed ambiguous "Edit Campaign" button from MAP Actions
-   - Fixed "New Campaign" routing (Hub→Hub, Generator→Generator)
+4. **UnityMAP MVP Complete** (Earlier session)
+   - Fixed edit campaign duplication bug
    - Committed and deployed as `f1997ab`
 
 ---
