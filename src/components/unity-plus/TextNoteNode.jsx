@@ -31,7 +31,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
   const cardTypeConfig = {
     note: { icon: '📝', label: 'Note' },
     link: { icon: '🔗', label: 'Link' },
-    ai: { icon: '🤖', label: 'AI Chat' },
+    ai: { icon: '🤖', label: 'Assistance' },
     video: { icon: '📹', label: 'Video' }
   };
 
@@ -222,6 +222,8 @@ const TextNoteNode = memo(({ data, id, selected }) => {
               onChange={(e) => setUrl(e.target.value)}
               onBlur={handleBlur}
               placeholder="https://example.com"
+              autoFocus
+              className="nodrag nopan"
               style={{
                 width: '100%',
                 fontSize: '12px',
@@ -234,25 +236,47 @@ const TextNoteNode = memo(({ data, id, selected }) => {
                 boxSizing: 'border-box',
               }}
             />
-          ) : url ? (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+          ) : (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
               style={{
-                fontSize: '12px',
-                color: isDarkTheme ? '#93c5fd' : '#2563eb',
-                textDecoration: 'underline',
-                wordBreak: 'break-all',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px',
+                backgroundColor: isDarkTheme ? '#111827' : '#eff6ff',
+                borderRadius: '4px',
+                cursor: 'text',
               }}
             >
-              {url}
-            </a>
-          ) : (
-            <span style={{ fontSize: '11px', color: '#9ca3af', fontStyle: 'italic' }}>
-              Double-click to add URL
-            </span>
+              {url ? (
+                <>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      fontSize: '12px',
+                      color: isDarkTheme ? '#93c5fd' : '#2563eb',
+                      textDecoration: 'underline',
+                      wordBreak: 'break-all',
+                      flex: 1,
+                    }}
+                  >
+                    {url}
+                  </a>
+                  <span style={{ fontSize: '16px' }}>🔗</span>
+                </>
+              ) : (
+                <span style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
+                  Click to add URL...
+                </span>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -266,6 +290,8 @@ const TextNoteNode = memo(({ data, id, selected }) => {
               onChange={(e) => setUrl(e.target.value)}
               onBlur={handleBlur}
               placeholder="YouTube or Vimeo URL"
+              autoFocus
+              className="nodrag nopan"
               style={{
                 width: '100%',
                 fontSize: '12px',
@@ -279,77 +305,123 @@ const TextNoteNode = memo(({ data, id, selected }) => {
               }}
             />
           ) : getVideoEmbed(url) ? (
-            <div style={{
-              position: 'relative',
-              width: '100%',
-              paddingBottom: '56.25%',
-              backgroundColor: '#000',
-              borderRadius: '4px',
-              overflow: 'hidden',
-            }}>
-              <iframe
-                src={
-                  getVideoEmbed(url).type === 'youtube'
-                    ? `https://www.youtube.com/embed/${getVideoEmbed(url).id}`
-                    : `https://player.vimeo.com/video/${getVideoEmbed(url).id}`
-                }
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                paddingBottom: '56.25%',
+                backgroundColor: '#000',
+                borderRadius: '4px',
+                overflow: 'hidden',
+              }}>
+                <iframe
+                  src={
+                    getVideoEmbed(url).type === 'youtube'
+                      ? `https://www.youtube.com/embed/${getVideoEmbed(url).id}`
+                      : `https://player.vimeo.com/video/${getVideoEmbed(url).id}`
+                  }
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              {/* Edit URL button */}
+              <button
+                className="nodrag nopan"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
                 }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+                style={{
+                  marginTop: '6px',
+                  padding: '4px 8px',
+                  fontSize: '10px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                }}
+              >
+                ✏️ Edit URL
+              </button>
             </div>
-          ) : url ? (
-            <span style={{ fontSize: '11px', color: '#dc2626' }}>
-              Invalid video URL. Use YouTube or Vimeo links.
-            </span>
           ) : (
-            <span style={{ fontSize: '11px', color: '#9ca3af', fontStyle: 'italic' }}>
-              Double-click to add video URL
-            </span>
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              style={{
+                padding: '16px',
+                backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+                borderRadius: '4px',
+                cursor: 'text',
+                textAlign: 'center',
+              }}
+            >
+              {url ? (
+                <span style={{ fontSize: '11px', color: '#dc2626' }}>
+                  Invalid video URL. Click to edit.
+                </span>
+              ) : (
+                <>
+                  <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>📹</span>
+                  <span style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
+                    Click to add YouTube or Vimeo URL
+                  </span>
+                </>
+              )}
+            </div>
           )}
         </div>
       )}
 
       {cardType === 'ai' && (
         <div style={{ padding: '0 12px 8px' }}>
-          {!isEditing && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (content.trim()) {
                 handleAiQuery();
-              }}
-              disabled={isAiLoading || !content.trim()}
-              style={{
-                width: '100%',
-                padding: '8px',
-                marginBottom: '8px',
-                backgroundColor: isAiLoading ? '#d1d5db' : 'rgb(251, 191, 36)',
-                color: isAiLoading ? 'white' : '#111827',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: '700',
-                cursor: isAiLoading ? 'wait' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              {isAiLoading ? (
-                <>⏳ Thinking...</>
-              ) : (
-                <>🤖 Ask AI</>
-              )}
-            </button>
-          )}
+              } else {
+                // If no content, enter edit mode so user can type
+                setIsEditing(true);
+              }
+            }}
+            disabled={isAiLoading}
+            style={{
+              width: '100%',
+              padding: '10px',
+              marginBottom: '8px',
+              backgroundColor: isAiLoading ? '#d1d5db' : 'rgb(251, 191, 36)',
+              color: isAiLoading ? 'white' : '#111827',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: '700',
+              cursor: isAiLoading ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              opacity: isAiLoading ? 0.7 : 1,
+            }}
+          >
+            {isAiLoading ? (
+              <>⏳ Thinking...</>
+            ) : (
+              <>🤖 Assistance</>
+            )}
+          </button>
         </div>
       )}
 
@@ -384,20 +456,29 @@ const TextNoteNode = memo(({ data, id, selected }) => {
             }}
           />
         ) : (
-          <p style={{
-            fontSize: '13px',
-            lineHeight: '1.5',
-            color: isDarkTheme ? '#d1d5db' : '#6b7280',
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-            cursor: 'text',
-            minHeight: content ? 'auto' : '40px',
-          }}>
+          <p
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            style={{
+              fontSize: '13px',
+              lineHeight: '1.5',
+              color: content ? (isDarkTheme ? '#d1d5db' : '#6b7280') : '#9ca3af',
+              margin: 0,
+              whiteSpace: 'pre-wrap',
+              cursor: 'text',
+              minHeight: '40px',
+              padding: '8px',
+              backgroundColor: isDarkTheme ? 'rgba(17, 24, 39, 0.5)' : 'rgba(249, 250, 251, 0.5)',
+              borderRadius: '4px',
+              fontStyle: content ? 'normal' : 'italic',
+            }}>
             {content || (
-              cardType === 'ai' ? 'Double-click to type a question...' :
-              cardType === 'link' ? 'Double-click to add notes...' :
-              cardType === 'video' ? 'Double-click to add notes...' :
-              'Double-click to edit...'
+              cardType === 'ai' ? 'Click to type a question...' :
+              cardType === 'link' ? 'Add notes about this link...' :
+              cardType === 'video' ? 'Add notes about this video...' :
+              'Add your note content...'
             )}
           </p>
         )}

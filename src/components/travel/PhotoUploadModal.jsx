@@ -741,8 +741,14 @@ const PhotoUploadModal = ({
                             <button
                               key={type}
                               onClick={() => {
-                                onAddCard(type);
-                                handleClose();
+                                if (type === 'photo') {
+                                  // Photo: Navigate back to upload methods (page 0)
+                                  setCurrentPage(0);
+                                } else {
+                                  // Other card types: Create and close
+                                  onAddCard(type);
+                                  handleClose();
+                                }
                               }}
                               style={{
                                 width: '100%',
