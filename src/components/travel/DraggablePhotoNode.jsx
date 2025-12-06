@@ -6,6 +6,8 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [lastTap, setLastTap] = useState(0);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAnalysisMenu, setShowAnalysisMenu] = useState(false);
   const resizeStartRef = useRef({ size: 0, x: 0, y: 0 });
 
   // Use size from data, or default to 300px
@@ -252,56 +254,182 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           </div>
         )}
 
-        {/* Edit Button - Only show when selected */}
+        {/* Action Buttons - Only show when selected */}
         {selected && (
-          <button
-            className="nodrag nopan"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (data.onEdit) {
-                data.onEdit(id, data);
-              }
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              if (data.onEdit) {
-                data.onEdit(id, data);
-              }
-            }}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              padding: '6px 12px',
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              color: 'white',
-              border: '2px solid #EECF00',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '11px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              zIndex: 25,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.2s ease',
-              pointerEvents: 'auto',
-              WebkitTapHighlightColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.95)';
-              e.target.style.color = '#000000';
-              e.target.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-              e.target.style.color = 'white';
-              e.target.style.transform = 'scale(1)';
-            }}
-          >
-            ✏️ EDIT
-          </button>
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            display: 'flex',
+            gap: '6px',
+            zIndex: 25
+          }}>
+            {/* AI Analyze Button */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="nodrag nopan"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAnalysisMenu(!showAnalysisMenu);
+                }}
+                disabled={isAnalyzing}
+                style={{
+                  padding: '6px 10px',
+                  backgroundColor: isAnalyzing ? 'rgba(251, 191, 36, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+                  color: isAnalyzing ? '#000' : 'white',
+                  border: '2px solid #fbbf24',
+                  borderRadius: '4px',
+                  cursor: isAnalyzing ? 'wait' : 'pointer',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  letterSpacing: '0.05em',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                  transition: 'all 0.2s ease',
+                  pointerEvents: 'auto',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <span style={{
+                      display: 'inline-block',
+                      width: '12px',
+                      height: '12px',
+                      border: '2px solid #000',
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    AI...
+                  </>
+                ) : (
+                  '🤖 AI'
+                )}
+              </button>
+
+              {/* Analysis Type Menu */}
+              {showAnalysisMenu && !isAnalyzing && (
+                <div
+                  className="nodrag nopan"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '4px',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+                    border: '1px solid #e5e7eb',
+                    overflow: 'hidden',
+                    minWidth: '160px',
+                    zIndex: 100
+                  }}
+                >
+                  {[
+                    { type: 'describe', label: '📝 Describe', desc: 'Get AI description' },
+                    { type: 'tags', label: '🏷️ Tags', desc: 'Suggest tags' },
+                    { type: 'travel', label: '🌍 Location', desc: 'Identify place' },
+                    { type: 'ocr', label: '📄 Text (OCR)', desc: 'Extract text' },
+                  ].map((option) => (
+                    <button
+                      key={option.type}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setShowAnalysisMenu(false);
+                        if (data.onAnalyze) {
+                          setIsAnalyzing(true);
+                          try {
+                            await data.onAnalyze(id, data.imageUrl, option.type);
+                          } finally {
+                            setIsAnalyzing(false);
+                          }
+                        }
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#111827',
+                        borderBottom: '1px solid #f3f4f6',
+                        transition: 'background-color 0.15s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#fef3c7'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                      {option.label}
+                      <span style={{
+                        display: 'block',
+                        fontSize: '10px',
+                        fontWeight: '400',
+                        color: '#6b7280',
+                        marginTop: '2px'
+                      }}>
+                        {option.desc}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Edit Button */}
+            <button
+              className="nodrag nopan"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowAnalysisMenu(false);
+                if (data.onEdit) {
+                  data.onEdit(id, data);
+                }
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowAnalysisMenu(false);
+                if (data.onEdit) {
+                  data.onEdit(id, data);
+                }
+              }}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                color: 'white',
+                border: '2px solid #EECF00',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.05em',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.2s ease',
+                pointerEvents: 'auto',
+                WebkitTapHighlightColor: 'transparent',
+                userSelect: 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.95)';
+                e.target.style.color = '#000000';
+                e.target.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                e.target.style.color = 'white';
+                e.target.style.transform = 'scale(1)';
+              }}
+            >
+              ✏️ EDIT
+            </button>
+          </div>
         )}
 
         {/* Resize Handles - Only show when selected */}

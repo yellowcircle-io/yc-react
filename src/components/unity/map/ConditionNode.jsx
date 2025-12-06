@@ -15,6 +15,7 @@ const ConditionNode = memo(({ id, data, selected }) => {
     operator = 'equals', // 'equals', 'contains', 'greater_than'
     value = true,
     waitDays = 3, // Days to wait before evaluating
+    customCondition = null, // { field, operator, value, label } for custom conditions
     onInlineEdit, // Edit handler
     onDelete // Delete this node
   } = data;
@@ -26,6 +27,20 @@ const ConditionNode = memo(({ id, data, selected }) => {
     clicked: '🖱️',
     replied: '💬',
     custom: '⚙️'
+  };
+
+  // For custom conditions, use the custom label if available
+  const getDisplayLabel = () => {
+    if (conditionType === 'custom' && customCondition?.label) {
+      return customCondition.label;
+    }
+    const defaultLabels = {
+      opened: 'Email Opened?',
+      clicked: 'Link Clicked?',
+      replied: 'Got Reply?',
+      custom: 'Custom Condition'
+    };
+    return defaultLabels[conditionType] || 'Condition';
   };
 
   const conditionLabels = {
@@ -100,12 +115,14 @@ const ConditionNode = memo(({ id, data, selected }) => {
       }}>
         <span style={{ fontSize: '24px' }}>{conditionIcons[conditionType]}</span>
         <span style={{
-          fontSize: '12px',
+          fontSize: conditionType === 'custom' && customCondition?.label ? '11px' : '12px',
           fontWeight: '700',
           color: '#374151',
-          textAlign: 'center'
+          textAlign: 'center',
+          maxWidth: '140px',
+          lineHeight: '1.3'
         }}>
-          {conditionLabels[conditionType]}
+          {getDisplayLabel()}
         </span>
       </div>
 
