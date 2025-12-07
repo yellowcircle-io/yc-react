@@ -2,9 +2,33 @@
 
 This directory contains custom slash commands for Claude Code to streamline project management across all access methods (desktop, web, SSH, Codespaces).
 
+Part of the **yellowCircle MultiSystem Framework (yC-MSF)**.
+
 ---
 
 ## Available Commands
+
+### `/yc-msf` ⭐ NEW
+**Central hub** for the yellowCircle MultiSystem Framework.
+
+**Use cases:**
+- Check sync status across all systems
+- Update WIP and roadmap
+- Deploy to Firebase
+- Run automation scripts
+- View framework documentation
+- Create restore points
+
+**Example usage:**
+```bash
+/yc-msf                     # Show yC-MSF dashboard
+/yc-msf sync                # Check sync status
+/yc-msf wip                 # Update WIP file
+/yc-msf deploy              # Deploy to Firebase
+/yc-msf docs                # View framework documentation
+```
+
+---
 
 ### `/roadmap`
 **Primary command** for managing the Trimurti project roadmap.
@@ -25,6 +49,83 @@ This directory contains custom slash commands for Claude Code to streamline proj
 ```
 
 **Aliases:** `/trimurti`, `/trimurti-roadmap`, `/yc-roadmap`
+
+---
+
+### `/automation`
+**Run automation workflows** - WIP sync, deadline alerts, blocked tasks, weekly summary.
+
+**Use cases:**
+- Sync roadmap to Notion database
+- Run daily WIP sync
+- Check deadline alerts
+- Generate weekly summary
+- View automation status
+
+**Example usage:**
+```bash
+/automation                 # Show automation menu
+/automation sync            # Sync roadmap to Notion
+/automation wip             # Run daily WIP sync
+/automation summary         # Generate weekly summary
+/automation all             # Run all automations
+```
+
+**Aliases:** `/auto`, `/sync`
+
+---
+
+### `/projects`
+**Multi-project management** for Unity Notes, 2nd Brain App, Personal tasks, Golden Unknown, Cath3dral.
+
+**Use cases:**
+- View status across all projects
+- Switch between project contexts
+- Update project-specific tasks
+- Cross-cutting infrastructure work
+
+**Example usage:**
+```bash
+/projects                   # Show all projects overview
+/projects unity             # Work on Unity Notes
+/projects 2nd-brain         # Work on 2nd Brain App
+/projects personal          # Personal development tasks
+```
+
+**Aliases:** `/unity`, `/personal`
+
+---
+
+### `/rho`
+**Rho project management** for assessments, candidate evaluations, and strategic analysis.
+
+**Use cases:**
+- Review/continue Rho assessment work
+- Analyze candidates or tools
+- Update Rho-specific documentation
+- Manage Rho tasks from roadmap
+
+**Example usage:**
+```bash
+/rho                        # Show Rho status and menu
+/rho continue               # Continue current Rho work
+/rho review Chris Chen      # Review specific candidate
+/rho update tasks           # Update Rho task completion
+```
+
+---
+
+## Complete Command Reference
+
+| Command | Purpose | Aliases |
+|---------|---------|---------|
+| `/yc-msf` | yC-MSF framework hub (sync, deploy, automation) | - |
+| `/roadmap` | Main roadmap management | `/trimurti`, `/trimurti-roadmap`, `/yc-roadmap` |
+| `/automation` | Run automation scripts | `/auto`, `/sync` |
+| `/projects` | Multi-project management | `/unity`, `/personal` |
+| `/rho` | Rho project management | - |
+
+**Total: 5 primary commands + 5 aliases = 10 commands**
 
 ---
 
@@ -52,10 +153,18 @@ This directory contains custom slash commands for Claude Code to streamline proj
 ```
 .claude/commands/
 ├── README.md                  # This file
+├── yc-msf.md                  # yC-MSF framework hub command
 ├── roadmap.md                 # Main roadmap management command
+├── automation.md              # Automation scripts command
+├── projects.md                # Multi-project management command
+├── rho.md                     # Rho project management command
 ├── trimurti.md                # Alias → roadmap
 ├── trimurti-roadmap.md        # Alias → roadmap
-└── yc-roadmap.md              # Alias → roadmap
+├── yc-roadmap.md              # Alias → roadmap
+├── auto.md                    # Alias → automation
+├── sync.md                    # Alias → automation
+├── unity.md                   # Alias → projects
+└── personal.md                # Alias → projects
 ```
 
 ---
@@ -185,9 +294,8 @@ When creating commands for this multi-environment setup:
 
 Potential commands to add:
 
-- `/deploy` - Deploy to Firebase hosting
+- `/deploy` - Dedicated Firebase deployment command
 - `/test` - Run linter and tests
-- `/sync` - Multi-machine sync status check
 - `/context` - Load full project context quickly
 - `/decision` - Document a new decision in DECISIONS.md
 - `/perplexity` - Manage Perplexity exports
@@ -195,5 +303,9 @@ Potential commands to add:
 ---
 
 **Created:** November 8, 2025
-**Last Updated:** November 8, 2025
-**Version:** 1.0
+**Last Updated:** December 7, 2025
+**Version:** 2.0
+
+**Changelog:**
+- v2.0 (Dec 7, 2025): Added yC-MSF hub, complete command list, updated structure
+- v1.0 (Nov 8, 2025): Initial roadmap command with aliases
