@@ -1,8 +1,8 @@
 # Project Roadmap - December 2025
 
-**Date:** December 6, 2025
-**Status:** ✅ UnitySTUDIO MVP + AI CHAT THREAD UI COMPLETE
-**Days Since Rho Exit:** 11 (Nov 25, 2025)
+**Date:** December 7, 2025
+**Status:** ✅ Unity Platform Comprehensive Fixes - DEPLOYED
+**Days Since Rho Exit:** 12 (Nov 25, 2025)
 
 ---
 
@@ -54,6 +54,63 @@
 | GA4 goals/conversions | 🔲 Planned | Self |
 | GTM event tracking | 🔲 Planned | Claude Code |
 | Remarketing audiences | 🔲 Planned | Self |
+
+---
+
+## ✅ DECEMBER 7, 2025 - UNITY PLATFORM COMPREHENSIVE FIXES
+
+### Mac Mini Session: Major Bug Fixes + Feature Additions
+
+**Build Status:** ✅ Successful
+**Deployed:** ✅ https://yellowcircle-app.web.app
+
+#### 1. UnitySTUDIO Fixes ✅ COMPLETE
+- Rewrote as responsive modal (85% viewport, centered)
+- Fixed mouse close issue with `onMouseDown` stopPropagation
+- Added close button and backdrop click to close
+- AI conversation context shown as collapsible panel (not pre-fill)
+
+#### 2. AI Chat Improvements ✅ COMPLETE
+- Changed to textarea for multiline support (Shift+Enter for newlines)
+- Added "Open in Studio" button for AI Chat → Studio flow
+- Extended gatherPageContext() to include MAP journey nodes
+- AI now sees: prospect data, email subjects/bodies, wait durations, conditions
+- Updated system prompt for marketing automation context
+
+#### 3. Hub→MAP Contact Passthrough ✅ COMPLETE
+- Updated `createJourneyFromOutreach` to store full prospect data
+- Updated `serializeNode` to include prospects array
+- Updated `saveJourney` to auto-populate journey-level prospects
+- Updated `handleEditInOutreach` to extract full prospect info
+
+#### 4. Journey Persistence ✅ COMPLETE
+- Added localStorage persistence for currentJourneyId
+- Added journey loading on MAP mode entry
+
+#### 5. Delay Nodes ✅ COMPLETE
+- Added "minutes" option to WaitEditModal
+- Added minutes icon to WaitNode
+
+#### 6. API Key Persistence with Firebase ✅ COMPLETE
+- Created `useApiKeyStorage` hook for Firebase/localStorage sync
+- Stores keys in Firestore when logged in (obfuscated)
+- Falls back to localStorage for anonymous users
+- Auto-migrates localStorage keys to cloud on login
+- Added cloud sync indicator badge
+
+**Files Created:**
+- `src/hooks/useApiKeyStorage.js` - API key persistence hook
+
+**Files Modified:**
+- `src/components/unity-studio/UnityStudioCanvas.jsx`
+- `src/components/unity-studio/EmailTemplateBuilder.jsx`
+- `src/components/unity-plus/TextNoteNode.jsx`
+- `src/components/unity/map/index.js`
+- `src/components/unity/map/WaitEditModal.jsx`
+- `src/components/unity/map/WaitNode.jsx`
+- `src/hooks/useFirebaseJourney.js`
+- `src/pages/UnityNotesPage.jsx`
+- `src/pages/experiments/OutreachGeneratorPage.jsx`
 
 ---
 
@@ -1276,7 +1333,7 @@ h1.your-circle {
 
 ---
 
-**Last Updated:** December 6, 2025
+**Last Updated:** December 7, 2025
 **Next Review:** December 10, 2025 (Week 2 of 60-Day Plan)
 **Owner:** Christopher Cooper
-**Version:** 2.4 (Dec 6 Custom Conditions + AI Vision + React 19.2.1)
+**Version:** 2.5 (Dec 7 Unity Platform Comprehensive Fixes)

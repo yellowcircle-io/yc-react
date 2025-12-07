@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 7, 2025 at 12:30 AM PST
+**Updated:** December 7, 2025 at 2:00 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ Unity Platform Fixes Session - Contact Passthrough + Studio Modal + AI Multiline
+**Status:** ✅ Unity Platform Comprehensive Fix Session - DEPLOYED
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -44,7 +44,9 @@
 
 ### ✅ Recently Completed (Dec 7 - Current Session)
 
-1. **Unity Platform Fixes** ✅ NEW (Dec 7)
+1. **Unity Platform Comprehensive Fixes** ✅ DEPLOYED (Dec 7)
+
+   **Session 1 - Core Fixes:**
    - **UnitySTUDIO Modal Container:**
      - Rewrote UnityStudioCanvas as responsive modal (85% viewport, centered)
      - Added close button and backdrop click to close
@@ -67,6 +69,27 @@
    - **Email Deployment Verified:**
      - Tested Firebase function - sendEmail working (Resend configured)
      - Contact passthrough fix enables emails to deploy properly
+   - **Hub/Generator API Key Persistence:**
+     - Created `useApiKeyStorage` hook for Firebase/localStorage sync
+     - When logged in: stores keys in Firestore user profile (obfuscated)
+     - When anonymous: falls back to localStorage
+     - Auto-migrates localStorage keys to cloud on login
+     - Added cloud sync indicator badge showing "☁️ Synced to [username]"
+
+   **Session 2 - Additional Fixes:**
+   - **UnitySTUDIO Mouse Close Issue:**
+     - Added `onMouseDown={(e) => e.stopPropagation()}` to EmailTemplateBuilder containers
+     - Both template selector and editor views now block backdrop close
+     - All buttons/inputs now clickable without closing modal
+   - **AI Chat → Studio Integration (Context Not Pre-fill):**
+     - Changed from pre-filling template to providing context reference
+     - AI conversation shown as collapsible reference panel in editor
+     - User manually selects template and writes content with AI context visible
+     - Added "AI Context Available" banner on asset selector
+   - **AI Chat MAP Nodes Context:**
+     - Extended gatherPageContext() to include MAP journey nodes
+     - AI now sees prospect data, email subjects/bodies, wait durations, conditions
+     - Updated system prompt for marketing automation context
 
 2. **UnitySTUDIO MVP** ✅ (Dec 6)
    - Third mode in Unity platform ecosystem (NOTES → MAP → STUDIO)

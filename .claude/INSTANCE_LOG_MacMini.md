@@ -3,7 +3,7 @@
 **Machine:** Mac Mini
 **Instance ID:** mac-mini-primary
 **Created:** November 2, 2025
-**Last Updated:** December 5, 2025
+**Last Updated:** December 7, 2025
 
 ---
 
@@ -822,6 +822,69 @@ Location: `.claude/shared-context/`
 **Next Scheduled Cleanup:** December 1, 2025
 
 **Machine Note:** This maintenance system is Mac Mini specific due to different storage patterns on MacBook Air.
+
+---
+
+### Session 10: Unity Platform Comprehensive Fixes
+**Date:** December 7, 2025 at 12:00 AM - 2:00 AM PST
+**Context:** Major Unity platform bug fixes and feature additions
+
+**Tasks Completed:**
+
+1. **UnitySTUDIO Modal Container** ✅
+   - Rewrote UnityStudioCanvas as responsive modal (85% viewport, centered)
+   - Added close button and backdrop click to close
+   - Added onClose, onSaveToCanvas props
+   - Fixed mouse close issue with onMouseDown stopPropagation
+
+2. **AI Chat Improvements** ✅
+   - Changed from `<input>` to `<textarea>` in TextNoteNode (multiline support)
+   - Added "Open in Studio" button for AI Chat → Studio flow
+   - Added MAP nodes context to AI (prospect data, emails, wait times, conditions)
+   - Updated system prompt for marketing automation context
+   - AI context shown as collapsible reference panel in Studio (not pre-fill)
+
+3. **Hub→MAP Contact Passthrough** ✅
+   - Updated `createJourneyFromOutreach` to store full prospect data
+   - Updated `serializeNode` in useFirebaseJourney to include prospects array
+   - Updated `saveJourney` to auto-populate journey-level prospects
+   - Updated `handleEditInOutreach` to extract full prospect info
+
+4. **Journey Persistence** ✅
+   - Added localStorage persistence for currentJourneyId
+   - Added journey loading on MAP mode entry
+
+5. **Delay Nodes** ✅
+   - Added "minutes" option to WaitEditModal
+   - Added minutes icon to WaitNode
+
+6. **API Key Persistence with Firebase** ✅
+   - Created `useApiKeyStorage` hook for Firebase/localStorage sync
+   - Stores keys in Firestore when logged in (obfuscated)
+   - Falls back to localStorage for anonymous users
+   - Auto-migrates localStorage keys to cloud on login
+   - Added cloud sync indicator badge
+
+**Files Created:**
+- `src/hooks/useApiKeyStorage.js` - API key persistence hook
+
+**Files Modified:**
+- `src/components/unity-studio/UnityStudioCanvas.jsx` - Modal container + AI context
+- `src/components/unity-studio/EmailTemplateBuilder.jsx` - Mouse fix + AI context panel
+- `src/components/unity-plus/TextNoteNode.jsx` - Multiline + Studio button + MAP context
+- `src/components/unity/map/index.js` - Full prospect data in createJourneyFromOutreach
+- `src/components/unity/map/WaitEditModal.jsx` - Minutes option
+- `src/components/unity/map/WaitNode.jsx` - Minutes icon
+- `src/hooks/useFirebaseJourney.js` - Prospects in serializeNode + auto-populate
+- `src/pages/UnityNotesPage.jsx` - Journey persistence + Studio callbacks
+- `src/pages/experiments/OutreachGeneratorPage.jsx` - useApiKeyStorage integration
+
+**Commits:**
+- `2f659b9` - Fix: Unity Platform - Contact passthrough, Studio modal, AI multiline
+- `7ea0ac5` - Feature: Unity Platform Improvements - Studio fixes, AI integration, API key sync
+- `2143e66` - Fix: UnitySTUDIO mouse close + AI Chat context (not pre-fill)
+
+**Deployed:** ✅ https://yellowcircle-app.web.app
 
 ---
 
