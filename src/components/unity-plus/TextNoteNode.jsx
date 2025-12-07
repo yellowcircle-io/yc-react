@@ -672,19 +672,21 @@ const TextNoteNode = memo(({ data, id, selected }) => {
             gap: '8px',
             alignItems: 'flex-end',
           }}>
-            <input
-              type="text"
+            <textarea
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
               onKeyDown={(e) => {
                 e.stopPropagation();
+                // Send on Enter (without Shift), allow Shift+Enter for newlines
                 if (e.key === 'Enter' && !e.shiftKey && aiInput.trim() && !isAiLoading) {
+                  e.preventDefault();
                   handleAiQuery();
                 }
               }}
-              placeholder="Ask a question..."
+              placeholder="Ask a question... (Shift+Enter for newline)"
               className="nodrag nopan"
               disabled={isAiLoading}
+              rows={2}
               style={{
                 flex: 1,
                 padding: '10px 12px',
@@ -694,6 +696,11 @@ const TextNoteNode = memo(({ data, id, selected }) => {
                 border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
                 borderRadius: '8px',
                 outline: 'none',
+                resize: 'none',
+                fontFamily: 'inherit',
+                lineHeight: '1.4',
+                minHeight: '42px',
+                maxHeight: '100px',
               }}
             />
             <button

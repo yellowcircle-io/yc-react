@@ -22,6 +22,7 @@ const WaitNode = memo(({ id, data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const unitIcons = {
+    minutes: '⏱️',
     hours: '⏰',
     days: '📅',
     weeks: '🗓️'
