@@ -37,7 +37,7 @@ const ASSET_TYPES = [
   }
 ];
 
-function UnityStudioCanvas({ onExportToMAP, isDarkTheme = false }) {
+function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme = false }) {
   const [selectedAssetType, setSelectedAssetType] = useState(null);
   const [savedAssets, setSavedAssets] = useState(() => {
     try {
@@ -76,32 +76,125 @@ function UnityStudioCanvas({ onExportToMAP, isDarkTheme = false }) {
     }
   }, [onExportToMAP]);
 
+  // Handle save to canvas (creates a note card with the template)
+  const handleSaveToCanvas = useCallback((asset) => {
+    if (onSaveToCanvas) {
+      onSaveToCanvas({
+        type: 'textNode',
+        data: {
+          title: asset.name || 'Email Template',
+          content: `**Subject:** ${asset.sections?.subject || ''}\n\n${asset.sections?.body || ''}`,
+          cardType: 'note',
+          sourceType: 'studio',
+          sourceAsset: asset
+        }
+      });
+    }
+  }, [onSaveToCanvas]);
+
+  // Wrapper component for responsive modal container
+  const ModalContainer = ({ children }) => (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 100,
+        padding: '20px'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        style={{
+          width: '90%',
+          maxWidth: '1200px',
+          height: '85vh',
+          maxHeight: '900px',
+          backgroundColor: isDarkTheme ? '#111827' : '#ffffff',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: isDarkTheme ? '#374151' : '#f3f4f6',
+            color: isDarkTheme ? '#d1d5db' : '#374151',
+            fontSize: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = isDarkTheme ? '#374151' : '#f3f4f6';
+          }}
+          title="Close Studio"
+        >
+          ×
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+
   // Render asset-specific builder
   if (selectedAssetType === 'email') {
     return (
-      <EmailTemplateBuilder
-        onBack={handleBack}
-        onSave={handleSaveAsset}
-        onExportToMAP={handleExportToMAP}
-        isDarkTheme={isDarkTheme}
-      />
+      <ModalContainer>
+        <EmailTemplateBuilder
+          onBack={handleBack}
+          onSave={handleSaveAsset}
+          onSaveToCanvas={handleSaveToCanvas}
+          onExportToMAP={handleExportToMAP}
+          isDarkTheme={isDarkTheme}
+        />
+      </ModalContainer>
     );
   }
 
   // Default: Asset type selector
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        padding: '40px',
-        backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
-        minHeight: '60vh'
-      }}
-    >
+    <ModalContainer>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          padding: '40px',
+          overflowY: 'auto'
+        }}
+      >
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1
@@ -278,7 +371,8 @@ function UnityStudioCanvas({ onExportToMAP, isDarkTheme = false }) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ModalContainer>
   );
 }
 

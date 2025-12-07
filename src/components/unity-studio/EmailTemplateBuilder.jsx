@@ -149,7 +149,7 @@ const VARIABLES = [
   { key: 'assessmentLink', label: 'Assessment Link', sample: 'https://yellowcircle.io/assessment' }
 ];
 
-function EmailTemplateBuilder({ onBack, onSave, onExportToMAP, isDarkTheme = false }) {
+function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, isDarkTheme = false }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [editedSections, setEditedSections] = useState({});
   const [showPreview, setShowPreview] = useState(false);
@@ -251,6 +251,19 @@ function EmailTemplateBuilder({ onBack, onSave, onExportToMAP, isDarkTheme = fal
     };
     onExportToMAP(asset);
     alert('Sent to UnityMAP! Create an Email node to use this template.');
+  };
+
+  const handleSaveToCanvas = () => {
+    if (onSaveToCanvas) {
+      const asset = {
+        type: 'email',
+        name: templateName,
+        sections: editedSections,
+        html: generateHTML()
+      };
+      onSaveToCanvas(asset);
+      alert('Saved to canvas as a note card!');
+    }
   };
 
   const handleCopyHTML = () => {
@@ -687,6 +700,23 @@ function EmailTemplateBuilder({ onBack, onSave, onExportToMAP, isDarkTheme = fal
           >
             🗺️ Send to MAP
           </button>
+          {onSaveToCanvas && (
+            <button
+              onClick={handleSaveToCanvas}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer'
+              }}
+            >
+              📝 Save to Canvas
+            </button>
+          )}
           <button
             onClick={handleCopyHTML}
             style={{

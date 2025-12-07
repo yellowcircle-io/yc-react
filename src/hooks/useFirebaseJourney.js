@@ -54,7 +54,9 @@ const serializeNode = (node) => {
           count: node.data?.count || 0,
           segment: node.data?.segment || '',
           source: node.data?.source || 'manual',
-          tags: Array.isArray(node.data?.tags) ? node.data.tags : []
+          tags: Array.isArray(node.data?.tags) ? node.data.tags : [],
+          // Include full prospect contact info from Hub/Generator
+          prospects: Array.isArray(node.data?.prospects) ? node.data.prospects : []
         }
       };
 
@@ -185,11 +187,39 @@ export const useFirebaseJourney = () => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 90);
 
+      // Extract prospects from prospect nodes (auto-populate from Hub/Generator)
+      const prospectNode = nodes.find(n => n.type === 'prospectNode');
+      const nodeProspects = prospectNode?.data?.prospects || [];
+
+      // Find first executable node for prospect placement
+      const firstNodeId = findFirstExecutableNode(nodes, edges);
+      const now = new Date();
+
+      // Convert node prospects to journey prospect format
+      const journeyProspects = nodeProspects
+        .filter(p => p.email) // Only include prospects with email
+        .map((prospect, index) => ({
+          id: prospect.id || `p-${Date.now()}-${index}`,
+          email: prospect.email,
+          name: `${prospect.firstName || ''} ${prospect.lastName || ''}`.trim() || '',
+          firstName: prospect.firstName || '',
+          lastName: prospect.lastName || '',
+          company: prospect.company || '',
+          title: prospect.title || '',
+          industry: prospect.industry || '',
+          trigger: prospect.trigger || '',
+          triggerDetails: prospect.triggerDetails || '',
+          currentNodeId: firstNodeId,
+          nextExecuteAt: Timestamp.fromDate(now),
+          status: 'active',
+          history: []
+        }));
+
       const journeyDoc = {
         id: journeyId,
         title: metadata.title || 'Untitled Journey',
         description: metadata.description || '',
-        status: 'draft',
+        status: journeyProspects.length > 0 ? 'active' : 'draft',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         expiresAt: Timestamp.fromDate(expiresAt),
@@ -198,15 +228,15 @@ export const useFirebaseJourney = () => {
         nodes: nodes.map(serializeNode),
         edges: edges.map(serializeEdge),
 
-        // Empty prospects array (populated on publish)
-        prospects: [],
+        // Auto-populated prospects from Hub/Generator (or empty if none)
+        prospects: journeyProspects,
 
         // Stats
         stats: {
           nodeCount: nodes.length,
           mapNodeCount: mapNodes.length,
           emailCount: emailCount,
-          totalProspects: 0,
+          totalProspects: journeyProspects.length,
           sent: 0,
           opened: 0,
           clicked: 0,
@@ -216,7 +246,7 @@ export const useFirebaseJourney = () => {
 
       await setDoc(journeyRef, journeyDoc);
 
-      console.log('✅ Journey saved:', journeyId);
+      console.log('✅ Journey saved:', journeyId, '- Prospects auto-populated:', journeyProspects.length);
       return journeyId;
 
     } catch (err) {

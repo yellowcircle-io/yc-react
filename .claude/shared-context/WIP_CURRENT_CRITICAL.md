@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 6, 2025 at 6:00 PM PST
+**Updated:** December 7, 2025 at 12:30 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ UnitySTUDIO MVP + AI CHAT THREAD UI COMPLETE
+**Status:** ✅ Unity Platform Fixes Session - Contact Passthrough + Studio Modal + AI Multiline
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -42,9 +42,33 @@
 
 ---
 
-### ✅ Recently Completed (Dec 6 - Current Session)
+### ✅ Recently Completed (Dec 7 - Current Session)
 
-1. **UnitySTUDIO MVP** ✅ NEW
+1. **Unity Platform Fixes** ✅ NEW (Dec 7)
+   - **UnitySTUDIO Modal Container:**
+     - Rewrote UnityStudioCanvas as responsive modal (85% viewport, centered)
+     - Added close button and backdrop click to close
+     - Passed onClose, onSaveToCanvas props
+     - No longer overlaps global navigation
+   - **AI Chat Multiline Input:**
+     - Changed from `<input>` to `<textarea>` in TextNoteNode
+     - Shift+Enter for newlines, Enter to send
+   - **Hub→MAP Contact Passthrough Fixed:**
+     - Updated `createJourneyFromOutreach` to store full prospect data in prospects array
+     - Updated `serializeNode` in useFirebaseJourney to include prospects array
+     - Updated `saveJourney` to auto-populate journey-level prospects from node data
+     - Updated `handleEditInOutreach` to extract full prospect info from new format
+   - **Journey Persistence:**
+     - Added localStorage persistence for currentJourneyId
+     - Added journey loading on MAP mode entry
+   - **Delay Nodes:**
+     - Added "minutes" option to WaitEditModal
+     - Added minutes icon to WaitNode
+   - **Email Deployment Verified:**
+     - Tested Firebase function - sendEmail working (Resend configured)
+     - Contact passthrough fix enables emails to deploy properly
+
+2. **UnitySTUDIO MVP** ✅ (Dec 6)
    - Third mode in Unity platform ecosystem (NOTES → MAP → STUDIO)
    - Asset creation suite for GTM campaigns
    - **Files Created:**

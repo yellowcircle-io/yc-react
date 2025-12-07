@@ -142,6 +142,7 @@ const WaitEditModal = ({ isOpen, onClose, waitData, onSave }) => {
                 WebkitAppearance: 'menulist'
               }}
             >
+              <option value="minutes">Minutes</option>
               <option value="hours">Hours</option>
               <option value="days">Days</option>
               <option value="weeks">Weeks</option>

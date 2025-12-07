@@ -38,6 +38,7 @@ export {
 
 // Helper to create a new journey from Outreach Generator output
 // Now includes WaitNodes between emails with proper timing
+// UPDATED: Stores full prospect contact info for email sending
 export const createJourneyFromOutreach = (outreachData, offsetX = 0) => {
   const { prospect, emails = [], mode = 'consultant', waitDays = [3, 7] } = outreachData;
   const timestamp = Date.now();
@@ -45,7 +46,7 @@ export const createJourneyFromOutreach = (outreachData, offsetX = 0) => {
   // Base X position (can be offset for multiple campaigns)
   const baseX = 400 + offsetX;
 
-  // Create prospect node
+  // Create prospect node with FULL contact info for email sending
   const prospectNode = {
     id: `prospect-${timestamp}`,
     type: 'prospectNode',
@@ -55,7 +56,21 @@ export const createJourneyFromOutreach = (outreachData, offsetX = 0) => {
       count: 1,
       segment: mode === 'consultant' ? 'Cold Outreach' : 'Warm Leads',
       source: 'manual',
-      tags: [prospect?.industry || 'Unknown'].filter(Boolean)
+      tags: [prospect?.industry || 'Unknown'].filter(Boolean),
+      // CRITICAL: Store full prospect info for email sending
+      prospects: prospect ? [{
+        id: `contact-${timestamp}`,
+        email: prospect.email || '',
+        firstName: prospect.firstName || '',
+        lastName: prospect.lastName || '',
+        company: prospect.company || '',
+        title: prospect.title || '',
+        industry: prospect.industry || '',
+        trigger: prospect.trigger || '',
+        triggerDetails: prospect.triggerDetails || '',
+        status: 'active',
+        currentNodeId: null // Will be set when journey starts
+      }] : []
     }
   };
 

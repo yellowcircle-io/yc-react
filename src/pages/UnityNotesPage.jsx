@@ -123,12 +123,64 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     isSaving: isSavingJourney,
     isLoading: isLoadingJourney
   } = useFirebaseJourney();
-  const [currentJourneyId, setCurrentJourneyId] = useState(null);
+
+  // Restore journey ID from localStorage on initial load
+  const [currentJourneyId, setCurrentJourneyId] = useState(() => {
+    try {
+      return localStorage.getItem('unity-map-current-journey-id') || null;
+    } catch {
+      return null;
+    }
+  });
   const [journeyTitle, setJourneyTitle] = useState('Untitled Journey');
   const [journeyStatus, setJourneyStatus] = useState('draft'); // draft, active, paused, completed
   const [showProspectModal, setShowProspectModal] = useState(false);
   const [isSendingEmails, setIsSendingEmails] = useState(false);
   const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
+
+  // Persist journey ID to localStorage when it changes
+  useEffect(() => {
+    if (currentJourneyId) {
+      localStorage.setItem('unity-map-current-journey-id', currentJourneyId);
+    }
+  }, [currentJourneyId]);
+
+  // Load saved journey when entering MAP mode with a stored journey ID
+  useEffect(() => {
+    const loadSavedJourney = async () => {
+      if (currentMode === 'map' && currentJourneyId && isInitialized) {
+        try {
+          console.log('📂 Loading saved journey:', currentJourneyId);
+          const journeyData = await loadJourney(currentJourneyId);
+          if (journeyData) {
+            setJourneyTitle(journeyData.title || 'Untitled Journey');
+            setJourneyStatus(journeyData.status || 'draft');
+            setJourneyProspects(journeyData.prospects || []);
+
+            // Restore nodes and edges from the journey
+            if (journeyData.nodes && journeyData.nodes.length > 0) {
+              setNodes(journeyData.nodes);
+            }
+            if (journeyData.edges) {
+              setEdges(journeyData.edges);
+            }
+            console.log('✅ Journey loaded successfully:', {
+              title: journeyData.title,
+              status: journeyData.status,
+              nodeCount: journeyData.nodes?.length,
+              prospectCount: journeyData.prospects?.length
+            });
+          }
+        } catch (error) {
+          console.error('❌ Failed to load journey:', error);
+          // Clear invalid journey ID
+          setCurrentJourneyId(null);
+          localStorage.removeItem('unity-map-current-journey-id');
+        }
+      }
+    };
+    loadSavedJourney();
+  }, [currentMode, currentJourneyId, isInitialized, loadJourney, setNodes, setEdges]);
 
   // Check if user has pro/admin access for cloud features
   const hasProAccess = () => {
@@ -643,12 +695,25 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       const companyMatch = headerNode.data?.title?.match(/📧\s*(.+?)\s*Outreach/);
       if (companyMatch) prospectInfo.company = companyMatch[1].trim();
     }
-    // Try new UnityMAP prospectNode format
+    // Try new UnityMAP prospectNode format with embedded prospects array
     else if (prospectNode && prospectNode.data) {
       const pData = prospectNode.data;
-      prospectInfo.company = pData.label || '';
-      prospectInfo.industry = pData.tags?.[0] || '';
-      // Note: New format doesn't store full prospect details, user will enter in Outreach Generator
+      // Check for full prospect data in prospects array (from Hub/Generator)
+      if (pData.prospects && pData.prospects.length > 0) {
+        const p = pData.prospects[0]; // Use first prospect for edit context
+        prospectInfo.email = p.email || '';
+        prospectInfo.firstName = p.firstName || '';
+        prospectInfo.lastName = p.lastName || '';
+        prospectInfo.company = p.company || pData.label || '';
+        prospectInfo.title = p.title || '';
+        prospectInfo.industry = p.industry || pData.tags?.[0] || '';
+        prospectInfo.trigger = p.trigger || '';
+        prospectInfo.triggerDetails = p.triggerDetails || '';
+      } else {
+        // Fallback to legacy format
+        prospectInfo.company = pData.label || '';
+        prospectInfo.industry = pData.tags?.[0] || '';
+      }
     }
 
     // Collect email nodes for the campaign
@@ -1789,10 +1854,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         transition: 'left 0.5s ease-out',
         zIndex: 1
       }}>
-        {/* STUDIO Mode - Asset Creation Suite */}
-        {currentMode === 'studio' ? (
+        {/* STUDIO Mode - Asset Creation Suite (Modal Overlay) */}
+        {currentMode === 'studio' && (
           <UnityStudioCanvas
             isDarkTheme={false}
+            onClose={() => handleModeChange('notes')}
             onExportToMAP={(asset) => {
               // Save template to localStorage for MAP to pick up
               const templates = JSON.parse(localStorage.getItem('unity-studio-templates') || '[]');
@@ -1803,8 +1869,31 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               });
               localStorage.setItem('unity-studio-templates', JSON.stringify(templates));
             }}
+            onSaveToCanvas={(nodeData) => {
+              // Create a new text node on the canvas with the template content
+              const newNode = {
+                id: `studio-${Date.now()}`,
+                type: nodeData.type || 'textNode',
+                position: { x: 300 + Math.random() * 200, y: 200 + Math.random() * 200 },
+                data: {
+                  ...nodeData.data,
+                  onUpdate: (nodeId, updates) => {
+                    setNodes(nds => nds.map(n =>
+                      n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n
+                    ));
+                  },
+                  onDelete: (nodeId) => {
+                    setNodes(nds => nds.filter(n => n.id !== nodeId));
+                  }
+                }
+              };
+              setNodes(nds => [...nds, newNode]);
+              handleModeChange('notes'); // Switch back to notes after saving
+            }}
           />
-        ) : (
+        )}
+        {/* ReactFlow Canvas - Always render but hide when studio is open */}
+        <div style={{ display: currentMode === 'studio' ? 'none' : 'block', height: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -1834,7 +1923,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               style={{ opacity: 0.3 }}
             />
           </ReactFlow>
-        )}
+        </div>
       </div>
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
