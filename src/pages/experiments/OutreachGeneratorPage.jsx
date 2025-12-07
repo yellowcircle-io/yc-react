@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useApiKeyStorage } from '../../hooks/useApiKeyStorage';
 import Layout from '../../components/global/Layout';
 import LeadGate from '../../components/shared/LeadGate';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
@@ -106,6 +108,14 @@ function OutreachGeneratorPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { user, isAuthenticated } = useAuth();
+  const {
+    groqApiKey,
+    resendApiKey: storedResendKey,
+    saveKey,
+    isCloudSynced,
+    migrateLocalToCloud
+  } = useApiKeyStorage();
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -135,12 +145,12 @@ function OutreachGeneratorPage() {
   const [generatedEmails, setGeneratedEmails] = useState(null);
   const [error, setError] = useState(null);
   const [formError, setFormError] = useState('');
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState(groqApiKey || '');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   // Track if editing an existing campaign (store timestamp for replacement)
   const [editingCampaignTimestamp, setEditingCampaignTimestamp] = useState(null);
-  const [resendApiKey, setResendApiKey] = useState('');
+  const [resendApiKey, setResendApiKey] = useState(storedResendKey || '');
   const [showResendKeyInput, setShowResendKeyInput] = useState(false);
   const [showBrandSettings, setShowBrandSettings] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -173,19 +183,25 @@ function OutreachGeneratorPage() {
   // Brand customization state
   const [brand, setBrand] = useState(DEFAULT_BRAND);
 
-  // Load API key, brand, and credits from localStorage
+  // Sync API keys from the hook (Firebase/localStorage)
   useEffect(() => {
-    const savedKey = localStorage.getItem('groq_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
+    if (groqApiKey) {
+      setApiKey(groqApiKey);
     }
-
-    // Load Resend API key for sending
-    const savedResendKey = localStorage.getItem('resend_api_key');
-    if (savedResendKey) {
-      setResendApiKey(savedResendKey);
+    if (storedResendKey) {
+      setResendApiKey(storedResendKey);
     }
+  }, [groqApiKey, storedResendKey]);
 
+  // Migrate localStorage keys to cloud when user logs in
+  useEffect(() => {
+    if (isAuthenticated) {
+      migrateLocalToCloud();
+    }
+  }, [isAuthenticated, migrateLocalToCloud]);
+
+  // Load brand and credits from localStorage
+  useEffect(() => {
     // Load credits
     const savedFreeCredits = localStorage.getItem('outreach_free_credits');
     if (savedFreeCredits !== null) {
@@ -400,14 +416,14 @@ function OutreachGeneratorPage() {
 
   const saveApiKey = () => {
     if (apiKey.trim()) {
-      localStorage.setItem('groq_api_key', apiKey.trim());
+      saveKey('groqApiKey', apiKey.trim()); // Use hook to save (Firebase or localStorage)
       setShowApiKeyInput(false);
     }
   };
 
   const saveResendApiKey = () => {
     if (resendApiKey.trim()) {
-      localStorage.setItem('resend_api_key', resendApiKey.trim());
+      saveKey('resendApiKey', resendApiKey.trim()); // Use hook to save
       setShowResendKeyInput(false);
     }
   };
@@ -1177,6 +1193,24 @@ Return ONLY a JSON object with this exact format:
 
           {/* Credits & Settings Toggle */}
           <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Cloud Sync Status */}
+            {isCloudSynced && (
+              <div style={{
+                padding: '8px 14px',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#22c55e',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                ☁️ Synced to {user?.email?.split('@')[0] || 'account'}
+              </div>
+            )}
+
             {/* Credits Badge - Always visible with tiered display */}
             {isClient ? (
               <div style={{

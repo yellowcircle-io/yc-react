@@ -137,6 +137,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [showProspectModal, setShowProspectModal] = useState(false);
   const [isSendingEmails, setIsSendingEmails] = useState(false);
   const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
+  const [studioContext, setStudioContext] = useState(null); // Context passed from AI Chat to Studio
+
+  // Handler for opening Studio from AI Chat with conversation context
+  const handleOpenStudio = useCallback((context) => {
+    setStudioContext(context);
+    handleModeChange('studio');
+  }, []);
 
   // Persist journey ID to localStorage when it changes
   useEffect(() => {
@@ -921,6 +928,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
           onDelete: handleDeleteNode,
+          onOpenStudio: handleOpenStudio,
         }
       };
     } else if (type === 'video') {
@@ -1043,13 +1051,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onDeploy: node.type === 'prospectNode' ? handleDeployFromNode : undefined,
             // AI image analysis for photo nodes
             onAnalyze: node.type === 'photoNode' ? handleImageAnalyze : undefined,
+            // AI Chat -> Studio integration
+            onOpenStudio: node.data?.cardType === 'ai' ? handleOpenStudio : undefined,
             // Prospect count at this node (for visual tracking)
             prospectsAtNode: prospectsAtNode,
           }
         };
       })
     );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, getProspectsAtNode, setNodes]);
+  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, getProspectsAtNode, setNodes]);
 
   // Save to localStorage
   useEffect(() => {
@@ -1858,7 +1868,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         {currentMode === 'studio' && (
           <UnityStudioCanvas
             isDarkTheme={false}
-            onClose={() => handleModeChange('notes')}
+            initialContext={studioContext}
+            onClose={() => {
+              setStudioContext(null); // Clear context when closing
+              handleModeChange('notes');
+            }}
             onExportToMAP={(asset) => {
               // Save template to localStorage for MAP to pick up
               const templates = JSON.parse(localStorage.getItem('unity-studio-templates') || '[]');
