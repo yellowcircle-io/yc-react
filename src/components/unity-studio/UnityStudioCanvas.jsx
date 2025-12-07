@@ -38,10 +38,8 @@ const ASSET_TYPES = [
 ];
 
 function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme = false, initialContext = null }) {
-  // If we have AI conversation context, go directly to email builder
-  const [selectedAssetType, setSelectedAssetType] = useState(
-    initialContext?.type === 'ai-conversation' ? 'email' : null
-  );
+  // User selects asset type manually - don't auto-select even with AI context
+  const [selectedAssetType, setSelectedAssetType] = useState(null);
   const [savedAssets, setSavedAssets] = useState(() => {
     try {
       const stored = localStorage.getItem('unity-studio-assets');
@@ -214,6 +212,39 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
           overflowY: 'auto'
         }}
       >
+      {/* AI Context Banner - shows when launched from AI Chat */}
+      {initialContext?.type === 'ai-conversation' && (
+        <div style={{
+          marginBottom: '24px',
+          padding: '12px 20px',
+          backgroundColor: isDarkTheme ? '#1e3a5f' : '#eff6ff',
+          border: `1px solid ${isDarkTheme ? '#3b82f6' : '#bfdbfe'}`,
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          maxWidth: '500px'
+        }}>
+          <span style={{ fontSize: '20px' }}>🤖</span>
+          <div>
+            <div style={{
+              fontSize: '13px',
+              fontWeight: '600',
+              color: isDarkTheme ? '#93c5fd' : '#1d4ed8'
+            }}>
+              AI Conversation Context Available
+            </div>
+            <div style={{
+              fontSize: '11px',
+              color: isDarkTheme ? '#93c5fd' : '#3b82f6',
+              opacity: 0.8
+            }}>
+              Your chat history will be available as reference when creating templates
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1
