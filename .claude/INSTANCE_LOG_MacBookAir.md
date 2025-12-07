@@ -3,7 +3,7 @@
 **Machine:** MacBook Air
 **Instance ID:** macbook-air-secondary
 **Created:** November 2, 2025
-**Last Updated:** November 29, 2025 at 4:50 PM PST
+**Last Updated:** December 7, 2025 at 3:30 PM PST
 
 ---
 
@@ -369,6 +369,39 @@ node shortcut-router.js edit-theme --field=primary --value="#FF0000"
 **Pushed:** ✅ GitHub
 
 **Session Status:** ✅ Complete
+
+---
+
+### Session 9: yC-MSF Documentation Update (Mac Mini - Cross-Session Sync)
+**Date:** December 7, 2025 at 3:30 PM PST
+**Machine:** Mac Mini (syncing to MacBook Air)
+**Context:** Adding yC-MSF (yellowCircle MultiSystem Framework) hub command and documentation updates
+
+**Note:** This session occurred on Mac Mini. Documented here for MacBook Air sync awareness.
+
+**Work Completed (on Mac Mini):**
+
+1. **yC-MSF Hub Command** (`/yc-msf`)
+   - Created `.claude/commands/yc-msf.md` - Central framework management command
+   - Hub for: sync status, WIP updates, deployment, automation, documentation
+   - Replaces/extends previous "MMF" terminology
+
+2. **Documentation Updates**
+   - Updated `.claude/TABLE_OF_CONTENTS.md` - Added yC-MSF references, v2.2
+   - Updated `.claude/commands/README.md` - Complete command reference with yC-MSF
+
+3. **Dec 7 Unity Platform Session (Earlier)**
+   - UnitySTUDIO modal improvements (mouse close fix)
+   - AI Chat context integration (MAP nodes + Studio)
+   - API key cloud persistence (Firebase/localStorage hybrid)
+   - All deployed to Firebase
+
+**Related Commits (Mac Mini):**
+- `95fc4a7` - Docs: Update MMF, Roadmap, WIP for Dec 7 Unity fixes session
+- `2143e66` - Fix: UnitySTUDIO mouse close + AI Chat context
+- Pending commit: yC-MSF documentation updates
+
+**Session Status:** ✅ Synced via Dropbox + GitHub
 
 ---
 

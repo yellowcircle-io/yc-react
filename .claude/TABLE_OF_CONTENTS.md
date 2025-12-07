@@ -1,8 +1,10 @@
-# Multi-Machine Framework - Table of Contents
+# yellowCircle MultiSystem Framework (yC-MSF) - Table of Contents
 
-**Last Updated:** November 21, 2025
-**Framework Version:** 2.1
-**Purpose:** Central directory of all framework documentation and tools
+**Last Updated:** December 7, 2025
+**Framework Version:** 2.2
+**Purpose:** Central directory of all yC-MSF documentation and tools
+
+> **Note:** yC-MSF is the unified name for the complete yellowCircle infrastructure system, previously called "Multi-Machine Framework (MMF)". It encompasses Dropbox sync, GitHub version control, Notion integration, Firebase deployment, WIP tracking, roadmaps, and automation.
 
 ---
 
@@ -160,11 +162,20 @@
 | Document | Purpose | When to Use | Priority |
 |----------|---------|-------------|----------|
 | [commands/README.md](commands/README.md) | Command documentation | Creating custom commands | 🟢 Reference |
+| [commands/yc-msf.md](commands/yc-msf.md) | `/yc-msf` command | yC-MSF framework hub | 🔴 Critical |
 | [commands/roadmap.md](commands/roadmap.md) | `/roadmap` command | Managing roadmap | 🔴 Critical |
+| [commands/automation.md](commands/automation.md) | `/automation` command | Run automation scripts | 🟡 Optional |
+| [commands/projects.md](commands/projects.md) | `/projects` command | Multi-project management | 🟡 Optional |
+| [commands/rho.md](commands/rho.md) | `/rho` command | Rho project management | 🟡 Optional |
 
 **Available Commands:**
-- `/roadmap` - Main roadmap management
-- `/trimurti`, `/trimurti-roadmap`, `/yc-roadmap` - Aliases to `/roadmap`
+| Command | Purpose | Aliases |
+|---------|---------|---------|
+| `/yc-msf` | yC-MSF framework hub (sync, deploy, automation) | - |
+| `/roadmap` | Main roadmap management | `/trimurti`, `/trimurti-roadmap`, `/yc-roadmap` |
+| `/automation` | Run automation scripts | `/auto`, `/sync` |
+| `/projects` | Multi-project management (Unity, 2nd Brain, etc.) | `/unity`, `/personal` |
+| `/rho` | Rho project management | - |
 
 ---
 
@@ -313,13 +324,13 @@
 
 ## 📊 Framework Metrics
 
-### Current State (as of Nov 21, 2025)
-- **Total Documents:** 34+ documentation files
-- **Scripts:** 6+ executable scripts
+### Current State (as of Dec 7, 2025)
+- **Total Documents:** 40+ documentation files
+- **Scripts:** 8+ executable scripts
 - **Machines Supported:** 2 active (Mac Mini, MacBook Air)
 - **Remote Access Points:** 7 (Desktop, Mobile, Web, Codespaces)
 - **Automation Commands:** 5 (sync, wip, content, deadline, summary)
-- **Slash Commands:** 4 (/roadmap + 3 aliases)
+- **Slash Commands:** 10 (5 primary + 5 aliases)
 - **Disk Space Reclaimed:** 24 GB (Nov 21 initial cleanup)
 
 ### Framework Version History
@@ -327,6 +338,7 @@
 - **v1.5** (Nov 9, 2025): Multi-environment sync + verification
 - **v2.0** (Nov 19, 2025): Mobile command system + automation
 - **v2.1** (Nov 21, 2025): Disk maintenance system + TOC
+- **v2.2** (Dec 7, 2025): yC-MSF rebrand + /yc-msf command hub
 
 ---
 
@@ -386,8 +398,8 @@
 ---
 
 **Framework Status:** ✅ Active and Operational
-**Last Major Update:** November 21, 2025 (Disk Maintenance System)
-**Next Scheduled Maintenance:** December 1, 2025 (Monthly cleanup)
+**Last Major Update:** December 7, 2025 (yC-MSF rebrand + command hub)
+**Next Scheduled Maintenance:** January 1, 2026 (Monthly cleanup)
 **Maintained By:** Multi-machine Claude Code instances
 
 ---
