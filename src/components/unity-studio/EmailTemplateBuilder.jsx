@@ -154,34 +154,23 @@ function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, i
   const [editedSections, setEditedSections] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  const [fromAiChat, setFromAiChat] = useState(false);
+  const [showAiContext, setShowAiContext] = useState(false);
 
-  // If aiContext is provided, extract content from AI conversation and pre-fill
-  React.useEffect(() => {
+  // Store AI context for reference (NOT pre-filling - just available as context)
+  // Similar to how photos/notes provide metadata context
+  const aiConversationContext = React.useMemo(() => {
     if (aiContext?.type === 'ai-conversation' && aiContext.messages?.length > 0) {
-      // Extract the last AI response as the email body suggestion
-      const aiMessages = aiContext.messages.filter(m => m.role === 'assistant' && !m.isError);
-      const lastAiMessage = aiMessages[aiMessages.length - 1];
-
-      if (lastAiMessage) {
-        // Create a custom template from the AI conversation
-        setSelectedTemplate({
-          id: 'ai-generated',
-          name: 'AI Generated',
-          description: 'Created from AI Chat conversation',
-          icon: '🤖'
-        });
-        setEditedSections({
-          subject: `Re: ${aiContext.title || 'Your inquiry'}`,
-          greeting: 'Hi {{firstName}},',
-          body: lastAiMessage.content,
-          cta: { text: 'Learn More', url: '{{calendarLink}}' },
-          signature: `Best,\n{{senderName}}\n{{senderTitle}}\nyellowCircle`
-        });
-        setTemplateName('AI Generated Template');
-        setFromAiChat(true);
-      }
+      return {
+        title: aiContext.title || 'AI Chat',
+        messages: aiContext.messages,
+        // Extract key insights from conversation for quick reference
+        summary: aiContext.messages
+          .filter(m => m.role === 'assistant' && !m.isError)
+          .slice(-2)
+          .map(m => m.content.substring(0, 200) + (m.content.length > 200 ? '...' : ''))
+      };
     }
+    return null;
   }, [aiContext]);
 
   const handleSelectTemplate = (template) => {
@@ -314,10 +303,13 @@ function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, i
   if (!selectedTemplate) {
     return (
       <div
+        onMouseDown={(e) => e.stopPropagation()}
         style={{
           padding: '32px',
           backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
-          minHeight: '100%'
+          minHeight: '100%',
+          height: '100%',
+          overflowY: 'auto'
         }}
       >
         <div style={{ marginBottom: '32px' }}>
@@ -421,6 +413,7 @@ function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, i
   // Template editor view
   return (
     <div
+      onMouseDown={(e) => e.stopPropagation()}
       style={{
         display: 'flex',
         height: '100%',
@@ -475,6 +468,76 @@ function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, i
             }}
           />
         </div>
+
+        {/* AI Context Panel - Shows conversation context when launched from AI Chat */}
+        {aiConversationContext && (
+          <div style={{ marginBottom: '20px' }}>
+            <button
+              onClick={() => setShowAiContext(!showAiContext)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                width: '100%',
+                padding: '12px 16px',
+                backgroundColor: isDarkTheme ? '#1e3a5f' : '#eff6ff',
+                border: `1px solid ${isDarkTheme ? '#3b82f6' : '#bfdbfe'}`,
+                borderRadius: '8px',
+                color: isDarkTheme ? '#93c5fd' : '#1d4ed8',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '600',
+                textAlign: 'left'
+              }}
+            >
+              <span>🤖</span>
+              <span style={{ flex: 1 }}>AI Conversation Context: {aiConversationContext.title}</span>
+              <span style={{ fontSize: '10px' }}>{showAiContext ? '▼' : '▶'}</span>
+            </button>
+            {showAiContext && (
+              <div style={{
+                marginTop: '8px',
+                padding: '12px',
+                backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                borderRadius: '8px',
+                maxHeight: '200px',
+                overflowY: 'auto'
+              }}>
+                <p style={{
+                  fontSize: '11px',
+                  color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                  marginBottom: '8px'
+                }}>
+                  Reference this conversation while writing your template:
+                </p>
+                {aiConversationContext.messages.slice(-4).map((msg, idx) => (
+                  <div key={idx} style={{
+                    marginBottom: '8px',
+                    padding: '8px',
+                    backgroundColor: msg.role === 'user'
+                      ? (isDarkTheme ? '#374151' : '#f3f4f6')
+                      : (isDarkTheme ? '#1e3a5f' : '#eff6ff'),
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    color: isDarkTheme ? '#e5e7eb' : '#374151'
+                  }}>
+                    <span style={{
+                      fontWeight: '600',
+                      fontSize: '10px',
+                      color: isDarkTheme ? '#9ca3af' : '#6b7280'
+                    }}>
+                      {msg.role === 'user' ? '💬 You' : '🤖 AI'}:
+                    </span>
+                    <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap' }}>
+                      {msg.content.length > 300 ? msg.content.substring(0, 300) + '...' : msg.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Subject Line */}
         <div style={{ marginBottom: '20px' }}>
