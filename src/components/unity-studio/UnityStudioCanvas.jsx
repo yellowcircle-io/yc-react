@@ -37,8 +37,11 @@ const ASSET_TYPES = [
   }
 ];
 
-function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme = false }) {
-  const [selectedAssetType, setSelectedAssetType] = useState(null);
+function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme = false, initialContext = null }) {
+  // If we have AI conversation context, go directly to email builder
+  const [selectedAssetType, setSelectedAssetType] = useState(
+    initialContext?.type === 'ai-conversation' ? 'email' : null
+  );
   const [savedAssets, setSavedAssets] = useState(() => {
     try {
       const stored = localStorage.getItem('unity-studio-assets');
@@ -93,78 +96,93 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
   }, [onSaveToCanvas]);
 
   // Wrapper component for responsive modal container
-  const ModalContainer = ({ children }) => (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 100,
-        padding: '20px'
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && onClose) {
-          onClose();
-        }
-      }}
-    >
+  // Uses onMouseDown instead of onClick to prevent accidental closes during drag/selection
+  const ModalContainer = ({ children }) => {
+    const handleBackdropMouseDown = (e) => {
+      // Only close if mousedown is directly on the backdrop (not bubbled from children)
+      if (e.target === e.currentTarget && onClose) {
+        onClose();
+      }
+    };
+
+    return (
       <div
         style={{
-          width: '90%',
-          maxWidth: '1200px',
-          height: '85vh',
-          maxHeight: '900px',
-          backgroundColor: isDarkTheme ? '#111827' : '#ffffff',
-          borderRadius: '16px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          position: 'relative'
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 100,
+          padding: '20px'
         }}
+        onMouseDown={handleBackdropMouseDown}
       >
-        {/* Close button */}
-        <button
-          onClick={onClose}
+        <div
           style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: isDarkTheme ? '#374151' : '#f3f4f6',
-            color: isDarkTheme ? '#d1d5db' : '#374151',
-            fontSize: '20px',
-            cursor: 'pointer',
+            width: '90%',
+            maxWidth: '1200px',
+            height: '85vh',
+            maxHeight: '900px',
+            backgroundColor: isDarkTheme ? '#111827' : '#ffffff',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10,
-            transition: 'all 0.2s ease'
+            flexDirection: 'column',
+            overflow: 'hidden',
+            position: 'relative'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = isDarkTheme ? '#374151' : '#f3f4f6';
-          }}
-          title="Close Studio"
+          onMouseDown={(e) => e.stopPropagation()}
         >
-          ×
-        </button>
-        {children}
+          {/* Close button - circular with proper sizing */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose && onClose();
+            }}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '36px',
+              height: '36px',
+              minWidth: '36px',
+              minHeight: '36px',
+              padding: 0,
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: isDarkTheme ? '#374151' : '#f3f4f6',
+              color: isDarkTheme ? '#d1d5db' : '#374151',
+              fontSize: '24px',
+              lineHeight: '1',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              transition: 'all 0.2s ease',
+              aspectRatio: '1 / 1'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkTheme ? '#374151' : '#f3f4f6';
+            }}
+            title="Close Studio"
+          >
+            ×
+          </button>
+          {children}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Render asset-specific builder
   if (selectedAssetType === 'email') {
@@ -176,6 +194,7 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
           onSaveToCanvas={handleSaveToCanvas}
           onExportToMAP={handleExportToMAP}
           isDarkTheme={isDarkTheme}
+          aiContext={initialContext}
         />
       </ModalContainer>
     );

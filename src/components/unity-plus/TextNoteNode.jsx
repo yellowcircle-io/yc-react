@@ -191,45 +191,80 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     }
   }, []);
 
-  // Gather context from localStorage (other notes/nodes on the page)
+  // Gather context from localStorage (notes and MAP journey nodes)
   const gatherPageContext = useCallback(() => {
     try {
-      const savedData = localStorage.getItem('unity-notes-data');
-      if (!savedData) return '';
-
-      const { nodes: savedNodes } = JSON.parse(savedData);
-      if (!savedNodes || savedNodes.length === 0) return '';
-
-      // Build context from other nodes (excluding current node)
       const contextParts = [];
       let noteCount = 0;
+      let mapNodeCount = 0;
 
-      savedNodes.forEach((node) => {
-        if (node.id === id) return; // Skip current node
+      // 1. Gather regular notes context
+      const savedData = localStorage.getItem('unity-notes-data');
+      if (savedData) {
+        const { nodes: savedNodes } = JSON.parse(savedData);
+        if (savedNodes && savedNodes.length > 0) {
+          savedNodes.forEach((node) => {
+            if (node.id === id) return; // Skip current node
 
-        const nodeData = node.data || {};
-        const nodeType = node.type || 'unknown';
+            const nodeData = node.data || {};
+            const nodeType = node.type || 'unknown';
 
-        // Extract relevant content based on node type
-        if (nodeType === 'textNode' || nodeType === 'photoNode') {
-          const title = nodeData.title || nodeData.label || '';
-          const content = nodeData.content || nodeData.description || '';
-          const url = nodeData.url || '';
+            // Extract relevant content based on node type
+            if (nodeType === 'textNode' || nodeType === 'photoNode') {
+              const title = nodeData.title || nodeData.label || '';
+              const content = nodeData.content || nodeData.description || '';
+              const url = nodeData.url || '';
 
-          if (title || content) {
-            noteCount++;
-            let nodeContext = `[Note ${noteCount}]`;
-            if (title) nodeContext += ` Title: ${title}`;
-            if (content) nodeContext += ` | Content: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`;
-            if (url) nodeContext += ` | URL: ${url}`;
-            contextParts.push(nodeContext);
-          }
+              if (title || content) {
+                noteCount++;
+                let nodeContext = `[Note ${noteCount}]`;
+                if (title) nodeContext += ` Title: ${title}`;
+                if (content) nodeContext += ` | Content: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`;
+                if (url) nodeContext += ` | URL: ${url}`;
+                contextParts.push(nodeContext);
+              }
+            }
+
+            // Also capture MAP nodes from the same localStorage (UnityNotes stores both)
+            if (['prospectNode', 'emailNode', 'conditionNode', 'waitNode', 'exitNode'].includes(nodeType)) {
+              mapNodeCount++;
+              let mapContext = `[MAP ${nodeType.replace('Node', '')} ${mapNodeCount}]`;
+
+              if (nodeType === 'prospectNode') {
+                mapContext += ` Company: ${nodeData.label || 'Unknown'}`;
+                if (nodeData.prospects?.length > 0) {
+                  const p = nodeData.prospects[0];
+                  mapContext += ` | Contact: ${p.firstName || ''} ${p.lastName || ''} (${p.email || 'no email'})`;
+                  if (p.trigger) mapContext += ` | Trigger: ${p.trigger}`;
+                }
+              } else if (nodeType === 'emailNode') {
+                mapContext += ` Subject: ${nodeData.subject || nodeData.label || 'No subject'}`;
+                if (nodeData.fullBody) {
+                  mapContext += ` | Body: ${nodeData.fullBody.substring(0, 150)}${nodeData.fullBody.length > 150 ? '...' : ''}`;
+                }
+              } else if (nodeType === 'waitNode') {
+                mapContext += ` Wait: ${nodeData.duration || 1} ${nodeData.unit || 'days'}`;
+              } else if (nodeType === 'conditionNode') {
+                mapContext += ` Condition: ${nodeData.label || 'Unknown'}`;
+                if (nodeData.customCondition) {
+                  mapContext += ` (${nodeData.customCondition.label || ''})`;
+                }
+              } else if (nodeType === 'exitNode') {
+                mapContext += ` Exit: ${nodeData.exitType || 'completed'}`;
+              }
+              contextParts.push(mapContext);
+            }
+          });
         }
-      });
+      }
 
       if (contextParts.length === 0) return '';
 
-      return `\n\n--- Context from your notes (${contextParts.length} items) ---\n${contextParts.join('\n')}`;
+      const summary = [];
+      if (noteCount > 0) summary.push(`${noteCount} notes`);
+      if (mapNodeCount > 0) summary.push(`${mapNodeCount} journey nodes`);
+
+      return `\n\n--- Context from your canvas (${summary.join(', ')}) ---\n${contextParts.join('\n')}`;
     } catch (error) {
       console.warn('Failed to gather page context:', error);
       return '';
@@ -298,7 +333,16 @@ const TextNoteNode = memo(({ data, id, selected }) => {
 
       // Generate with Hub's API key if available
       const generateOptions = {
-        systemPrompt: 'You are a helpful assistant integrated into a note-taking app. You have access to the user\'s other notes as context. Keep responses concise and relevant. Reference their notes when applicable. Continue the conversation naturally.',
+        systemPrompt: `You are a helpful AI assistant integrated into Unity, a marketing automation platform. You have access to the user's notes and marketing journey nodes (email campaigns, prospect data, wait times, conditions, etc.) as context.
+
+Key capabilities:
+- Help write and refine email copy for outreach campaigns
+- Suggest improvements to email sequences and timing
+- Provide insights about prospects and targeting
+- Reference their existing notes and journey nodes when applicable
+- Keep responses concise and actionable
+
+If you see MAP journey nodes in the context, you can help optimize the email sequence, suggest subject lines, or improve the messaging strategy.`,
         maxTokens: 1024
       };
 
@@ -733,35 +777,82 @@ const TextNoteNode = memo(({ data, id, selected }) => {
             </button>
           </div>
 
-          {/* Clear history button (when there are messages) */}
+          {/* Action buttons row */}
           {aiMessages.length > 0 && (
-            <button
-              className="nodrag nopan"
-              onClick={() => {
-                setAiMessages([]);
-                if (data.onUpdate) {
-                  data.onUpdate(id, {
-                    title: localTitle,
-                    content: localContent,
-                    url: localUrl,
-                    cardType,
-                    aiMessages: []
-                  });
-                }
-              }}
-              style={{
-                marginTop: '8px',
-                padding: '4px 8px',
-                fontSize: '10px',
-                color: isDarkTheme ? '#6b7280' : '#9ca3af',
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                opacity: 0.7,
-              }}
-            >
-              Clear conversation
-            </button>
+            <div style={{
+              marginTop: '8px',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}>
+              {/* Open in Studio button */}
+              {data.onOpenStudio && (
+                <button
+                  className="nodrag nopan"
+                  onClick={() => {
+                    // Pass conversation context to Studio
+                    const context = {
+                      type: 'ai-conversation',
+                      messages: aiMessages,
+                      title: localTitle,
+                      nodeId: id
+                    };
+                    data.onOpenStudio(context);
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    color: '#111827',
+                    backgroundColor: 'rgb(251, 191, 36)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgb(245, 180, 25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
+                  }}
+                  title="Create email template from this conversation"
+                >
+                  ✨ Open in Studio
+                </button>
+              )}
+              {/* Clear history button */}
+              <button
+                className="nodrag nopan"
+                onClick={() => {
+                  setAiMessages([]);
+                  if (data.onUpdate) {
+                    data.onUpdate(id, {
+                      title: localTitle,
+                      content: localContent,
+                      url: localUrl,
+                      cardType,
+                      aiMessages: []
+                    });
+                  }
+                }}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '10px',
+                  color: isDarkTheme ? '#6b7280' : '#9ca3af',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  opacity: 0.7,
+                }}
+              >
+                Clear conversation
+              </button>
+            </div>
           )}
         </div>
       )}

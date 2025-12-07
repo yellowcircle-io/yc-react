@@ -149,11 +149,40 @@ const VARIABLES = [
   { key: 'assessmentLink', label: 'Assessment Link', sample: 'https://yellowcircle.io/assessment' }
 ];
 
-function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, isDarkTheme = false }) {
+function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, isDarkTheme = false, aiContext = null }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [editedSections, setEditedSections] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [fromAiChat, setFromAiChat] = useState(false);
+
+  // If aiContext is provided, extract content from AI conversation and pre-fill
+  React.useEffect(() => {
+    if (aiContext?.type === 'ai-conversation' && aiContext.messages?.length > 0) {
+      // Extract the last AI response as the email body suggestion
+      const aiMessages = aiContext.messages.filter(m => m.role === 'assistant' && !m.isError);
+      const lastAiMessage = aiMessages[aiMessages.length - 1];
+
+      if (lastAiMessage) {
+        // Create a custom template from the AI conversation
+        setSelectedTemplate({
+          id: 'ai-generated',
+          name: 'AI Generated',
+          description: 'Created from AI Chat conversation',
+          icon: '🤖'
+        });
+        setEditedSections({
+          subject: `Re: ${aiContext.title || 'Your inquiry'}`,
+          greeting: 'Hi {{firstName}},',
+          body: lastAiMessage.content,
+          cta: { text: 'Learn More', url: '{{calendarLink}}' },
+          signature: `Best,\n{{senderName}}\n{{senderTitle}}\nyellowCircle`
+        });
+        setTemplateName('AI Generated Template');
+        setFromAiChat(true);
+      }
+    }
+  }, [aiContext]);
 
   const handleSelectTemplate = (template) => {
     setSelectedTemplate(template);
