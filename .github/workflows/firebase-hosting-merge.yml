@@ -25,7 +25,10 @@ jobs:
           fi
       
       - name: Install dependencies with platform support
-        run: npm ci --include=dev
+        run: npm ci --include=dev --ignore-scripts
+        env:
+          # Skip ripgrep download that fails in CI due to rate limits
+          SKIP_RIPGREP_DOWNLOAD: true
       
       - name: Verify build tools availability
         run: |
