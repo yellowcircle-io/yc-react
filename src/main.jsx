@@ -5,21 +5,16 @@ import './index.css'
 import RouterApp from './RouterApp.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-// Initialize Sentry for production error monitoring
-// DSN will be set via environment variable or placeholder for setup
+// Initialize Sentry for error monitoring
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
-if (SENTRY_DSN && import.meta.env.PROD) {
+if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    environment: import.meta.env.MODE,
+    environment: import.meta.env.MODE || 'production',
 
     // Performance monitoring - sample 10% of transactions
     tracesSampleRate: 0.1,
-
-    // Session replay for debugging (only on errors)
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0,
 
     // Filter out common non-actionable errors
     ignoreErrors: [
@@ -37,9 +32,6 @@ if (SENTRY_DSN && import.meta.env.PROD) {
 
     // Add context for debugging
     beforeSend(event) {
-      // Don't send events in development
-      if (import.meta.env.DEV) return null;
-
       // Add user context if available
       const userEmail = localStorage.getItem('yc_user_email');
       if (userEmail) {
@@ -50,7 +42,8 @@ if (SENTRY_DSN && import.meta.env.PROD) {
     },
   });
 
-  console.log('Sentry initialized for production monitoring');
+  // Expose Sentry globally for testing
+  window.Sentry = Sentry;
 }
 
 createRoot(document.getElementById('root')).render(
