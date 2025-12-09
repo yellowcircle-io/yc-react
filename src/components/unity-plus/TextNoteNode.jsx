@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { getLLMAdapter, getLLMAdapterByName } from '../../adapters/llm';
+import { useCredits } from '../../hooks/useCredits';
+import { useAuth } from '../../contexts/AuthContext';
 
 // ============================================================================
 // ENCRYPTION UTILITIES - To read Hub's encrypted settings
@@ -88,6 +90,20 @@ const TextNoteNode = memo(({ data, id, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Credits hook for AI usage restrictions
+  const { hasCredits, useCredit, creditsRemaining, tier } = useCredits();
+
+  // Authentication for admin check
+  const { isAdmin } = useAuth();
+
+  // Check if user has unlimited access (admin/premium)
+  const hasUnlimitedAccess = useCallback(() => {
+    // Admin - unlimited (authenticated via SSO)
+    if (isAdmin) return true;
+    if (tier === 'premium') return true;
+    return false;
+  }, [isAdmin, tier]);
 
   // Local state that syncs with data prop
   const [localTitle, setLocalTitle] = useState(data.title || 'New Note');
@@ -278,6 +294,19 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     if (!queryText.trim()) return;
     if (isAiLoading) return;
 
+    // Check credits before making AI request (unless user has unlimited access)
+    if (!hasUnlimitedAccess() && !hasCredits()) {
+      // No credits - show error message in thread
+      const errorMessage = {
+        role: 'assistant',
+        content: '⚠️ No credits remaining. Sign in or upgrade to continue using AI assistance.',
+        timestamp: Date.now(),
+        isError: true
+      };
+      setAiMessages(prev => [...prev, errorMessage]);
+      return;
+    }
+
     // Add user message to thread immediately
     const userMessage = {
       role: 'user',
@@ -353,6 +382,14 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
 
       const aiResponse = await adapter.generate(enhancedPrompt, generateOptions);
 
+      // Consume credit after successful AI response (unless unlimited access)
+      if (!hasUnlimitedAccess()) {
+        const creditResult = await useCredit();
+        if (!creditResult.success) {
+          console.warn('Failed to consume credit:', creditResult.error);
+        }
+      }
+
       // Add AI response to thread
       const assistantMessage = {
         role: 'assistant',
@@ -386,7 +423,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
     } finally {
       setIsAiLoading(false);
     }
-  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext]);
+  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext, hasUnlimitedAccess, hasCredits, useCredit]);
 
   const baseStyles = {
     backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 
 /**
  * EmailEditModal - Inline editor for UnityMAP email nodes
@@ -80,7 +81,7 @@ const EmailEditModal = ({ isOpen, onClose, emailData, onSave }) => {
           justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '24px' }}>📧</span>
+            <Mail size={24} strokeWidth={2} style={{ color: '#374151' }} />
             <h2 style={{
               margin: 0,
               fontSize: '18px',

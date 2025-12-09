@@ -262,9 +262,67 @@ export const useFirebaseJourney = () => {
   }, []);
 
   /**
-   * Load journey from Firestore
+   * Get cached journey from localStorage
    */
-  const loadJourney = useCallback(async (journeyId) => {
+  const getCachedJourney = (journeyId) => {
+    try {
+      const cached = localStorage.getItem(`journey_cache_${journeyId}`);
+      if (!cached) return null;
+
+      const { data, timestamp } = JSON.parse(cached);
+      const cacheAge = Date.now() - timestamp;
+      const maxAge = 5 * 60 * 1000; // 5 minutes
+
+      if (cacheAge > maxAge) {
+        localStorage.removeItem(`journey_cache_${journeyId}`);
+        return null;
+      }
+
+      return data;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Cache journey to localStorage
+   */
+  const cacheJourney = (journeyId, data) => {
+    try {
+      // Strip history from prospects to reduce cache size
+      const lightData = {
+        ...data,
+        prospects: data.prospects?.map(p => ({
+          ...p,
+          history: undefined // Lazy load history separately
+        })) || []
+      };
+
+      localStorage.setItem(`journey_cache_${journeyId}`, JSON.stringify({
+        data: lightData,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      // Ignore cache errors (quota exceeded, etc.)
+      console.warn('Cache write failed:', e.message);
+    }
+  };
+
+  /**
+   * Load journey from Firestore (with localStorage caching)
+   */
+  const loadJourney = useCallback(async (journeyId, options = {}) => {
+    const { skipCache = false, includeHistory = false } = options;
+
+    // Check cache first (unless skipped)
+    if (!skipCache) {
+      const cached = getCachedJourney(journeyId);
+      if (cached) {
+        console.log('📦 Journey loaded from cache:', journeyId);
+        return cached;
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -278,9 +336,14 @@ export const useFirebaseJourney = () => {
 
       const data = journeySnap.data();
 
-      console.log('✅ Journey loaded:', journeyId);
+      // Lazy load: strip history unless specifically requested
+      const prospects = (data.prospects || []).map(p => ({
+        ...p,
+        history: includeHistory ? (p.history || []) : undefined,
+        historyCount: p.history?.length || 0
+      }));
 
-      return {
+      const result = {
         metadata: {
           id: data.id,
           title: data.title,
@@ -292,8 +355,14 @@ export const useFirebaseJourney = () => {
         },
         nodes: data.nodes || [],
         edges: data.edges || [],
-        prospects: data.prospects || []
+        prospects
       };
+
+      // Cache the result
+      cacheJourney(journeyId, result);
+
+      console.log('✅ Journey loaded:', journeyId);
+      return result;
 
     } catch (err) {
       console.error('❌ Load journey failed:', err);
@@ -301,6 +370,32 @@ export const useFirebaseJourney = () => {
       throw err;
     } finally {
       setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Load prospect history on demand (lazy loading)
+   */
+  const loadProspectHistory = useCallback(async (journeyId, prospectId) => {
+    try {
+      const journeyRef = doc(db, 'journeys', journeyId);
+      const journeySnap = await getDoc(journeyRef);
+
+      if (!journeySnap.exists()) {
+        throw new Error('Journey not found');
+      }
+
+      const data = journeySnap.data();
+      const prospect = data.prospects?.find(p => p.id === prospectId);
+
+      if (!prospect) {
+        throw new Error('Prospect not found');
+      }
+
+      return prospect.history || [];
+    } catch (err) {
+      console.error('❌ Load history failed:', err);
+      throw err;
     }
   }, []);
 
@@ -798,10 +893,51 @@ export const useFirebaseJourney = () => {
         }
       }
 
-      // Update journey with modified prospects and stats
+      // Update email node statuses based on what was sent
+      const updatedNodes = nodes.map(node => {
+        if (node.type === 'emailNode') {
+          // Check if any email was sent from this node
+          const sentFromNode = results.details.some(
+            d => d.status === 'sent' && emailNodes.find(en => en.id === node.id && en.data.subject === d.subject)
+          );
+          // Also mark as sent if we have prospects past this node
+          const prospectsPastNode = prospects.some(p => {
+            const history = p.history || [];
+            return history.some(h => h.nodeId === node.id && h.action === 'sent');
+          });
+
+          if (sentFromNode || prospectsPastNode) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                status: 'sent'
+              }
+            };
+          }
+          // Check if prospects are waiting at this node
+          const prospectsAtNode = prospects.filter(p =>
+            p.status === 'active' && p.currentNodeId === node.id
+          ).length;
+          if (prospectsAtNode > 0) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                status: 'scheduled',
+                prospectsAtNode
+              }
+            };
+          }
+        }
+        return node;
+      });
+
+      // Update journey with modified prospects, nodes, and stats
       await updateDoc(journeyRef, {
         updatedAt: serverTimestamp(),
         prospects: prospects,
+        nodes: updatedNodes.map(serializeNode),
         'stats.sent': journeyData.stats.sent + results.sent,
         'stats.completed': prospects.filter(p => p.status === 'completed').length
       });
@@ -867,6 +1003,15 @@ export const useFirebaseJourney = () => {
     }
   }, []);
 
+  /**
+   * Invalidate journey cache
+   */
+  const invalidateCache = useCallback((journeyId) => {
+    if (journeyId) {
+      localStorage.removeItem(`journey_cache_${journeyId}`);
+    }
+  }, []);
+
   return {
     // CRUD
     saveJourney,
@@ -884,6 +1029,10 @@ export const useFirebaseJourney = () => {
     // Direct Email Sending (via ESP/Resend)
     sendEmailNow,
     sendJourneyNow,
+
+    // Lazy Loading & Caching
+    loadProspectHistory,
+    invalidateCache,
 
     // State
     isSaving,

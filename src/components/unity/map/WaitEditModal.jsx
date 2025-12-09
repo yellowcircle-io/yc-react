@@ -16,14 +16,29 @@ const WaitEditModal = ({ isOpen, onClose, waitData, onSave }) => {
     }
   }, [isOpen, waitData]);
 
+  // Validate minimum 15 minutes (scheduler runs every 15 min)
+  const getMinDuration = () => {
+    switch (unit) {
+      case 'minutes': return 15;
+      case 'hours': return 1;
+      case 'days': return 1;
+      case 'weeks': return 1;
+      default: return 1;
+    }
+  };
+
   const handleSave = async () => {
+    // Enforce minimum duration
+    const minDuration = getMinDuration();
+    const finalDuration = Math.max(duration, minDuration);
+
     setIsSaving(true);
     try {
       await onSave({
         ...waitData,
-        duration,
+        duration: finalDuration,
         unit,
-        label: `Wait ${duration} ${unit}`
+        label: `Wait ${finalDuration} ${unit}`
       });
       onClose();
     } catch (error) {

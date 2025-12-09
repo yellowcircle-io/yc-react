@@ -20,7 +20,8 @@ const CompanyDetailPage = lazy(() => import('./pages/works/CompanyDetailPage'));
 const ServiceDetailPage = lazy(() => import('./pages/services/ServiceDetailPage'));
 // ARCHIVED: Travel Time Capsule (uses Cloudinary - archived for simplification)
 // const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
-// const CapsuleViewPage = lazy(() => import('./pages/CapsuleViewPage'));
+// CapsuleViewPage still needed for UnityNotes sharing
+const CapsuleViewPage = lazy(() => import('./pages/CapsuleViewPage'));
 const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
 const SitemapPage = lazy(() => import('./pages/SitemapPage'));
 const DirectoryPage = lazy(() => import('./pages/DirectoryPage'));
@@ -47,6 +48,10 @@ const OwnYourStoryArticle1Page = lazy(() => import('./pages/OwnYourStoryArticle1
 // Legal pages (lazy loaded)
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+
+// Access approval pages (lazy loaded)
+const ApproveAccessPage = lazy(() => import('./pages/ApproveAccessPage'));
+const DenyAccessPage = lazy(() => import('./pages/DenyAccessPage'));
 
 // Loading spinner for lazy loaded components
 const PageLoader = () => (
@@ -122,6 +127,9 @@ function RouterApp() {
             <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
             */}
 
+            {/* UnityNotes Share View - uses same CapsuleViewPage for canvas display */}
+            <Route path="/unity-notes/view/:capsuleId" element={<CapsuleViewPage />} />
+
             {/* Feedback */}
             <Route path="/feedback" element={<FeedbackPage />} />
 
@@ -148,6 +156,10 @@ function RouterApp() {
             {/* Legal Pages */}
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+
+            {/* Client Access Approval Routes */}
+            <Route path="/approve-access" element={<ApproveAccessPage />} />
+            <Route path="/deny-access" element={<DenyAccessPage />} />
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />

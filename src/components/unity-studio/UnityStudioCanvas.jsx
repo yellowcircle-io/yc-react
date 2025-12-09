@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
+import SocialPostBuilder from './SocialPostBuilder';
+import AdCreativeBuilder from './AdCreativeBuilder';
 
 /**
  * UnityStudioCanvas - Main container for STUDIO mode
@@ -9,6 +11,97 @@ import EmailTemplateBuilder from './EmailTemplateBuilder';
  * - Ad creatives
  * - Social posts
  */
+
+/**
+ * StudioModalContainer - Stable modal wrapper component
+ * Defined outside UnityStudioCanvas to prevent remounting on parent re-renders
+ */
+const StudioModalContainer = ({ children, onClose, isDarkTheme }) => {
+  const handleBackdropMouseDown = (e) => {
+    // Only close if mousedown is directly on the backdrop (not bubbled from children)
+    if (e.target === e.currentTarget && onClose) {
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 100,
+        padding: '20px'
+      }}
+      onMouseDown={handleBackdropMouseDown}
+    >
+      <div
+        style={{
+          width: '90%',
+          maxWidth: '1200px',
+          height: '85vh',
+          maxHeight: '900px',
+          backgroundColor: isDarkTheme ? '#111827' : '#ffffff',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {/* Close button - circular with proper sizing */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose && onClose();
+          }}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            width: '36px',
+            height: '36px',
+            minWidth: '36px',
+            minHeight: '36px',
+            padding: 0,
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: isDarkTheme ? '#374151' : '#f3f4f6',
+            color: isDarkTheme ? '#d1d5db' : '#374151',
+            fontSize: '24px',
+            lineHeight: '1',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+            transition: 'all 0.2s ease',
+            aspectRatio: '1 / 1'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = isDarkTheme ? '#374151' : '#f3f4f6';
+          }}
+          title="Close Studio"
+        >
+          ×
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const ASSET_TYPES = [
   {
@@ -23,8 +116,8 @@ const ASSET_TYPES = [
     id: 'ad',
     label: 'Ad Creative',
     icon: '📢',
-    description: 'Design ads for Reddit, LinkedIn, Instagram',
-    available: false, // Coming soon
+    description: 'Design ads for Reddit, LinkedIn, Meta',
+    available: true,
     color: '#3b82f6' // Blue
   },
   {
@@ -32,7 +125,7 @@ const ASSET_TYPES = [
     label: 'Social Post',
     icon: '📱',
     description: 'Create posts for LinkedIn, Twitter, Instagram',
-    available: false, // Coming soon
+    available: true,
     color: '#8b5cf6' // Purple
   }
 ];
@@ -77,115 +170,31 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
     }
   }, [onExportToMAP]);
 
-  // Handle save to canvas (creates a note card with the template)
+  // Handle save to canvas (creates a note card with the template including HTML)
   const handleSaveToCanvas = useCallback((asset) => {
     if (onSaveToCanvas) {
+      // Include HTML code block for easy copying to MAP email nodes
+      const htmlBlock = asset.html ? `\n\n---\n\n**HTML Code:**\n\`\`\`html\n${asset.html}\n\`\`\`` : '';
+
       onSaveToCanvas({
         type: 'textNode',
         data: {
           title: asset.name || 'Email Template',
-          content: `**Subject:** ${asset.sections?.subject || ''}\n\n${asset.sections?.body || ''}`,
+          content: `**Subject:** ${asset.sections?.subject || ''}\n\n${asset.sections?.body || ''}${htmlBlock}`,
           cardType: 'note',
           sourceType: 'studio',
-          sourceAsset: asset
+          sourceAsset: asset,
+          // Also store raw HTML for programmatic access
+          html: asset.html || ''
         }
       });
     }
   }, [onSaveToCanvas]);
 
-  // Wrapper component for responsive modal container
-  // Uses onMouseDown instead of onClick to prevent accidental closes during drag/selection
-  const ModalContainer = ({ children }) => {
-    const handleBackdropMouseDown = (e) => {
-      // Only close if mousedown is directly on the backdrop (not bubbled from children)
-      if (e.target === e.currentTarget && onClose) {
-        onClose();
-      }
-    };
-
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 100,
-          padding: '20px'
-        }}
-        onMouseDown={handleBackdropMouseDown}
-      >
-        <div
-          style={{
-            width: '90%',
-            maxWidth: '1200px',
-            height: '85vh',
-            maxHeight: '900px',
-            backgroundColor: isDarkTheme ? '#111827' : '#ffffff',
-            borderRadius: '16px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            position: 'relative'
-          }}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {/* Close button - circular with proper sizing */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose && onClose();
-            }}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              width: '36px',
-              height: '36px',
-              minWidth: '36px',
-              minHeight: '36px',
-              padding: 0,
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: isDarkTheme ? '#374151' : '#f3f4f6',
-              color: isDarkTheme ? '#d1d5db' : '#374151',
-              fontSize: '24px',
-              lineHeight: '1',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-              transition: 'all 0.2s ease',
-              aspectRatio: '1 / 1'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = isDarkTheme ? '#374151' : '#f3f4f6';
-            }}
-            title="Close Studio"
-          >
-            ×
-          </button>
-          {children}
-        </div>
-      </div>
-    );
-  };
-
   // Render asset-specific builder
   if (selectedAssetType === 'email') {
     return (
-      <ModalContainer>
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
         <EmailTemplateBuilder
           onBack={handleBack}
           onSave={handleSaveAsset}
@@ -194,13 +203,41 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
           isDarkTheme={isDarkTheme}
           aiContext={initialContext}
         />
-      </ModalContainer>
+      </StudioModalContainer>
+    );
+  }
+
+  if (selectedAssetType === 'ad') {
+    return (
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
+        <AdCreativeBuilder
+          onBack={handleBack}
+          onSave={handleSaveAsset}
+          onSaveToCanvas={handleSaveToCanvas}
+          isDarkTheme={isDarkTheme}
+          aiContext={initialContext}
+        />
+      </StudioModalContainer>
+    );
+  }
+
+  if (selectedAssetType === 'social') {
+    return (
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
+        <SocialPostBuilder
+          onBack={handleBack}
+          onSave={handleSaveAsset}
+          onSaveToCanvas={handleSaveToCanvas}
+          isDarkTheme={isDarkTheme}
+          aiContext={initialContext}
+        />
+      </StudioModalContainer>
     );
   }
 
   // Default: Asset type selector
   return (
-    <ModalContainer>
+    <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
       <div
         style={{
           display: 'flex',
@@ -422,7 +459,7 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
         </div>
       )}
       </div>
-    </ModalContainer>
+    </StudioModalContainer>
   );
 }
 

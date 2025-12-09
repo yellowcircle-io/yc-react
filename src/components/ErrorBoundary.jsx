@@ -1,9 +1,10 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, eventId: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -11,9 +12,18 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Report to Sentry with full context
+    const eventId = Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+      },
+    });
 
-    // Log to Firebase Analytics if available
+    this.setState({ eventId });
+
+    // Also log to Firebase Analytics if available
     if (window.gtag) {
       window.gtag('event', 'exception', {
         description: error.toString(),

@@ -332,7 +332,7 @@ function HomePage() {
       {/* Positioned to match FINAL scroll state - buttons separate to prevent jump */}
       <div style={{
         position: 'fixed',
-        bottom: footerOpen ? '380px' : '80px',
+        bottom: footerOpen ? '420px' : (isMobile ? '120px' : '80px'),
         left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
         right: isMobile ? '100px' : '140px',
         padding: isMobile ? '0 20px' : '0 40px',
@@ -415,13 +415,13 @@ function HomePage() {
             <button
               onClick={() => navigate('/services')}
               style={{
-                padding: isMobile ? '10px 16px' : '12px 24px',
-                minHeight: '44px',
+                padding: isMobile ? '8px 12px' : '12px 24px',
+                minHeight: isMobile ? '36px' : '44px',
                 backgroundColor: 'rgba(251, 191, 36, 0.95)',
                 color: 'black',
                 border: 'none',
                 borderRadius: '4px',
-                fontSize: isMobile ? '12px' : '11px',
+                fontSize: isMobile ? '10px' : '11px',
                 fontWeight: '700',
                 letterSpacing: '0.02em',
                 cursor: 'pointer',
@@ -443,13 +443,13 @@ function HomePage() {
             <button
               onClick={() => navigate('/journeys')}
               style={{
-                padding: isMobile ? '10px 16px' : '12px 24px',
-                minHeight: '44px',
+                padding: isMobile ? '8px 12px' : '12px 24px',
+                minHeight: isMobile ? '36px' : '44px',
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 color: 'black',
                 border: '1px solid rgba(251, 191, 36, 0.5)',
                 borderRadius: '4px',
-                fontSize: isMobile ? '12px' : '11px',
+                fontSize: isMobile ? '10px' : '11px',
                 fontWeight: '700',
                 letterSpacing: '0.02em',
                 cursor: 'pointer',
@@ -471,13 +471,13 @@ function HomePage() {
             <button
               onClick={handleFooterToggle}
               style={{
-                padding: isMobile ? '10px 16px' : '12px 24px',
-                minHeight: '44px',
+                padding: isMobile ? '8px 12px' : '12px 24px',
+                minHeight: isMobile ? '36px' : '44px',
                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
                 color: 'white',
                 border: '1px solid rgba(251, 191, 36, 0.5)',
                 borderRadius: '4px',
-                fontSize: isMobile ? '12px' : '11px',
+                fontSize: isMobile ? '10px' : '11px',
                 fontWeight: '700',
                 letterSpacing: '0.02em',
                 cursor: 'pointer',

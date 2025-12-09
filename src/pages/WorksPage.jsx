@@ -412,14 +412,15 @@ function WorksPage() {
                 onClick={() => handleCompanyClick(company.id)}
                 style={{
                   flex: isMobile ? 'none' : '1 1 0',
-                  maxWidth: isMobile ? '100%' : '320px',
-                  width: isMobile ? '100%' : 'auto',
+                  maxWidth: isMobile ? 'calc(100% - 16px)' : '280px',
+                  width: isMobile ? 'calc(100% - 16px)' : 'auto',
+                  marginRight: isMobile ? '16px' : '0',
                   backgroundColor: 'rgba(255, 255, 255, 0.9)',
                   backdropFilter: 'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
                   border: `2px solid ${COLORS.yellow}`,
                   borderRadius: '12px',
-                  padding: '20px',
+                  padding: isMobile ? '16px' : '20px',
                   cursor: 'pointer',
                   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
                   transition: 'all 0.2s ease',
@@ -532,14 +533,15 @@ function WorksPage() {
             ))}
           </div>
 
-          {/* Navigation + Progress Counter */}
+          {/* Navigation Arrows with Counter below */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '8px',
             marginTop: '16px'
           }}>
-            {/* Navigation Arrows - Left side */}
+            {/* Navigation Arrows */}
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => {
@@ -549,13 +551,13 @@ function WorksPage() {
                 }}
                 disabled={currentGroupIndex === 0}
                 style={{
-                  width: '36px',
-                  height: '36px',
+                  width: isMobile ? '32px' : '36px',
+                  height: isMobile ? '32px' : '36px',
                   borderRadius: '50%',
                   border: 'none',
                   backgroundColor: currentGroupIndex === 0 ? 'rgba(0,0,0,0.1)' : COLORS.yellow,
                   color: currentGroupIndex === 0 ? 'rgba(0,0,0,0.3)' : 'black',
-                  fontSize: '16px',
+                  fontSize: isMobile ? '14px' : '16px',
                   cursor: currentGroupIndex === 0 ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s ease',
                   display: 'flex',
@@ -573,13 +575,13 @@ function WorksPage() {
                 }}
                 disabled={currentGroupIndex === totalGroups - 1}
                 style={{
-                  width: '36px',
-                  height: '36px',
+                  width: isMobile ? '32px' : '36px',
+                  height: isMobile ? '32px' : '36px',
                   borderRadius: '50%',
                   border: 'none',
                   backgroundColor: currentGroupIndex === totalGroups - 1 ? 'rgba(0,0,0,0.1)' : COLORS.yellow,
                   color: currentGroupIndex === totalGroups - 1 ? 'rgba(0,0,0,0.3)' : 'black',
-                  fontSize: '16px',
+                  fontSize: isMobile ? '14px' : '16px',
                   cursor: currentGroupIndex === totalGroups - 1 ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s ease',
                   display: 'flex',
@@ -591,13 +593,14 @@ function WorksPage() {
               </button>
             </div>
 
-            {/* Progress Counter - Right side */}
+            {/* Progress Counter - Under arrows, small text */}
             <p style={{
-              ...TYPOGRAPHY.small,
               margin: 0,
+              fontSize: '10px',
               color: 'rgba(0, 0, 0, 0.4)',
               fontWeight: '600',
-              letterSpacing: '0.1em'
+              letterSpacing: '0.1em',
+              paddingLeft: '4px'
             }}>
               {currentGroupIndex + 1} / {totalGroups}
             </p>

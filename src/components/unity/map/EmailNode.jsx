@@ -1,5 +1,6 @@
 import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { Mail } from 'lucide-react';
 
 /**
  * EmailNode - Email step in UnityMAP journey
@@ -77,7 +78,7 @@ const EmailNode = memo(({ id, data, selected }) => {
           alignItems: 'center',
           gap: '8px'
         }}>
-          <span style={{ fontSize: '18px' }}>📧</span>
+          <Mail size={18} strokeWidth={2} style={{ color: '#374151' }} />
           <span style={{
             fontSize: '11px',
             fontWeight: '700',

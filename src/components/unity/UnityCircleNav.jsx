@@ -88,7 +88,7 @@ const SettingsGear = ({ onClick, isHovered, onHover }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        filter: 'invert(1) brightness(2)'
+        filter: 'invert(1) brightness(2) grayscale(1)'
       }}>
         <LottieIcon
           animationData={settingsAnimation}
@@ -141,7 +141,7 @@ const OptionsMenu = ({
       disabled: isSaving || !hasNotes
     },
     { label: 'CLEAR', action: onClear, color: '#dc2626', textColor: 'white', hoverColor: '#b91c1c' },
-    { label: 'FOOTER', action: onFooter, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true }
+    { label: 'FOOTER', action: onFooter, color: '#1f2937', textColor: 'white', hoverColor: '#111827', separator: true }
   ];
 
   const mapMenuItems = [
@@ -168,7 +168,7 @@ const OptionsMenu = ({
     },
     { label: 'EXPORT', action: onExport, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563' },
     { label: 'CLEAR', action: onClear, color: '#dc2626', textColor: 'white', hoverColor: '#b91c1c' },
-    { label: 'FOOTER', action: onFooter, color: '#6b7280', textColor: 'white', hoverColor: '#4b5563', separator: true }
+    { label: 'FOOTER', action: onFooter, color: '#1f2937', textColor: 'white', hoverColor: '#111827', separator: true }
   ];
 
   const menuItems = currentMode === 'map' ? mapMenuItems : notesMenuItems;
