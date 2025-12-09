@@ -108,7 +108,7 @@ function OutreachGeneratorPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAdmin, userProfile } = useAuth();
   const {
     groqApiKey,
     resendApiKey: storedResendKey,
@@ -116,6 +116,10 @@ function OutreachGeneratorPage() {
     isCloudSynced,
     migrateLocalToCloud
   } = useApiKeyStorage();
+
+  // Premium/client users get unlimited credits like admins
+  const isPremium = userProfile?.subscription?.tier === 'premium';
+  const hasUnlimitedCredits = isAdmin || isPremium;
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -169,7 +173,6 @@ function OutreachGeneratorPage() {
   const API_KEY_CREDITS = 10;
   const [freeCreditsRemaining, setFreeCreditsRemaining] = useState(FREE_CREDITS);
   const [apiKeyCreditsRemaining, setApiKeyCreditsRemaining] = useState(API_KEY_CREDITS);
-  const [isClient, setIsClient] = useState(false);
 
   // Backwards compatibility alias
   const creditsRemaining = apiKey ? apiKeyCreditsRemaining : freeCreditsRemaining;
@@ -214,12 +217,6 @@ function OutreachGeneratorPage() {
       setApiKeyCreditsRemaining(parseInt(savedApiKeyCredits, 10));
     }
 
-    // Check client status (elevated access)
-    const clientStatus = localStorage.getItem('yc_client_access');
-    if (clientStatus) {
-      setIsClient(true);
-    }
-
     const savedBrand = localStorage.getItem('outreach_brand_config');
     if (savedBrand) {
       try {
@@ -230,7 +227,7 @@ function OutreachGeneratorPage() {
     }
 
     // Show API key input only if no free credits AND no API key
-    if (!savedKey && savedFreeCredits !== null && parseInt(savedFreeCredits, 10) <= 0) {
+    if (!groqApiKey && savedFreeCredits !== null && parseInt(savedFreeCredits, 10) <= 0) {
       setShowApiKeyInput(true);
     }
 
@@ -304,12 +301,12 @@ function OutreachGeneratorPage() {
     }
   }, []);
 
-  // Check if user can generate (tiered: clients unlimited, API key 10, free 3)
-  const canGenerate = isClient || (apiKey && apiKeyCreditsRemaining > 0) || freeCreditsRemaining > 0;
+  // Check if user can generate (tiered: admins/premium unlimited, API key 10, free 3)
+  const canGenerate = hasUnlimitedCredits || (apiKey && apiKeyCreditsRemaining > 0) || freeCreditsRemaining > 0;
 
   // Use a credit (tiered system)
   const useCredit = () => {
-    if (isClient) return; // Clients don't use credits
+    if (hasUnlimitedCredits) return; // Admins and premium users don't use credits
 
     if (apiKey) {
       // API key users have limited credits
@@ -1212,7 +1209,7 @@ Return ONLY a JSON object with this exact format:
             )}
 
             {/* Credits Badge - Always visible with tiered display */}
-            {isClient ? (
+            {hasUnlimitedCredits ? (
               <div style={{
                 padding: '8px 14px',
                 backgroundColor: 'rgba(238, 207, 0, 0.15)',
@@ -1222,7 +1219,7 @@ Return ONLY a JSON object with this exact format:
                 fontWeight: '600',
                 color: COLORS.yellow
               }}>
-                ⭐ Client Access — Unlimited
+                {isAdmin ? 'Admin Access' : 'Premium'} — Unlimited
               </div>
             ) : apiKey ? (
               <div style={{

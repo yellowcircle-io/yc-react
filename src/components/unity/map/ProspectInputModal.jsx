@@ -335,8 +335,10 @@ const ProspectInputModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               border: '1px solid #d1d5db',
               borderRadius: '6px',
               backgroundColor: 'white',
+              color: '#374151',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: '14px',
+              fontWeight: '500'
             }}
           >
             Cancel

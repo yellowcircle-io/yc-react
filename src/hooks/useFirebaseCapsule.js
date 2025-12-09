@@ -22,7 +22,46 @@ export const useFirebaseCapsule = () => {
   const [error, setError] = useState(null);
 
   /**
-   * Save capsule to Firebase
+   * Serialize node for storage (minimal footprint)
+   */
+  const serializeNode = (node) => ({
+    id: node.id,
+    type: node.type,
+    position: {
+      x: Math.round(node.position.x),
+      y: Math.round(node.position.y)
+    },
+    data: {
+      imageUrl: node.data?.imageUrl || '',
+      location: node.data?.location || '',
+      date: node.data?.date || '',
+      description: node.data?.description || '',
+      content: node.data?.content || '',
+      size: node.data?.size || 350,
+      // Include additional data for MAP nodes
+      label: node.data?.label || '',
+      subject: node.data?.subject || '',
+      preview: node.data?.preview || '',
+      fullBody: node.data?.fullBody || '',
+      status: node.data?.status || 'draft'
+    }
+  });
+
+  /**
+   * Serialize edge for storage
+   */
+  const serializeEdge = (edge) => ({
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    type: edge.type || 'default'
+  });
+
+  /**
+   * Save capsule to Firebase (v2 - embedded model for cost efficiency)
+   * Uses single document with embedded arrays instead of subcollections.
+   * Reduces document count from 1 + N + E to just 1 document.
+   *
    * @param {Array} nodes - React Flow nodes array
    * @param {Array} edges - React Flow edges array
    * @param {Object} metadata - Optional metadata (title, description)
@@ -37,54 +76,37 @@ export const useFirebaseCapsule = () => {
       const capsuleRef = doc(collection(db, 'capsules'));
       const capsuleId = capsuleRef.id;
 
-      // Use batch writes for atomic operations
-      const batch = writeBatch(db);
+      // Calculate expiry (90 days from now)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 90);
 
-      // Save capsule metadata
-      batch.set(capsuleRef, {
+      // Single document with embedded arrays (v2 model)
+      const capsuleDoc = {
         id: capsuleId,
-        title: metadata.title || 'UK Travel Memories',
+        title: metadata.title || 'Travel Memories',
         description: metadata.description || '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        expiresAt: expiresAt,
         isPublic: true,
-        viewCount: 0
-      });
+        viewCount: 0,
+        version: 2, // Mark as v2 embedded model
+        // Embedded arrays (cost-efficient)
+        nodes: nodes.map(serializeNode),
+        edges: edges.map(serializeEdge),
+        // Stats for quick access
+        stats: {
+          nodeCount: nodes.length,
+          edgeCount: edges.length,
+          photoCount: nodes.filter(n => n.type === 'photoNode').length
+        }
+      };
 
-      // Save nodes (strip ALL React Flow internal properties for Safari compatibility)
-      nodes.forEach(node => {
-        const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
-        // Explicitly construct serializable node with only essential data
-        const cleanNode = {
-          id: node.id,
-          type: node.type,
-          position: node.position,
-          data: {
-            imageUrl: node.data?.imageUrl || '',
-            location: node.data?.location || '',
-            date: node.data?.date || '',
-            description: node.data?.description || '',
-            size: node.data?.size || 350
-          }
-        };
-        batch.set(nodeRef, cleanNode);
-      });
+      // Single write instead of batch writes to subcollections
+      const { setDoc } = await import('firebase/firestore');
+      await setDoc(capsuleRef, capsuleDoc);
 
-      // Save edges (clean for Safari compatibility)
-      edges.forEach(edge => {
-        const edgeRef = doc(db, `capsules/${capsuleId}/edges`, edge.id);
-        const cleanEdge = {
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: edge.type || 'default'
-        };
-        batch.set(edgeRef, cleanEdge);
-      });
-
-      await batch.commit();
-
-      console.log('✅ Capsule saved successfully:', capsuleId);
+      console.log('✅ Capsule saved (v2 embedded):', capsuleId, '- Nodes:', nodes.length);
       return capsuleId;
 
     } catch (err) {
@@ -113,7 +135,7 @@ export const useFirebaseCapsule = () => {
   };
 
   /**
-   * Load capsule from Firebase
+   * Load capsule from Firebase (supports both v1 subcollection and v2 embedded models)
    * @param {string} capsuleId - Unique capsule ID
    * @returns {Promise<Object>} { metadata, nodes, edges }
    */
@@ -122,7 +144,7 @@ export const useFirebaseCapsule = () => {
     setError(null);
 
     try {
-      // Get capsule metadata
+      // Get capsule document
       const capsuleRef = doc(db, 'capsules', capsuleId);
       const capsuleSnap = await getDoc(capsuleRef);
 
@@ -130,22 +152,31 @@ export const useFirebaseCapsule = () => {
         throw new Error('Capsule not found');
       }
 
-      // Get nodes (with safety limit to prevent excessive reads)
-      const nodesRef = collection(db, `capsules/${capsuleId}/nodes`);
-      const nodesQuery = query(nodesRef, limit(500)); // Max 500 photos per capsule
-      const nodesSnap = await getDocs(nodesQuery);
-      const nodes = nodesSnap.docs.map(doc => doc.data());
+      const capsuleData = capsuleSnap.data();
+      let nodes, edges;
 
-      // Get edges (with safety limit)
-      const edgesRef = collection(db, `capsules/${capsuleId}/edges`);
-      const edgesQuery = query(edgesRef, limit(1000)); // Max 1000 connections
-      const edgesSnap = await getDocs(edgesQuery);
-      const edges = edgesSnap.docs.map(doc => doc.data());
+      // Check if v2 (embedded) or v1 (subcollections)
+      if (capsuleData.version === 2 && capsuleData.nodes) {
+        // v2 embedded model - read directly from document
+        nodes = capsuleData.nodes || [];
+        edges = capsuleData.edges || [];
+        console.log('📦 Loaded v2 embedded capsule');
+      } else {
+        // v1 subcollection model (legacy) - read from subcollections
+        const nodesRef = collection(db, `capsules/${capsuleId}/nodes`);
+        const nodesQuery = query(nodesRef, limit(500));
+        const nodesSnap = await getDocs(nodesQuery);
+        nodes = nodesSnap.docs.map(doc => doc.data());
+
+        const edgesRef = collection(db, `capsules/${capsuleId}/edges`);
+        const edgesQuery = query(edgesRef, limit(1000));
+        const edgesSnap = await getDocs(edgesQuery);
+        edges = edgesSnap.docs.map(doc => doc.data());
+        console.log('📂 Loaded v1 subcollection capsule (legacy)');
+      }
 
       // Increment view count (only in production to avoid excessive writes during development)
       const isProduction = import.meta.env.PROD;
-
-      // Check if already viewed this session (prevent duplicate counts on refresh)
       const viewedKey = `capsule_viewed_${capsuleId}`;
       const alreadyViewed = sessionStorage.getItem(viewedKey);
 
@@ -158,18 +189,20 @@ export const useFirebaseCapsule = () => {
           console.log('✅ View count incremented');
         } catch (viewCountError) {
           console.warn('Failed to increment view count:', viewCountError);
-          // Don't fail the entire load if view count update fails
         }
       } else if (!isProduction) {
-        console.log('⚠️ DEV MODE: Skipping view count increment (prevents excessive Firebase writes)');
-      } else {
-        console.log('ℹ️ Already viewed this capsule in this session');
+        console.log('⚠️ DEV MODE: Skipping view count increment');
       }
 
-      console.log('✅ Capsule loaded successfully:', capsuleId);
+      console.log('✅ Capsule loaded:', capsuleId, '- Nodes:', nodes.length);
 
       return {
-        metadata: capsuleSnap.data(),
+        metadata: {
+          ...capsuleData,
+          // Exclude embedded arrays from metadata
+          nodes: undefined,
+          edges: undefined
+        },
         nodes,
         edges
       };
@@ -184,7 +217,7 @@ export const useFirebaseCapsule = () => {
   };
 
   /**
-   * Update existing capsule
+   * Update existing capsule (v2 - single document update)
    * @param {string} capsuleId - Existing capsule ID
    * @param {Array} nodes - Updated nodes array
    * @param {Array} edges - Updated edges array
@@ -194,46 +227,44 @@ export const useFirebaseCapsule = () => {
     setError(null);
 
     try {
-      const batch = writeBatch(db);
-
-      // Update timestamp
       const capsuleRef = doc(db, 'capsules', capsuleId);
-      batch.update(capsuleRef, {
-        updatedAt: serverTimestamp()
-      });
 
-      // Update nodes (explicitly serialize for Safari compatibility)
-      nodes.forEach(node => {
-        const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
-        // Explicitly construct serializable node with only essential data
-        const cleanNode = {
-          id: node.id,
-          type: node.type,
-          position: node.position,
-          data: {
-            imageUrl: node.data?.imageUrl || '',
-            location: node.data?.location || '',
-            date: node.data?.date || '',
-            description: node.data?.description || '',
-            size: node.data?.size || 350
-          }
-        };
-        batch.set(nodeRef, cleanNode);
-      });
+      // Check if this is a v2 capsule
+      const capsuleSnap = await getDoc(capsuleRef);
+      const capsuleData = capsuleSnap.data();
 
-      edges.forEach(edge => {
-        const edgeRef = doc(db, `capsules/${capsuleId}/edges`, edge.id);
-        const cleanEdge = {
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          type: edge.type || 'default'
-        };
-        batch.set(edgeRef, cleanEdge);
-      });
+      if (capsuleData?.version === 2) {
+        // v2 embedded model - single document update
+        await updateDoc(capsuleRef, {
+          updatedAt: serverTimestamp(),
+          nodes: nodes.map(serializeNode),
+          edges: edges.map(serializeEdge),
+          'stats.nodeCount': nodes.length,
+          'stats.edgeCount': edges.length,
+          'stats.photoCount': nodes.filter(n => n.type === 'photoNode').length
+        });
+        console.log('✅ Capsule updated (v2 embedded)');
+      } else {
+        // v1 subcollection model (legacy) - batch updates
+        const batch = writeBatch(db);
 
-      await batch.commit();
-      console.log('✅ Capsule updated successfully');
+        batch.update(capsuleRef, {
+          updatedAt: serverTimestamp()
+        });
+
+        nodes.forEach(node => {
+          const nodeRef = doc(db, `capsules/${capsuleId}/nodes`, node.id);
+          batch.set(nodeRef, serializeNode(node));
+        });
+
+        edges.forEach(edge => {
+          const edgeRef = doc(db, `capsules/${capsuleId}/edges`, edge.id);
+          batch.set(edgeRef, serializeEdge(edge));
+        });
+
+        await batch.commit();
+        console.log('✅ Capsule updated (v1 subcollection)');
+      }
 
     } catch (err) {
       console.error('❌ Update failed:', err);
@@ -350,6 +381,87 @@ export const useFirebaseCapsule = () => {
     }
   };
 
+  /**
+   * Migrate v1 subcollection capsules to v2 embedded model
+   * This reduces Firestore document count and costs significantly.
+   * Safe to run multiple times - only migrates capsules without version flag.
+   *
+   * @returns {Promise<Object>} { migrated: number, alreadyV2: number, failed: number }
+   */
+  const migrateToV2 = async () => {
+    console.log('🔄 Starting v1 → v2 capsule migration...');
+
+    try {
+      const capsulesRef = collection(db, 'capsules');
+      const capsulesSnap = await getDocs(capsulesRef);
+
+      let migrated = 0;
+      let alreadyV2 = 0;
+      let failed = 0;
+
+      for (const capsuleDoc of capsulesSnap.docs) {
+        const data = capsuleDoc.data();
+        const capsuleId = capsuleDoc.id;
+
+        // Skip if already v2
+        if (data.version === 2) {
+          alreadyV2++;
+          continue;
+        }
+
+        try {
+          // Load nodes from subcollection
+          const nodesRef = collection(db, `capsules/${capsuleId}/nodes`);
+          const nodesSnap = await getDocs(nodesRef);
+          const nodes = nodesSnap.docs.map(doc => doc.data());
+
+          // Load edges from subcollection
+          const edgesRef = collection(db, `capsules/${capsuleId}/edges`);
+          const edgesSnap = await getDocs(edgesRef);
+          const edges = edgesSnap.docs.map(doc => doc.data());
+
+          // Calculate expiry (90 days from now for existing capsules)
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 90);
+
+          // Update to v2 embedded format
+          const capsuleRef = doc(db, 'capsules', capsuleId);
+          await updateDoc(capsuleRef, {
+            version: 2,
+            nodes: nodes.map(serializeNode),
+            edges: edges.map(serializeEdge),
+            expiresAt: expiresAt,
+            stats: {
+              nodeCount: nodes.length,
+              edgeCount: edges.length,
+              photoCount: nodes.filter(n => n.type === 'photoNode').length
+            }
+          });
+
+          // Delete old subcollection documents (optional - saves storage)
+          const batch = writeBatch(db);
+          nodesSnap.docs.forEach(nodeDoc => batch.delete(nodeDoc.ref));
+          edgesSnap.docs.forEach(edgeDoc => batch.delete(edgeDoc.ref));
+          await batch.commit();
+
+          migrated++;
+          console.log(`✅ Migrated: ${capsuleId} (${nodes.length} nodes, ${edges.length} edges)`);
+
+        } catch (err) {
+          failed++;
+          console.error(`❌ Failed to migrate ${capsuleId}:`, err.message);
+        }
+      }
+
+      console.log(`\n📊 Migration complete: ${migrated} migrated, ${alreadyV2} already v2, ${failed} failed`);
+      return { migrated, alreadyV2, failed };
+
+    } catch (err) {
+      console.error('❌ Migration failed:', err);
+      throw err;
+    }
+  };
+
   return {
     saveCapsule,
     loadCapsule,
@@ -357,6 +469,7 @@ export const useFirebaseCapsule = () => {
     deleteCapsule,
     cleanupOldCapsules,
     getCapsuleStats,
+    migrateToV2,
     isSaving,
     isLoading,
     error

@@ -2,7 +2,7 @@
 
 **A Strategic Consulting Practice + Digital Product Studio**
 
-*Last Updated: December 2, 2025*
+*Last Updated: December 8, 2025*
 
 ---
 
@@ -13,7 +13,7 @@
 **yellowCircle** is a GTM (Go-To-Market) strategy and marketing operations consulting practice founded by Christopher Cooper. It combines:
 
 1. **Consulting Services** - Strategic audits for B2B companies ($1.5K - $5K engagements)
-2. **Digital Products** - Tools like Unity Notes (canvas-based workspace) and Outreach Generator
+2. **Digital Products** - The **Unity Platform** ecosystem (UnityNOTES, UnityMAP, UnitySTUDIO)
 3. **Thought Leadership** - "Own Your Story" article series on marketing operations dysfunction
 
 ### The Problem We Solve
@@ -62,27 +62,141 @@ Most B2B companies invest $50K-$200K/year in marketing technology while their te
 | Technical Debt Quantification | $2,500 - $3,500 | 1-2 weeks |
 | Attribution System Audit | $2,000 - $3,000 | 1-2 weeks |
 | Data Architecture Assessment | $3,000 - $4,000 | 2-3 weeks |
+| Creative + Operations | Custom | Project-based |
+| Email Template Development | $500+ | Per template |
 
 ---
 
-## Digital Products
+## Digital Products: The Unity Platform
 
-### Unity Notes
+### Unity Platform Overview
+
+A 3-mode integrated campaign system for GTM operations:
+
+| Mode | Purpose | Status |
+|------|---------|--------|
+| **UnityNOTES** | Visual noteboard + second brain | ✅ MVP Complete |
+| **UnityMAP** | Email journey builder + campaign management | ✅ MVP Complete |
+| **UnitySTUDIO** | Asset creation for GTM campaigns | ✅ MVP Complete |
+
+### UnityNOTES (`/unity-notes`)
+
 A canvas-based workspace for visual note-taking and idea organization.
-- **Status:** Beta (web), App Store submission planned
-- **Tech:** React, ReactFlow, Firebase, Cloudinary
-- **Revenue Model:** Freemium (local-first free, cloud features paid)
 
-### Outreach Generator
+**Features:**
+- 5+ node types: Photo, Text, Link, AI Chat, Video (placeholder)
+- AI-powered image analysis (describe, tags, OCR, location, creative)
+- Drag-and-drop canvas with React Flow
+- AI chat integration (Groq/OpenAI adapters)
+- Export/Import JSON, Share URLs
+- Firebase Firestore cloud backup (premium)
+
+**Tech:** React, ReactFlow, Firebase, Cloudinary
+**Revenue Model:** Freemium (local-first free, cloud features paid)
+
+### UnityMAP Generator (`/experiments/outreach-generator`)
+
 AI-powered cold email generation for B2B prospecting.
-- **Status:** Live at yellowcircle.io/outreach
-- **Tech:** React, Groq API (free tier), Resend
-- **Revenue Model:** Free tool, drives consulting leads
 
-### Growth Health Check
+**Features:**
+- 3-email sequence generation (Initial, Day 3, Day 10)
+- Two modes: Prospect (cold) and MarCom (warm)
+- Credit system: Free (3), API Key (10), Client (unlimited)
+- Brand customization and variable placeholders
+- Firebase Cloud Function proxy for free tier
+
+**Tech:** React, Groq API (free tier), Firebase Functions
+**Revenue Model:** Free tool, drives consulting leads + premium tiers
+
+### UnityMAP Hub (`/outreach`)
+
+Business email outreach platform with journey builder.
+
+**Features:**
+- Node-based workflow editor (5 node types)
+  - Prospect, Email, Wait/Delay, Condition, Exit
+- Email deployment via Resend ESP
+- Journey persistence to Firestore
+- Contact passthrough from Generator
+- Prospect status tracking (draft → deployed → active → paused)
+- API key cloud sync with encryption
+
+**Tech:** React, ReactFlow, Firebase, Resend
+**Revenue Model:** Premium feature for clients
+
+### UnitySTUDIO (Integrated into UnityNOTES)
+
+Asset creation suite for GTM campaigns.
+
+**Features:**
+- Email Template Builder (5 pre-built templates)
+- Section-based editing (Subject, Greeting, Body, CTA, Signature)
+- Real-time preview with sample data
+- Export options: Save, Send to MAP, Copy HTML, Download
+- AI context integration from chat nodes
+
+**Tech:** React, Modal-based UI
+**Status:** MVP Complete; SocialPostBuilder & AdCreativeBuilder stubbed
+
+### Growth Health Check (`/assessment`)
+
 8-question assessment that scores marketing operations health.
-- **Status:** Live at yellowcircle.io/assessment
-- **Purpose:** Lead qualification and service matching
+
+**Features:**
+- 8 category-based questions with 5-point scale
+- Categories: Data Architecture, Attribution, Marketing Automation, Integration Health, Team Alignment, Technical Debt, Reporting, Sales-Marketing Alignment
+- Service recommendations based on lowest scores
+- Email capture via Web3Forms
+
+**Purpose:** Lead qualification and service matching
+
+---
+
+## Authentication & Access Control
+
+### Framework
+- Firebase Authentication with Google OAuth
+- Email/password authentication
+- Password reset flow
+
+### Access Tiers
+
+| Tier | Access Level | Credits |
+|------|--------------|---------|
+| **Free** | Public tools, Assessment | 3 generations |
+| **API Key** | Personal LLM/ESP keys | 10 generations |
+| **Premium Client** | Full platform access | Unlimited |
+
+### Client Provisioning
+- Firestore-based whitelist (`config/client_whitelist`)
+- Admin whitelist (`config/admin_whitelist`)
+- Token-based approval flow (`/approve-access`)
+- Email notifications for access requests
+- Fallback admins: christopher@yellowcircle.io, info@yellowcircle.io, arscooper@live.com
+
+---
+
+## Content & Thought Leadership
+
+### Article 1: "Why Your GTM Sucks" (`/thoughts/why-your-gtm-sucks`)
+- **Status:** Complete
+- **Length:** ~15,500 words across 35 sections
+- **Format:** Horizontal scroll (desktop), vertical scroll (mobile)
+
+**Content Structure:**
+1. Hero + Data Grid + TOC
+2. Why This Matters (misalignment stats)
+3. Big Picture (operations theater, industry trends)
+4. 5 Persona Narratives (Alex, Jordan, Casey, Morgan, Riley)
+5. What Now (Stop Buying Tools, Start With Roles, Own Your Story)
+6. Enhanced CTA (consultation, audit template, PDF download)
+
+**Interactive Features:**
+- Reading time indicator
+- Share buttons (Twitter, LinkedIn, copy link)
+- Back-to-top floating button
+- PDF export
+- Email capture modals
 
 ---
 
@@ -90,14 +204,19 @@ AI-powered cold email generation for B2B prospecting.
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Website (yellowcircle.io) | 90% Complete | Domain verification pending |
-| Services Page | Complete | 7 offerings with pricing |
-| Works/Portfolio | Complete | 11 company case studies |
-| Article 1 | Complete | "Why Your GTM Sucks" (15,500 words) |
-| Contact Forms | Complete | Web3Forms integration |
-| Analytics | In Progress | GTM ready, GA4 crawling |
-| Calendar Booking | Pending | Cal.com setup needed |
-| Mobile Optimization | Planned | Testing on physical devices |
+| Website (yellowcircle.io) | ✅ Complete | Live with all pages |
+| Services Page | ✅ Complete | 8 offerings with pricing |
+| Works/Portfolio | ✅ Complete | 11 company case studies |
+| Article 1 | ✅ Complete | 35 sections, ~15,500 words |
+| Contact Forms | ✅ Complete | Web3Forms integration |
+| Analytics | ✅ Complete | GTM + GA4 tracking live |
+| Calendar Booking | ✅ Complete | Cal.com integration |
+| UnityNOTES | ✅ Complete | AI chat, image analysis, 5+ card types |
+| UnityMAP | ✅ Complete | Journey builder + email deployment |
+| UnitySTUDIO | ✅ Complete | Email template builder |
+| Authentication | ✅ Complete | Google OAuth + email/password |
+| Client Access System | ✅ Complete | Whitelist-based premium access |
+| Mobile Optimization | ⏳ In Progress | Responsive design complete, testing ongoing |
 
 ---
 
@@ -105,13 +224,52 @@ AI-powered cold email generation for B2B prospecting.
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 19.1, Vite 5.4, Tailwind CSS |
+| **Frontend** | React 19.2, Vite 5.4, Tailwind CSS 4.1, React Flow 12.8 |
 | **Hosting** | Firebase Hosting |
+| **Auth** | Firebase Authentication (Google OAuth, Email/Password) |
+| **Database** | Firebase Cloud Firestore |
+| **Functions** | Firebase Cloud Functions (Node.js) |
 | **Forms** | Web3Forms (free tier) |
 | **Email** | Resend (100 free/day) |
-| **AI** | Groq API (14,400 free requests/day) |
+| **AI - LLM** | Groq API (14,400 free requests/day), OpenAI (pay-as-you-go) |
+| **AI - Vision** | OpenAI Vision API |
+| **Calendar** | Cal.com |
 | **Analytics** | Google Analytics 4, Google Tag Manager |
-| **Design System** | Custom (COLORS, TYPOGRAPHY, EFFECTS constants) |
+| **Animations** | Lottie, Framer Motion |
+
+### Adapter Architecture
+
+The platform uses a hot-swappable adapter pattern for flexibility:
+
+**LLM Adapters:**
+- Groq (✅ Complete)
+- OpenAI (✅ Complete)
+- Claude (stub)
+
+**ESP Adapters:**
+- Resend (✅ Complete)
+- SendGrid (stub)
+- HubSpot (stub)
+- Mailchimp (stub)
+
+**Storage Adapters:**
+- Firestore (✅ Complete)
+- Airtable (stub)
+- LocalStorage (✅ Complete)
+
+---
+
+## Firebase Cloud Functions
+
+| Function | Purpose | Status |
+|----------|---------|--------|
+| `generate` | LLM proxy for free tier (rate limited) | ✅ Live |
+| `sendEmail` | Resend ESP proxy | ✅ Live |
+| `health` | Health check endpoint | ✅ Live |
+| `requestAccess` | Client access workflow | ✅ Live |
+| `approveAccess` | Token-based approval | ✅ Live |
+| `deleteAccessRequest` | Admin request cleanup | ✅ Live |
+| `stopAllJourneys` | Journey cleanup utility | ✅ Live |
 
 ---
 
@@ -142,30 +300,52 @@ services:
   target_market: B2B companies, Series A-C startups, enterprise marketing teams
 
 products:
-  - name: Unity Notes
-    type: canvas_workspace_app
-    status: beta
-    monetization: freemium
-  - name: Outreach Generator
-    type: ai_email_tool
-    status: live
-    monetization: free_lead_generation
-  - name: Growth Health Check
-    type: assessment_quiz
-    status: live
-    monetization: lead_qualification
+  unity_platform:
+    - name: UnityNOTES
+      type: canvas_workspace_app
+      status: mvp_complete
+      features: [ai_chat, image_analysis, cloud_backup, export_share]
+      monetization: freemium
+    - name: UnityMAP
+      type: email_journey_builder
+      status: mvp_complete
+      features: [node_editor, email_deployment, prospect_tracking, journey_persistence]
+      monetization: premium_feature
+    - name: UnitySTUDIO
+      type: asset_creation_suite
+      status: mvp_complete
+      features: [email_templates, section_editor, ai_context]
+      monetization: premium_feature
+  standalone:
+    - name: Outreach Generator
+      type: ai_email_tool
+      status: live
+      monetization: free_lead_generation
+    - name: Growth Health Check
+      type: assessment_quiz
+      status: live
+      monetization: lead_qualification
+
+authentication:
+  provider: firebase_auth
+  methods: [google_oauth, email_password]
+  tiers: [free, api_key, premium_client]
+  access_control: firestore_whitelist
 
 content:
   thought_leadership_series: "Own Your Story"
   flagship_article: "Why Your GTM Sucks: The Human Cost of Operations Theater"
   word_count: 15500
+  sections: 35
   publication_date: 2025-11
 
 technology:
-  frontend: [React, Vite, Tailwind]
-  backend: [Firebase, Web3Forms, Resend]
-  ai_integration: [Groq API]
+  frontend: [React 19.2, Vite, Tailwind, React Flow, Framer Motion]
+  backend: [Firebase Auth, Firestore, Cloud Functions]
+  ai_integration: [Groq API, OpenAI Vision, OpenAI LLM]
+  email: [Resend ESP]
   analytics: [GA4, GTM]
+  architecture: adapter_pattern
 
 market_positioning:
   differentiator: "Organizational solutions over tool purchases"
@@ -201,16 +381,17 @@ contact:
 
 **Technical Architecture Decisions:**
 - Technology stack selection
-- Database architecture choices (Airtable vs Supabase vs MongoDB)
+- Database architecture choices
 - Third-party service selection (Web3Forms, Resend, Groq, Cal.com)
 - Hosting and deployment strategy (Firebase)
 - Domain and DNS configuration (Cloudflare)
+- Unity Platform product design and feature scope
 
 **Business Operations:**
-- Calendly/Cal.com account setup
+- Cal.com account setup
 - Firebase project management
 - Google Analytics property creation
-- Prospect enrichment tool evaluation (Clay, Apollo.io)
+- Client provisioning workflow design
 - Paid ads budget allocation decisions
 
 **Quality Control:**
@@ -223,18 +404,23 @@ contact:
 ### What Claude Code Executed
 
 **Frontend Development:**
-- React component creation (40+ components)
+- React component creation (50+ components)
 - CSS styling and responsive design implementation
 - Animation and interaction code (Lottie, scroll behaviors)
 - Form validation and submission handling
 - Routing configuration (RouterApp.jsx)
+- Unity Platform UI implementation
 
 **System Integration:**
 - Web3Forms API integration
 - Cloudinary upload implementation
-- Firebase Firestore queries
+- Firebase Firestore queries and rules
+- Firebase Cloud Functions
+- Firebase Authentication flows
 - UTM parameter tracking
 - GTM/GA4 code implementation
+- Resend email integration
+- Groq/OpenAI adapter implementations
 
 **Documentation:**
 - Technical documentation (WIP, Roadmap, this overview)
@@ -244,27 +430,15 @@ contact:
 
 **Code Refactoring:**
 - Component extraction and reuse
-- Performance optimization suggestions
+- Performance optimization
 - Accessibility improvements
 - Console.log cleanup
-
-### Skills Demonstrated by Christopher
-
-| Skill Category | Evidence |
-|----------------|----------|
-| **Product Management** | Defined MVP scope, prioritized features, created phased roadmap |
-| **Marketing Strategy** | Identified target market, created positioning, planned content calendar |
-| **Technical Literacy** | Evaluated tech stack options, made informed architecture decisions |
-| **Project Management** | Managed multi-machine workflow, coordinated async development |
-| **UX Sensibility** | Iterated on designs based on visual review, caught usability issues |
-| **Business Acumen** | Priced services, evaluated cost/benefit of tools, planned revenue model |
-| **Domain Expertise** | Leveraged 10+ years of marketing ops experience into product offerings |
 
 ### AI Limitations Observed
 
 - Cannot test on physical mobile devices
-- Cannot create Calendly/Cal.com accounts
-- Cannot submit Firebase support tickets
+- Cannot create accounts on external services
+- Cannot submit support tickets
 - Cannot make subjective design decisions without human input
 - Cannot access private APIs without credentials provided
 - Cannot make business strategy decisions without human direction
@@ -272,15 +446,53 @@ contact:
 
 ---
 
-## Next Steps (December 2025)
+## Pages & Routes Summary
 
-1. **Immediate:** Cal.com setup, GTM implementation, favicon update
-2. **Week 1:** Prospect database, notification pipeline
-3. **Week 2:** Unity Notes optimization, Assessment → Services funnel
-4. **Week 3:** Ads Generator, paid ads launch
-5. **Week 4:** Mobile testing, PWA setup
+### Main Pages (7)
+- Home (`/`)
+- About (`/about`)
+- Works (`/works`) + 11 company detail pages
+- Services (`/services`) + 8 service detail pages
+- Hands (`/hands`)
+- Thoughts (`/thoughts`) + article pages
+- Experiments (`/experiments`) + 5 experiment pages
+
+### Tools/Labs (5)
+- UnityNOTES (`/unity-notes`)
+- UnityMAP Hub (`/outreach`)
+- Outreach Generator (`/experiments/outreach-generator`)
+- Growth Assessment (`/assessment`)
+- Journeys (`/journeys`)
+
+### Utility Pages
+- Portfolio (`/portfolio`)
+- Shortlinks (`/shortlinks`, `/go/:shortCode`)
+- Directory (`/directory`)
+- Sitemap (`/sitemap`)
+- Feedback (`/feedback`)
+
+### Legal & Access
+- Privacy Policy (`/privacy`)
+- Terms of Service (`/terms`)
+- Approve Access (`/approve-access`)
+- Deny Access (`/deny-access`)
 
 ---
 
-*Document Version: 1.0*
+## Deployment
+
+**Live:** https://yellowcircle.io
+**Backup:** https://yellowcircle-app.web.app
+
+**Commands:**
+```bash
+npm run build              # Build with Vite
+firebase deploy            # Deploy hosting + functions
+firebase deploy --only hosting    # Deploy hosting only
+firebase deploy --only functions  # Deploy functions only
+```
+
+---
+
+*Document Version: 2.0*
 *For questions: info@yellowcircle.io*

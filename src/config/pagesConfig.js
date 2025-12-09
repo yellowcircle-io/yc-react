@@ -334,6 +334,24 @@ export const PAGES_CONFIG = [
     description: 'Machine-assisted email outreach with templates and sending',
     icon: '🤝'
   },
+  {
+    name: 'Journeys',
+    path: '/journeys',
+    category: 'Labs',
+    status: 'live',
+    lastUpdated: '2025-12-07',
+    description: 'Email journey builder and automation flows',
+    icon: '🛤️'
+  },
+  {
+    name: 'Portfolio',
+    path: '/portfolio',
+    category: 'Labs',
+    status: 'live',
+    lastUpdated: '2025-12-07',
+    description: 'Alternative portfolio view with project showcase',
+    icon: '📁'
+  },
   // ARCHIVED: UK-Memories (Travel Time Capsule)
   {
     name: 'Home-17',
@@ -360,7 +378,7 @@ export const PAGES_CONFIG = [
     path: '/sitemap',
     category: 'Utility',
     status: 'live',
-    lastUpdated: '2025-11-30',
+    lastUpdated: '2025-12-07',
     description: 'Visual map of all pages with descriptions',
     icon: '🗺️'
   },
@@ -369,9 +387,18 @@ export const PAGES_CONFIG = [
     path: '/directory',
     category: 'Utility',
     status: 'live',
-    lastUpdated: '2025-11-30',
+    lastUpdated: '2025-12-07',
     description: 'Developer directory with status tracking',
     icon: '📂'
+  },
+  {
+    name: 'Shortlinks',
+    path: '/shortlinks',
+    category: 'Utility',
+    status: 'live',
+    lastUpdated: '2025-12-07',
+    description: 'Manage custom short links for sharing',
+    icon: '🔗'
   },
   {
     name: '404',
@@ -381,6 +408,26 @@ export const PAGES_CONFIG = [
     lastUpdated: '2025-11-30',
     description: 'Page not found error handler',
     icon: '❓'
+  },
+
+  // Legal Pages
+  {
+    name: 'Privacy Policy',
+    path: '/privacy',
+    category: 'Legal',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Privacy policy and data handling practices',
+    icon: '🔒'
+  },
+  {
+    name: 'Terms of Service',
+    path: '/terms',
+    category: 'Legal',
+    status: 'live',
+    lastUpdated: '2025-11-30',
+    description: 'Terms and conditions for using yellowCircle services',
+    icon: '📜'
   }
 ];
 
@@ -405,7 +452,7 @@ export const getPagesByCategory = () => {
 };
 
 // Helper to get category order for display
-export const CATEGORY_ORDER = ['Main', 'Services', 'Works', 'Experiments', 'Thoughts', 'Labs', 'Utility'];
+export const CATEGORY_ORDER = ['Main', 'Services', 'Works', 'Experiments', 'Thoughts', 'Labs', 'Utility', 'Legal'];
 
 // Get pages as array of category objects (for Sitemap)
 export const getPagesCategorized = () => {

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LottieIcon from '../shared/LottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
+import UserMenu from '../auth/UserMenu';
 
 /**
  * Sidebar - Three-section collapsible sidebar with slide-over navigation
@@ -416,43 +417,56 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
       {/* YC Logo - Fixed position for "hidden" variant only */}
       {/* Always opens Footer only */}
       {variant === "hidden" && (
-        <div
-          className="yc-logo clickable-element"
-          style={{
+        <>
+          <div
+            className="yc-logo clickable-element"
+            style={{
+              position: 'fixed',
+              left: '20px',
+              bottom: '20px',
+              width: '45px',
+              height: '45px',
+              minWidth: '40px',
+              minHeight: '40px',
+              borderRadius: '50%',
+              overflow: 'visible',
+              cursor: 'pointer',
+              zIndex: 290,  // Above everything - sidebar (50), menu overlay (250), slide-over (270)
+              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              if (onFooterToggle) {
+                onFooterToggle();
+              }
+              // Logo only opens Footer - no home navigation
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.15) rotate(5deg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+            }}
+          >
+            <img
+              src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
+              alt="YC Logo"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+            />
+          </div>
+          {/* User Menu - right of YC logo */}
+          <div style={{
             position: 'fixed',
-            left: '20px',
+            left: '80px',
             bottom: '20px',
-            width: '45px',
-            height: '45px',
-            minWidth: '40px',
-            minHeight: '40px',
-            borderRadius: '50%',
-            overflow: 'visible',
-            cursor: 'pointer',
-            zIndex: 290,  // Above everything - sidebar (50), menu overlay (250), slide-over (270)
-            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            if (onFooterToggle) {
-              onFooterToggle();
-            }
-            // Logo only opens Footer - no home navigation
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.15) rotate(5deg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
-          }}
-        >
-          <img
-            src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
-            alt="YC Logo"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-          />
-        </div>
+            zIndex: 290,  // Match YC logo z-index to stay above sidebar
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <UserMenu compact dropdownDirection="up" />
+          </div>
+        </>
       )}
 
       {/* Sidebar container */}
@@ -491,7 +505,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           {/* Breadcrumb wrapper - positioned above navigation items */}
           <div style={{
             position: 'absolute',
-            top: isMobile ? '80px' : '140px',
+            top: isMobile ? '120px' : '140px',
             left: 0,
             width: '80px',
             display: 'flex',
@@ -746,7 +760,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           </div>
         )}
 
-        {/* FOOTER SECTION - YC Logo (only for standard variant) */}
+        {/* FOOTER SECTION - YC Logo + UserMenu (only for standard variant) */}
         {/* Always opens Footer only */}
         {variant === "standard" && (
           <div style={{
@@ -789,6 +803,20 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
               />
             </div>
+          </div>
+        )}
+
+        {/* User Menu - Fixed position, always visible on standard variant pages (Home, Services, etc.) */}
+        {variant === "standard" && (
+          <div style={{
+            position: 'fixed',
+            left: '80px',
+            bottom: '20px',
+            zIndex: 290,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <UserMenu compact dropdownDirection="up" />
           </div>
         )}
 

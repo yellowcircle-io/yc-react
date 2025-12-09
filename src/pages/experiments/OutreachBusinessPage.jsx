@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
+import { useAuth } from '../../contexts/AuthContext';
 import Layout from '../../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../../styles/constants';
 import { navigationItems } from '../../config/navigationItems';
 import UserMenu from '../../components/auth/UserMenu';
 
-// Password for access (hash comparison, not plaintext)
-// To generate: btoa('yourpassword') in console
-const ACCESS_HASH = 'eWMyMDI1b3V0cmVhY2g=';
+// Encryption key for settings (deterministic, per-user encryption)
+// Note: Access control is now handled via SSO (isAdmin check)
 
 // API keys - users must enter their own keys via the settings panel
 // Keys are encrypted and stored in localStorage
@@ -546,16 +546,16 @@ function OutreachBusinessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { isAdmin, user, userProfile, signOut } = useAuth();
   const previewRef = useRef(null);
   const fileInputRef = useRef(null); // For batch CSV upload
 
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [authError, setAuthError] = useState('');
+  // Access is controlled by SSO - premium/client users can access this page
+  // No password gate needed - encryption uses user's UID as key
+  const isPremium = userProfile?.subscription?.tier === 'premium';
+  const hasAccess = isAdmin || isPremium;
 
   // Settings state
-  // NOTE: Using Resend test domain until yellowcircle.io is verified at https://resend.com/domains
   const [settings, setSettings] = useState({
     groqApiKey: DEFAULT_KEYS.groq,
     resendApiKey: DEFAULT_KEYS.resend,
@@ -563,7 +563,7 @@ function OutreachBusinessPage() {
     selectedModel: 'llama-3.3-70b-versatile',
     sendProvider: 'resend',
     enableSending: true,
-    fromEmail: 'onboarding@resend.dev',
+    fromEmail: 'christopher@yellowcircle.io',
     fromName: 'Chris Cooper',
     // API Toggles
     enableGeneration: true,
@@ -631,24 +631,20 @@ function OutreachBusinessPage() {
   const [emailSections, setEmailSections] = useState(DEFAULT_EMAIL_SECTIONS);
   const [showToggles, setShowToggles] = useState(false);
 
-  // Track password for encryption/decryption
-  const [sessionPassword, setSessionPassword] = useState('');
+  // Encryption key derived from user's UID (deterministic per-user)
+  const encryptionKey = user?.uid ? `yc-outreach-${user.uid}` : null;
 
-  // Load settings and auth from localStorage
+  // Load saved motion from localStorage
   useEffect(() => {
-    const savedAuth = localStorage.getItem('outreach_business_auth');
-    if (savedAuth === 'true') setIsAuthenticated(true);
-
     const savedMotion = localStorage.getItem('outreach_business_motion');
     if (savedMotion && OUTREACH_MOTIONS[savedMotion]) {
       setSelectedMotion(savedMotion);
     }
   }, []);
 
-  // Load encrypted settings after authentication
-  // Prefer DEFAULT_KEYS (from local config) over empty localStorage values
+  // Load encrypted settings when admin user is authenticated
   useEffect(() => {
-    if (isAuthenticated && sessionPassword) {
+    if (hasAccess && encryptionKey) {
       const loadEncryptedSettings = async () => {
         // If DEFAULT_KEYS are available, clear old settings that have empty keys
         const hasDefaultKeys = DEFAULT_KEYS.groq || DEFAULT_KEYS.resend || DEFAULT_KEYS.perplexity;
@@ -657,7 +653,7 @@ function OutreachBusinessPage() {
         if (savedSettings) {
           try {
             const parsed = JSON.parse(savedSettings);
-            const decrypted = await decryptSettings(parsed, sessionPassword);
+            const decrypted = await decryptSettings(parsed, encryptionKey);
             if (decrypted) {
               // Check if saved settings have empty API keys while defaults have values
               const savedHasEmptyKeys = !decrypted.groqApiKey && !decrypted.resendApiKey && !decrypted.perplexityApiKey;
@@ -689,13 +685,13 @@ function OutreachBusinessPage() {
       };
       loadEncryptedSettings();
     }
-  }, [isAuthenticated, sessionPassword]);
+  }, [isAdmin, encryptionKey]);
 
   // Save encrypted settings to localStorage
   useEffect(() => {
-    if (isAuthenticated && sessionPassword) {
+    if (hasAccess && encryptionKey) {
       const saveEncryptedSettings = async () => {
-        const encrypted = await encryptSettings(settings, sessionPassword);
+        const encrypted = await encryptSettings(settings, encryptionKey);
         if (encrypted) {
           localStorage.setItem('outreach_business_settings_v4', JSON.stringify(encrypted));
         }
@@ -703,7 +699,7 @@ function OutreachBusinessPage() {
       };
       saveEncryptedSettings();
     }
-  }, [settings, selectedMotion, isAuthenticated, sessionPassword]);
+  }, [settings, selectedMotion, isAdmin, encryptionKey]);
 
   // Inject animations
   useEffect(() => {
@@ -933,30 +929,6 @@ RECIPIENT:
 
     const successCount = results.filter(r => r.success).length;
     setSuccessMessage(`Generated ${successCount}/${batchRecipients.length} emails successfully`);
-  };
-
-  // Auth handlers (hash comparison)
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    try {
-      if (btoa(passwordInput) === ACCESS_HASH) {
-        setSessionPassword(passwordInput); // Store for encryption/decryption
-        setIsAuthenticated(true);
-        localStorage.setItem('outreach_business_auth', 'true');
-        setAuthError('');
-      } else {
-        setAuthError('Invalid password');
-        setPasswordInput('');
-      }
-    } catch {
-      setAuthError('Invalid password');
-      setPasswordInput('');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('outreach_business_auth');
   };
 
   const handleHomeClick = (e) => {
@@ -1598,42 +1570,28 @@ Return ONLY a JSON array with exactly 3 strings:
     cursor: isDisabled ? 'not-allowed' : 'pointer'
   });
 
-  // Password Screen (initial auth or re-auth for encryption)
-  if (!isAuthenticated || (isAuthenticated && !sessionPassword)) {
-    const isReauth = isAuthenticated && !sessionPassword;
-
-    const handleReauthSubmit = (e) => {
-      e.preventDefault();
-      try {
-        if (btoa(passwordInput) === ACCESS_HASH) {
-          setSessionPassword(passwordInput);
-          setAuthError('');
-        } else {
-          setAuthError('Invalid password');
-          setPasswordInput('');
-        }
-      } catch {
-        setAuthError('Invalid password');
-        setPasswordInput('');
-      }
-    };
-
+  // SSO-based access gate - premium/client users
+  if (!hasAccess) {
     return (
       <Layout onHomeClick={handleHomeClick} onFooterToggle={handleFooterToggle} onMenuToggle={handleMenuToggle} navigationItems={navigationItems} pageLabel="OUTREACH" hideParallaxCircle>
         <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100 }}>
           <div style={{ ...cardStyle, width: '400px', maxWidth: '90vw', textAlign: 'center', animation: 'fadeInUp 0.5s ease-out' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: COLORS.yellow, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>{isReauth ? '🔓' : '🔐'}</div>
-            <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px', color: '#111827' }}>{isReauth ? 'Unlock Settings' : 'Business Access'}</h2>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>{isReauth ? 'Re-enter password to decrypt your saved settings' : 'Enter password to access the outreach generator'}</p>
-            <form onSubmit={isReauth ? handleReauthSubmit : handlePasswordSubmit}>
-              <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="Password" style={{ ...inputStyle, textAlign: 'center', marginBottom: '16px', animation: authError ? 'shake 0.5s ease-out' : 'none' }} autoFocus />
-              {authError && <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px' }}>{authError}</p>}
-              <button type="submit" style={{ ...primaryButtonStyle, width: '100%', justifyContent: 'center' }}>{isReauth ? 'Unlock' : 'Access'}</button>
-            </form>
-            {isReauth && (
-              <button onClick={handleLogout} style={{ marginTop: '12px', background: 'none', border: 'none', color: '#6b7280', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
-                Logout instead
-              </button>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#ef4444', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px', color: '#111827' }}>Premium Access Required</h2>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+              This tool is restricted to yellowCircle clients.
+            </p>
+            {!user ? (
+              <UserMenu />
+            ) : (
+              <p style={{ fontSize: '13px', color: '#9ca3af' }}>
+                Signed in as {user.email}
+              </p>
             )}
           </div>
         </div>
@@ -1702,7 +1660,6 @@ Return ONLY a JSON array with exactly 3 strings:
               Internal outreach platform with AI generation, refinement, and direct sending
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              <button onClick={handleLogout} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px', backgroundColor: '#f3f4f6', color: '#6b7280' }}>Logout</button>
               <button onClick={() => setShowSettings(!showSettings)} style={{ ...secondaryButtonStyle, padding: '10px 16px', fontSize: '13px' }}>
                 ⚙️ Settings {showSettings ? '▲' : '▼'}
               </button>

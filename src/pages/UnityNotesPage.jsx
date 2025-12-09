@@ -15,6 +15,9 @@ import Layout from '../components/global/Layout';
 import LeadGate from '../components/shared/LeadGate';
 import { useLayout } from '../contexts/LayoutContext';
 import { navigationItems } from '../config/navigationItems';
+import { useAuth } from '../contexts/AuthContext';
+import { useApiKeyStorage } from '../hooks/useApiKeyStorage';
+import { useCredits } from '../hooks/useCredits';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
@@ -60,6 +63,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  // SSO Authentication hooks
+  const { user, userProfile, isAuthenticated, isAdmin } = useAuth();
+  const { keys: apiKeys, isCloudSynced, migrateLocalToCloud, saveKey } = useApiKeyStorage();
+  const { creditsRemaining, tier, hasCredits } = useCredits();
+
   // AI Image Analysis hook
   const { analyzeImage, isAnalyzing: isAIAnalyzing, error: aiError, isConfigured: aiConfigured } = useImageAnalysis();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -87,9 +95,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Handle mode change
   const handleModeChange = useCallback((newMode) => {
-    // If selecting MAP mode but no campaign exists, redirect to UnityMAP Hub
+    // If selecting MAP mode but no campaign exists, redirect to Generator (free) not Hub (premium)
     if (newMode === 'map' && !hasJourneyContent) {
-      navigate('/outreach?from=unity-map');
+      navigate('/experiments/outreach-generator?from=unity-map');
       return;
     }
 
@@ -106,7 +114,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   }, [navigate, searchParams, hasJourneyContent]);
 
   // Firebase hook for shareable URLs (gated for pro/admin users)
-  const { saveCapsule, isSaving } = useFirebaseCapsule();
+  const { saveCapsule, isSaving, cleanupOldCapsules, getCapsuleStats, migrateToV2 } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
@@ -144,6 +152,18 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setStudioContext(context);
     handleModeChange('studio');
   }, []);
+
+  // Auto-migrate localStorage API keys to Firestore when user logs in
+  useEffect(() => {
+    if (isAuthenticated && !isCloudSynced) {
+      // User just logged in - migrate localStorage keys to cloud
+      migrateLocalToCloud().then((migrated) => {
+        if (migrated) {
+          console.log('✅ API keys migrated to cloud storage');
+        }
+      });
+    }
+  }, [isAuthenticated, isCloudSynced, migrateLocalToCloud]);
 
   // Persist journey ID to localStorage when it changes
   useEffect(() => {
@@ -190,10 +210,24 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   }, [currentMode, currentJourneyId, isInitialized, loadJourney, setNodes, setEdges]);
 
   // Check if user has pro/admin access for cloud features
-  const hasProAccess = () => {
-    return localStorage.getItem('yc_bypass_active') === 'true' ||
-           localStorage.getItem('yc_client_access') === 'true';
-  };
+  // Scopes: admin (SSO-authenticated admin), premium (SSO tier)
+  const hasProAccess = useCallback(() => {
+    // Admin - full access (authenticated via SSO)
+    if (isAdmin) return true;
+    // SSO premium tier
+    if (isAuthenticated && tier === 'premium') return true;
+    return false;
+  }, [isAdmin, isAuthenticated, tier]);
+
+  // Check if user has credits available (for credit-gated features)
+  const hasAvailableCredits = useCallback(() => {
+    // Admin - unlimited (authenticated via SSO)
+    if (isAdmin) return true;
+    // Premium tier - unlimited
+    if (isAuthenticated && tier === 'premium') return true;
+    // Check actual credits
+    return creditsRemaining > 0;
+  }, [isAdmin, isAuthenticated, tier, creditsRemaining]);
 
   // Lightbox state
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
@@ -230,18 +264,21 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   // Dev tools panel state (Cmd+Shift+D to toggle)
   const [showDevTools, setShowDevTools] = useState(false);
 
-  // Dev tools keyboard shortcut
+  // Dev tools keyboard shortcut - only available for authenticated admins
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Cmd+Shift+D (Mac) or Ctrl+Shift+D (Windows)
+      // Cmd+Shift+D (Mac) or Ctrl+Shift+D (Windows) - admin only
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'd') {
         e.preventDefault();
-        setShowDevTools(prev => !prev);
+        // Only allow if authenticated as admin
+        if (isAdmin) {
+          setShowDevTools(prev => !prev);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isAdmin]);
 
   // Dev tools actions
   const devToolsActions = {
@@ -260,16 +297,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       localStorage.removeItem('yc_credits_used');
       alert('Credits cleared.');
     },
-    toggleBypass: () => {
-      const current = localStorage.getItem('yc_bypass_active') === 'true';
-      localStorage.setItem('yc_bypass_active', (!current).toString());
-      alert(`Bypass ${!current ? 'ENABLED' : 'DISABLED'}. Refresh to apply.`);
-    },
-    toggleClientAccess: () => {
-      const current = localStorage.getItem('yc_client_access') === 'true';
-      localStorage.setItem('yc_client_access', (!current).toString());
-      alert(`Client access ${!current ? 'ENABLED' : 'DISABLED'}. Refresh to apply.`);
-    },
     clearHubSettings: () => {
       localStorage.removeItem('outreach_business_settings_v4');
       localStorage.removeItem('outreach_business_auth');
@@ -277,14 +304,43 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     },
     viewState: () => {
       console.log('=== DEV STATE ===');
-      console.log('Bypass:', localStorage.getItem('yc_bypass_active'));
-      console.log('Client:', localStorage.getItem('yc_client_access'));
+      console.log('Admin:', isAdmin);
+      console.log('Authenticated:', isAuthenticated);
+      console.log('User:', user?.email);
       console.log('Hub Auth:', localStorage.getItem('outreach_business_auth'));
       console.log('Journey ID:', currentJourneyId);
       console.log('Journey Status:', journeyStatus);
       console.log('Nodes:', nodes.length);
       console.log('Edges:', edges.length);
       alert('State logged to console (F12)');
+    },
+    // Admin functions - only visible when bypass is active
+    migrateCapsules: async () => {
+      if (!confirm('⚠️ ADMIN: Migrate all v1 capsules to v2?\n\nThis will:\n- Convert subcollections to embedded arrays\n- Delete old subcollection documents\n- Reduce Firestore costs\n\nContinue?')) return;
+      try {
+        const result = await migrateToV2();
+        alert(`✅ Migration complete!\n\nMigrated: ${result.migrated}\nAlready v2: ${result.alreadyV2}\nFailed: ${result.failed}`);
+      } catch (err) {
+        alert(`❌ Migration failed: ${err.message}`);
+      }
+    },
+    cleanupCapsules: async () => {
+      if (!confirm('⚠️ ADMIN: Cleanup old capsules?\n\nThis will delete capsules:\n- Older than 30 days\n- With less than 5 views\n\nContinue?')) return;
+      try {
+        const result = await cleanupOldCapsules(30, 5);
+        alert(`✅ Cleanup complete!\n\nDeleted: ${result.deleted}\nKept: ${result.kept}`);
+      } catch (err) {
+        alert(`❌ Cleanup failed: ${err.message}`);
+      }
+    },
+    getCapsuleStats: async () => {
+      try {
+        const stats = await getCapsuleStats();
+        alert(`📊 Capsule Stats:\n\nTotal: ${stats.total}\nTotal Views: ${stats.totalViews}\nOld (>30 days): ${stats.oldCapsules}\nLow Views (<5): ${stats.lowViewCapsules}`);
+        console.log('Capsule Stats:', stats);
+      } catch (err) {
+        alert(`❌ Stats failed: ${err.message}`);
+      }
     }
   };
 
@@ -789,8 +845,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       // Edit existing campaign - use handleEditInOutreach
       handleEditInOutreach(prospectNode.id, prospectNode.data);
     } else {
-      // No campaign exists - navigate to Hub to create one
-      navigate('/outreach?from=unity-map');
+      // No campaign exists - navigate to Generator (free) not Hub (premium)
+      navigate('/experiments/outreach-generator?from=unity-map');
     }
   }, [nodes, handleEditInOutreach, navigate]);
 
@@ -1619,7 +1675,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       console.log('📊 sendJourneyNow complete:', sendResults);
       setIsSendingEmails(false);
 
-      // Refresh prospect state for visual tracking (reload from Firestore)
+      // Refresh journey data for visual tracking (reload from Firestore)
       try {
         const journeyData = await loadJourney(currentJourneyId);
         if (journeyData?.prospects) {
@@ -1630,8 +1686,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             status: p.status
           })));
         }
+        // Also refresh nodes to update email statuses (DRAFT -> SENT)
+        if (journeyData?.nodes) {
+          setNodes(journeyData.nodes);
+          console.log('📧 Updated node statuses');
+        }
       } catch (e) {
-        console.warn('Could not refresh prospect positions:', e);
+        console.warn('Could not refresh journey data:', e);
       }
 
       // Show results
@@ -1736,6 +1797,20 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
       setJourneyStatus('active');
 
+      // Refresh journey data to update node statuses (DRAFT -> SENT)
+      try {
+        const journeyData = await loadJourney(currentJourneyId);
+        if (journeyData?.nodes) {
+          setNodes(journeyData.nodes);
+          console.log('📧 Updated node statuses after RUN ALL');
+        }
+        if (journeyData?.prospects) {
+          setJourneyProspects(journeyData.prospects);
+        }
+      } catch (e) {
+        console.warn('Could not refresh journey data:', e);
+      }
+
       // Show detailed results
       let resultMessage = `📧 Email Campaign Sent!\n\n`;
       resultMessage += `✅ Successfully sent: ${results.sent}\n`;
@@ -1788,12 +1863,17 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     return nodes.filter(n => n.type === 'emailNode').length;
   }, [nodes]);
 
-  // Determine email limit based on user access
+  // Determine email limit based on user access/scope
   const emailLimit = useMemo(() => {
-    const hasApiAccess = localStorage.getItem('yc_bypass_active') === 'true' ||
-                         localStorage.getItem('yc_client_access') === 'true';
-    return hasApiAccess ? 10 : 3;
-  }, []);
+    // Admin - highest limit (authenticated via SSO)
+    if (isAdmin) return 50;
+    // Premium tier - high limit
+    if (isAuthenticated && tier === 'premium') return 25;
+    // Free authenticated users
+    if (isAuthenticated) return 10;
+    // Anonymous users
+    return 3;
+  }, [isAdmin, isAuthenticated, tier]);
 
   // Add new Email node to canvas
   const handleAddEmail = useCallback(() => {
@@ -1939,6 +2019,39 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           </ReactFlow>
         </div>
       </div>
+
+      {/* Credits Badge - Bottom Left (Sidebar now handles UserMenu via global component) */}
+      {/* Positioned to the right of Sidebar's UserMenu */}
+      {isAuthenticated && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '200px', // Right of Sidebar's UserMenu (logo 20px + gap + UserMenu ~110px)
+          zIndex: 290,  // Match YC logo/UserMenu z-index to stay above sidebar
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '5px 10px',
+            backgroundColor: creditsRemaining <= 0 && tier !== 'premium'
+              ? 'rgba(239, 68, 68, 0.15)'
+              : 'rgba(251, 191, 36, 0.15)',
+            border: `1px solid ${creditsRemaining <= 0 && tier !== 'premium'
+              ? 'rgba(239, 68, 68, 0.3)'
+              : 'rgba(251, 191, 36, 0.3)'}`,
+            borderRadius: '16px',
+            fontSize: '10px',
+            color: creditsRemaining <= 0 && tier !== 'premium' ? '#dc2626' : '#d97706',
+            fontWeight: '500'
+          }}>
+            <span style={{ fontSize: '11px' }}>⚡</span>
+            {tier === 'premium' ? 'PRO' : `${creditsRemaining}`}
+          </div>
+        </div>
+      )}
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
       <div style={{
@@ -2680,16 +2793,34 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
           {/* Status indicators */}
           <div style={{ marginBottom: '12px', fontSize: '10px', color: '#9ca3af' }}>
+            {/* SSO Auth Status */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span>Bypass:</span>
-              <span style={{ color: localStorage.getItem('yc_bypass_active') === 'true' ? '#22c55e' : '#ef4444' }}>
-                {localStorage.getItem('yc_bypass_active') === 'true' ? 'ON' : 'OFF'}
+              <span>SSO Auth:</span>
+              <span style={{ color: isAuthenticated ? '#22c55e' : '#6b7280' }}>
+                {isAuthenticated ? (userProfile?.email || 'Logged In') : 'Anonymous'}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span>Client:</span>
-              <span style={{ color: localStorage.getItem('yc_client_access') === 'true' ? '#22c55e' : '#ef4444' }}>
-                {localStorage.getItem('yc_client_access') === 'true' ? 'ON' : 'OFF'}
+              <span>Cloud Sync:</span>
+              <span style={{ color: isCloudSynced ? '#22c55e' : '#6b7280' }}>
+                {isCloudSynced ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>Credits:</span>
+              <span style={{ color: '#fbbf24' }}>
+                {tier === 'premium' ? '∞ PRO' : `${creditsRemaining}`}
+              </span>
+            </div>
+            <div style={{
+              height: '1px',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              margin: '6px 0'
+            }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>Admin:</span>
+              <span style={{ color: isAdmin ? '#22c55e' : '#6b7280' }}>
+                {isAdmin ? 'YES' : 'NO'}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -2706,12 +2837,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
           {/* Action buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <button onClick={devToolsActions.toggleBypass} style={devBtnStyle}>
-              Toggle Bypass
-            </button>
-            <button onClick={devToolsActions.toggleClientAccess} style={devBtnStyle}>
-              Toggle Client Access
-            </button>
             <button onClick={devToolsActions.clearCredits} style={devBtnStyle}>
               Clear Credits
             </button>
@@ -2728,6 +2853,32 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               Log State (F12)
             </button>
           </div>
+
+          {/* Admin Section - Only visible for authenticated admins */}
+          {isAdmin && (
+            <>
+              <div style={{
+                marginTop: '12px',
+                paddingTop: '12px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <span style={{ color: '#ef4444', fontWeight: '700', fontSize: '10px', display: 'block', marginBottom: '8px' }}>
+                  ⚠️ ADMIN TOOLS
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button onClick={devToolsActions.getCapsuleStats} style={{ ...devBtnStyle, backgroundColor: '#8b5cf6' }}>
+                    📊 Capsule Stats
+                  </button>
+                  <button onClick={devToolsActions.migrateCapsules} style={{ ...devBtnStyle, backgroundColor: '#059669' }}>
+                    🔄 Migrate v1→v2
+                  </button>
+                  <button onClick={devToolsActions.cleanupCapsules} style={{ ...devBtnStyle, backgroundColor: '#dc2626' }}>
+                    🗑️ Cleanup Old Capsules
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           <div style={{ marginTop: '12px', fontSize: '9px', color: '#6b7280', textAlign: 'center' }}>
             Cmd+Shift+D to toggle

@@ -256,10 +256,10 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                   >
                     <span style={{
                       color: item === 'CLIENTS' ? 'black' : 'rgb(251, 191, 36)',
-                      fontSize: 'clamp(2rem, 5vh, 4rem)',
+                      fontSize: isMobile ? 'clamp(1.5rem, 4vh, 2.5rem)' : 'clamp(2rem, 5vh, 4rem)',
                       fontWeight: '900',
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
-                      letterSpacing: '0.3em',
+                      letterSpacing: isMobile ? '0.2em' : '0.3em',
                       transition: 'color 0.3s ease-in-out'
                     }}>{item}</span>
                   </div>
@@ -300,11 +300,11 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                     style={{
                       textDecoration: 'none',
                       color: 'black',
-                      fontSize: 'clamp(2rem, 5vh, 4rem)',
+                      fontSize: isMobile ? 'clamp(1.5rem, 4vh, 2.5rem)' : 'clamp(2rem, 5vh, 4rem)',
                       fontWeight: '900',
                       fontFamily: 'Helvetica, Arial Black, Arial, sans-serif',
-                      letterSpacing: '0.3em',
-                      padding: '10px 20px',
+                      letterSpacing: isMobile ? '0.2em' : '0.3em',
+                      padding: isMobile ? '8px 16px' : '10px 20px',
                       borderRadius: '4px',
                       WebkitTapHighlightColor: 'transparent',
                       userSelect: 'none',
@@ -312,7 +312,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                       textAlign: 'right',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '16px',
+                      gap: isMobile ? '12px' : '16px',
                       transition: 'color 0.3s ease-in-out'
                     }}
                     onMouseEnter={(e) => {

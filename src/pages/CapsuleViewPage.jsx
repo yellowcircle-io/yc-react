@@ -3,10 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlow, Background, Controls, ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
+import TextNoteNode from '../components/unity-plus/TextNoteNode';
+import { mapNodeTypes } from '../components/unity/map';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
+  textNode: TextNoteNode,
+  // Include all UnityMAP node types for journey sharing
+  ...mapNodeTypes
 };
 
 const CapsuleView = () => {

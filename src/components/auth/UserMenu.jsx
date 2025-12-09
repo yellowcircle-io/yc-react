@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import AuthModal from './AuthModal';
 
-const UserMenu = ({ compact = false }) => {
+const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
   const { user, userProfile, isAuthenticated, signOut } = useAuth();
   const { creditsRemaining, tier } = useCredits();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -141,21 +141,27 @@ const UserMenu = ({ compact = false }) => {
           <div
             style={{
               position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: '8px',
+              ...(dropdownDirection === 'up'
+                ? { bottom: '100%', marginBottom: '8px' }
+                : { top: '100%', marginTop: '8px' }
+              ),
+              left: 0,
               backgroundColor: 'white',
               borderRadius: '12px',
               boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
               minWidth: '200px',
               zIndex: 1000,
               overflow: 'hidden',
-              animation: 'dropdownSlide 0.15s ease-out'
+              animation: dropdownDirection === 'up' ? 'dropdownSlideUp 0.15s ease-out' : 'dropdownSlide 0.15s ease-out'
             }}
           >
             <style>{`
               @keyframes dropdownSlide {
                 from { opacity: 0; transform: translateY(-8px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              @keyframes dropdownSlideUp {
+                from { opacity: 0; transform: translateY(8px); }
                 to { opacity: 1; transform: translateY(0); }
               }
             `}</style>
