@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { COLORS } from '../../styles/constants';
 import { submitLeadGate } from '../../utils/formSubmit';
 import { sendLeadCapture } from '../../config/integrations';
+import { createLead } from '../../utils/firestoreLeads';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLayout } from '../../contexts/LayoutContext';
 import { useAccessRequest } from '../../hooks/useAccessRequest';
@@ -113,7 +114,19 @@ function LeadGate({
     setIsSubmitting(true);
 
     try {
-      // Use shared form submission utility
+      // === NEW: Create lead in Firestore (canonical data store) ===
+      // This triggers the automation pipeline via Firestore triggers
+      createLead({
+        email,
+        submittedData: { name, tool: toolName },
+        source: 'lead_gate',
+        sourceTool: toolName
+      }).catch(err => {
+        // Fire and forget - don't block user on Firestore errors
+        console.error('[LeadGate] Firestore lead creation failed:', err);
+      });
+
+      // Use shared form submission utility (Web3Forms backup)
       await submitLeadGate(email, name, toolName);
 
       // Send to n8n for Airtable + Slack automation (fire and forget)
@@ -123,7 +136,7 @@ function LeadGate({
         'Tool Access'
       );
 
-      // Store in localStorage
+      // Store in localStorage (client-side tracking)
       localStorage.setItem(storageKey, JSON.stringify({
         email,
         name,

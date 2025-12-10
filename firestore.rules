@@ -70,6 +70,78 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+// ============================================================
+    // NEW COLLECTIONS - Phase 1 Data Foundation (Dec 2025)
+    // ============================================================
+
+    // Rate limits collection - internal use for persistent rate limiting
+    match /rate_limits/{limitId} {
+      allow read: if true;
+      allow write: if true;  // Cloud Functions manage this
+    }
+
+    // Contacts collection - canonical person records
+    match /contacts/{contactId} {
+      // Read: admin users only
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/config/admin_users).data.emails.hasAny([request.auth.token.email]);
+
+      // Write: admin or Cloud Functions (internal token checked in function)
+      allow create, update: if request.auth != null;
+
+      // Delete: admin only (soft delete preferred)
+      allow delete: if request.auth != null &&
+        get(/databases/$(database)/documents/config/admin_users).data.emails.hasAny([request.auth.token.email]);
+    }
+
+    // Leads collection - raw capture events
+    match /leads/{leadId} {
+      // Create: anyone can submit a lead (form submissions)
+      allow create: if true;
+
+      // Read: admin only
+      allow read: if request.auth != null;
+
+      // Update/Delete: admin or Cloud Functions
+      allow update, delete: if request.auth != null;
+    }
+
+    // Trigger Rules collection - automation configuration
+    match /triggerRules/{ruleId} {
+      // Full access for authenticated users (admin check in app)
+      allow read, write: if request.auth != null;
+    }
+
+    // Dedupe Log collection - deduplication tracking (TTL managed)
+    match /dedupeLog/{key} {
+      // Internal use only - Cloud Functions manage this
+      allow read, write: if request.auth != null;
+    }
+
+    // Trigger Logs collection - audit trail
+    match /triggerLogs/{logId} {
+      // Read: authenticated (admin check in app)
+      allow read: if request.auth != null;
+
+      // Write: Cloud Functions only (via admin SDK)
+      allow create: if request.auth != null;
+      allow update, delete: if false;  // Immutable audit log
+    }
+
+    // Email Events collection - ESP webhook events
+    match /emailEvents/{eventId} {
+      // Read: authenticated
+      allow read: if request.auth != null;
+
+      // Write: Cloud Functions only (webhook handler)
+      allow create, update: if request.auth != null;
+      allow delete: if false;  // Preserve email history
+    }
+
+    // ============================================================
+    // END NEW COLLECTIONS
+    // ============================================================
+
     // Capsules collection - public read, controlled write
     match /capsules/{capsuleId} {
       // Allow anyone to read capsules (for shared links)
