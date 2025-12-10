@@ -1372,3 +1372,419 @@ exports.deleteAccessRequest = functions.https.onRequest(async (request, response
     response.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================
+// N8N INTEGRATION FUNCTIONS - Phase 2
+// ============================================================
+
+/**
+ * Generate contact ID from email (same algorithm as client-side)
+ */
+const generateContactId = (email) => {
+  const normalized = email.toLowerCase().trim();
+  let hash = 5381;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) + hash) + normalized.charCodeAt(i);
+  }
+  return `contact-${Math.abs(hash).toString(16).padStart(8, '0')}`;
+};
+
+/**
+ * Sync Lead from n8n to Firestore
+ * Called by n8n webhook workflow after Airtable creation
+ */
+exports.syncLeadFromN8N = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  // Verify n8n token
+  const token = request.headers["x-n8n-token"];
+  const expectedToken = functions.config().n8n?.token;
+
+  if (!expectedToken || token !== expectedToken) {
+    console.error("❌ Invalid n8n token");
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const { email, name, source, tool, company, message, airtableId, utmSource, utmCampaign, page } = request.body;
+
+    if (!email) {
+      response.status(400).json({ error: "Email is required" });
+      return;
+    }
+
+    const contactId = generateContactId(email);
+    const contactRef = db.collection("contacts").doc(contactId);
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    // Check if contact exists
+    const existingContact = await contactRef.get();
+
+    if (existingContact.exists) {
+      // Update existing contact
+      await contactRef.update({
+        // Don't overwrite name if already set
+        ...(name && !existingContact.data().name ? { name } : {}),
+        ...(company && !existingContact.data().company ? { company } : {}),
+        "externalIds.airtableId": airtableId || existingContact.data().externalIds?.airtableId,
+        "syncStatus.airtable": "synced",
+        "syncStatus.airtableLastSync": now,
+        updatedAt: now,
+        updatedBy: "n8n"
+      });
+
+      console.log(`✅ Updated contact from n8n: ${email} (${contactId})`);
+    } else {
+      // Create new contact
+      await contactRef.set({
+        id: contactId,
+        email: email.toLowerCase().trim(),
+        name: name || "",
+        firstName: name ? name.split(" ")[0] : "",
+        lastName: name ? name.split(" ").slice(1).join(" ") : "",
+        company: company || "",
+        type: "lead",
+        stage: "new",
+        tags: tool ? ["tools-user"] : [],
+        score: 0,
+        scoreBreakdown: { engagement: 0, behavior: 0, profile: 0, recency: 0 },
+        source: {
+          original: source || "n8n",
+          medium: utmSource || "",
+          campaign: utmCampaign || "",
+          referrer: "",
+          landingPage: page || ""
+        },
+        engagement: {
+          emailsSent: 0,
+          emailsOpened: 0,
+          emailsClicked: 0,
+          toolsUsed: tool ? [tool] : [],
+          assessmentScore: null,
+          pageViews: 0
+        },
+        journeys: { active: [], completed: [], history: [] },
+        externalIds: {
+          airtableId: airtableId || null,
+          hubspotId: null,
+          stripeId: null
+        },
+        syncStatus: {
+          airtable: airtableId ? "synced" : "not_synced",
+          airtableLastSync: airtableId ? now : null
+        },
+        preferences: {
+          emailOptIn: true,
+          emailFrequency: "weekly",
+          doNotContact: false
+        },
+        notes: message || "",
+        customFields: {},
+        metadata: { createdVia: "n8n" },
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+        createdBy: "n8n",
+        updatedBy: "n8n"
+      });
+
+      console.log(`✅ Created contact from n8n: ${email} (${contactId})`);
+    }
+
+    response.json({
+      success: true,
+      contactId,
+      created: !existingContact.exists
+    });
+
+  } catch (error) {
+    console.error("❌ syncLeadFromN8N error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Sync Contact Update from Airtable via n8n
+ * Called when Airtable record is modified
+ */
+exports.syncContactFromAirtable = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  // Verify n8n token
+  const token = request.headers["x-n8n-token"];
+  const expectedToken = functions.config().n8n?.token;
+
+  if (!expectedToken || token !== expectedToken) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const { airtableId, email, name, company, status, tags, notes, jobTitle, phone, linkedinUrl } = request.body;
+
+    if (!email && !airtableId) {
+      response.status(400).json({ error: "Email or airtableId is required" });
+      return;
+    }
+
+    // Find contact by airtableId or email
+    let contactRef;
+    let contactData;
+
+    if (airtableId) {
+      const byAirtable = await db.collection("contacts")
+        .where("externalIds.airtableId", "==", airtableId)
+        .limit(1)
+        .get();
+
+      if (!byAirtable.empty) {
+        contactRef = byAirtable.docs[0].ref;
+        contactData = byAirtable.docs[0].data();
+      }
+    }
+
+    if (!contactRef && email) {
+      const contactId = generateContactId(email);
+      contactRef = db.collection("contacts").doc(contactId);
+      const doc = await contactRef.get();
+      if (doc.exists) {
+        contactData = doc.data();
+      }
+    }
+
+    if (!contactRef) {
+      response.status(404).json({ error: "Contact not found" });
+      return;
+    }
+
+    // Map Airtable status to Firestore stage
+    const stageMap = {
+      "New": "new",
+      "Contacted": "nurturing",
+      "Engaged": "engaged",
+      "Qualified": "qualified",
+      "Opportunity": "opportunity",
+      "Customer": "customer",
+      "Churned": "churned"
+    };
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    // Build update object (only update non-empty fields)
+    const updates = {
+      updatedAt: now,
+      updatedBy: "airtable_sync",
+      "syncStatus.airtable": "synced",
+      "syncStatus.airtableLastSync": now
+    };
+
+    if (name) updates.name = name;
+    if (company) updates.company = company;
+    if (jobTitle) updates.jobTitle = jobTitle;
+    if (phone) updates.phone = phone;
+    if (linkedinUrl) updates.linkedinUrl = linkedinUrl;
+    if (notes) updates.notes = notes;
+    if (status && stageMap[status]) updates.stage = stageMap[status];
+    if (tags) {
+      updates.tags = typeof tags === "string"
+        ? tags.split(",").map(t => t.trim()).filter(t => t)
+        : tags;
+    }
+    if (airtableId) updates["externalIds.airtableId"] = airtableId;
+
+    await contactRef.update(updates);
+
+    console.log(`✅ Synced contact from Airtable: ${email || airtableId}`);
+
+    response.json({
+      success: true,
+      contactId: contactRef.id,
+      fieldsUpdated: Object.keys(updates).length
+    });
+
+  } catch (error) {
+    console.error("❌ syncContactFromAirtable error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Create Prospect in Journey - API for trigger system
+ * Adds a contact to a UnityMAP journey
+ */
+exports.createProspect = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  // Auth check (admin token or n8n token)
+  const adminToken = request.headers["x-admin-token"];
+  const n8nToken = request.headers["x-n8n-token"];
+  const expectedAdminToken = functions.config().admin?.token || "yc-admin-2025";
+  const expectedN8nToken = functions.config().n8n?.token;
+
+  const isAuthorized = (adminToken === expectedAdminToken) ||
+                       (expectedN8nToken && n8nToken === expectedN8nToken);
+
+  if (!isAuthorized) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const { email, name, company, journeyId, source, skipDedupe } = request.body;
+
+    if (!email || !journeyId) {
+      response.status(400).json({ error: "Email and journeyId are required" });
+      return;
+    }
+
+    // Check deduplication (unless skipped)
+    if (!skipDedupe) {
+      const dedupeKey = `${email.toLowerCase()}-${journeyId}`;
+      const dedupeRef = db.collection("dedupeLog").doc(dedupeKey);
+      const dedupeDoc = await dedupeRef.get();
+
+      if (dedupeDoc.exists) {
+        const lastEntry = dedupeDoc.data().lastExecutedAt?.toDate();
+        const windowMs = 24 * 60 * 60 * 1000; // 24 hours
+
+        if (lastEntry && (Date.now() - lastEntry.getTime()) < windowMs) {
+          response.json({
+            success: false,
+            reason: "duplicate",
+            lastEntry: lastEntry.toISOString(),
+            windowHours: 24
+          });
+          return;
+        }
+      }
+
+      // Log this entry for dedup
+      await dedupeRef.set({
+        email: email.toLowerCase(),
+        journeyId,
+        lastExecutedAt: admin.firestore.FieldValue.serverTimestamp(),
+        executionCount: admin.firestore.FieldValue.increment(1)
+      }, { merge: true });
+    }
+
+    // Load journey
+    const journeyRef = db.collection("journeys").doc(journeyId);
+    const journeySnap = await journeyRef.get();
+
+    if (!journeySnap.exists) {
+      response.status(404).json({ error: "Journey not found" });
+      return;
+    }
+
+    const journey = journeySnap.data();
+    const { nodes, edges, prospects } = journey;
+
+    // Find first executable node (after prospect node)
+    let firstNodeId = null;
+    const prospectNode = nodes.find(n => n.type === "prospectNode");
+    if (prospectNode) {
+      const outEdge = edges.find(e => e.source === prospectNode.id);
+      firstNodeId = outEdge?.target || null;
+    }
+    if (!firstNodeId && nodes.length > 0) {
+      firstNodeId = nodes[0].id;
+    }
+
+    // Create prospect entry
+    const now = admin.firestore.Timestamp.now();
+    const newProspect = {
+      id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      email: email.toLowerCase().trim(),
+      name: name || "",
+      company: company || "",
+      currentNodeId: firstNodeId,
+      nextExecuteAt: now,
+      status: "active",
+      history: [{
+        action: "enrolled",
+        at: now,
+        source: source || "api",
+        nodeId: null
+      }]
+    };
+
+    // Add to journey
+    const updatedProspects = [...(prospects || []), newProspect];
+
+    await journeyRef.update({
+      prospects: updatedProspects,
+      "stats.totalProspects": updatedProspects.length,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Also update contact if exists
+    const contactId = generateContactId(email);
+    const contactRef = db.collection("contacts").doc(contactId);
+    const contactDoc = await contactRef.get();
+
+    if (contactDoc.exists) {
+      const contact = contactDoc.data();
+      const activeJourneys = contact.journeys?.active || [];
+
+      if (!activeJourneys.includes(journeyId)) {
+        await contactRef.update({
+          "journeys.active": [...activeJourneys, journeyId],
+          "journeys.history": admin.firestore.FieldValue.arrayUnion({
+            journeyId,
+            journeyName: journey.title,
+            action: "enrolled",
+            at: now,
+            reason: source || "api"
+          }),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    console.log(`✅ Created prospect: ${email} in journey ${journeyId}`);
+
+    response.json({
+      success: true,
+      prospectId: newProspect.id,
+      journeyId,
+      journeyTitle: journey.title,
+      firstNodeId,
+      contactUpdated: contactDoc.exists
+    });
+
+  } catch (error) {
+    console.error("❌ createProspect error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});

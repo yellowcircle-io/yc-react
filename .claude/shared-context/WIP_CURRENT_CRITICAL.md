@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 7, 2025 at 2:00 AM PST
+**Updated:** December 9, 2025 at 12:30 PM PST
 **Machine:** Mac Mini
-**Status:** ✅ Unity Platform Comprehensive Fix Session - DEPLOYED
+**Status:** 🔄 EOY Roadmap Execution - Phase 2 In Progress (n8n + Railway)
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -12,11 +12,48 @@
 
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 6, 2025)
+### Current Status (Dec 9, 2025)
 
-- **Day 11** since Rho exit (Nov 25, 2025)
-- **Status:** 🚀 UnitySTUDIO MVP READY - Asset creation suite built
+- **Day 14** since Rho exit (Nov 25, 2025)
+- **Status:** 🔄 EOY Roadmap Phase 2 - n8n + Railway deployment
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
+
+---
+
+### 🔄 EOY 2025 ROADMAP EXECUTION (Started Dec 9)
+
+**6-Phase Plan:**
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Firestore Schemas (contacts, leads, triggerRules) | ✅ COMPLETE |
+| Phase 2 | n8n + Railway Deployment | 🔄 IN PROGRESS |
+| Phase 3 | Trigger System + createProspect API | ⏳ Pending |
+| Phase 4 | Contact Dashboard UI | ⏳ Pending |
+| Phase 5 | TinaCMS for Blog | ⏳ Pending |
+| Phase 6 | SendGrid ESP Hot-Swap | ⏳ Pending |
+
+**Phase 1 Completed Files:**
+- `dev-context/FIRESTORE_SCHEMA_V1.md` - Canonical schema spec
+- `src/utils/firestoreContacts.js` - Contact CRUD with deterministic IDs
+- `src/utils/firestoreLeads.js` - Lead capture and processing
+- `src/utils/firestoreTriggers.js` - Trigger rule management
+- `src/utils/firestore/index.js` - Unified export
+- `firestore.rules` - Security rules for new collections
+- `src/components/shared/LeadGate.jsx` - Updated with Firestore lead capture
+
+**Phase 2 Files Created:**
+- `dev-context/N8N_RAILWAY_SETUP.md` - Complete deployment guide
+- `dev-context/PHASE2_DEPLOYMENT_CHECKLIST.md` - Manual execution steps
+- `functions/index.js` - Added: syncLeadFromN8N, syncContactFromAirtable, createProspect
+
+**⚠️ ACTION REQUIRED:** Firebase CLI needs re-authentication
+```bash
+firebase login --reauth
+firebase functions:config:set n8n.token="YOUR_SECURE_TOKEN"
+firebase deploy --only functions
+```
+
+See `dev-context/PHASE2_DEPLOYMENT_CHECKLIST.md` for complete steps.
 
 ---
 

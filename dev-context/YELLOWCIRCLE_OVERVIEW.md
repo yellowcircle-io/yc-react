@@ -2,7 +2,7 @@
 
 **A Strategic Consulting Practice + Digital Product Studio**
 
-*Last Updated: December 8, 2025*
+*Last Updated: December 9, 2025*
 
 ---
 
@@ -213,10 +213,41 @@ Asset creation suite for GTM campaigns.
 | Calendar Booking | ✅ Complete | Cal.com integration |
 | UnityNOTES | ✅ Complete | AI chat, image analysis, 5+ card types |
 | UnityMAP | ✅ Complete | Journey builder + email deployment |
-| UnitySTUDIO | ✅ Complete | Email template builder |
+| UnitySTUDIO | ✅ MVP Complete | Email template builder; Ad/Social builders stubbed |
 | Authentication | ✅ Complete | Google OAuth + email/password |
 | Client Access System | ✅ Complete | Whitelist-based premium access |
 | Mobile Optimization | ⏳ In Progress | Responsive design complete, testing ongoing |
+| Error Monitoring | ✅ Complete | Sentry integration (Dec 2025) |
+| Rate Limiting | ✅ Complete | Persistent Firestore-based (Dec 2025) |
+
+---
+
+## EOY 2025 Roadmap Reference
+
+**Full Scoping Document:** `dev-context/EOY_ROADMAP_SCOPING_DEC2025.md`
+
+### Priority Items (P1 - Revenue Focus):
+| Item | Status | Notes |
+|------|--------|-------|
+| Prospecting Motion | 🟡 Partial | n8n webhook designed, deployment pending |
+| Outbound Campaign Seed | ⬜ Not Started | Contact list + journey creation |
+| Contact Dashboard | ⬜ Not Started | Firestore UI + lead scoring |
+| Email Nurture System | 🟡 Partial | ESP adapters stubbed |
+| Mobile Optimization | 🟡 In Progress | Testing ongoing |
+
+### Platform Enhancements (P2):
+| Item | Status | Notes |
+|------|--------|-------|
+| UnitySTUDIO Ad Creative | ⬜ Stub Only | Platform specs documented |
+| UnitySTUDIO Social Posts | ⬜ Stub Only | Platform specs documented |
+| Bundle Optimization | ⬜ Not Started | Target: 40% reduction |
+| Blog/CMS | ⬜ Not Started | MDX recommended |
+
+### Architecture Gap Identified:
+**Email Capture → UnityMAP Journey Integration**
+- Current: No automated bridge between captures and journeys
+- Required: Firestore trigger + journey enrollment webhook
+- See scoping document for detailed analysis
 
 ---
 
@@ -494,5 +525,5 @@ firebase deploy --only functions  # Deploy functions only
 
 ---
 
-*Document Version: 2.0*
+*Document Version: 2.1*
 *For questions: info@yellowcircle.io*
