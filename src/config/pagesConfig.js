@@ -306,20 +306,20 @@ export const PAGES_CONFIG = [
     icon: '📊'
   },
 
-  // Labs / Tools
+  // Tools (formerly Labs) - pinned to top
   {
     name: 'Growth Health Assessment',
     path: '/assessment',
-    category: 'Labs',
+    category: 'Tools',
     status: 'live',
     lastUpdated: '2025-11-30',
     description: '8-question growth health quiz with scoring and recommendations',
     icon: '🩺'
   },
   {
-    name: 'UnityNotes',
+    name: 'UnityNOTES',
     path: '/unity-notes',
-    category: 'Labs',
+    category: 'Tools',
     status: 'live',
     lastUpdated: '2025-11-30',
     description: 'Visual noteboard and second brain application',
@@ -328,7 +328,7 @@ export const PAGES_CONFIG = [
   {
     name: 'UnityMAP Hub',
     path: '/outreach',
-    category: 'Labs',
+    category: 'Tools',
     status: 'live',
     lastUpdated: '2025-12-05',
     description: 'Machine-assisted email outreach with templates and sending',
@@ -337,7 +337,7 @@ export const PAGES_CONFIG = [
   {
     name: 'Journeys',
     path: '/journeys',
-    category: 'Labs',
+    category: 'Tools',
     status: 'live',
     lastUpdated: '2025-12-07',
     description: 'Email journey builder and automation flows',
@@ -346,7 +346,7 @@ export const PAGES_CONFIG = [
   {
     name: 'Portfolio',
     path: '/portfolio',
-    category: 'Labs',
+    category: 'Tools',
     status: 'live',
     lastUpdated: '2025-12-07',
     description: 'Alternative portfolio view with project showcase',
@@ -356,11 +356,49 @@ export const PAGES_CONFIG = [
   {
     name: 'Home-17',
     path: '/home-17',
-    category: 'Labs',
+    category: 'Tools',
     status: 'draft',
     lastUpdated: '2025-11-30',
     description: 'Experimental homepage variant with alternative layout',
     icon: '🏡'
+  },
+
+  // Admin Tools (hidden from public sitemap but shown in directory)
+  {
+    name: 'Admin Hub',
+    path: '/admin',
+    category: 'Admin',
+    status: 'live',
+    lastUpdated: '2025-12-10',
+    description: 'Central admin dashboard for all internal tools',
+    icon: '🛡️'
+  },
+  {
+    name: 'Articles Manager',
+    path: '/admin/articles',
+    category: 'Admin',
+    status: 'live',
+    lastUpdated: '2025-12-10',
+    description: 'Manage blog posts and thought leadership content',
+    icon: '📝'
+  },
+  {
+    name: 'Contacts Dashboard',
+    path: '/admin/contacts',
+    category: 'Admin',
+    status: 'live',
+    lastUpdated: '2025-12-10',
+    description: 'View and manage contacts and lead submissions',
+    icon: '👥'
+  },
+  {
+    name: 'Trigger Rules',
+    path: '/admin/trigger-rules',
+    category: 'Admin',
+    status: 'live',
+    lastUpdated: '2025-12-10',
+    description: 'Configure automation rules for lead processing',
+    icon: '⚡'
   },
 
   // Utility Pages
@@ -452,7 +490,8 @@ export const getPagesByCategory = () => {
 };
 
 // Helper to get category order for display
-export const CATEGORY_ORDER = ['Main', 'Services', 'Works', 'Experiments', 'Thoughts', 'Labs', 'Utility', 'Legal'];
+// Tools (formerly Labs) is pinned to the top for visibility
+export const CATEGORY_ORDER = ['Tools', 'Main', 'Services', 'Works', 'Experiments', 'Thoughts', 'Admin', 'Utility', 'Legal'];
 
 // Get pages as array of category objects (for Sitemap)
 export const getPagesCategorized = () => {

@@ -5,6 +5,19 @@
  * Configure in .env or .env.local
  */
 
+/**
+ * Source value mapping (internal → Airtable display)
+ * Airtable Single Select fields require exact Title Case values
+ */
+export const SOURCE_DISPLAY = {
+  'lead_gate': 'Lead Gate',
+  'lead_gate_sso': 'Lead Gate (SSO)',
+  'contact_form': 'Contact Form',
+  'assessment': 'Assessment',
+  'footer': 'Footer',
+  'outreach_tool': 'Outreach Tool',
+};
+
 // n8n Webhook for lead capture (Airtable + Slack + AI drafts)
 export const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK || '';
 
@@ -96,13 +109,17 @@ export const sendToSlack = async (data) => {
  * Use this in form submit handlers
  */
 export const sendLeadCapture = async (formData, source, leadType) => {
+  const cleanSource = (source || '').trim();
+  const mappedSource = (SOURCE_DISPLAY[cleanSource] || cleanSource).trim();
+
   const leadData = {
     // Core fields (match n8n Airtable mapping)
-    email: formData.email,
-    name: formData.name || formData.from_name || '',
-    company: formData.company || '',
-    source,
-    sourceTool: formData.tool || leadType || '',
+    email: (formData.email || '').trim(),
+    name: (formData.name || formData.from_name || '').trim(),
+    company: (formData.company || '').trim(),
+    source: mappedSource, // Map to Title Case for Airtable (trimmed)
+    sourceInternal: cleanSource, // Keep internal value for programmatic use
+    sourceTool: (formData.tool || leadType || '').trim(),
 
     // Legacy fields for backwards compatibility
     from_name: formData.name || formData.from_name,

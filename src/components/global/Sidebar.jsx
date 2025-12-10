@@ -271,7 +271,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                 isHovered={isHovered}
                 alt={label}
               />
-            ) : (
+            ) : icon ? (
               <img
                 src={icon}
                 alt={label}
@@ -285,6 +285,9 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                   filter: isHovered ? 'grayscale(0)' : 'grayscale(1)'
                 }}
               />
+            ) : (
+              /* No icon - render empty placeholder */
+              <div style={{ width: 28, height: 28 }} />
             )}
           </div>
 
@@ -494,15 +497,16 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
         {/* HEADER SECTION - HOME Label */}
         {/* Hide on mobile when slide-over is open to avoid overlap */}
+        {/* Hide breadcrumb when sidebar is open to avoid overlap with navigation items */}
         <div style={{
           flexShrink: 0,
           height: '100px',
           position: 'relative',
-          opacity: showBackground && !(isMobile && slideOverOpen) ? 1 : 0,
+          opacity: showBackground && !(isMobile && slideOverOpen) && !sidebarOpen ? 1 : 0,
           transition: 'opacity 0.3s ease-out',
-          pointerEvents: (isMobile && slideOverOpen) ? 'none' : 'auto'
+          pointerEvents: (isMobile && slideOverOpen) || sidebarOpen ? 'none' : 'auto'
         }}>
-          {/* Breadcrumb wrapper - positioned above navigation items */}
+          {/* Breadcrumb wrapper - positioned above navigation items (only visible when sidebar closed) */}
           <div style={{
             position: 'absolute',
             top: isMobile ? '120px' : '140px',

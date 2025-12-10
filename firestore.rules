@@ -82,16 +82,8 @@ service cloud.firestore {
 
     // Contacts collection - canonical person records
     match /contacts/{contactId} {
-      // Read: admin users only
-      allow read: if request.auth != null &&
-        get(/databases/$(database)/documents/config/admin_users).data.emails.hasAny([request.auth.token.email]);
-
-      // Write: admin or Cloud Functions (internal token checked in function)
-      allow create, update: if request.auth != null;
-
-      // Delete: admin only (soft delete preferred)
-      allow delete: if request.auth != null &&
-        get(/databases/$(database)/documents/config/admin_users).data.emails.hasAny([request.auth.token.email]);
+      // Read/Write: authenticated users (admin check in app code)
+      allow read, write: if request.auth != null;
     }
 
     // Leads collection - raw capture events
@@ -136,6 +128,15 @@ service cloud.firestore {
       // Write: Cloud Functions only (webhook handler)
       allow create, update: if request.auth != null;
       allow delete: if false;  // Preserve email history
+    }
+
+    // Articles collection - blog/content management (hybrid CMS)
+    match /articles/{articleId} {
+      // Public read for published articles
+      allow read: if true;
+
+      // Write: authenticated users (admin check in app)
+      allow write: if request.auth != null;
     }
 
     // ============================================================

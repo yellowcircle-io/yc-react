@@ -59,6 +59,7 @@ const FALLBACK_ADMIN_EMAILS = [
   'christopher@yellowcircle.io',
   'info@yellowcircle.io',
   'arscooper@live.com',
+  'christopher.ramon.cooper@gmail.com',
 ];
 
 // Cache for whitelist (loaded from Firestore on init)

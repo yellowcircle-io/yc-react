@@ -53,6 +53,13 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 const ApproveAccessPage = lazy(() => import('./pages/ApproveAccessPage'));
 const DenyAccessPage = lazy(() => import('./pages/DenyAccessPage'));
 
+// Admin pages (lazy loaded)
+const AdminHubPage = lazy(() => import('./pages/admin/AdminHubPage'));
+const TriggerRulesPage = lazy(() => import('./pages/admin/TriggerRulesPage'));
+const ContactDashboardPage = lazy(() => import('./pages/admin/ContactDashboardPage'));
+const ArticleListPage = lazy(() => import('./pages/admin/ArticleListPage'));
+const ArticleEditorPage = lazy(() => import('./pages/admin/ArticleEditorPage'));
+
 // Loading spinner for lazy loaded components
 const PageLoader = () => (
   <div style={{
@@ -160,6 +167,13 @@ function RouterApp() {
             {/* Client Access Approval Routes */}
             <Route path="/approve-access" element={<ApproveAccessPage />} />
             <Route path="/deny-access" element={<DenyAccessPage />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminHubPage />} />
+            <Route path="/admin/trigger-rules" element={<TriggerRulesPage />} />
+            <Route path="/admin/contacts" element={<ContactDashboardPage />} />
+            <Route path="/admin/articles" element={<ArticleListPage />} />
+            <Route path="/admin/articles/:articleId" element={<ArticleEditorPage />} />
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />

@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "triggerRules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "enabled", "order": "ASCENDING" },
+        { "fieldPath": "priority", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

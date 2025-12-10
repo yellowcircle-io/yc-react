@@ -18,19 +18,21 @@ function SitemapPage() {
   // Get pages from shared config - automatically stays in sync with DirectoryPage
   const pagesFromConfig = getPagesCategorized();
 
-  // Transform config format to sitemap display format - show all except draft
-  const pages = pagesFromConfig.map(cat => ({
-    category: cat.category,
-    items: cat.items
-      .filter(page => page.status !== 'draft') // Hide draft pages from public sitemap
-      .map(page => ({
-        path: page.path,
-        name: page.name,
-        description: page.description,
-        icon: page.icon,
-        status: page.status
-      }))
-  })).filter(cat => cat.items.length > 0);
+  // Transform config format to sitemap display format - show all except draft and Admin
+  const pages = pagesFromConfig
+    .filter(cat => cat.category !== 'Admin') // Hide Admin category from public sitemap
+    .map(cat => ({
+      category: cat.category,
+      items: cat.items
+        .filter(page => page.status !== 'draft') // Hide draft pages from public sitemap
+        .map(page => ({
+          path: page.path,
+          name: page.name,
+          description: page.description,
+          icon: page.icon,
+          status: page.status
+        }))
+    })).filter(cat => cat.items.length > 0);
 
   return (
     <Layout

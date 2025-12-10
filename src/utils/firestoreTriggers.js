@@ -292,20 +292,22 @@ export const getTriggerRule = async (ruleId) => {
 
 /**
  * List all trigger rules
+ * Note: Sorting is done client-side to avoid requiring composite index
  */
 export const listTriggerRules = async ({ enabled = null } = {}) => {
-  const constraints = [];
+  let q;
 
   if (enabled !== null) {
-    constraints.push(where('enabled', '==', enabled));
+    q = query(collection(db, 'triggerRules'), where('enabled', '==', enabled));
+  } else {
+    q = query(collection(db, 'triggerRules'));
   }
 
-  constraints.push(orderBy('priority', 'asc'));
-
-  const q = query(collection(db, 'triggerRules'), ...constraints);
   const snapshot = await getDocs(q);
+  const rules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // Sort by priority client-side (avoids composite index requirement)
+  return rules.sort((a, b) => (a.priority || 100) - (b.priority || 100));
 };
 
 /**

@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 9, 2025 at 12:30 PM PST
+**Updated:** December 10, 2025 at 11:30 AM PST
 **Machine:** Mac Mini
-**Status:** 🔄 EOY Roadmap Execution - Phase 2 In Progress (n8n + Railway)
+**Status:** ✅ EOY Roadmap Phases 1-5 Complete - Phase 6 SendGrid ESP Hot-Swap Next
 
 **🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
 
@@ -12,48 +12,45 @@
 
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 9, 2025)
+### Current Status (Dec 10, 2025)
 
-- **Day 14** since Rho exit (Nov 25, 2025)
-- **Status:** 🔄 EOY Roadmap Phase 2 - n8n + Railway deployment
+- **Day 15** since Rho exit (Nov 25, 2025)
+- **Status:** ✅ EOY Roadmap Phases 1-5 COMPLETE - Phase 6 SendGrid ESP Hot-Swap next
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
 
 ---
 
-### 🔄 EOY 2025 ROADMAP EXECUTION (Started Dec 9)
+### ✅ EOY 2025 ROADMAP EXECUTION (Started Dec 9)
 
 **6-Phase Plan:**
 | Phase | Description | Status |
 |-------|-------------|--------|
 | Phase 1 | Firestore Schemas (contacts, leads, triggerRules) | ✅ COMPLETE |
-| Phase 2 | n8n + Railway Deployment | 🔄 IN PROGRESS |
-| Phase 3 | Trigger System + createProspect API | ⏳ Pending |
-| Phase 4 | Contact Dashboard UI | ⏳ Pending |
-| Phase 5 | TinaCMS for Blog | ⏳ Pending |
-| Phase 6 | SendGrid ESP Hot-Swap | ⏳ Pending |
+| Phase 2 | n8n + Railway Deployment | ✅ COMPLETE |
+| Phase 3 | Trigger System + createProspect API | ✅ COMPLETE |
+| Phase 4 | Contact Dashboard UI + Admin Hub | ✅ COMPLETE |
+| Phase 5 | Blog CMS (Hybrid Firestore/MDX) | ✅ COMPLETE |
+| Phase 6 | SendGrid ESP Hot-Swap | 🔄 NEXT |
 
-**Phase 1 Completed Files:**
-- `dev-context/FIRESTORE_SCHEMA_V1.md` - Canonical schema spec
-- `src/utils/firestoreContacts.js` - Contact CRUD with deterministic IDs
-- `src/utils/firestoreLeads.js` - Lead capture and processing
-- `src/utils/firestoreTriggers.js` - Trigger rule management
-- `src/utils/firestore/index.js` - Unified export
-- `firestore.rules` - Security rules for new collections
-- `src/components/shared/LeadGate.jsx` - Updated with Firestore lead capture
+**Phase 4 Completed (Dec 10, 2025):**
+- Admin Hub `/admin` with central dashboard
+- Contacts Dashboard `/admin/contacts` with search and filters
+- Trigger Rules `/admin/trigger-rules` for automation
+- Articles Manager `/admin/articles` + `/admin/articles/new`
+- Access tier system implemented (Admin → Premium/Client → Public)
 
-**Phase 2 Files Created:**
-- `dev-context/N8N_RAILWAY_SETUP.md` - Complete deployment guide
-- `dev-context/PHASE2_DEPLOYMENT_CHECKLIST.md` - Manual execution steps
-- `functions/index.js` - Added: syncLeadFromN8N, syncContactFromAirtable, createProspect
+**Access Tier System:**
+| Tier | Pages | Credits |
+|------|-------|---------|
+| **Tier 3 (Admin)** | Admin Hub, Contacts, Trigger Rules, Articles | Unlimited |
+| **Tier 2 (Premium/Client)** | Unity Hub, Shortlinks | Unlimited |
+| **Tier 1 (Public)** | UnityNOTES, Journeys, Assessment | Limited |
 
-**⚠️ ACTION REQUIRED:** Firebase CLI needs re-authentication
-```bash
-firebase login --reauth
-firebase functions:config:set n8n.token="YOUR_SECURE_TOKEN"
-firebase deploy --only functions
-```
-
-See `dev-context/PHASE2_DEPLOYMENT_CHECKLIST.md` for complete steps.
+**Dec 10 Session Fixes:**
+- Added `christopher.ramon.cooper@gmail.com` to admin whitelist
+- Fixed search input overflow (boxSizing: 'border-box') in admin pages
+- Added premium/client access gate to ShortlinkManagerPage
+- Verified Unity Hub retains premium/client restriction
 
 ---
 
@@ -69,17 +66,38 @@ See `dev-context/PHASE2_DEPLOYMENT_CHECKLIST.md` for complete steps.
 
 ---
 
-### 🔄 Current Phase: Phase 1 (Day 3-7)
+### 🔄 Current Phase: Phase 6 - SendGrid ESP Hot-Swap
 
-**Infrastructure Work - Scoped but Not Started:**
-- Prospect database (Airtable → Supabase path)
-- Form → DB → Notification pipeline
-- Prospect enrichment (Apollo.io free tier)
-- Outreach approval workflow
+**Next Up:**
+- Implement SendGrid adapter (`src/adapters/esp/sendgrid.js`)
+- Add ESP selector UI in outreach settings
+- Test multi-provider email delivery
+- Document ESP switching workflow
+
+**Completed Infrastructure (Phases 1-5):**
+- ✅ Firestore schemas (contacts, leads, triggerRules)
+- ✅ n8n + Railway deployed
+- ✅ UnityMAP email sending functional (Resend ESP)
+- ✅ Admin Hub with Contacts, Trigger Rules, Articles
+- ✅ Blog CMS with Firestore/MDX hybrid
 
 ---
 
-### ✅ Recently Completed (Dec 7 - Current Session)
+### ✅ Recently Completed (Dec 10 - Current Session)
+
+1. **Admin Access Tier System Refinement** ✅ DEPLOYED (Dec 10)
+   - Added `christopher.ramon.cooper@gmail.com` to admin fallback whitelist
+   - Fixed search input overflow in ContactDashboardPage, ArticleListPage, ArticleEditorPage
+   - Added premium/client access gate to ShortlinkManagerPage (was incorrectly public)
+   - Verified Unity Hub keeps premium/client restriction
+   - Tiered access now properly enforced:
+     - Tier 3 (Admin): Admin Hub, Contacts, Trigger Rules, Articles
+     - Tier 2 (Premium/Client): Unity Hub, Shortlinks
+     - Tier 1 (Public): UnityNOTES, Journeys, Assessment
+
+---
+
+### ✅ Previously Completed (Dec 7)
 
 1. **Unity Platform Comprehensive Fixes** ✅ DEPLOYED (Dec 7)
 
@@ -441,22 +459,21 @@ Firebase Cloud Function (proxy)
 
 ### 🎯 Immediate Next Steps
 
-**UnityMAP Email Sending (P0):**
-- Enable Google Auth in Firebase Console (Authentication → Sign-in method)
-- Deploy Firebase Function `sendEmail` if not already deployed
-- Test email sending end-to-end with Resend ESP
-- Verify prospect initialization when deploying (status: 'active', currentNodeId set)
+**Phase 6 - SendGrid ESP Hot-Swap (P0):**
+- Implement SendGrid adapter (`src/adapters/esp/sendgrid.js`)
+- Add ESP selector dropdown in outreach settings
+- Test email delivery with SendGrid + Resend
+- Document ESP provider switching
 
-**Revenue Focus (P1):**
-- LinkedIn transition announcement
-- Network activation (10 warmest contacts)
-- Share Article 1 across channels
-- Schedule 3-5 discovery calls
+**Post-EOY Roadmap (P1):**
+- HubSpot ESP adapter (for enterprise clients)
+- Mailchimp/Mandrill adapter
+- ESP analytics dashboard
 
-**Platform Development (P2):**
-- Phase 1 infrastructure (Airtable/prospect pipeline)
-- Unity Notes cost optimization (free tier gating)
-- Assessment → Services funnel integration
+**Revenue Focus (P2):**
+- Continue outreach via UnityMAP
+- Schedule discovery calls
+- Follow up on warm leads
 
 ---
 

@@ -31,6 +31,7 @@ function Layout({
   customCircleNav = null, // Custom circle nav component
   hideParallaxCircle = false, // Hide the background yellow circle
   hideCircleNav = false, // Hide the NavigationCircle completely (for pages with custom nav)
+  hideSidebar = false, // Hide the sidebar completely (for admin pages)
   isHomePage = false, // Show arrow Lottie during scroll, placeholder at end
   allowScroll = false // Enable vertical scrolling for article pages
 }) {
@@ -130,14 +131,16 @@ function Layout({
       <Header onHomeClick={onHomeClick} />
 
       {/* Sidebar */}
-      <Sidebar
-        onHomeClick={onHomeClick}
-        onFooterToggle={onFooterToggle}
-        navigationItems={navigationItems}
-        scrollOffset={scrollOffset}
-        pageLabel={pageLabel}
-        variant={sidebarVariant}
-      />
+      {!hideSidebar && (
+        <Sidebar
+          onHomeClick={onHomeClick}
+          onFooterToggle={onFooterToggle}
+          navigationItems={navigationItems}
+          scrollOffset={scrollOffset}
+          pageLabel={pageLabel}
+          variant={sidebarVariant}
+        />
+      )}
 
       {/* Page Content */}
       <main style={{ position: 'relative', zIndex: 10 }}>
