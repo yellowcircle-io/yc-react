@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
+import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/global/Layout';
-import LeadGate from '../components/shared/LeadGate';
+import UserMenu from '../components/auth/UserMenu';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
 import { useShortlinks } from '../hooks/useShortlinks';
@@ -10,6 +11,11 @@ import { useShortlinks } from '../hooks/useShortlinks';
 function ShortlinkManagerPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { isAdmin, user, userProfile } = useAuth();
+
+  // Tier 2 access: Premium/Client users
+  const isPremium = userProfile?.subscription?.tier === 'premium';
+  const hasAccess = isAdmin || isPremium;
   const {
     createShortlink,
     getAllShortlinks,
@@ -116,9 +122,51 @@ function ShortlinkManagerPage() {
 
   const baseUrl = window.location.origin;
 
-  return (
-    <LeadGate toolName="Shortlink Manager" requiredAccess="admin">
+  // Card style for access gate
+  const cardStyle = {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    padding: '32px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+  };
+
+  // Tier 2 access gate - Premium/Client users only
+  if (!hasAccess) {
+    return (
       <Layout
+        onHomeClick={handleHomeClick}
+        onFooterToggle={handleFooterToggle}
+        onMenuToggle={handleMenuToggle}
+        navigationItems={navigationItems}
+        pageLabel="SHORTLINKS"
+      >
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100 }}>
+          <div style={{ ...cardStyle, width: '400px', maxWidth: '90vw', textAlign: 'center', animation: 'fadeInUp 0.5s ease-out' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#ef4444', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px', color: '#111827' }}>Premium Access Required</h2>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px' }}>
+              This tool is restricted to yellowCircle clients.
+            </p>
+            {!user ? (
+              <UserMenu />
+            ) : (
+              <p style={{ fontSize: '13px', color: '#9ca3af' }}>
+                Signed in as {user.email}
+              </p>
+            )}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout
         onHomeClick={handleHomeClick}
         onFooterToggle={handleFooterToggle}
         onMenuToggle={handleMenuToggle}
@@ -586,7 +634,6 @@ function ShortlinkManagerPage() {
           </div>
         </div>
       </Layout>
-    </LeadGate>
   );
 }
 

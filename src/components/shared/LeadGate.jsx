@@ -78,12 +78,49 @@ function LeadGate({
     }
   }, [storageKey, onUnlock, isAuthenticated]);
 
-  // Handle SSO login
+  // Handle SSO login - also capture lead data
   const handleGoogleSignIn = async () => {
     try {
       setSsoLoading(true);
       clearError?.();
-      await signInWithGoogle();
+      const user = await signInWithGoogle();
+
+      // Capture lead from SSO user data
+      if (user?.email) {
+        // Create lead in Firestore
+        createLead({
+          email: user.email,
+          submittedData: {
+            name: user.displayName || '',
+            tool: toolName,
+            authMethod: 'google_sso'
+          },
+          source: 'lead_gate',
+          sourceTool: toolName
+        }).catch(err => {
+          console.error('[LeadGate] Firestore lead creation failed (SSO):', err);
+        });
+
+        // Send to n8n pipeline
+        sendLeadCapture(
+          {
+            email: user.email,
+            name: user.displayName || '',
+            tool: toolName
+          },
+          'lead_gate_sso',
+          'Tool Access (SSO)'
+        );
+
+        // Track conversion
+        if (typeof gtag === 'function') {
+          gtag('event', 'conversion', {
+            'send_to': 'AW-17772974519/lead_gate_sso',
+            'event_category': 'lead_gate',
+            'event_label': toolName
+          });
+        }
+      }
       // isAuthenticated will update via useEffect and unlock
     } catch (err) {
       setError(err.message || 'Google sign-in failed');

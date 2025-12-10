@@ -449,10 +449,11 @@ const processProspect = async (prospect, journey, resendApiKey) => {
 
 /**
  * Process Journeys - Scheduled function
- * Runs every 15 minutes to process active journeys
+ * Runs every hour to process active journeys (reduced from 15 min for cost)
+ * Use triggerJourneyProcessing for manual/immediate processing
  */
 exports.processJourneys = functions.pubsub
-  .schedule("every 15 minutes")
+  .schedule("every 60 minutes")
   .timeZone("America/New_York")
   .onRun(async (context) => {
     console.log("🚀 Starting journey processing...");
@@ -1372,6 +1373,388 @@ exports.deleteAccessRequest = functions.https.onRequest(async (request, response
     response.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================
+// TRIGGER SYSTEM - Phase 3
+// ============================================================
+
+// In-memory cache for trigger rules (reduces Firestore reads)
+// Cache expires after 5 minutes or on cold start
+let triggerRulesCache = null;
+let triggerRulesCacheTime = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get trigger rules with caching
+ */
+const getCachedTriggerRules = async () => {
+  const now = Date.now();
+
+  // Return cached rules if still valid
+  if (triggerRulesCache && (now - triggerRulesCacheTime) < CACHE_TTL_MS) {
+    console.log('📦 Using cached trigger rules');
+    return triggerRulesCache;
+  }
+
+  // Fetch fresh rules
+  console.log('🔄 Fetching trigger rules from Firestore');
+  const rulesSnapshot = await db.collection('triggerRules')
+    .where('enabled', '==', true)
+    .orderBy('priority', 'asc')
+    .get();
+
+  triggerRulesCache = rulesSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ref: doc.ref,
+    ...doc.data()
+  }));
+  triggerRulesCacheTime = now;
+
+  return triggerRulesCache;
+};
+
+/**
+ * Invalidate trigger rules cache (call when rules are updated)
+ */
+const invalidateTriggerRulesCache = () => {
+  triggerRulesCache = null;
+  triggerRulesCacheTime = 0;
+};
+
+/**
+ * Evaluate if a lead matches rule conditions
+ */
+const evaluateConditions = (lead, conditions, matchMode = 'all') => {
+  if (!conditions || conditions.length === 0) return true;
+
+  const results = conditions.map(cond => {
+    const value = getNestedValue(lead, cond.field);
+    const compareValue = cond.caseSensitive ? cond.value : String(cond.value).toLowerCase();
+    const fieldValue = cond.caseSensitive ? value : String(value || '').toLowerCase();
+
+    switch (cond.operator) {
+      case 'equals':
+        return fieldValue === compareValue;
+      case 'not_equals':
+        return fieldValue !== compareValue;
+      case 'contains':
+        return fieldValue.includes(compareValue);
+      case 'not_contains':
+        return !fieldValue.includes(compareValue);
+      case 'starts_with':
+        return fieldValue.startsWith(compareValue);
+      case 'ends_with':
+        return fieldValue.endsWith(compareValue);
+      case 'greater_than':
+        return Number(value) > Number(cond.value);
+      case 'less_than':
+        return Number(value) < Number(cond.value);
+      case 'exists':
+        return value !== undefined && value !== null && value !== '';
+      case 'not_exists':
+        return value === undefined || value === null || value === '';
+      case 'in':
+        return Array.isArray(cond.value) ? cond.value.includes(value) : false;
+      default:
+        return false;
+    }
+  });
+
+  return matchMode === 'all'
+    ? results.every(r => r)
+    : results.some(r => r);
+};
+
+/**
+ * Get nested value from object (e.g., "submittedData.score")
+ */
+const getNestedValue = (obj, path) => {
+  return path.split('.').reduce((curr, key) => curr?.[key], obj);
+};
+
+/**
+ * Replace template variables in string (e.g., "{{email}}")
+ */
+const replaceTemplateVars = (template, data) => {
+  return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
+    const value = getNestedValue(data, path);
+    return value !== undefined ? String(value) : match;
+  });
+};
+
+/**
+ * Execute a single action
+ */
+const executeAction = async (action, lead, contactId) => {
+  const resendApiKey = functions.config().resend?.api_key;
+  const slackWebhook = functions.config().slack?.webhook;
+
+  switch (action.type) {
+    case 'enroll_journey': {
+      const { journeyId } = action.config;
+      if (!journeyId) throw new Error('journeyId required for enroll_journey');
+
+      // Use createProspect logic inline
+      const journeyRef = db.collection('journeys').doc(journeyId);
+      const journeySnap = await journeyRef.get();
+
+      if (!journeySnap.exists) {
+        throw new Error(`Journey ${journeyId} not found`);
+      }
+
+      const journey = journeySnap.data();
+      const { nodes, edges, prospects } = journey;
+
+      // Find first node after prospect node
+      let firstNodeId = null;
+      const prospectNode = nodes.find(n => n.type === 'prospectNode');
+      if (prospectNode) {
+        const outEdge = edges.find(e => e.source === prospectNode.id);
+        firstNodeId = outEdge?.target || null;
+      }
+      if (!firstNodeId && nodes.length > 0) {
+        firstNodeId = nodes[0].id;
+      }
+
+      const now = admin.firestore.Timestamp.now();
+      const newProspect = {
+        id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        email: lead.email.toLowerCase().trim(),
+        name: lead.submittedData?.name || '',
+        company: lead.submittedData?.company || '',
+        currentNodeId: firstNodeId,
+        nextExecuteAt: now,
+        status: 'active',
+        history: [{
+          action: 'enrolled',
+          at: now,
+          source: 'trigger_rule',
+          nodeId: null
+        }]
+      };
+
+      await journeyRef.update({
+        prospects: [...(prospects || []), newProspect],
+        'stats.totalProspects': (prospects || []).length + 1,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Update contact journeys
+      if (contactId) {
+        const contactRef = db.collection('contacts').doc(contactId);
+        const contactDoc = await contactRef.get();
+        if (contactDoc.exists) {
+          const contact = contactDoc.data();
+          const activeJourneys = contact.journeys?.active || [];
+          if (!activeJourneys.includes(journeyId)) {
+            await contactRef.update({
+              'journeys.active': [...activeJourneys, journeyId],
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
+      }
+
+      return { enrolled: true, journeyId, prospectId: newProspect.id };
+    }
+
+    case 'add_tag': {
+      const { tags } = action.config;
+      if (!tags || !contactId) return { skipped: true };
+
+      const contactRef = db.collection('contacts').doc(contactId);
+      await contactRef.update({
+        tags: admin.firestore.FieldValue.arrayUnion(...tags),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      return { tagged: true, tags };
+    }
+
+    case 'update_score': {
+      const { scoreAdjustment } = action.config;
+      if (!scoreAdjustment || !contactId) return { skipped: true };
+
+      const contactRef = db.collection('contacts').doc(contactId);
+      await contactRef.update({
+        score: admin.firestore.FieldValue.increment(scoreAdjustment),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      return { scoreUpdated: true, adjustment: scoreAdjustment };
+    }
+
+    case 'notify_slack': {
+      if (!slackWebhook) return { skipped: true, reason: 'no_webhook' };
+
+      const { channel, message } = action.config;
+      const finalMessage = replaceTemplateVars(message, lead);
+
+      await fetch(slackWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: channel || '#leads',
+          text: finalMessage
+        })
+      });
+
+      return { notified: true, channel };
+    }
+
+    case 'send_webhook': {
+      const { url, method = 'POST', headers = {} } = action.config;
+      if (!url) throw new Error('url required for send_webhook');
+
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(lead)
+      });
+
+      return { webhookSent: true, url };
+    }
+
+    default:
+      return { skipped: true, reason: `unknown_action_type: ${action.type}` };
+  }
+};
+
+/**
+ * Firestore Trigger: On Lead Created
+ * Evaluates all enabled trigger rules and executes matching actions
+ * Uses in-memory caching to reduce Firestore reads
+ */
+exports.onLeadCreated = functions.firestore
+  .document('leads/{leadId}')
+  .onCreate(async (snap, context) => {
+    const lead = snap.data();
+    const leadId = context.params.leadId;
+
+    console.log(`🎯 Processing new lead: ${lead.email} (${leadId})`);
+
+    try {
+      // Get cached trigger rules (reduces Firestore reads)
+      const rules = await getCachedTriggerRules();
+
+      if (rules.length === 0) {
+        console.log('No enabled trigger rules found');
+        return null;
+      }
+
+      console.log(`📋 Evaluating ${rules.length} trigger rules`);
+
+      // Generate contact ID for this lead
+      const contactId = generateContactId(lead.email);
+
+      for (const rule of rules) {
+        const ruleId = rule.id;
+
+        // Only process lead_created triggers
+        if (rule.trigger?.type !== 'lead_created') continue;
+
+        // Evaluate conditions
+        const matches = evaluateConditions(
+          lead,
+          rule.trigger?.conditions || [],
+          rule.trigger?.matchMode || 'all'
+        );
+
+        if (!matches) {
+          console.log(`  ❌ Rule ${rule.name}: conditions not met`);
+          continue;
+        }
+
+        console.log(`  ✅ Rule ${rule.name}: conditions match!`);
+
+        // Check deduplication
+        if (rule.dedup?.enabled) {
+          const dedupeKey = rule.dedup.strategy === 'email_journey'
+            ? `${lead.email.toLowerCase()}-${rule.actions.find(a => a.type === 'enroll_journey')?.config?.journeyId || ruleId}`
+            : `${lead.email.toLowerCase()}-${ruleId}`;
+
+          const dedupeRef = db.collection('dedupeLog').doc(dedupeKey);
+          const dedupeDoc = await dedupeRef.get();
+
+          if (dedupeDoc.exists) {
+            const lastEntry = dedupeDoc.data().lastExecutedAt?.toDate();
+            const windowMs = (rule.dedup.windowSeconds || 86400) * 1000;
+
+            if (lastEntry && (Date.now() - lastEntry.getTime()) < windowMs) {
+              console.log(`  ⏭️ Rule ${rule.name}: skipped (dedupe)`);
+              await rule.ref.update({
+                'stats.skippedDedupe': admin.firestore.FieldValue.increment(1)
+              });
+              continue;
+            }
+          }
+
+          // Record for dedup
+          await dedupeRef.set({
+            email: lead.email.toLowerCase(),
+            ruleId,
+            lastExecutedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+
+        // Execute actions
+        let allSuccess = true;
+        const actionResults = [];
+
+        for (const action of rule.actions || []) {
+          try {
+            const result = await executeAction(action, lead, contactId);
+            actionResults.push({ actionId: action.id, success: true, result });
+            console.log(`    ✅ Action ${action.type}: success`);
+          } catch (actionError) {
+            console.error(`    ❌ Action ${action.type}: ${actionError.message}`);
+            actionResults.push({ actionId: action.id, success: false, error: actionError.message });
+
+            if (!action.continueOnError) {
+              allSuccess = false;
+              break;
+            }
+          }
+        }
+
+        // Record execution
+        const now = admin.firestore.FieldValue.serverTimestamp();
+        const statsUpdate = {
+          'stats.totalExecutions': admin.firestore.FieldValue.increment(1),
+          'stats.lastExecutedAt': now,
+          updatedAt: now
+        };
+
+        if (allSuccess) {
+          statsUpdate['stats.successfulExecutions'] = admin.firestore.FieldValue.increment(1);
+          statsUpdate['stats.consecutiveErrors'] = 0;
+        } else {
+          statsUpdate['stats.failedExecutions'] = admin.firestore.FieldValue.increment(1);
+          statsUpdate['stats.consecutiveErrors'] = admin.firestore.FieldValue.increment(1);
+        }
+
+        await rule.ref.update(statsUpdate);
+
+        // Log to triggerLogs collection
+        await db.collection('triggerLogs').add({
+          ruleId,
+          ruleName: rule.name,
+          leadId,
+          email: lead.email,
+          success: allSuccess,
+          actionResults,
+          executedAt: now
+        });
+      }
+
+      console.log(`🏁 Finished processing lead: ${lead.email}`);
+      return null;
+
+    } catch (error) {
+      console.error(`❌ onLeadCreated error: ${error.message}`);
+      return null;
+    }
+  });
 
 // ============================================================
 // N8N INTEGRATION FUNCTIONS - Phase 2
