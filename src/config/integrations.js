@@ -97,14 +97,19 @@ export const sendToSlack = async (data) => {
  */
 export const sendLeadCapture = async (formData, source, leadType) => {
   const leadData = {
+    // Core fields (match n8n Airtable mapping)
     email: formData.email,
-    from_name: formData.name || formData.from_name,
+    name: formData.name || formData.from_name || '',
+    company: formData.company || '',
     source,
+    sourceTool: formData.tool || leadType || '',
+
+    // Legacy fields for backwards compatibility
+    from_name: formData.name || formData.from_name,
     lead_type: leadType,
     message: formData.message || '',
     service: formData.service || formData.interest || '',
     tool: formData.tool || '',
-    company: formData.company || '',
     score: formData.score || null,
   };
 
