@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
-    "prepare": "husky",
+    "prepare": "node -e \"try { require.resolve('husky') } catch(e) { process.exit(0) }\" && husky || true",
     "audit": "npm audit --audit-level=high",
     "deadcode": "npx knip"
   },
