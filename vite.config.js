@@ -8,4 +8,19 @@ export default defineConfig({
     // Strip console.log and debugger statements in production builds
     drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor chunks for better caching
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'firebase/analytics'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-xyflow': ['@xyflow/react'],
+          'vendor-lottie': ['lottie-react', '@lottiefiles/dotlottie-react'],
+          'vendor-sentry': ['@sentry/react'],
+        }
+      }
+    }
+  }
 })
