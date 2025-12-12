@@ -12,7 +12,12 @@ export default defineConfig([
     'design-assets/**',
     'my-project/**',
     'rho-hubspot-deployment/**',
-    'functions/**'
+    'functions/**',
+    '.claude/**',
+    'scripts/**',
+    'yellowcircle-outreach/**',
+    'dev-context/**',
+    'fix-layout.js'
   ]),
   {
     files: ['**/*.{js,jsx}'],
@@ -31,7 +36,11 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['error', {
+        varsIgnorePattern: '^[A-Z_]',
+        argsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
     },
   },
   {

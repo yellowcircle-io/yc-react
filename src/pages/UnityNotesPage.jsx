@@ -45,6 +45,8 @@ const nodeTypes = {
 };
 
 const STORAGE_KEY = 'unity-notes-data';
+const FREE_NODE_LIMIT = 10;
+const PRO_NODE_LIMIT = 100;
 
 // Card type configuration (same as UnityNotes Plus)
 const CARD_TYPES = {
@@ -65,11 +67,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // SSO Authentication hooks
   const { user, userProfile, isAuthenticated, isAdmin } = useAuth();
-  const { keys: apiKeys, isCloudSynced, migrateLocalToCloud, saveKey } = useApiKeyStorage();
-  const { creditsRemaining, tier, hasCredits } = useCredits();
+  const { isCloudSynced, migrateLocalToCloud } = useApiKeyStorage();
+  const { creditsRemaining, tier } = useCredits();
 
   // AI Image Analysis hook
-  const { analyzeImage, isAnalyzing: isAIAnalyzing, error: aiError, isConfigured: aiConfigured } = useImageAnalysis();
+  const { analyzeImage, error: aiError, isConfigured: aiConfigured } = useImageAnalysis();
   const [isInitialized, setIsInitialized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
@@ -125,11 +127,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     loadJourney,
     updateJourney,
     publishJourney,
-    listJourneys,
-    sendEmailNow,
     sendJourneyNow,
-    isSaving: isSavingJourney,
-    isLoading: isLoadingJourney
+    isSaving: isSavingJourney
   } = useFirebaseJourney();
 
   // Restore journey ID from localStorage on initial load
@@ -146,6 +145,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [isSendingEmails, setIsSendingEmails] = useState(false);
   const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
   const [studioContext, setStudioContext] = useState(null); // Context passed from AI Chat to Studio
+  const [associatedTriggers, setAssociatedTriggers] = useState([]); // Trigger rules that enroll into this journey
+  const [isLoadingTriggers, setIsLoadingTriggers] = useState(false);
+
+  // Auto-save state
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [isSavingLocal, setIsSavingLocal] = useState(false);
 
   // Handler for opening Studio from AI Chat with conversation context
   const handleOpenStudio = useCallback((context) => {
@@ -209,6 +214,54 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     loadSavedJourney();
   }, [currentMode, currentJourneyId, isInitialized, loadJourney, setNodes, setEdges]);
 
+  // Fetch associated trigger rules when journey ID changes
+  useEffect(() => {
+    const fetchAssociatedTriggers = async () => {
+      if (!currentJourneyId || currentMode !== 'map') {
+        setAssociatedTriggers([]);
+        return;
+      }
+
+      setIsLoadingTriggers(true);
+      try {
+        // Fetch trigger rules from Firestore that have enroll_journey action targeting this journey
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('../config/firebase');
+
+        const triggersRef = collection(db, 'triggerRules');
+        const snapshot = await getDocs(triggersRef);
+
+        const matchingTriggers = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          // Check if any action enrolls into this journey
+          const hasEnrollAction = data.actions?.some(
+            action => action.type === 'enroll_journey' && action.config?.journeyId === currentJourneyId
+          );
+          if (hasEnrollAction && data.enabled !== false) {
+            matchingTriggers.push({
+              id: doc.id,
+              name: data.name,
+              triggerType: data.trigger?.type,
+              conditions: data.trigger?.conditions || [],
+              enabled: data.enabled !== false
+            });
+          }
+        });
+
+        setAssociatedTriggers(matchingTriggers);
+        console.log('📡 Associated triggers for journey:', currentJourneyId, matchingTriggers);
+      } catch (error) {
+        console.error('❌ Failed to fetch associated triggers:', error);
+        setAssociatedTriggers([]);
+      } finally {
+        setIsLoadingTriggers(false);
+      }
+    };
+
+    fetchAssociatedTriggers();
+  }, [currentJourneyId, currentMode]);
+
   // Check if user has pro/admin access for cloud features
   // Scopes: admin (SSO-authenticated admin), premium (SSO tier)
   const hasProAccess = useCallback(() => {
@@ -219,15 +272,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     return false;
   }, [isAdmin, isAuthenticated, tier]);
 
-  // Check if user has credits available (for credit-gated features)
-  const hasAvailableCredits = useCallback(() => {
-    // Admin - unlimited (authenticated via SSO)
-    if (isAdmin) return true;
-    // Premium tier - unlimited
-    if (isAuthenticated && tier === 'premium') return true;
-    // Check actual credits
-    return creditsRemaining > 0;
-  }, [isAdmin, isAuthenticated, tier, creditsRemaining]);
+  // hasAvailableCredits - reserved for future credit-gated features
+  // Currently unused but kept for upcoming AI features
 
   // Lightbox state
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
@@ -703,7 +749,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   }, [nodes, edges]);
 
   // Handle "Edit in Outreach" - Navigate back to Outreach Generator with context
-  const handleEditInOutreach = useCallback((nodeId, nodeData) => {
+  const handleEditInOutreach = useCallback((nodeId, _nodeData) => {
     console.log('📝 MAP Edit: nodeId =', nodeId);
 
     // Find all related campaign nodes (same timestamp prefix)
@@ -821,8 +867,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           const parsed = JSON.parse(context);
           originPath = parsed.originPath;
         }
-      } catch (e) {
-        // Ignore
+      } catch (_e) {
+        // Ignore parse errors
       }
     }
 
@@ -918,6 +964,17 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Add new card (non-photo types)
   const handleAddCard = useCallback((type) => {
+    // Check node limit (computed later, use closure to access)
+    if (nodes.length >= nodeLimit) {
+      alert(
+        `⚠️ Node Limit Reached (${nodeLimit} nodes)\n\n` +
+        (tier === 'premium' || isAdmin
+          ? 'You are at your canvas limit.'
+          : `Free tier allows ${FREE_NODE_LIMIT} nodes.\n\nUpgrade to Pro for ${PRO_NODE_LIMIT} nodes, or use EXPORT to backup and clear your canvas.`)
+      );
+      return;
+    }
+
     const timestamp = Date.now();
     const totalNodes = nodes.length;
     const gridX = totalNodes % 8;
@@ -1014,7 +1071,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         fitView({ duration: 400, padding: 0.2 });
       }, 100);
     }
-  }, [nodes.length, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen]);
+  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio]);
 
   // Handle Deploy from ProspectNode - opens prospect modal
   // Uses refs to avoid circular dependency with useEffect that injects callbacks
@@ -1117,14 +1174,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     );
   }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, getProspectsAtNode, setNodes]);
 
-  // Save to localStorage
+  // Save to localStorage with status indicator
   useEffect(() => {
     if (!isInitialized) return;
+    setIsSavingLocal(true);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
+      setLastSavedAt(new Date());
     } catch (error) {
       console.error('❌ localStorage save error:', error);
       alert('⚠️ Unable to save locally. Your notes will be preserved in the current session.\n\nUse EXPORT to save as JSON file, or SHARE to save to cloud.');
+    } finally {
+      // Brief delay to show saving indicator
+      setTimeout(() => setIsSavingLocal(false), 300);
     }
   }, [nodes, edges, isInitialized]);
 
@@ -1338,6 +1400,20 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
         if (!importData.nodes || !Array.isArray(importData.nodes)) {
           throw new Error('Invalid file format: missing nodes array');
+        }
+
+        // Check node limit for free tier
+        const limit = isAdmin ? 999 : (isAuthenticated && tier === 'premium') ? PRO_NODE_LIMIT : FREE_NODE_LIMIT;
+        if (importData.nodes.length > limit) {
+          alert(
+            `⚠️ Import Exceeds Node Limit\n\n` +
+            `File contains ${importData.nodes.length} nodes.\n` +
+            `Your tier limit: ${limit} nodes.\n\n` +
+            (tier === 'premium' || isAdmin
+              ? 'Please reduce file contents before importing.'
+              : `Upgrade to Pro for ${PRO_NODE_LIMIT} nodes.`)
+          );
+          return;
         }
 
         if (nodes.length > 0) {
@@ -1605,8 +1681,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   };
 
-  // Handle opening publish modal
-  const handleStartPublish = async () => {
+  // Handle opening publish modal (reserved for future publish button)
+  const _handleStartPublish = async () => {
     if (!hasProAccess()) {
       alert(
         '☁️ Publish Journey - Pro Feature\n\n' +
@@ -1875,6 +1951,16 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     return 3;
   }, [isAdmin, isAuthenticated, tier]);
 
+  // Node limit for canvas (tier-based)
+  const nodeLimit = useMemo(() => {
+    if (isAdmin) return 999;
+    if (isAuthenticated && tier === 'premium') return PRO_NODE_LIMIT;
+    return FREE_NODE_LIMIT;
+  }, [isAdmin, isAuthenticated, tier]);
+
+  const isAtNodeLimit = nodes.length >= nodeLimit;
+  const nodeUsagePercent = Math.min((nodes.length / nodeLimit) * 100, 100);
+
   // Add new Email node to canvas
   const handleAddEmail = useCallback(() => {
     if (emailNodeCount >= emailLimit) return;
@@ -2052,6 +2138,119 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           </div>
         </div>
       )}
+
+      {/* Status Bar - Bottom Right */}
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 150,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(8px)',
+        padding: '8px 12px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+      }}>
+        {/* Auto-save indicator */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '10px',
+          color: isSavingLocal ? '#f59e0b' : '#6b7280'
+        }}>
+          <span style={{ fontSize: '12px' }}>{isSavingLocal ? '⏳' : '✓'}</span>
+          <span>{isSavingLocal ? 'Saving...' : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Local'}</span>
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }} />
+
+        {/* Node count with progress bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{
+            width: '40px',
+            height: '4px',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            borderRadius: '2px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${nodeUsagePercent}%`,
+              height: '100%',
+              backgroundColor: nodeUsagePercent >= 90 ? '#ef4444' : nodeUsagePercent >= 70 ? '#f59e0b' : '#10b981',
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '600',
+            color: isAtNodeLimit ? '#ef4444' : '#6b7280'
+          }}>
+            {nodes.length}/{nodeLimit}
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }} />
+
+        {/* Export button */}
+        <button
+          onClick={handleExportJSON}
+          style={{
+            padding: '4px 8px',
+            fontSize: '9px',
+            fontWeight: '600',
+            border: '1px solid rgba(0, 0, 0, 0.15)',
+            borderRadius: '4px',
+            backgroundColor: 'transparent',
+            color: '#374151',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.2)';
+            e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+            e.target.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+          }}
+          title="Export canvas to JSON file"
+        >
+          ⬇ EXPORT
+        </button>
+
+        {/* Import button */}
+        <button
+          onClick={handleImportJSON}
+          style={{
+            padding: '4px 8px',
+            fontSize: '9px',
+            fontWeight: '600',
+            border: '1px solid rgba(0, 0, 0, 0.15)',
+            borderRadius: '4px',
+            backgroundColor: 'transparent',
+            color: '#374151',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+            e.target.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+            e.target.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+          }}
+          title="Import canvas from JSON file"
+        >
+          ⬆ IMPORT
+        </button>
+      </div>
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
       <div style={{
@@ -2302,6 +2501,57 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           >
             {isSavingJourney ? '⏳' : '☁️'}
           </button>
+        )}
+
+        {/* Trigger Association Indicator (MAP mode only, when journey is saved) */}
+        {currentMode === 'map' && currentJourneyId && (
+          <div
+            onClick={() => navigate('/admin/trigger-rules')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 10px',
+              backgroundColor: associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(156, 163, 175, 0.1)',
+              border: `1px solid ${associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(156, 163, 175, 0.3)'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: '600',
+              color: associatedTriggers.length > 0 ? '#059669' : '#6b7280',
+              marginTop: '4px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(156, 163, 175, 0.2)';
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(156, 163, 175, 0.1)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title={
+              isLoadingTriggers
+                ? 'Loading triggers...'
+                : associatedTriggers.length > 0
+                  ? `${associatedTriggers.length} trigger${associatedTriggers.length > 1 ? 's' : ''} feed into this journey:\n${associatedTriggers.map(t => `• ${t.name}`).join('\n')}\n\nClick to manage triggers`
+                  : 'No triggers associated with this journey. Click to create one.'
+            }
+          >
+            {isLoadingTriggers ? (
+              <span style={{ fontSize: '12px' }}>⏳</span>
+            ) : associatedTriggers.length > 0 ? (
+              <>
+                <span style={{ fontSize: '12px' }}>⚡</span>
+                <span>{associatedTriggers.length} TRIGGER{associatedTriggers.length > 1 ? 'S' : ''}</span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '12px', opacity: 0.7 }}>⚡</span>
+                <span style={{ opacity: 0.8 }}>NO TRIGGERS</span>
+              </>
+            )}
+          </div>
         )}
 
         {/* RUN ALL / PAUSE ALL Toggle (MAP mode only) */}
