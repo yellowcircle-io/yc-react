@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
-    "prepare": "node -e \"try { require.resolve('husky') } catch(e) { process.exit(0) }\" && husky || true",
+    "prepare": "node -e \"if (process.env.CI) process.exit(0); try { require.resolve('husky'); require('child_process').execSync('husky') } catch(e) {}\"",
     "audit": "npm audit --audit-level=high",
     "deadcode": "npx knip"
   },
