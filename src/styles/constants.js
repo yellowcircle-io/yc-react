@@ -174,6 +174,43 @@ export const BORDERS = {
   }
 };
 
+// Unity Notes specific tokens
+export const UNITY = {
+  // Canvas background
+  canvasBg: '#0a0a0a',
+  canvasDots: 'rgba(255, 255, 255, 0.03)',
+
+  // Card styles
+  card: {
+    bg: 'rgba(30, 30, 30, 0.95)',
+    border: 'rgba(255, 255, 255, 0.1)',
+    borderHover: 'rgba(251, 191, 36, 0.3)',
+    shadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+  },
+
+  // Status bar
+  statusBar: {
+    bg: 'rgba(20, 20, 20, 0.9)',
+    border: 'rgba(255, 255, 255, 0.1)',
+  },
+
+  // Progress colors for node limits
+  progress: {
+    low: '#22c55e',      // 0-50% - green
+    medium: '#fbbf24',   // 50-90% - yellow
+    high: '#ef4444',     // 90-100% - red
+  },
+
+  // Node type colors
+  nodeTypes: {
+    note: '#3b82f6',      // Blue
+    photo: '#8b5cf6',     // Purple
+    link: '#06b6d4',      // Cyan
+    email: '#f59e0b',     // Orange
+    prospect: '#10b981',  // Emerald
+  }
+};
+
 // Effects
 export const EFFECTS = {
   blur: {
@@ -198,5 +235,6 @@ export default {
   BUTTON,
   EFFECTS,
   SPACING,
-  BORDERS
+  BORDERS,
+  UNITY
 };

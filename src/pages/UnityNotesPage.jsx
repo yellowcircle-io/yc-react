@@ -36,6 +36,7 @@ import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
 import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
+import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal } from '../components/unity';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -58,7 +59,7 @@ const CARD_TYPES = {
 };
 
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle }) => {
-  const { fitView, zoomIn, zoomOut, getZoom } = useReactFlow();
+  const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport } = useReactFlow();
   const { sidebarOpen } = useLayout();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -76,9 +77,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     if (isAuthenticated && tier === 'premium') return PRO_NODE_LIMIT;
     return FREE_NODE_LIMIT;
   }, [isAdmin, isAuthenticated, tier]);
-
-  const isAtNodeLimit = nodes.length >= nodeLimit;
-  const nodeUsagePercent = Math.min((nodes.length / nodeLimit) * 100, 100);
 
   // AI Image Analysis hook
   const { analyzeImage, error: aiError, isConfigured: aiConfigured } = useImageAnalysis();
@@ -2018,8 +2016,54 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setNodes((nds) => [...nds, newNode]);
   }, [nodes.length, setNodes, handleInlineConditionEdit]);
 
+  // Pan canvas handler for keyboard navigation
+  const handlePan = useCallback((delta) => {
+    const viewport = getViewport();
+    setViewport({
+      x: viewport.x + delta.x,
+      y: viewport.y + delta.y,
+      zoom: viewport.zoom,
+    });
+  }, [getViewport, setViewport]);
+
+  // Deselect all nodes
+  const handleDeselect = useCallback(() => {
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+  }, [setNodes]);
+
+  // Delete selected nodes
+  const handleDeleteSelected = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected);
+    if (selectedNodes.length === 0) return;
+    const selectedIds = new Set(selectedNodes.map((n) => n.id));
+    setNodes((nds) => nds.filter((n) => !selectedIds.has(n.id)));
+    setEdges((eds) =>
+      eds.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target))
+    );
+  }, [nodes, setNodes, setEdges]);
+
+  // Keyboard shortcuts hook
+  const { showHelp: showShortcutsHelp, setShowHelp: setShowShortcutsHelp } = useKeyboardShortcuts({
+    onSave: handleSaveJourney,
+    onExport: handleExportJSON,
+    onAddCard: () => handleAddCard('note'),
+    onDelete: handleDeleteSelected,
+    onDeselect: handleDeselect,
+    onPan: handlePan,
+    enabled: currentMode === 'notes', // Only enable in notes mode
+  });
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
+      {/* Loading Skeleton - shown while initializing */}
+      {!isInitialized && <LoadingSkeleton nodeCount={4} />}
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <ShortcutsHelpModal
+        show={showShortcutsHelp}
+        onClose={() => setShowShortcutsHelp(false)}
+      />
+
       {/* React Flow Container */}
       <div style={{
         position: 'fixed',
@@ -2140,117 +2184,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       )}
 
       {/* Status Bar - Bottom Right */}
-      <div style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        zIndex: 150,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(8px)',
-        padding: '8px 12px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-      }}>
-        {/* Auto-save indicator */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          fontSize: '10px',
-          color: isSavingLocal ? '#f59e0b' : '#6b7280'
-        }}>
-          <span style={{ fontSize: '12px' }}>{isSavingLocal ? '⏳' : '✓'}</span>
-          <span>{isSavingLocal ? 'Saving...' : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Local'}</span>
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }} />
-
-        {/* Node count with progress bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{
-            width: '40px',
-            height: '4px',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            borderRadius: '2px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${nodeUsagePercent}%`,
-              height: '100%',
-              backgroundColor: nodeUsagePercent >= 90 ? '#ef4444' : nodeUsagePercent >= 70 ? '#f59e0b' : '#10b981',
-              transition: 'width 0.3s ease'
-            }} />
-          </div>
-          <span style={{
-            fontSize: '10px',
-            fontWeight: '600',
-            color: isAtNodeLimit ? '#ef4444' : '#6b7280'
-          }}>
-            {nodes.length}/{nodeLimit}
-          </span>
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: '1px', height: '16px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }} />
-
-        {/* Export button */}
-        <button
-          onClick={handleExportJSON}
-          style={{
-            padding: '4px 8px',
-            fontSize: '9px',
-            fontWeight: '600',
-            border: '1px solid rgba(0, 0, 0, 0.15)',
-            borderRadius: '4px',
-            backgroundColor: 'transparent',
-            color: '#374151',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.2)';
-            e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-            e.target.style.borderColor = 'rgba(0, 0, 0, 0.15)';
-          }}
-          title="Export canvas to JSON file"
-        >
-          ⬇ EXPORT
-        </button>
-
-        {/* Import button */}
-        <button
-          onClick={handleImportJSON}
-          style={{
-            padding: '4px 8px',
-            fontSize: '9px',
-            fontWeight: '600',
-            border: '1px solid rgba(0, 0, 0, 0.15)',
-            borderRadius: '4px',
-            backgroundColor: 'transparent',
-            color: '#374151',
-            cursor: 'pointer',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
-            e.target.style.borderColor = 'rgba(16, 185, 129, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-            e.target.style.borderColor = 'rgba(0, 0, 0, 0.15)';
-          }}
-          title="Import canvas from JSON file"
-        >
-          ⬆ IMPORT
-        </button>
-      </div>
+      <StatusBar
+        isSaving={isSavingLocal}
+        lastSavedAt={lastSavedAt}
+        nodeCount={nodes.length}
+        nodeLimit={nodeLimit}
+        onExport={handleExportJSON}
+        onImport={handleImportJSON}
+        showShortcutsHint={currentMode === 'notes'}
+      />
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
       <div style={{
