@@ -2,21 +2,57 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 10, 2025 at 11:30 AM PST
-**Machine:** Mac Mini
-**Status:** ✅ EOY Roadmap Phases 1-5 Complete - Phase 6 SendGrid ESP Hot-Swap Next
+**Updated:** December 12, 2025 at 7:15 PM PST
+**Machine:** Mac Mini → Transferring to MacBook Air
+**Status:** ✅ P2/P3 Partial Complete - Design tokens, keyboard shortcuts, loading skeleton
 
-**🔴 RESTORE POINT**: `.claude/RESTORE_POINT_NOV18_2025.md` - Complete session state captured, return to this for full context
+**🔴 RESTORE POINTS**:
+- `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
+- `.claude/RESTORE_POINT_NOV18_2025.md` - Full context backup
 
 ---
 
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 10, 2025)
+### Current Status (Dec 12, 2025)
 
-- **Day 15** since Rho exit (Nov 25, 2025)
-- **Status:** ✅ EOY Roadmap Phases 1-5 COMPLETE - Phase 6 SendGrid ESP Hot-Swap next
+- **Day 17** since Rho exit (Nov 25, 2025)
+- **Status:** ✅ P2/P3 Partial Complete (4 of 8 items done)
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
+- **Latest Commit:** `9136a65` - "Feature: Unity Notes P2-P3 - Visual polish + keyboard shortcuts"
+
+### Latest Session (Dec 12, 2025 Evening)
+
+**P2-P3 Unity Notes - Visual Polish + Advanced Features:**
+
+**✅ COMPLETED:**
+- ✅ P2.1: Design tokens - Added `UNITY` section to `src/styles/constants.js`
+  - Canvas colors, card styles, status bar, progress colors, node types
+- ✅ P2.4: Loading skeleton - `src/components/unity/LoadingSkeleton.jsx`
+  - Animated shimmer effect while canvas loads from localStorage
+- ✅ P3.1: Keyboard shortcuts - `src/components/unity/useKeyboardShortcuts.jsx`
+  - Cmd+S (save), Cmd+E (export), Cmd+N (new card), Cmd+/ (help modal)
+  - Arrow keys pan canvas (Shift = faster), Escape deselects, Delete removes
+  - Platform-aware keys (⌘ for Mac, Ctrl for Windows)
+- ✅ StatusBar component - `src/components/unity/StatusBar.jsx`
+  - Dark themed, save indicator, node count, progress bar, export/import
+
+**New Files Created:**
+- `src/components/unity/LoadingSkeleton.jsx`
+- `src/components/unity/StatusBar.jsx`
+- `src/components/unity/useKeyboardShortcuts.jsx`
+- `src/components/unity/ShortcutsHelpModal.jsx`
+- `src/components/unity/index.js` (barrel export)
+
+**⏳ REMAINING P2-P3 (for MacBook Air session):**
+- P2.2: Mobile section dividers component
+- P2.3: Typography rhythm improvements
+- P3.2: Section jump navigation
+- P3.3: Lazy loading for off-screen cards
+
+**Earlier Today (Fixed):**
+- ✅ CI husky failure - Updated prepare script to skip in CI
+- ✅ Runtime nodeLimit error - Moved useMemo before first usage
 
 ---
 
@@ -30,7 +66,7 @@
 | Phase 3 | Trigger System + createProspect API | ✅ COMPLETE |
 | Phase 4 | Contact Dashboard UI + Admin Hub | ✅ COMPLETE |
 | Phase 5 | Blog CMS (Hybrid Firestore/MDX) | ✅ COMPLETE |
-| Phase 6 | SendGrid ESP Hot-Swap | 🔄 NEXT |
+| Phase 6 | SendGrid ESP Hot-Swap | ✅ COMPLETE |
 
 **Phase 4 Completed (Dec 10, 2025):**
 - Admin Hub `/admin` with central dashboard
@@ -66,18 +102,35 @@
 
 ---
 
-### 🔄 Current Phase: Phase 6 - SendGrid ESP Hot-Swap
+### ✅ Phase 6 Complete: SendGrid ESP Hot-Swap (Dec 10, 2025)
 
-**Next Up:**
-- Implement SendGrid adapter (`src/adapters/esp/sendgrid.js`)
-- Add ESP selector UI in outreach settings
-- Test multi-provider email delivery
-- Document ESP switching workflow
+**Implementation:**
+- ESP hot-swap system in Firebase Functions
+- `getESPProvider()` - Provider selection logic
+- `sendViaResend()` / `sendViaSendGrid()` - Provider adapters
+- `sendEmailViaESP()` - Unified sender with provider routing
+- `getESPStatus` endpoint - Configuration status API
+- Per-email provider override via `provider` parameter
 
-**Completed Infrastructure (Phases 1-5):**
+**Configuration:**
+```bash
+# Switch provider
+firebase functions:config:set esp.provider="sendgrid"
+
+# Add SendGrid key
+firebase functions:config:set sendgrid.api_key="SG.YOUR_KEY"
+```
+
+**Status API:** https://us-central1-yellowcircle-app.cloudfunctions.net/getESPStatus
+
+**Documentation:** `docs/ESP_HOT_SWAP_GUIDE.md`
+
+**Completed Infrastructure (All Phases):**
 - ✅ Firestore schemas (contacts, leads, triggerRules)
 - ✅ n8n + Railway deployed
-- ✅ UnityMAP email sending functional (Resend ESP)
+- ✅ UnityMAP email sending functional
+- ✅ Block CMS with ArticleRenderer
+- ✅ ESP hot-swap (Resend + SendGrid)
 - ✅ Admin Hub with Contacts, Trigger Rules, Articles
 - ✅ Blog CMS with Firestore/MDX hybrid
 
@@ -85,7 +138,20 @@
 
 ### ✅ Recently Completed (Dec 10 - Current Session)
 
-1. **Admin Access Tier System Refinement** ✅ DEPLOYED (Dec 10)
+1. **Block-Based CMS Implementation** ✅ DEPLOYED (Dec 10)
+   - Created 13 reusable block components (`src/components/articles/ArticleBlocks.jsx`)
+   - Block types: hero, lead-paragraph, paragraph, section-header, stat-grid, bullet-list, quote, persona-card, numbered-list, action-grid, callout-box, cta-section, sources
+   - Created ArticleRenderer that maps block data to components (`src/components/articles/ArticleRenderer.jsx`)
+   - Created visual BlockEditorPage for admin (`/admin/blocks/:articleId`)
+   - Created duplicate article `why-your-gtm-sucks-v2` using block renderer for validation
+   - Wired ThoughtsPage to useArticles hook (Firestore + MDX support)
+   - **Documentation:** `docs/BLOCK_CMS_GUIDE.md` - Templates and block type reference
+   - **Validation URLs:**
+     - Original (JSX): `/thoughts/why-your-gtm-sucks`
+     - Block-based (v2): `/thoughts/why-your-gtm-sucks-v2`
+     - Block Editor: `/admin/blocks/new`
+
+2. **Admin Access Tier System Refinement** ✅ DEPLOYED (Dec 10)
    - Added `christopher.ramon.cooper@gmail.com` to admin fallback whitelist
    - Fixed search input overflow in ContactDashboardPage, ArticleListPage, ArticleEditorPage
    - Added premium/client access gate to ShortlinkManagerPage (was incorrectly public)
