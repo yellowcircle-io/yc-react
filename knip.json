@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/main.jsx",
+    "src/RouterApp.jsx"
+  ],
+  "project": [
+    "src/**/*.{js,jsx}"
+  ],
+  "ignore": [
+    ".claude/**",
+    "dev-context/**",
+    "functions/**",
+    "scripts/**",
+    "my-project/**",
+    "yellowcircle-outreach/**",
+    "docs/**",
+    "src/archive/**",
+    "*.config.js"
+  ],
+  "ignoreDependencies": [
+    "@builder.io/dev-tools",
+    "@rollup/rollup-linux-x64-gnu",
+    "autoprefixer",
+    "postcss"
+  ]
+}
