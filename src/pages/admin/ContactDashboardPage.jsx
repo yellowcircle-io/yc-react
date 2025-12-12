@@ -43,7 +43,12 @@ import {
   Clock,
   AlertCircle,
   ExternalLink,
-  Home
+  Home,
+  Send,
+  MousePointer,
+  Activity,
+  Target,
+  BarChart3
 } from 'lucide-react';
 
 // ============================================================
@@ -1070,6 +1075,146 @@ const ContactDashboardPage = () => {
                     <p style={{ color: COLORS.text, margin: 0 }}>{formatDate(detailModal.data.createdAt)}</p>
                   </div>
                 </div>
+
+                {/* Engagement Stats */}
+                <div>
+                  <label style={styles.label}>Email Engagement</label>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px',
+                    marginTop: '8px'
+                  }}>
+                    <div style={{
+                      backgroundColor: '#dbeafe',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <Send size={16} style={{ color: '#1d4ed8', marginBottom: '4px' }} />
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#1d4ed8' }}>
+                        {detailModal.data.engagement?.emailsSent || 0}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#3b82f6' }}>Sent</div>
+                    </div>
+                    <div style={{
+                      backgroundColor: '#dcfce7',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <Eye size={16} style={{ color: '#15803d', marginBottom: '4px' }} />
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#15803d' }}>
+                        {detailModal.data.engagement?.emailsOpened || 0}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#22c55e' }}>Opened</div>
+                    </div>
+                    <div style={{
+                      backgroundColor: '#fef3c7',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      textAlign: 'center'
+                    }}>
+                      <MousePointer size={16} style={{ color: '#d97706', marginBottom: '4px' }} />
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#d97706' }}>
+                        {detailModal.data.engagement?.emailsClicked || 0}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#f59e0b' }}>Clicked</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Journey Status */}
+                {detailModal.data.journey && (
+                  <div>
+                    <label style={styles.label}>Journey Status</label>
+                    <div style={{
+                      backgroundColor: COLORS.cardBg,
+                      padding: '14px',
+                      borderRadius: '8px',
+                      marginTop: '8px',
+                      border: `1px solid ${COLORS.border}`
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <Activity size={16} style={{ color: COLORS.primary }} />
+                        <span style={{ fontWeight: '600', color: COLORS.text }}>
+                          {detailModal.data.journey.name || 'Welcome Journey'}
+                        </span>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          backgroundColor: detailModal.data.journey.status === 'completed' ? '#dcfce7' : '#dbeafe',
+                          color: detailModal.data.journey.status === 'completed' ? '#15803d' : '#1d4ed8'
+                        }}>
+                          {detailModal.data.journey.status || 'active'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
+                        Current Node: {detailModal.data.journey.currentNode || 'N/A'}
+                      </div>
+                      {detailModal.data.journey.enrolledAt && (
+                        <div style={{ fontSize: '12px', color: COLORS.textLight, marginTop: '4px' }}>
+                          Enrolled: {formatDate(detailModal.data.journey.enrolledAt)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Assessment Data */}
+                {detailModal.data.assessment && (
+                  <div>
+                    <label style={styles.label}>Assessment Results</label>
+                    <div style={{
+                      backgroundColor: COLORS.cardBg,
+                      padding: '14px',
+                      borderRadius: '8px',
+                      marginTop: '8px',
+                      border: `1px solid ${COLORS.border}`
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          borderRadius: '50%',
+                          backgroundColor: detailModal.data.assessment.score >= 70 ? '#dcfce7' :
+                                          detailModal.data.assessment.score >= 40 ? '#fef3c7' : '#fee2e2',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Target size={24} style={{
+                            color: detailModal.data.assessment.score >= 70 ? '#15803d' :
+                                   detailModal.data.assessment.score >= 40 ? '#d97706' : '#dc2626'
+                          }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.text }}>
+                            {detailModal.data.assessment.score}/100
+                          </div>
+                          <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                            {detailModal.data.assessment.level || 'GTM Health Score'}
+                          </div>
+                        </div>
+                      </div>
+                      {detailModal.data.assessment.recommendations?.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: '600', color: COLORS.textMuted, marginBottom: '6px' }}>
+                            RECOMMENDATIONS
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '13px', color: COLORS.text }}>
+                            {detailModal.data.assessment.recommendations.slice(0, 3).map((rec, i) => (
+                              <li key={i} style={{ marginBottom: '4px' }}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {detailModal.data.tags?.length > 0 && (
                   <div>
                     <label style={styles.label}>Tags</label>
@@ -1092,6 +1237,39 @@ const ContactDashboardPage = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Lifecycle Timeline */}
+                {detailModal.data.lifecycle?.length > 0 && (
+                  <div>
+                    <label style={styles.label}>Lifecycle Timeline</label>
+                    <div style={{
+                      marginTop: '8px',
+                      borderLeft: `2px solid ${COLORS.border}`,
+                      paddingLeft: '16px'
+                    }}>
+                      {detailModal.data.lifecycle.map((event, i) => (
+                        <div key={i} style={{ position: 'relative', paddingBottom: '16px' }}>
+                          <div style={{
+                            position: 'absolute',
+                            left: '-21px',
+                            top: '2px',
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            backgroundColor: i === 0 ? COLORS.primary : COLORS.border
+                          }} />
+                          <div style={{ fontSize: '13px', fontWeight: '500', color: COLORS.text }}>
+                            {event.action}
+                          </div>
+                          <div style={{ fontSize: '12px', color: COLORS.textLight }}>
+                            {formatRelativeTime(event.timestamp)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {detailModal.data.source && (
                   <div>
                     <label style={styles.label}>Source</label>

@@ -66,6 +66,158 @@ const setCors = (response) => {
   response.set("Access-Control-Allow-Headers", "Content-Type");
 };
 
+// ============================================
+// ESP (Email Service Provider) Hot-Swap System
+// ============================================
+
+/**
+ * Get configured ESP provider
+ * Priority: request param > Firebase config > default (resend)
+ */
+const getESPProvider = (requestProvider = null) => {
+  if (requestProvider && ['resend', 'sendgrid'].includes(requestProvider)) {
+    return requestProvider;
+  }
+  return functions.config().esp?.provider || 'resend';
+};
+
+/**
+ * Send email via Resend
+ */
+const sendViaResend = async (options, apiKey) => {
+  const { to, from, subject, html, text, replyTo, tags } = options;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: from || "yellowCircle <hello@yellowcircle.io>",
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text,
+      reply_to: replyTo,
+      tags: tags || []
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Resend API error");
+  }
+
+  const data = await response.json();
+  return { id: data.id, status: "sent", provider: "resend" };
+};
+
+/**
+ * Send email via SendGrid
+ */
+const sendViaSendGrid = async (options, apiKey) => {
+  const { to, from, subject, html, text, replyTo, tags } = options;
+
+  const fromAddress = from || "yellowCircle <hello@yellowcircle.io>";
+  const fromParsed = typeof fromAddress === 'string'
+    ? { email: fromAddress.match(/<(.+)>/)?.[1] || fromAddress, name: fromAddress.match(/(.+) </)?.[1]?.trim() || 'yellowCircle' }
+    : fromAddress;
+
+  const payload = {
+    personalizations: [{
+      to: Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }]
+    }],
+    from: fromParsed,
+    subject,
+    content: []
+  };
+
+  if (text) payload.content.push({ type: 'text/plain', value: text });
+  if (html) payload.content.push({ type: 'text/html', value: html });
+  if (replyTo) payload.reply_to = { email: replyTo };
+  if (tags && tags.length > 0) {
+    payload.categories = tags.map(tag => tag.name || tag.value || tag);
+  }
+
+  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.errors?.[0]?.message || "SendGrid API error");
+  }
+
+  const messageId = response.headers.get('X-Message-Id');
+  return { id: messageId, status: "sent", provider: "sendgrid" };
+};
+
+/**
+ * Unified email sender - routes to configured ESP
+ */
+const sendEmailViaESP = async (options, provider = null) => {
+  const esp = getESPProvider(provider || options.provider);
+
+  let apiKey;
+  if (options.apiKey) {
+    apiKey = options.apiKey;
+  } else if (esp === 'sendgrid') {
+    apiKey = functions.config().sendgrid?.api_key;
+  } else {
+    apiKey = functions.config().resend?.api_key;
+  }
+
+  if (!apiKey) {
+    throw new Error(`${esp} API key not configured. Set firebase functions:config:set ${esp}.api_key="YOUR_KEY"`);
+  }
+
+  if (esp === 'sendgrid') {
+    return sendViaSendGrid(options, apiKey);
+  }
+  return sendViaResend(options, apiKey);
+};
+
+/**
+ * Get current ESP configuration status
+ */
+exports.getESPStatus = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const currentProvider = getESPProvider();
+  const resendConfigured = !!functions.config().resend?.api_key;
+  const sendgridConfigured = !!functions.config().sendgrid?.api_key;
+
+  response.json({
+    currentProvider,
+    providers: {
+      resend: {
+        configured: resendConfigured,
+        freeTier: "100 emails/day"
+      },
+      sendgrid: {
+        configured: sendgridConfigured,
+        freeTier: "100 emails/day"
+      }
+    },
+    switchCommand: `firebase functions:config:set esp.provider="sendgrid"`,
+    configuredProviders: [
+      resendConfigured && 'resend',
+      sendgridConfigured && 'sendgrid'
+    ].filter(Boolean)
+  });
+});
+
 /**
  * Generate Email Content - Proxy for Groq API
  */
@@ -165,7 +317,12 @@ exports.health = functions.https.onRequest((request, response) => {
 });
 
 /**
- * Send Email via Resend API - Proxy to avoid CORS
+ * Send Email via ESP - Hot-swappable provider (Resend or SendGrid)
+ *
+ * Supports provider selection via:
+ * 1. Request body: { provider: "sendgrid" }
+ * 2. Firebase config: esp.provider = "sendgrid"
+ * 3. Default: "resend"
  */
 exports.sendEmail = functions.https.onRequest(async (request, response) => {
   setCors(response);
@@ -181,7 +338,7 @@ exports.sendEmail = functions.https.onRequest(async (request, response) => {
   }
 
   try {
-    const { to, from, subject, html, text, replyTo, tags, apiKey } = request.body;
+    const { to, from, subject, html, text, replyTo, tags, apiKey, provider } = request.body;
 
     if (!to || !subject || (!html && !text)) {
       response.status(400).json({
@@ -190,50 +347,26 @@ exports.sendEmail = functions.https.onRequest(async (request, response) => {
       return;
     }
 
-    // Use user-provided API key first, fall back to Firebase config
-    const resendApiKey = apiKey || functions.config().resend?.api_key;
+    const result = await sendEmailViaESP({
+      to,
+      from,
+      subject,
+      html,
+      text,
+      replyTo,
+      tags,
+      apiKey
+    }, provider);
 
-    if (!resendApiKey) {
-      response.status(500).json({ error: "Resend API key not provided or configured" });
-      return;
-    }
+    console.log(`Email sent via ${result.provider}: ${result.id} to ${to}`);
+    response.json(result);
 
-    const fromAddress = from || "yellowCircle <hello@yellowcircle.io>";
-
-    const resendResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: Array.isArray(to) ? to : [to],
-        subject,
-        html,
-        text,
-        reply_to: replyTo,
-        tags: tags || []
-      })
-    });
-
-    if (!resendResponse.ok) {
-      const error = await resendResponse.json();
-      console.error("Resend API error:", error);
-      response.status(resendResponse.status).json({
-        error: error.message || "Failed to send email",
-        details: error
-      });
-      return;
-    }
-
-    const data = await resendResponse.json();
-    console.log(`Email sent: ${data.id} to ${to}`);
-
-    response.json({ id: data.id, status: "sent", provider: "resend" });
   } catch (error) {
     console.error("SendEmail function error:", error);
-    response.status(500).json({ error: "Internal server error" });
+    response.status(500).json({
+      error: error.message || "Internal server error",
+      provider: getESPProvider()
+    });
   }
 });
 
@@ -265,30 +398,83 @@ const findNextNode = (currentNodeId, edges, sourceHandle = null) => {
 };
 
 /**
- * Helper: Send email via Resend
+ * Helper: Send email via configured ESP (used by journey engine)
+ * @deprecated Use sendEmailViaESP instead for new code
  */
-const sendEmailInternal = async (to, subject, html, resendApiKey) => {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from: "yellowCircle <hello@yellowcircle.io>",
-      to: [to],
-      subject,
-      html
-    })
+const sendEmailInternal = async (to, subject, html, apiKeyOrProvider = null) => {
+  const result = await sendEmailViaESP({
+    to,
+    subject,
+    html,
+    apiKey: typeof apiKeyOrProvider === 'string' && apiKeyOrProvider.startsWith('re_') ? apiKeyOrProvider : null
   });
+  return result.id;
+};
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Resend API error");
+/**
+ * Send lifecycle event notification to n8n for Slack threading
+ * Events: email_sent, email_opened, email_clicked, journey_step, journey_completed, score_changed
+ */
+const sendLifecycleNotification = async (eventType, lead, details = {}) => {
+  const n8nWebhook = functions.config().n8n?.leads_webhook;
+  if (!n8nWebhook) return { skipped: true, reason: 'no_webhook' };
+
+  const payload = {
+    event: eventType,
+    timestamp: new Date().toISOString(),
+    leadId: lead.id || null,
+    email: lead.email || null,
+    lead: {
+      name: lead.name || lead.submittedData?.name || null,
+      email: lead.email || null,
+      company: lead.company || lead.submittedData?.company || null,
+      source: lead.source || null,
+      sourceForm: lead.sourceForm || null
+    },
+    details,
+    slack: {
+      channel: '#leads',
+      message: formatLifecycleMessage(eventType, lead, details)
+    }
+  };
+
+  try {
+    await fetch(n8nWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    console.log(`📣 Lifecycle notification sent: ${eventType} for ${lead.email}`);
+    return { sent: true, event: eventType };
+  } catch (error) {
+    console.error(`❌ Lifecycle notification failed: ${error.message}`);
+    return { sent: false, error: error.message };
   }
+};
 
-  const data = await response.json();
-  return data.id;
+/**
+ * Format lifecycle event message for Slack
+ */
+const formatLifecycleMessage = (eventType, lead, details) => {
+  const email = lead.email || 'Unknown';
+  const name = lead.name || lead.submittedData?.name || '';
+
+  switch (eventType) {
+    case 'email_sent':
+      return `📧 *Email Sent* to ${email}\n• Subject: ${details.subject || 'N/A'}\n• Journey: ${details.journeyName || 'N/A'}`;
+    case 'email_opened':
+      return `👁️ *Email Opened* by ${email}\n• Subject: ${details.subject || 'N/A'}`;
+    case 'email_clicked':
+      return `🖱️ *Link Clicked* by ${email}\n• URL: ${details.url || 'N/A'}`;
+    case 'journey_step':
+      return `📍 *Journey Step* for ${email}\n• Step: ${details.stepName || details.nodeType || 'N/A'}\n• Journey: ${details.journeyName || 'N/A'}`;
+    case 'journey_completed':
+      return `🏁 *Journey Completed* for ${email}\n• Journey: ${details.journeyName || 'N/A'}\n• Duration: ${details.duration || 'N/A'}`;
+    case 'score_changed':
+      return `📊 *Score Updated* for ${email}\n• New Score: ${details.newScore || 'N/A'}\n• Change: ${details.change > 0 ? '+' : ''}${details.change || 0}`;
+    default:
+      return `📌 *${eventType}* for ${email}`;
+  }
 };
 
 /**
@@ -311,7 +497,17 @@ const processProspect = async (prospect, journey, resendApiKey) => {
       // Send the email
       try {
         const subject = currentNode.data.subject || "Message from yellowCircle";
-        const html = currentNode.data.fullBody || currentNode.data.preview || "";
+        const rawBody = currentNode.data.fullBody || currentNode.data.preview || "";
+
+        // Replace template variables
+        const prospectName = prospect.name || prospect.submittedData?.name || "there";
+        const processedBody = rawBody
+          .replace(/\{\{name\}\}/gi, prospectName)
+          .replace(/\{\{email\}\}/gi, prospect.email || "")
+          .replace(/\{\{company\}\}/gi, prospect.company || prospect.submittedData?.company || "");
+
+        // Convert to HTML paragraphs
+        const html = processedBody.split("\n\n").map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
 
         const messageId = await sendEmailInternal(
           prospect.email,
@@ -321,6 +517,14 @@ const processProspect = async (prospect, journey, resendApiKey) => {
         );
 
         console.log(`✅ Email sent to ${prospect.email}: ${messageId}`);
+
+        // Send lifecycle notification for email sent
+        sendLifecycleNotification('email_sent', prospect, {
+          subject,
+          journeyName: journey.title || 'Unknown Journey',
+          nodeId: currentNode.id,
+          messageId
+        }).catch(err => console.error('Lifecycle notification error:', err));
 
         // Record in history
         updatedProspect.history = [
@@ -431,6 +635,18 @@ const processProspect = async (prospect, journey, resendApiKey) => {
           at: admin.firestore.Timestamp.now()
         }
       ];
+
+      // Calculate journey duration
+      const startTime = prospect.history?.[0]?.at?.toDate?.() || new Date();
+      const duration = Math.round((new Date() - startTime) / (1000 * 60 * 60 * 24)); // days
+
+      // Send lifecycle notification for journey completed
+      sendLifecycleNotification('journey_completed', prospect, {
+        journeyName: journey.title || 'Unknown Journey',
+        duration: `${duration} days`,
+        stepsCompleted: prospect.history?.length || 0
+      }).catch(err => console.error('Lifecycle notification error:', err));
+
       console.log(`🏁 ${prospect.email} journey completed`);
       break;
     }
@@ -449,11 +665,12 @@ const processProspect = async (prospect, journey, resendApiKey) => {
 
 /**
  * Process Journeys - Scheduled function
- * Runs every hour to process active journeys (reduced from 15 min for cost)
+ * Runs every 4 hours to process active journeys (for follow-up emails)
+ * NOTE: Welcome emails are sent immediately on lead creation, not via this scheduler
  * Use triggerJourneyProcessing for manual/immediate processing
  */
 exports.processJourneys = functions.pubsub
-  .schedule("every 60 minutes")
+  .schedule("every 4 hours")
   .timeZone("America/New_York")
   .onRun(async (context) => {
     console.log("🚀 Starting journey processing...");
@@ -465,11 +682,17 @@ exports.processJourneys = functions.pubsub
     }
 
     try {
-      // Query active journeys
+      // COST OPTIMIZATION: Query only active journeys
       const journeysSnapshot = await db
         .collection("journeys")
         .where("status", "==", "active")
         .get();
+
+      // Early exit if no active journeys (saves processing time)
+      if (journeysSnapshot.empty) {
+        console.log("📋 No active journeys - exiting early");
+        return null;
+      }
 
       console.log(`📋 Found ${journeysSnapshot.size} active journeys`);
 
@@ -1396,18 +1619,19 @@ const getCachedTriggerRules = async () => {
     return triggerRulesCache;
   }
 
-  // Fetch fresh rules
+  // Fetch fresh rules (fetch all, filter in code to avoid composite index)
   console.log('🔄 Fetching trigger rules from Firestore');
-  const rulesSnapshot = await db.collection('triggerRules')
-    .where('enabled', '==', true)
-    .orderBy('priority', 'asc')
-    .get();
+  const rulesSnapshot = await db.collection('triggerRules').get();
 
-  triggerRulesCache = rulesSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ref: doc.ref,
-    ...doc.data()
-  }));
+  // Filter enabled rules and sort by priority in code
+  triggerRulesCache = rulesSnapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ref: doc.ref,
+      ...doc.data()
+    }))
+    .filter(rule => rule.enabled !== false) // Default to enabled if not explicitly set
+    .sort((a, b) => (a.priority || 999) - (b.priority || 999));
   triggerRulesCacheTime = now;
 
   return triggerRulesCache;
@@ -1517,12 +1741,199 @@ const executeAction = async (action, lead, contactId) => {
       }
 
       const now = admin.firestore.Timestamp.now();
+      const prospectId = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+
+      // Determine starting node and whether to send immediate email
+      let actualStartNodeId = firstNodeId;
+      let immediateEmailSent = false;
+      let emailSentTo = null;
+      let emailResult = null;
+
+      // Check if first node is a short wait (< 10 min) - if so, skip it and send email immediately
+      const firstNode = nodes.find(n => n.id === firstNodeId);
+      if (firstNode?.type === 'waitNode') {
+        const delay = firstNode.data?.delay || 0;
+        const unit = firstNode.data?.unit || 'minutes';
+        const delayMinutes = unit === 'days' ? delay * 24 * 60 :
+                           unit === 'hours' ? delay * 60 : delay;
+
+        if (delayMinutes < 10) {
+          // Skip this wait node and find the next node (should be email)
+          const nextEdge = edges.find(e => e.source === firstNodeId);
+          const nextNodeId = nextEdge?.target;
+          const nextNode = nextNodeId ? nodes.find(n => n.id === nextNodeId) : null;
+
+          if (nextNode?.type === 'emailNode' && resendApiKey) {
+            // Send the email immediately with dynamic content based on source/intent
+            const prospectName = lead.submittedData?.name || 'there';
+            const prospectEmail = lead.email.toLowerCase().trim();
+            const prospectCompany = lead.submittedData?.company || '';
+            const leadSource = lead.source || 'unknown';
+            const sourceForm = lead.sourceForm || '';
+            const assessmentScore = lead.metadata?.score;
+            const assessmentLevel = lead.metadata?.level;
+            const serviceRequested = lead.submittedData?.service || lead.submittedData?.serviceRequested || '';
+            const userMessage = lead.submittedData?.message || '';
+
+            // Determine intent level and personalization
+            const isHighIntent = leadSource === 'assessment' || leadSource === 'unity' || sourceForm === 'unity_gating';
+            const isAssessment = leadSource === 'assessment' || sourceForm === 'growth_health_check';
+            const isUnity = leadSource === 'unity' || sourceForm === 'unity_gating';
+            const isFooter = leadSource === 'footer' || sourceForm === 'contact_modal';
+            const isLeadGate = leadSource === 'lead_gate';
+
+            // Build dynamic email content
+            let dynamicSubject = nextNode.data.subject || 'Thanks for checking out yellowCircle';
+            let dynamicBody = '';
+
+            if (isAssessment && assessmentScore !== undefined) {
+              // High-intent: Assessment completion
+              dynamicSubject = `Your GTM Assessment Results + Next Steps`;
+              dynamicBody = `Hi ${prospectName},
+
+Thanks for taking the GTM Health Assessment — that tells me you're serious about improving your operations.
+
+**Your Score: ${assessmentScore}/100 (${assessmentLevel})**
+
+${assessmentScore >= 70 ? `You're doing better than most. But even at ${assessmentScore}/100, there's likely 20-30% of your marketing tech that's sitting unused. The question is: what's that costing you in missed opportunities?` : assessmentScore >= 40 ? `A score of ${assessmentScore} is common — most companies I work with are in this range. The good news? This usually means there are some quick wins available that can move the needle fast.` : `A score of ${assessmentScore} tells me there's significant room for improvement. But here's the thing — that's actually good news. It means small changes can have a big impact.`}
+
+Based on your results, here's what I'd focus on first:
+
+${lead.metadata?.recommendations ? lead.metadata.recommendations.slice(0, 3).map((r, i) => `${i + 1}. ${r}`).join('\n') : '1. Audit your current tech stack utilization\n2. Review your lead scoring methodology\n3. Map your data flows end-to-end'}
+
+**Want to talk through your specific situation?**
+
+I do a limited number of free discovery calls each month. No pitch — just an honest conversation about what's working, what's not, and what might help.
+
+👉 [Book a 30-minute call](https://cal.com/yellowcircle)
+
+Talk soon,
+Christopher
+
+P.S. — Reply to this email anytime. I read every response.`;
+            } else if (isUnity) {
+              // High-intent: Unity Platform access
+              dynamicSubject = `Your Unity Platform Access + Quick Start Guide`;
+              dynamicBody = `Hi ${prospectName},
+
+Welcome to the Unity Platform! You now have access to tools that most companies pay enterprise rates for.
+
+**What you can do right now:**
+• **AI Chat** — Get instant answers about GTM strategy, marketing ops, and growth challenges
+• **Knowledge Base** — Access frameworks, templates, and guides I've built over 10+ years
+• **Studio** — Create content, analyze data, and build automations
+
+**Quick tip:** Start with the AI Chat. Ask it something specific about a challenge you're facing — it's trained on real GTM problems and solutions.
+
+Since you're exploring the Unity Platform, I'm guessing you're looking for more than just basic advice. You want actionable frameworks you can implement.
+
+**Here are 3 things worth checking out:**
+1. The GTM Health Assessment (if you haven't taken it yet)
+2. The "Why Your GTM Sucks" deep dive
+3. The MarOps maturity framework
+
+Questions? Just reply to this email.
+
+Best,
+Christopher
+
+---
+yellowCircle | Growth Infrastructure Solutions
+https://yellowcircle.io`;
+            } else if (isFooter && serviceRequested) {
+              // Contact form with service interest
+              dynamicSubject = `Re: Your ${serviceRequested} Inquiry`;
+              dynamicBody = `Hi ${prospectName},
+
+Thanks for reaching out about ${serviceRequested}. I'll get back to you personally within 24 hours.
+
+${userMessage ? `I saw your note: "${userMessage.substring(0, 200)}${userMessage.length > 200 ? '...' : ''}"` : ''}
+
+In the meantime, here's some context on how I approach ${serviceRequested.toLowerCase().includes('audit') ? 'audits' : serviceRequested.toLowerCase().includes('consult') ? 'consulting' : 'this type of work'}:
+
+**My approach is different from most consultants:**
+• I don't just make recommendations — I help implement them
+• I've been in-house at companies like DoorDash, Reddit, and LiveIntent, so I know what actually works
+• I focus on quick wins first, then build sustainable systems
+
+${prospectCompany ? `I'll do some research on ${prospectCompany} before we connect so we can make the most of our time.` : ''}
+
+Talk soon,
+Christopher
+
+P.S. — If you want to get started right away, book a discovery call: https://cal.com/yellowcircle`;
+            } else if (isFooter) {
+              // Generic footer contact
+              dynamicSubject = `Thanks for reaching out, ${prospectName}`;
+              dynamicBody = `Hi ${prospectName},
+
+Thanks for getting in touch! I'll review your message and get back to you within 24 hours.
+
+${userMessage ? `I saw your note: "${userMessage.substring(0, 200)}${userMessage.length > 200 ? '...' : ''}"` : ''}
+
+While you wait, here are some resources you might find useful:
+
+1. **GTM Health Assessment** — A free 5-minute assessment that shows where your operations might be leaking value: https://yellowcircle.io/assessment
+
+2. **"Why Your GTM Sucks"** — My breakdown of the most common go-to-market failures: https://yellowcircle.io/thoughts/why-your-gtm-sucks
+
+3. **Book a discovery call** — If you want to skip ahead and talk directly: https://cal.com/yellowcircle
+
+Talk soon,
+Christopher Cooper
+Founder, yellowCircle`;
+            } else {
+              // Default: LeadGate or other sources
+              const rawBody = nextNode.data.fullBody || nextNode.data.preview || '';
+              dynamicBody = rawBody
+                .replace(/\{\{name\}\}/gi, prospectName)
+                .replace(/\{\{email\}\}/gi, prospectEmail)
+                .replace(/\{\{company\}\}/gi, prospectCompany);
+            }
+
+            // Process any remaining template variables
+            const processedBody = dynamicBody
+              .replace(/\{\{name\}\}/gi, prospectName)
+              .replace(/\{\{email\}\}/gi, prospectEmail)
+              .replace(/\{\{company\}\}/gi, prospectCompany)
+              .replace(/\{\{source\}\}/gi, leadSource)
+              .replace(/\{\{score\}\}/gi, assessmentScore || 'N/A');
+
+            const html = processedBody
+              .split('\n\n')
+              .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+              .join('');
+
+            try {
+              emailResult = await sendViaResend({
+                to: prospectEmail,
+                subject: dynamicSubject,
+                html,
+                replyTo: 'christopher@yellowcircle.io'
+              }, resendApiKey);
+
+              console.log(`✅ Immediate welcome email sent to ${prospectEmail}: ${emailResult.id}`);
+              immediateEmailSent = true;
+              emailSentTo = prospectEmail;
+
+              // Move prospect past the email node to the wait node after
+              const emailOutEdge = edges.find(e => e.source === nextNodeId);
+              actualStartNodeId = emailOutEdge?.target || nextNodeId;
+            } catch (emailErr) {
+              console.error(`❌ Failed to send immediate email: ${emailErr.message}`);
+              // Fall back to normal enrollment at wait node
+              actualStartNodeId = firstNodeId;
+            }
+          }
+        }
+      }
+
       const newProspect = {
-        id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        id: prospectId,
         email: lead.email.toLowerCase().trim(),
         name: lead.submittedData?.name || '',
         company: lead.submittedData?.company || '',
-        currentNodeId: firstNodeId,
+        currentNodeId: actualStartNodeId,
         nextExecuteAt: now,
         status: 'active',
         history: [{
@@ -1533,9 +1944,21 @@ const executeAction = async (action, lead, contactId) => {
         }]
       };
 
+      // If email was sent, add that to history and update node position
+      if (immediateEmailSent) {
+        newProspect.history.push({
+          action: 'sent',
+          at: now,
+          nodeId: nodes.find(n => n.type === 'emailNode')?.id,
+          emailId: emailResult?.id,
+          to: emailSentTo
+        });
+      }
+
       await journeyRef.update({
         prospects: [...(prospects || []), newProspect],
         'stats.totalProspects': (prospects || []).length + 1,
+        'stats.sent': (journey.stats?.sent || 0) + (immediateEmailSent ? 1 : 0),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
@@ -1555,7 +1978,13 @@ const executeAction = async (action, lead, contactId) => {
         }
       }
 
-      return { enrolled: true, journeyId, prospectId: newProspect.id };
+      return {
+        enrolled: true,
+        journeyId,
+        prospectId: newProspect.id,
+        immediateEmailSent,
+        emailSentTo
+      };
     }
 
     case 'add_tag': {
@@ -1563,10 +1992,14 @@ const executeAction = async (action, lead, contactId) => {
       if (!tags || !contactId) return { skipped: true };
 
       const contactRef = db.collection('contacts').doc(contactId);
-      await contactRef.update({
+      // Use set with merge to create contact if doesn't exist
+      await contactRef.set({
+        email: lead.email.toLowerCase().trim(),
+        name: lead.submittedData?.name || '',
         tags: admin.firestore.FieldValue.arrayUnion(...tags),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
 
       return { tagged: true, tags };
     }
@@ -1576,30 +2009,302 @@ const executeAction = async (action, lead, contactId) => {
       if (!scoreAdjustment || !contactId) return { skipped: true };
 
       const contactRef = db.collection('contacts').doc(contactId);
-      await contactRef.update({
+
+      // Get current score for notification
+      const contactSnap = await contactRef.get();
+      const currentScore = contactSnap.exists ? (contactSnap.data().score || 0) : 0;
+      const newScore = currentScore + scoreAdjustment;
+
+      // Use set with merge to create contact if doesn't exist
+      await contactRef.set({
+        email: lead.email.toLowerCase().trim(),
+        name: lead.submittedData?.name || '',
         score: admin.firestore.FieldValue.increment(scoreAdjustment),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      // Send lifecycle notification for score change (only for significant changes)
+      if (Math.abs(scoreAdjustment) >= 10) {
+        sendLifecycleNotification('score_changed', lead, {
+          previousScore: currentScore,
+          newScore: newScore,
+          change: scoreAdjustment,
+          reason: lead.source || 'trigger_rule'
+        }).catch(err => console.error('Lifecycle notification error:', err));
+      }
 
       return { scoreUpdated: true, adjustment: scoreAdjustment };
     }
 
     case 'notify_slack': {
-      if (!slackWebhook) return { skipped: true, reason: 'no_webhook' };
+      // Use n8n webhook for threaded Slack notifications
+      // n8n manages thread_ts per lead for conversation threading
+      const n8nWebhook = functions.config().n8n?.leads_webhook;
 
-      const { channel, message } = action.config;
+      if (!n8nWebhook && !slackWebhook) {
+        return { skipped: true, reason: 'no_webhook_configured' };
+      }
+
+      const { channel, message, eventType } = action.config;
       const finalMessage = replaceTemplateVars(message, lead);
 
-      await fetch(slackWebhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channel: channel || '#leads',
-          text: finalMessage
-        })
-      });
+      // Build structured payload for n8n
+      const payload = {
+        // Event metadata
+        event: eventType || 'new_lead',
+        timestamp: new Date().toISOString(),
 
-      return { notified: true, channel };
+        // Lead identification (for thread lookup)
+        leadId: lead.id || null,
+        email: lead.email || null,
+
+        // Lead details
+        lead: {
+          name: lead.submittedData?.name || null,
+          email: lead.email || null,
+          company: lead.submittedData?.company || null,
+          phone: lead.submittedData?.phone || null,
+          source: lead.source || null,
+          sourceForm: lead.sourceForm || null,
+          createdAt: lead.createdAt?.toDate?.()?.toISOString() || null
+        },
+
+        // Assessment data if available
+        assessment: lead.assessmentScore !== undefined ? {
+          score: lead.assessmentScore,
+          level: lead.assessmentLevel,
+          categories: lead.submittedData?.categoryScores || null,
+          recommendations: lead.submittedData?.recommendations || null
+        } : null,
+
+        // Service interest
+        serviceInterest: lead.submittedData?.service || lead.submittedData?.interest || null,
+
+        // Slack preferences
+        slack: {
+          channel: channel || '#leads',
+          message: finalMessage
+        }
+      };
+
+      // Prefer n8n webhook (supports threading), fall back to direct Slack
+      if (n8nWebhook) {
+        await fetch(n8nWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        return { notified: true, via: 'n8n', channel };
+      } else {
+        // Fallback to direct Slack (no threading)
+        await fetch(slackWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel: channel || '#leads',
+            text: finalMessage
+          })
+        });
+        return { notified: true, via: 'slack_direct', channel };
+      }
+    }
+
+    case 'notify_email': {
+      // Send internal notification email to team
+      // COST OPTIMIZATION: Can configure highIntentOnly to skip low-intent leads
+      const { to, subject, template, highIntentOnly } = action.config;
+
+      // Build notification email body (declare these early so highIntentOnly check can use them)
+      const leadName = lead.submittedData?.name || 'Unknown';
+      const leadEmail = lead.email || 'No email';
+      const leadSource = lead.source || 'Unknown';
+      const leadSourceForm = lead.sourceForm || 'Unknown';
+
+      // Check if we should skip this notification based on intent
+      const isHighIntent = leadSource === 'assessment' || leadSource === 'unity' ||
+                          leadSourceForm === 'unity_gating' || leadSourceForm === 'growth_health_check';
+
+      if (highIntentOnly && !isHighIntent) {
+        console.log(`📧 Skipping internal notification for low-intent lead: ${leadEmail} (source: ${leadSource})`);
+        return { skipped: true, reason: 'low_intent_lead' };
+      }
+
+      const notifyTo = to || 'christopher@yellowcircle.io';
+      const notifySubject = replaceTemplateVars(subject || 'New Lead: {{email}}', lead);
+      const leadMessage = lead.submittedData?.message || 'No message';
+      const leadService = lead.submittedData?.service || lead.submittedData?.serviceRequested || 'Not specified';
+      const leadCompany = lead.submittedData?.company || 'Not specified';
+      const leadScore = lead.metadata?.score !== undefined ? lead.metadata.score : 'N/A';
+      const leadLevel = lead.metadata?.level || 'N/A';
+
+      // Assessment-specific data
+      const isAssessment = leadSource === 'assessment' || leadSourceForm === 'growth_health_check';
+      const categoryScores = lead.metadata?.categoryScores || {};
+      const recommendations = lead.metadata?.recommendations || lead.submittedData?.recommendations || [];
+
+      let htmlBody = `
+        <h2>New Lead Captured</h2>
+        <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Name</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadName}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Email</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadEmail}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Source</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadSource} / ${leadSourceForm}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Service Interest</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadService}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Company</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadCompany}</td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Message</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadMessage}</td></tr>
+        </table>
+      `;
+
+      // Add assessment details if applicable
+      if (isAssessment) {
+        htmlBody += `
+          <h3 style="margin-top: 20px;">Assessment Results</h3>
+          <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+            <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Score</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadScore}/100</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Level</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${leadLevel}</td></tr>
+          </table>
+        `;
+
+        if (Object.keys(categoryScores).length > 0) {
+          htmlBody += `<h4 style="margin-top: 15px;">Category Scores</h4><ul>`;
+          for (const [cat, score] of Object.entries(categoryScores)) {
+            htmlBody += `<li><strong>${cat}:</strong> ${score}</li>`;
+          }
+          htmlBody += `</ul>`;
+        }
+
+        if (recommendations.length > 0) {
+          const recsArray = Array.isArray(recommendations) ? recommendations : recommendations.split(', ');
+          htmlBody += `<h4 style="margin-top: 15px;">Recommendations</h4><ul>`;
+          for (const rec of recsArray) {
+            htmlBody += `<li>${rec}</li>`;
+          }
+          htmlBody += `</ul>`;
+        }
+      }
+
+      htmlBody += `
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          Captured at: ${new Date().toISOString()}<br>
+          Lead ID: ${lead.id || 'N/A'}
+        </p>
+      `;
+
+      try {
+        await sendEmailViaESP({
+          to: notifyTo,
+          subject: notifySubject,
+          html: htmlBody,
+          tags: [{ name: 'internal-notification' }]
+        });
+        console.log(`📧 Internal notification sent to ${notifyTo}`);
+        return { emailNotified: true, to: notifyTo };
+      } catch (emailErr) {
+        console.error(`❌ Failed to send internal notification: ${emailErr.message}`);
+        return { emailNotified: false, error: emailErr.message };
+      }
+    }
+
+    case 'send_assessment_results': {
+      // Send assessment results to the user who completed it
+      const leadEmail = lead.email;
+      const leadName = lead.submittedData?.name || 'there';
+      const score = lead.metadata?.score || lead.submittedData?.assessmentScore || 0;
+      const level = lead.metadata?.level || lead.submittedData?.assessmentLevel || 'Unknown';
+      const categoryScores = lead.metadata?.categoryScores || {};
+      const recommendations = lead.metadata?.recommendations || lead.submittedData?.recommendations || [];
+      const recsArray = Array.isArray(recommendations) ? recommendations : (recommendations ? recommendations.split(', ') : []);
+
+      // Determine health indicator color/emoji
+      let healthEmoji = '🔴';
+      let healthColor = '#e74c3c';
+      let healthLabel = 'Critical';
+      if (score >= 80) {
+        healthEmoji = '🟢';
+        healthColor = '#2ecc71';
+        healthLabel = 'Healthy';
+      } else if (score >= 60) {
+        healthEmoji = '🟡';
+        healthColor = '#f39c12';
+        healthLabel = 'Moderate';
+      } else if (score >= 40) {
+        healthEmoji = '🟠';
+        healthColor = '#e67e22';
+        healthLabel = 'At Risk';
+      }
+
+      // Build category scores HTML
+      let categoryHTML = '';
+      if (Object.keys(categoryScores).length > 0) {
+        categoryHTML = '<h3 style="margin-top: 25px; color: #333;">Category Breakdown</h3><table style="border-collapse: collapse; width: 100%; max-width: 500px;">';
+        for (const [cat, catScore] of Object.entries(categoryScores)) {
+          const catColor = catScore >= 80 ? '#2ecc71' : catScore >= 60 ? '#f39c12' : catScore >= 40 ? '#e67e22' : '#e74c3c';
+          categoryHTML += `<tr><td style="padding: 10px; border-bottom: 1px solid #eee;">${cat}</td><td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: ${catColor}; font-weight: bold;">${catScore}/100</td></tr>`;
+        }
+        categoryHTML += '</table>';
+      }
+
+      // Build recommendations HTML
+      let recsHTML = '';
+      if (recsArray.length > 0) {
+        recsHTML = '<h3 style="margin-top: 25px; color: #333;">Recommended Next Steps</h3><ul style="padding-left: 20px;">';
+        for (const rec of recsArray) {
+          recsHTML += `<li style="margin-bottom: 8px;">${rec}</li>`;
+        }
+        recsHTML += '</ul>';
+      }
+
+      const assessmentResultsHTML = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #333; margin-bottom: 5px;">Your GTM Health Assessment Results</h1>
+          <p style="color: #666; margin-top: 0;">Hi ${leadName}, thanks for completing the Growth Health Check!</p>
+
+          <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 12px; padding: 30px; text-align: center; margin: 25px 0;">
+            <div style="font-size: 48px; margin-bottom: 10px;">${healthEmoji}</div>
+            <div style="font-size: 64px; font-weight: bold; color: ${healthColor};">${score}</div>
+            <div style="font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 1px;">out of 100</div>
+            <div style="margin-top: 15px; font-size: 18px; color: ${healthColor}; font-weight: 600;">${level} - ${healthLabel}</div>
+          </div>
+
+          ${categoryHTML}
+
+          ${recsHTML}
+
+          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+            <strong>What's next?</strong><br>
+            Most companies I work with are leaving 30-50% of their marketing tech capabilities unused. Want to see exactly where the gaps are in your stack?
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://cal.com/yellowcircle" style="display: inline-block; background: #fbbf24; color: #000; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">Book a Free Discovery Call</a>
+          </div>
+
+          <p style="color: #666; font-size: 14px;">Questions? Just reply to this email — I read every response.</p>
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+          <p style="color: #999; font-size: 12px;">
+            Christopher Cooper<br>
+            Founder, yellowCircle<br>
+            <a href="https://yellowcircle.io" style="color: #fbbf24;">yellowcircle.io</a>
+          </p>
+        </div>
+      `;
+
+      try {
+        await sendEmailViaESP({
+          to: leadEmail,
+          subject: `Your GTM Health Score: ${score}/100 - ${level}`,
+          html: assessmentResultsHTML,
+          replyTo: 'christopher@yellowcircle.io',
+          tags: [{ name: 'assessment-results' }]
+        });
+        console.log(`📊 Assessment results sent to ${leadEmail}`);
+        return { assessmentResultsSent: true, to: leadEmail, score };
+      } catch (emailErr) {
+        console.error(`❌ Failed to send assessment results: ${emailErr.message}`);
+        return { assessmentResultsSent: false, error: emailErr.message };
+      }
     }
 
     case 'send_webhook': {
@@ -2169,5 +2874,788 @@ exports.createProspect = functions.https.onRequest(async (request, response) => 
   } catch (error) {
     console.error("❌ createProspect error:", error);
     response.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// SEED WELCOME JOURNEY
+// One-time setup endpoint to create welcome journey + trigger rule
+// ============================================================
+
+exports.seedWelcomeJourney = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  // Auth check
+  const adminToken = request.headers["x-admin-token"];
+  const expectedToken = functions.config().admin?.token || "yc-admin-2025";
+
+  if (adminToken !== expectedToken) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const WELCOME_JOURNEY_ID = "welcome-new-leads";
+  const TRIGGER_RULE_ID = "welcome-new-leads-rule";
+  const ASSESSMENT_RULE_ID = "assessment-results-rule";
+  const SCRIPT_VERSION = "1.2.0"; // Sync with scripts/seed-welcome-journey.cjs
+
+  // Welcome email content
+  const welcomeEmailContent = `Hi {{name}},
+
+Thanks for checking out yellowCircle! I'm Christopher, and I help B2B companies fix their go-to-market operations.
+
+You just accessed one of our tools, which means you're probably dealing with one of these challenges:
+• Marketing and sales aren't aligned on what "qualified" means
+• Your tech stack is expensive but underutilized
+• Attribution feels like a guessing game
+• Your team is drowning in operational work instead of strategic work
+
+Sound familiar? You're not alone. I've spent 10+ years in marketing operations at companies like DoorDash, Reddit, and LiveIntent, and I've seen these patterns everywhere.
+
+**Here's what I'd suggest:**
+
+1. **Take our GTM Health Assessment** (if you haven't already) — it's free and takes 15 minutes: https://yellowcircle.io/assessment
+
+2. **Read "Why Your GTM Sucks"** — my deep dive into why most go-to-market strategies fail: https://yellowcircle.io/thoughts/why-your-gtm-sucks
+
+3. **Book a free discovery call** — if you want to talk through your specific situation: https://cal.com/yellowcircle
+
+No pitch, no pressure. Just honest conversation about what's actually broken and what might help.
+
+Talk soon,
+Christopher Cooper
+Founder, yellowCircle
+
+P.S. — Reply to this email anytime. I read every response.`;
+
+  const followUpEmailContent = `Hi {{name}},
+
+Quick follow-up from my earlier email.
+
+I wanted to share something that might be useful: most companies I talk to are spending $50K-$200K/year on marketing technology, but only using about 30% of what they've bought.
+
+The problem isn't the tools. It's the organizational structure around them.
+
+**Three questions to ask yourself:**
+
+1. Does your marketing ops person spend more time pulling reports than building systems?
+2. Can your sales team trust the lead scoring without manually checking each lead?
+3. When attribution numbers don't match, do you know which source to believe?
+
+If you answered "no" to any of these, it's not a tool problem — it's an operations architecture problem.
+
+I put together a free guide on how to diagnose these issues. Want me to send it over?
+
+Just reply "yes" and I'll send it your way.
+
+Best,
+Christopher
+
+---
+yellowCircle | Growth Infrastructure Solutions
+https://yellowcircle.io`;
+
+  try {
+    // 1. Create Welcome Journey
+    const journeyRef = db.collection("journeys").doc(WELCOME_JOURNEY_ID);
+    const existingJourney = await journeyRef.get();
+
+    // Preserve existing stats and prospects if updating
+    const existingData = existingJourney.exists ? existingJourney.data() : {};
+
+    const journeyData = {
+      id: WELCOME_JOURNEY_ID,
+      title: "Welcome - New Leads",
+      description: "Automated welcome sequence for new leads from website captures",
+      status: "active",
+
+      // Sync metadata - marks this journey as script-managed
+      _sync: {
+        source: "script",
+        scriptPath: "scripts/seed-welcome-journey.cjs",
+        scriptVersion: SCRIPT_VERSION,
+        lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+        allowUIEdits: false,
+        syncEndpoint: "seedWelcomeJourney"
+      },
+
+      nodes: [
+        {
+          id: "prospect-entry",
+          type: "prospectNode",
+          position: { x: 250, y: 50 },
+          data: {
+            label: "New Leads",
+            count: 0,
+            segment: "website_captures",
+            source: "trigger_rule",
+            tags: ["welcome-sequence"],
+            prospects: []
+          }
+        },
+        // Enrichment wait - allows time for data enrichment before sending
+        {
+          id: "enrichment-wait",
+          type: "waitNode",
+          position: { x: 250, y: 150 },
+          data: {
+            label: "Enrichment Wait",
+            delay: 5,
+            unit: "minutes",
+            description: "Short delay for data enrichment (company, role, etc.)"
+          }
+        },
+        {
+          id: "welcome-email",
+          type: "emailNode",
+          position: { x: 250, y: 280 },
+          data: {
+            label: "Welcome Email",
+            subject: "Thanks for checking out yellowCircle",
+            preview: welcomeEmailContent.substring(0, 200) + "...",
+            fullBody: welcomeEmailContent,
+            status: "active"
+          }
+        },
+        {
+          id: "wait-3-days",
+          type: "waitNode",
+          position: { x: 250, y: 410 },
+          data: {
+            label: "Wait 3 Days",
+            delay: 3,
+            unit: "days"
+          }
+        },
+        {
+          id: "followup-email",
+          type: "emailNode",
+          position: { x: 250, y: 540 },
+          data: {
+            label: "Follow-up Email",
+            subject: "Quick question about your GTM operations",
+            preview: followUpEmailContent.substring(0, 200) + "...",
+            fullBody: followUpEmailContent,
+            status: "active"
+          }
+        },
+        {
+          id: "exit-completed",
+          type: "exitNode",
+          position: { x: 250, y: 670 },
+          data: {
+            label: "Sequence Complete",
+            exitType: "completed"
+          }
+        }
+      ],
+
+      edges: [
+        { id: "e0", source: "prospect-entry", target: "enrichment-wait", type: "default" },
+        { id: "e1", source: "enrichment-wait", target: "welcome-email", type: "default" },
+        { id: "e2", source: "welcome-email", target: "wait-3-days", type: "default" },
+        { id: "e3", source: "wait-3-days", target: "followup-email", type: "default" },
+        { id: "e4", source: "followup-email", target: "exit-completed", type: "default" }
+      ],
+
+      // Preserve existing prospects
+      prospects: existingData.prospects || [],
+
+      stats: {
+        nodeCount: 6,
+        mapNodeCount: 6,
+        emailCount: 2,
+        // Preserve existing stats
+        totalProspects: existingData.stats?.totalProspects || 0,
+        sent: existingData.stats?.sent || 0,
+        opened: existingData.stats?.opened || 0,
+        clicked: existingData.stats?.clicked || 0,
+        completed: existingData.stats?.completed || 0
+      },
+
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!existingJourney.exists) {
+      journeyData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    await journeyRef.set(journeyData, { merge: true });
+    console.log(`✅ Journey created/updated: ${WELCOME_JOURNEY_ID}`);
+
+    // 2. Create Trigger Rule
+    const ruleRef = db.collection("triggerRules").doc(TRIGGER_RULE_ID);
+    const existingRule = await ruleRef.get();
+
+    const ruleData = {
+      name: "Welcome Sequence - New Leads",
+      description: "Auto-enroll new leads from website captures into welcome journey",
+      enabled: true,
+      priority: 10,
+
+      trigger: {
+        type: "lead_created",
+        conditions: [
+          {
+            field: "source",
+            operator: "in",
+            value: ["lead_gate", "footer", "assessment", "sso"],
+            caseSensitive: false
+          }
+        ],
+        matchMode: "any"
+      },
+
+      actions: [
+        {
+          type: "add_tag",
+          config: { tags: ["welcome-sent", "website-lead"] }
+        },
+        {
+          type: "update_score",
+          config: { scoreAdjustment: 10 }
+        },
+        {
+          type: "notify_email",
+          config: {
+            to: "christopher@yellowcircle.io",
+            subject: "New Lead: {{email}} from {{source}}"
+          }
+        },
+        {
+          type: "notify_slack",
+          config: {
+            channel: "#leads",
+            message: "🎯 *New Lead Captured*\n• Email: {{email}}\n• Source: {{source}}\n• Name: {{name}}\n• Company: {{company}}"
+          }
+        },
+        {
+          type: "enroll_journey",
+          config: { journeyId: WELCOME_JOURNEY_ID }
+        }
+      ],
+
+      dedup: {
+        enabled: true,
+        strategy: "email_journey",
+        windowSeconds: 86400 * 7
+      },
+
+      stats: {
+        triggered: 0,
+        actionsExecuted: 0,
+        skippedDedupe: 0,
+        errors: 0
+      },
+
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!existingRule.exists) {
+      ruleData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    await ruleRef.set(ruleData, { merge: true });
+    console.log(`✅ Trigger rule created/updated: ${TRIGGER_RULE_ID}`);
+
+    // 3. Create Assessment Results Trigger Rule
+    const assessmentRuleRef = db.collection("triggerRules").doc(ASSESSMENT_RULE_ID);
+    const existingAssessmentRule = await assessmentRuleRef.get();
+
+    const assessmentRuleData = {
+      name: "Assessment Results - Send to User",
+      description: "Send assessment results email to users who complete the Growth Health Check",
+      enabled: true,
+      priority: 5, // Higher priority than welcome (runs first)
+
+      trigger: {
+        type: "lead_created",
+        conditions: [
+          {
+            field: "source",
+            operator: "eq",
+            value: "assessment",
+            caseSensitive: false
+          }
+        ],
+        matchMode: "all"
+      },
+
+      actions: [
+        {
+          type: "add_tag",
+          config: { tags: ["assessment-completed"] }
+        },
+        {
+          type: "send_assessment_results",
+          config: {}
+        }
+      ],
+
+      dedup: {
+        enabled: true,
+        strategy: "email_journey",
+        windowSeconds: 86400 // 1 day - allow re-assessment after a day
+      },
+
+      stats: {
+        triggered: 0,
+        actionsExecuted: 0,
+        skippedDedupe: 0,
+        errors: 0
+      },
+
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!existingAssessmentRule.exists) {
+      assessmentRuleData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    await assessmentRuleRef.set(assessmentRuleData, { merge: true });
+    console.log(`✅ Assessment trigger rule created/updated: ${ASSESSMENT_RULE_ID}`);
+
+    // Clear trigger rules cache
+    invalidateTriggerRulesCache();
+
+    response.json({
+      success: true,
+      sync: {
+        source: "script",
+        scriptVersion: SCRIPT_VERSION,
+        scriptPath: "scripts/seed-welcome-journey.cjs",
+        syncedAt: new Date().toISOString(),
+        note: "This journey is script-managed. Edit script and re-sync for changes."
+      },
+      journey: {
+        id: WELCOME_JOURNEY_ID,
+        title: journeyData.title,
+        nodeCount: journeyData.stats.nodeCount,
+        emailCount: journeyData.stats.emailCount,
+        status: journeyData.status,
+        created: !existingJourney.exists,
+        updated: existingJourney.exists
+      },
+      triggerRules: {
+        welcome: {
+          id: TRIGGER_RULE_ID,
+          name: ruleData.name,
+          enabled: ruleData.enabled,
+          triggers: ruleData.trigger.conditions[0].value,
+          actions: ruleData.actions.map(a => a.type),
+          created: !existingRule.exists
+        },
+        assessment: {
+          id: ASSESSMENT_RULE_ID,
+          name: assessmentRuleData.name,
+          enabled: assessmentRuleData.enabled,
+          triggers: "source = assessment",
+          actions: assessmentRuleData.actions.map(a => a.type),
+          created: !existingAssessmentRule.exists
+        }
+      },
+      flows: {
+        allLeads: [
+          "1. Lead created → Welcome trigger rule matches",
+          "2. Internal notification email sent to christopher@yellowcircle.io",
+          "3. Enrolls in welcome journey → Immediate welcome email",
+          "4. 3-day wait → Follow-up email sent"
+        ],
+        assessmentLeads: [
+          "1. Lead created → Assessment trigger rule matches (priority 5)",
+          "2. Assessment results email sent to user with score/recommendations",
+          "3. Then welcome trigger rule also fires (priority 10)"
+        ]
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ seedWelcomeJourney error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// TEST LEAD CAPTURE - Full Flow Testing
+// Creates a test lead and returns complete flow results
+// ============================================================
+
+exports.testLeadCapture = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  // Auth check
+  const adminToken = request.headers["x-admin-token"];
+  const expectedToken = functions.config().admin?.token || "yc-admin-2025";
+
+  if (adminToken !== expectedToken) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const {
+    email = `test-${Date.now()}@yellowcircle.io`,
+    name = "Test User",
+    source = "lead_gate",
+    sourceTool = "test-endpoint",
+    dryRun = false,
+    skipEmail = false
+  } = request.body || {};
+
+  const flowResults = {
+    timestamp: new Date().toISOString(),
+    input: { email, name, source, sourceTool, dryRun, skipEmail },
+    steps: [],
+    lead: null,
+    contact: null,
+    triggersEvaluated: [],
+    triggersMatched: [],
+    actionsExecuted: [],
+    journeyEnrollment: null,
+    emailSent: null,
+    errors: []
+  };
+
+  try {
+    // Step 1: Create Lead
+    flowResults.steps.push({ step: 1, action: "create_lead", status: "starting" });
+
+    const leadId = `test-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+    const leadData = {
+      email: email.toLowerCase().trim(),
+      submittedData: {
+        name,
+        company: "Test Company",
+        tool: sourceTool
+      },
+      source,
+      sourceTool,
+      sourceForm: null,
+      attribution: {
+        utmSource: "test",
+        utmMedium: "api",
+        utmCampaign: "test_lead_capture"
+      },
+      context: {
+        userAgent: "TestLeadCapture/1.0",
+        device: "api"
+      },
+      status: "new",
+      resolution: {
+        contactId: null,
+        resolvedAt: null,
+        resolvedBy: null
+      },
+      triggers: {
+        rulesEvaluated: [],
+        rulesMatched: [],
+        actionsExecuted: []
+      },
+      capturedAt: admin.firestore.Timestamp.now(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!dryRun) {
+      await db.collection("leads").doc(leadId).set(leadData);
+    }
+
+    flowResults.lead = { id: leadId, ...leadData };
+    flowResults.steps[0].status = "completed";
+    flowResults.steps[0].leadId = leadId;
+
+    // Step 2: Create/Update Contact
+    flowResults.steps.push({ step: 2, action: "upsert_contact", status: "starting" });
+
+    const contactId = generateContactId(email);
+    const contactRef = db.collection("contacts").doc(contactId);
+    const existingContact = await contactRef.get();
+
+    const contactData = {
+      email: email.toLowerCase().trim(),
+      name,
+      company: "Test Company",
+      source: {
+        original: source,
+        medium: "api",
+        campaign: "test_lead_capture"
+      },
+      score: existingContact.exists ? (existingContact.data().score || 0) : 0,
+      tags: existingContact.exists ? (existingContact.data().tags || []) : [],
+      journeys: existingContact.exists ? (existingContact.data().journeys || { active: [], history: [] }) : { active: [], history: [] },
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!existingContact.exists) {
+      contactData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    if (!dryRun) {
+      await contactRef.set(contactData, { merge: true });
+    }
+
+    flowResults.contact = { id: contactId, created: !existingContact.exists, ...contactData };
+    flowResults.steps[1].status = "completed";
+    flowResults.steps[1].contactId = contactId;
+    flowResults.steps[1].contactCreated = !existingContact.exists;
+
+    // Step 3: Evaluate Trigger Rules
+    flowResults.steps.push({ step: 3, action: "evaluate_triggers", status: "starting" });
+
+    const rules = await getCachedTriggerRules();
+    flowResults.triggersEvaluated = rules.map(r => ({ id: r.id, name: r.name }));
+
+    for (const rule of rules) {
+      if (rule.trigger?.type !== "lead_created") continue;
+
+      // Evaluate conditions
+      const conditions = rule.trigger?.conditions || [];
+      let matches = true;
+
+      if (conditions.length > 0) {
+        const matchMode = rule.trigger?.matchMode || "all";
+        const results = conditions.map(cond => {
+          const value = leadData[cond.field] || leadData.submittedData?.[cond.field];
+
+          switch (cond.operator) {
+            case "equals":
+              return String(value).toLowerCase() === String(cond.value).toLowerCase();
+            case "in":
+              return Array.isArray(cond.value) && cond.value.map(v => v.toLowerCase()).includes(String(value).toLowerCase());
+            case "contains":
+              return String(value).toLowerCase().includes(String(cond.value).toLowerCase());
+            default:
+              return false;
+          }
+        });
+
+        matches = matchMode === "all" ? results.every(r => r) : results.some(r => r);
+      }
+
+      if (matches) {
+        flowResults.triggersMatched.push({ id: rule.id, name: rule.name });
+
+        // Execute actions
+        for (const action of rule.actions || []) {
+          const actionResult = {
+            ruleId: rule.id,
+            ruleName: rule.name,
+            type: action.type,
+            config: action.config,
+            result: null,
+            error: null
+          };
+
+          try {
+            switch (action.type) {
+              case "add_tag": {
+                const tags = action.config?.tags || [];
+                if (!dryRun && tags.length > 0) {
+                  await contactRef.update({
+                    tags: admin.firestore.FieldValue.arrayUnion(...tags),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                  });
+                }
+                actionResult.result = { tagged: true, tags };
+                break;
+              }
+
+              case "update_score": {
+                const adjustment = action.config?.scoreAdjustment || 0;
+                if (!dryRun && adjustment !== 0) {
+                  await contactRef.update({
+                    score: admin.firestore.FieldValue.increment(adjustment),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                  });
+                }
+                actionResult.result = { scoreUpdated: true, adjustment };
+                break;
+              }
+
+              case "enroll_journey": {
+                const journeyId = action.config?.journeyId;
+                if (!journeyId) {
+                  actionResult.error = "No journeyId specified";
+                  break;
+                }
+
+                const journeyRef = db.collection("journeys").doc(journeyId);
+                const journeySnap = await journeyRef.get();
+
+                if (!journeySnap.exists) {
+                  actionResult.error = `Journey ${journeyId} not found`;
+                  break;
+                }
+
+                const journey = journeySnap.data();
+                const { nodes, edges, prospects } = journey;
+
+                // Find first node after prospect node
+                let firstNodeId = null;
+                const prospectNode = nodes.find(n => n.type === "prospectNode");
+                if (prospectNode) {
+                  const outEdge = edges.find(e => e.source === prospectNode.id);
+                  firstNodeId = outEdge?.target || null;
+                }
+                if (!firstNodeId && nodes.length > 0) {
+                  firstNodeId = nodes[0].id;
+                }
+
+                const now = admin.firestore.Timestamp.now();
+                const newProspect = {
+                  id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                  email: email.toLowerCase().trim(),
+                  name: name || "",
+                  company: "Test Company",
+                  currentNodeId: firstNodeId,
+                  nextExecuteAt: now,
+                  status: "active",
+                  history: [{
+                    action: "enrolled",
+                    at: now,
+                    source: "test_lead_capture",
+                    nodeId: null
+                  }]
+                };
+
+                if (!dryRun) {
+                  await journeyRef.update({
+                    prospects: [...(prospects || []), newProspect],
+                    "stats.totalProspects": (prospects || []).length + 1,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  // Update contact journeys
+                  await contactRef.update({
+                    "journeys.active": admin.firestore.FieldValue.arrayUnion(journeyId),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                  });
+                }
+
+                flowResults.journeyEnrollment = {
+                  journeyId,
+                  journeyTitle: journey.title,
+                  prospectId: newProspect.id,
+                  firstNodeId,
+                  enrolled: !dryRun
+                };
+
+                actionResult.result = {
+                  enrolled: true,
+                  journeyId,
+                  journeyTitle: journey.title,
+                  prospectId: newProspect.id
+                };
+
+                // Step 4: Send email if not skipped
+                if (!skipEmail && !dryRun && firstNodeId) {
+                  flowResults.steps.push({ step: 4, action: "send_email", status: "starting" });
+
+                  const emailNode = nodes.find(n => n.id === firstNodeId && n.type === "emailNode");
+
+                  if (emailNode) {
+                    const emailBody = (emailNode.data.fullBody || emailNode.data.preview || "")
+                      .replace(/\{\{name\}\}/g, name || "there")
+                      .replace(/\{\{email\}\}/g, email);
+
+                    const esp = getESPProvider();
+                    let emailResult;
+
+                    if (esp === "sendgrid") {
+                      emailResult = await sendViaSendGrid({
+                        to: email,
+                        subject: emailNode.data.subject,
+                        html: emailBody.split("\n\n").map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join(""),
+                        text: emailBody
+                      }, functions.config().sendgrid?.api_key);
+                    } else {
+                      emailResult = await sendViaResend({
+                        to: email,
+                        subject: emailNode.data.subject,
+                        html: emailBody.split("\n\n").map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join(""),
+                        text: emailBody
+                      }, functions.config().resend?.api_key);
+                    }
+
+                    flowResults.emailSent = {
+                      to: email,
+                      subject: emailNode.data.subject,
+                      provider: esp,
+                      result: emailResult
+                    };
+
+                    flowResults.steps[3].status = emailResult.status === "sent" ? "completed" : "failed";
+                    flowResults.steps[3].emailId = emailResult.id;
+                  } else {
+                    flowResults.steps[3].status = "skipped";
+                    flowResults.steps[3].reason = "First node is not an email node";
+                  }
+                }
+                break;
+              }
+
+              default:
+                actionResult.result = { skipped: true, reason: `Unknown action type: ${action.type}` };
+            }
+          } catch (actionError) {
+            actionResult.error = actionError.message;
+            flowResults.errors.push({ action: action.type, error: actionError.message });
+          }
+
+          flowResults.actionsExecuted.push(actionResult);
+        }
+      }
+    }
+
+    flowResults.steps[2].status = "completed";
+    flowResults.steps[2].rulesEvaluated = rules.length;
+    flowResults.steps[2].rulesMatched = flowResults.triggersMatched.length;
+
+    // Update lead with trigger results
+    if (!dryRun) {
+      await db.collection("leads").doc(leadId).update({
+        status: "resolved",
+        "resolution.contactId": contactId,
+        "resolution.resolvedAt": admin.firestore.FieldValue.serverTimestamp(),
+        "resolution.resolvedBy": "test_lead_capture",
+        "triggers.rulesEvaluated": flowResults.triggersEvaluated.map(r => r.id),
+        "triggers.rulesMatched": flowResults.triggersMatched.map(r => r.id),
+        "triggers.actionsExecuted": flowResults.actionsExecuted,
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    response.json({
+      success: true,
+      dryRun,
+      summary: {
+        leadCreated: !dryRun,
+        contactCreated: flowResults.contact?.created,
+        triggersMatched: flowResults.triggersMatched.length,
+        actionsExecuted: flowResults.actionsExecuted.length,
+        journeyEnrolled: !!flowResults.journeyEnrollment,
+        emailSent: flowResults.emailSent?.result?.status === "sent"
+      },
+      flow: flowResults
+    });
+
+  } catch (error) {
+    console.error("❌ testLeadCapture error:", error);
+    flowResults.errors.push({ step: "global", error: error.message });
+    response.status(500).json({
+      success: false,
+      error: error.message,
+      flow: flowResults
+    });
   }
 });
