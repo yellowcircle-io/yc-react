@@ -70,6 +70,16 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const { isCloudSynced, migrateLocalToCloud } = useApiKeyStorage();
   const { creditsRemaining, tier } = useCredits();
 
+  // Node limit for canvas (tier-based) - must be defined early for handleAddCard
+  const nodeLimit = useMemo(() => {
+    if (isAdmin) return 999;
+    if (isAuthenticated && tier === 'premium') return PRO_NODE_LIMIT;
+    return FREE_NODE_LIMIT;
+  }, [isAdmin, isAuthenticated, tier]);
+
+  const isAtNodeLimit = nodes.length >= nodeLimit;
+  const nodeUsagePercent = Math.min((nodes.length / nodeLimit) * 100, 100);
+
   // AI Image Analysis hook
   const { analyzeImage, error: aiError, isConfigured: aiConfigured } = useImageAnalysis();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -1950,16 +1960,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     // Anonymous users
     return 3;
   }, [isAdmin, isAuthenticated, tier]);
-
-  // Node limit for canvas (tier-based)
-  const nodeLimit = useMemo(() => {
-    if (isAdmin) return 999;
-    if (isAuthenticated && tier === 'premium') return PRO_NODE_LIMIT;
-    return FREE_NODE_LIMIT;
-  }, [isAdmin, isAuthenticated, tier]);
-
-  const isAtNodeLimit = nodes.length >= nodeLimit;
-  const nodeUsagePercent = Math.min((nodes.length / nodeLimit) * 100, 100);
 
   // Add new Email node to canvas
   const handleAddEmail = useCallback(() => {
