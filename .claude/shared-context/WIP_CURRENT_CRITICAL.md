@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 12, 2025 at 7:15 PM PST
-**Machine:** Mac Mini → Transferring to MacBook Air
-**Status:** ✅ P2/P3 Partial Complete - Design tokens, keyboard shortcuts, loading skeleton
+**Updated:** December 12, 2025 at 9:50 PM PST
+**Machine:** MacBook Air
+**Status:** ✅ CRITICAL FIXES DEPLOYED - Contact form, SSO notifications, UI clutter
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -21,7 +21,23 @@
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
 - **Latest Commit:** `9136a65` - "Feature: Unity Notes P2-P3 - Visual polish + keyboard shortcuts"
 
-### Latest Session (Dec 12, 2025 Evening)
+### Latest Session (Dec 12, 2025 Late Evening)
+
+**🔴 CRITICAL FIXES DEPLOYED:**
+- ✅ **Contact Form Fixed** - Switched from Web3Forms (failing) to Firestore
+- ✅ **Health Check Form Fixed** - Firestore now primary, Web3Forms backup
+- ✅ **SSO Notifications Added** - New Google signups now create leads + notify Slack
+- ✅ **UnityNotes UI Fixed** - Removed redundant EXPORT/IMPORT from StatusBar
+- **Deployed:** Dec 12, 2025 at ~9:45 PM PST
+
+**Root Causes Found:**
+- Web3Forms API was failing (quota/service issue)
+- SSO signups were creating user profiles but NOT leads
+- StatusBar was showing redundant buttons already in toolbar
+
+---
+
+### Earlier Session (Dec 12, 2025 Evening)
 
 **P2-P3 Unity Notes - Visual Polish + Advanced Features:**
 

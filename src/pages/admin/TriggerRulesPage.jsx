@@ -39,7 +39,11 @@ import {
   ArrowRight,
   RefreshCw,
   Users,
-  Home
+  Home,
+  ExternalLink,
+  FlaskConical,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 
 // Brand colors
@@ -138,6 +142,10 @@ const TriggerRulesPage = () => {
   const [actionLoading, setActionLoading] = useState({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRuleTemplate, setNewRuleTemplate] = useState('welcome');
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testConfig, setTestConfig] = useState({ email: '', name: '', source: 'lead_gate', dryRun: true, skipEmail: true });
+  const [testResult, setTestResult] = useState(null);
+  const [testLoading, setTestLoading] = useState(false);
 
   // Load rules on mount
   const loadRules = useCallback(async () => {
@@ -257,6 +265,37 @@ const TriggerRulesPage = () => {
     }
   };
 
+  // Test lead capture flow
+  const handleTestFlow = async () => {
+    setTestLoading(true);
+    setTestResult(null);
+
+    try {
+      const response = await fetch('https://us-central1-yellowcircle-app.cloudfunctions.net/testLeadCapture', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': 'yc-admin-2025'
+        },
+        body: JSON.stringify({
+          email: testConfig.email || `test-${Date.now()}@yellowcircle.io`,
+          name: testConfig.name || 'Test User',
+          source: testConfig.source,
+          sourceTool: 'trigger-rules-test',
+          dryRun: testConfig.dryRun,
+          skipEmail: testConfig.skipEmail
+        })
+      });
+
+      const data = await response.json();
+      setTestResult(data);
+    } catch (err) {
+      setTestResult({ success: false, error: err.message });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   // Layout handlers
   const handleHomeClick = () => navigate('/');
   const handleFooterToggle = () => {};
@@ -365,6 +404,20 @@ const TriggerRulesPage = () => {
               title="Refresh"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            </button>
+
+            <button
+              onClick={() => setShowTestModal(true)}
+              style={{
+                ...buttonSecondary,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              title="Test Lead Flow"
+            >
+              <FlaskConical size={18} />
+              Test Flow
             </button>
 
             <button
@@ -635,6 +688,8 @@ const TriggerRulesPage = () => {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {rule.actions.map((action, i) => {
                               const Icon = ACTION_ICONS[action.type] || Settings;
+                              const isJourneyAction = action.type === 'enroll_journey' && action.config?.journeyId;
+
                               return (
                                 <div
                                   key={i}
@@ -651,11 +706,41 @@ const TriggerRulesPage = () => {
                                   }}
                                 >
                                   <Icon size={16} style={{ color: COLORS.primary }} />
-                                  <span>{action.type.replace(/_/g, ' ')}</span>
+                                  <span style={{ flex: 1 }}>{action.type.replace(/_/g, ' ')}</span>
                                   {action.config?.tags && (
                                     <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>
                                       [{action.config.tags.join(', ')}]
                                     </span>
+                                  )}
+                                  {action.config?.scoreAdjustment && (
+                                    <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>
+                                      +{action.config.scoreAdjustment}
+                                    </span>
+                                  )}
+                                  {isJourneyAction && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/outreach?journey=${action.config.journeyId}`);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '4px 8px',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        color: COLORS.primaryDark,
+                                        backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                      }}
+                                      title={`Open journey: ${action.config.journeyId}`}
+                                    >
+                                      <ExternalLink size={12} />
+                                      View Journey
+                                    </button>
                                   )}
                                 </div>
                               );
@@ -866,6 +951,308 @@ const TriggerRulesPage = () => {
                 Create
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Test Flow Modal */}
+      {showTestModal && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => { setShowTestModal(false); setTestResult(null); }}
+        >
+          <div
+            style={{
+              backgroundColor: COLORS.white,
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+              <FlaskConical size={24} style={{ color: COLORS.primary }} />
+              <h2 style={{
+                fontSize: '22px',
+                fontWeight: '700',
+                color: COLORS.text,
+                margin: 0
+              }}>
+                Test Lead Capture Flow
+              </h2>
+            </div>
+
+            {!testResult ? (
+              <>
+                <p style={{ color: COLORS.textMuted, marginBottom: '24px', fontSize: '14px' }}>
+                  Simulate a lead capture to test trigger rules and journey enrollment.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: COLORS.text, marginBottom: '6px' }}>
+                      Email (optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder={`test-${Date.now()}@yellowcircle.io`}
+                      value={testConfig.email}
+                      onChange={(e) => setTestConfig(prev => ({ ...prev, email: e.target.value }))}
+                      style={inputStyles}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: COLORS.text, marginBottom: '6px' }}>
+                      Name (optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Test User"
+                      value={testConfig.name}
+                      onChange={(e) => setTestConfig(prev => ({ ...prev, name: e.target.value }))}
+                      style={inputStyles}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: COLORS.text, marginBottom: '6px' }}>
+                      Source
+                    </label>
+                    <select
+                      value={testConfig.source}
+                      onChange={(e) => setTestConfig(prev => ({ ...prev, source: e.target.value }))}
+                      style={inputStyles}
+                    >
+                      <option value="lead_gate">Lead Gate (Tool Access)</option>
+                      <option value="footer">Footer Signup</option>
+                      <option value="assessment">Assessment</option>
+                      <option value="sso">SSO Login</option>
+                      <option value="api">API</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '24px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={testConfig.dryRun}
+                        onChange={(e) => setTestConfig(prev => ({ ...prev, dryRun: e.target.checked }))}
+                        style={{ accentColor: COLORS.primary, width: '18px', height: '18px' }}
+                      />
+                      <span style={{ fontSize: '14px', color: COLORS.text }}>Dry Run (don't save to database)</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={testConfig.skipEmail}
+                        onChange={(e) => setTestConfig(prev => ({ ...prev, skipEmail: e.target.checked }))}
+                        style={{ accentColor: COLORS.primary, width: '18px', height: '18px' }}
+                      />
+                      <span style={{ fontSize: '14px', color: COLORS.text }}>Skip Email Send</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button
+                    onClick={() => { setShowTestModal(false); setTestResult(null); }}
+                    style={buttonSecondary}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTestFlow}
+                    disabled={testLoading}
+                    style={{
+                      ...buttonPrimary,
+                      opacity: testLoading ? 0.6 : 1
+                    }}
+                  >
+                    {testLoading ? (
+                      <RefreshCw size={18} className="animate-spin" />
+                    ) : (
+                      <FlaskConical size={18} />
+                    )}
+                    Run Test
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Test Results */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  borderRadius: '10px',
+                  backgroundColor: testResult.success ? '#dcfce7' : '#fef2f2',
+                  marginBottom: '24px'
+                }}>
+                  {testResult.success ? (
+                    <CheckCircle2 size={24} style={{ color: COLORS.success }} />
+                  ) : (
+                    <XCircle size={24} style={{ color: COLORS.error }} />
+                  )}
+                  <div>
+                    <div style={{ fontWeight: '600', color: testResult.success ? COLORS.success : COLORS.error }}>
+                      {testResult.success ? 'Test Completed Successfully' : 'Test Failed'}
+                    </div>
+                    {testResult.dryRun && (
+                      <div style={{ fontSize: '13px', color: COLORS.textMuted }}>Dry run - no data saved</div>
+                    )}
+                  </div>
+                </div>
+
+                {testResult.summary && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{ padding: '12px', backgroundColor: COLORS.inputBg, borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.text }}>{testResult.summary.triggersMatched}</div>
+                      <div style={{ fontSize: '12px', color: COLORS.textMuted }}>Triggers Matched</div>
+                    </div>
+                    <div style={{ padding: '12px', backgroundColor: COLORS.inputBg, borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.text }}>{testResult.summary.actionsExecuted}</div>
+                      <div style={{ fontSize: '12px', color: COLORS.textMuted }}>Actions Executed</div>
+                    </div>
+                    <div style={{ padding: '12px', backgroundColor: testResult.summary.journeyEnrolled ? '#dcfce7' : COLORS.inputBg, borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', fontWeight: '700', color: testResult.summary.journeyEnrolled ? COLORS.success : COLORS.textMuted }}>
+                        {testResult.summary.journeyEnrolled ? '✓' : '—'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: COLORS.textMuted }}>Journey Enrolled</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flow Steps */}
+                {testResult.flow?.steps && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: COLORS.textMuted, marginBottom: '12px', letterSpacing: '0.05em' }}>
+                      FLOW STEPS
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {testResult.flow.steps.map((step, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '12px',
+                            backgroundColor: COLORS.inputBg,
+                            borderRadius: '8px'
+                          }}
+                        >
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            backgroundColor: step.status === 'completed' ? COLORS.success : step.status === 'failed' ? COLORS.error : COLORS.primary,
+                            color: COLORS.white,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
+                            {step.step}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '500', color: COLORS.text, fontSize: '14px' }}>
+                              {step.action.replace(/_/g, ' ')}
+                            </div>
+                            {step.leadId && <div style={{ fontSize: '12px', color: COLORS.textMuted }}>Lead: {step.leadId}</div>}
+                            {step.contactId && <div style={{ fontSize: '12px', color: COLORS.textMuted }}>Contact: {step.contactId}</div>}
+                            {step.reason && <div style={{ fontSize: '12px', color: COLORS.textMuted }}>{step.reason}</div>}
+                          </div>
+                          <div style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            backgroundColor: step.status === 'completed' ? '#dcfce7' : step.status === 'failed' ? '#fef2f2' : 'rgba(251, 191, 36, 0.15)',
+                            color: step.status === 'completed' ? COLORS.success : step.status === 'failed' ? COLORS.error : COLORS.primaryDark
+                          }}>
+                            {step.status}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Journey Enrollment Details */}
+                {testResult.flow?.journeyEnrollment && (
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#dcfce7',
+                    borderRadius: '10px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{ fontWeight: '600', color: COLORS.success, marginBottom: '8px' }}>Journey Enrollment</div>
+                    <div style={{ fontSize: '13px', color: COLORS.text }}>
+                      <div><strong>Journey:</strong> {testResult.flow.journeyEnrollment.journeyTitle}</div>
+                      <div><strong>Prospect ID:</strong> {testResult.flow.journeyEnrollment.prospectId}</div>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/outreach?journey=${testResult.flow.journeyEnrollment.journeyId}`)}
+                      style={{
+                        ...buttonSecondary,
+                        marginTop: '12px',
+                        padding: '8px 12px',
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                      View Journey
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button
+                    onClick={() => setTestResult(null)}
+                    style={buttonSecondary}
+                  >
+                    Run Another Test
+                  </button>
+                  <button
+                    onClick={() => { setShowTestModal(false); setTestResult(null); }}
+                    style={buttonPrimary}
+                  >
+                    Done
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>,
         document.body

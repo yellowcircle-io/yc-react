@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLayout } from '../../contexts/LayoutContext';
-import { submitContactForm } from '../../utils/formSubmit';
+import { createLead } from '../../utils/firestoreLeads';
 import { sendLeadCapture } from '../../config/integrations';
 
 // Service options for dropdown
@@ -168,46 +168,50 @@ function ContactModal() {
     setIsSubmitting(true);
 
     try {
-      // Use shared form submission utility
       const serviceName = service ? SERVICE_OPTIONS.find(s => s.value === service)?.label : '';
 
-      const result = await submitContactForm({
+      // Create lead in Firestore (triggers onLeadCreated → journey enrollment → welcome email)
+      await createLead({
         email,
-        name,
-        phone,
-        service: serviceName,
-        message
+        submittedData: {
+          name,
+          phone,
+          service: serviceName,
+          message
+        },
+        source: 'footer',
+        sourceForm: 'contact_modal',
+        attribution: utmParams,
+        metadata: {
+          serviceRequested: serviceName || null
+        }
       });
 
-      if (result.success) {
-        setSubmitted(true);
+      setSubmitted(true);
 
-        // Send to n8n for Airtable + Slack automation (fire and forget)
-        sendLeadCapture(
-          { email, name, phone, service: serviceName, message },
-          'contact_form',
-          service ? 'Service Inquiry' : 'Contact Request'
-        );
+      // Send to n8n for Airtable + Slack automation (fire and forget)
+      sendLeadCapture(
+        { email, name, phone, service: serviceName, message },
+        'contact_form',
+        service ? 'Service Inquiry' : 'Contact Request'
+      );
 
-        // Track conversion in Google Ads + GA4
-        if (typeof gtag === 'function') {
-          gtag('event', 'conversion', {
-            'send_to': 'AW-17772974519/contact_form',
-            'event_category': 'form',
-            'event_label': serviceName || 'general'
-          });
-          gtag('event', 'generate_lead', {
-            'event_category': 'form',
-            'event_label': 'contact_form'
-          });
-        }
-        // Close modal after showing success
-        setTimeout(() => {
-          closeContactModal();
-        }, 2000);
-      } else {
-        throw new Error('Submission failed');
+      // Track conversion in Google Ads + GA4
+      if (typeof gtag === 'function') {
+        gtag('event', 'conversion', {
+          'send_to': 'AW-17772974519/contact_form',
+          'event_category': 'form',
+          'event_label': serviceName || 'general'
+        });
+        gtag('event', 'generate_lead', {
+          'event_category': 'form',
+          'event_label': 'contact_form'
+        });
       }
+      // Close modal after showing success
+      setTimeout(() => {
+        closeContactModal();
+      }, 2000);
     } catch (err) {
       console.error('Contact form error:', err);
       setError('Something went wrong. Please try again or email us directly.');
@@ -502,6 +506,7 @@ function ContactModal() {
                   width: '100%',
                   padding: '12px 16px',
                   fontSize: '16px',
+                  color: 'black',
                   border: '2px solid rgba(0, 0, 0, 0.1)',
                   borderRadius: '8px',
                   backgroundColor: 'rgba(0, 0, 0, 0.02)',

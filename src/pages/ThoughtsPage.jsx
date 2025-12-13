@@ -4,24 +4,28 @@ import { useLayout } from '../contexts/LayoutContext';
 import Layout from '../components/global/Layout';
 import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
+import { useArticles } from '../hooks/useArticles';
+import { ARTICLE_CATEGORIES } from '../utils/firestoreArticles';
 
-// Article data
-const ARTICLES = [
-  {
-    id: 'why-your-gtm-sucks',
-    title: 'Why Your GTM Sucks',
-    subtitle: 'The Human Cost of Operations Theater',
-    category: 'Own Your Story',
-    readTime: '12 min read',
-    date: 'November 2025',
-    description: 'A confrontational look at why your go-to-market operations are failing your team—and how to fix it.',
-    featured: true
-  }
-];
+/**
+ * ThoughtsPage - Article listing with hybrid CMS support
+ *
+ * Displays articles from:
+ * 1. Firestore (admin-created content)
+ * 2. Static MDX registry (developer-created content)
+ *
+ * Features:
+ * - List/Carousel view toggle
+ * - Featured articles highlighting
+ * - Loading state
+ */
 
 function ThoughtsPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+
+  // Load articles from both Firestore and MDX registry
+  const { articles, loading, error } = useArticles({ limit: 20 });
 
   // Scroll mode: 'vertical' (list) or 'horizontal' (carousel)
   const [scrollMode, setScrollMode] = React.useState('vertical');
@@ -53,9 +57,34 @@ function ThoughtsPage() {
     navigate('/');
   };
 
-  const handleArticleClick = (articleId) => {
-    navigate(`/thoughts/${articleId}`);
+  const handleArticleClick = (article) => {
+    // Navigate to the appropriate article URL
+    // For block-based articles, use slug directly
+    // For legacy articles, use existing slug
+    navigate(`/thoughts/${article.slug}`);
   };
+
+  // Format article for display
+  const formatArticle = (article) => {
+    const category = ARTICLE_CATEGORIES.find(c => c.id === article.category);
+    const publishedDate = article.publishedAt?.toDate?.() || new Date(article.publishedAt);
+
+    return {
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      subtitle: article.excerpt,
+      category: category?.label || article.category || 'Article',
+      readTime: `${article.readingTime || 5} min read`,
+      date: publishedDate ? publishedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '',
+      description: article.excerpt,
+      featured: article.category === 'own-your-story', // Feature "Own Your Story" series
+      contentSource: article.contentSource
+    };
+  };
+
+  // Format articles for display
+  const displayArticles = articles.map(formatArticle);
 
   return (
     <Layout
@@ -168,127 +197,181 @@ function ThoughtsPage() {
             </button>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div style={{
+              marginTop: '20px',
+              padding: '40px',
+              textAlign: 'center',
+              animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
+            }}>
+              <div style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                border: '3px solid rgba(251, 191, 36, 0.2)',
+                borderTopColor: COLORS.yellow,
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto'
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div style={{
+              marginTop: '20px',
+              padding: '20px',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '8px',
+              color: '#dc2626',
+              fontSize: '14px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
+            }}>
+              Failed to load articles: {error}
+            </div>
+          )}
+
           {/* Articles List/Carousel */}
-          <div style={{
-            marginTop: '20px',
-            animation: 'fadeInUp 0.6s ease-in-out 0.6s both',
-            ...(scrollMode === 'horizontal' ? {
-              display: 'flex',
-              gap: '16px',
-              overflowX: 'auto',
-              paddingBottom: '16px',
-              scrollSnapType: 'x mandatory',
-              WebkitOverflowScrolling: 'touch'
-            } : {})
-          }}>
-            {ARTICLES.map((article, index) => (
-              <div
-                key={article.id}
-                onClick={() => handleArticleClick(article.id)}
-                style={{
-                  backgroundColor: article.featured ? 'rgba(251, 191, 36, 0.15)' : COLORS.backgroundLight,
-                  border: article.featured ? `2px solid ${COLORS.yellow}` : '1px solid rgba(0, 0, 0, 0.1)',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  ...EFFECTS.blur,
-                  ...(scrollMode === 'horizontal' ? {
-                    minWidth: '300px',
-                    maxWidth: '300px',
-                    flexShrink: 0,
-                    scrollSnapAlign: 'start'
-                  } : {
-                    marginBottom: '16px'
-                  })
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = scrollMode === 'horizontal' ? 'translateY(-4px)' : 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                {/* Category & Date */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '8px'
-                }}>
-                  <span style={{
-                    fontSize: '11px',
+          {!loading && displayArticles.length > 0 && (
+            <div style={{
+              marginTop: '20px',
+              animation: 'fadeInUp 0.6s ease-in-out 0.6s both',
+              ...(scrollMode === 'horizontal' ? {
+                display: 'flex',
+                gap: '16px',
+                overflowX: 'auto',
+                paddingBottom: '16px',
+                scrollSnapType: 'x mandatory',
+                WebkitOverflowScrolling: 'touch'
+              } : {})
+            }}>
+              {displayArticles.map((article, index) => (
+                <div
+                  key={article.id}
+                  onClick={() => handleArticleClick(article)}
+                  style={{
+                    backgroundColor: article.featured ? 'rgba(251, 191, 36, 0.15)' : COLORS.backgroundLight,
+                    border: article.featured ? `2px solid ${COLORS.yellow}` : '1px solid rgba(0, 0, 0, 0.1)',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    ...EFFECTS.blur,
+                    ...(scrollMode === 'horizontal' ? {
+                      minWidth: '300px',
+                      maxWidth: '300px',
+                      flexShrink: 0,
+                      scrollSnapAlign: 'start'
+                    } : {
+                      marginBottom: '16px'
+                    })
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = scrollMode === 'horizontal' ? 'translateY(-4px)' : 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Category & Date */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      letterSpacing: '0.1em',
+                      color: COLORS.yellow,
+                      textTransform: 'uppercase'
+                    }}>
+                      {article.category}
+                    </span>
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(0, 0, 0, 0.4)'
+                    }}>
+                      {article.date}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 style={{
+                    fontSize: '20px',
                     fontWeight: '700',
-                    letterSpacing: '0.1em',
-                    color: COLORS.yellow,
-                    textTransform: 'uppercase'
+                    color: COLORS.black,
+                    margin: '0 0 4px 0',
+                    lineHeight: '1.3'
                   }}>
-                    {article.category}
-                  </span>
-                  <span style={{
-                    fontSize: '11px',
-                    color: 'rgba(0, 0, 0, 0.4)'
+                    {article.title}
+                  </h3>
+
+                  {/* Subtitle */}
+                  <p style={{
+                    fontSize: '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    margin: '0 0 12px 0',
+                    fontStyle: 'italic'
                   }}>
-                    {article.date}
-                  </span>
+                    {article.subtitle}
+                  </p>
+
+                  {/* Description */}
+                  {article.description && article.description !== article.subtitle && (
+                    <p style={{
+                      fontSize: '14px',
+                      color: 'rgba(0, 0, 0, 0.7)',
+                      margin: '0 0 12px 0',
+                      lineHeight: '1.5'
+                    }}>
+                      {article.description}
+                    </p>
+                  )}
+
+                  {/* Read Time & Source Badge */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: '12px',
+                      color: 'rgba(0, 0, 0, 0.5)'
+                    }}>
+                      {article.readTime}
+                    </span>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: COLORS.yellow
+                    }}>
+                      READ ARTICLE →
+                    </span>
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
 
-                {/* Title */}
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: COLORS.black,
-                  margin: '0 0 4px 0',
-                  lineHeight: '1.3'
-                }}>
-                  {article.title}
-                </h3>
-
-                {/* Subtitle */}
-                <p style={{
-                  fontSize: '14px',
-                  color: 'rgba(0, 0, 0, 0.6)',
-                  margin: '0 0 12px 0',
-                  fontStyle: 'italic'
-                }}>
-                  {article.subtitle}
-                </p>
-
-                {/* Description */}
-                <p style={{
-                  fontSize: '14px',
-                  color: 'rgba(0, 0, 0, 0.7)',
-                  margin: '0 0 12px 0',
-                  lineHeight: '1.5'
-                }}>
-                  {article.description}
-                </p>
-
-                {/* Read Time */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'rgba(0, 0, 0, 0.5)'
-                  }}>
-                    {article.readTime}
-                  </span>
-                  <span style={{
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: COLORS.yellow
-                  }}>
-                    READ ARTICLE →
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Empty State */}
+          {!loading && displayArticles.length === 0 && (
+            <div style={{
+              marginTop: '20px',
+              padding: '40px',
+              textAlign: 'center',
+              color: 'rgba(0, 0, 0, 0.5)',
+              animation: 'fadeInUp 0.6s ease-in-out 0.6s both'
+            }}>
+              No articles yet. Check back soon!
+            </div>
+          )}
 
           {/* Coming Soon Note */}
           <p style={{
@@ -297,7 +380,7 @@ function ThoughtsPage() {
             marginTop: '20px',
             animation: 'fadeInUp 0.6s ease-in-out 0.8s both'
           }}>
-            More articles coming soon.
+            {displayArticles.length > 0 ? 'More articles coming soon.' : ''}
           </p>
         </div>
       </div>

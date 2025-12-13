@@ -52,7 +52,25 @@ export const ARTICLE_CATEGORIES = [
 
 export const CONTENT_SOURCE = {
   FIRESTORE: 'firestore',
-  MDX: 'mdx'
+  MDX: 'mdx',
+  BLOCKS: 'blocks' // Block-based content
+};
+
+// Block types for block-based articles
+export const BLOCK_TYPES = {
+  HERO: 'hero',
+  LEAD_PARAGRAPH: 'lead-paragraph',
+  PARAGRAPH: 'paragraph',
+  SECTION_HEADER: 'section-header',
+  STAT_GRID: 'stat-grid',
+  BULLET_LIST: 'bullet-list',
+  QUOTE: 'quote',
+  PERSONA_CARD: 'persona-card',
+  NUMBERED_LIST: 'numbered-list',
+  ACTION_GRID: 'action-grid',
+  CALLOUT_BOX: 'callout-box',
+  CTA_SECTION: 'cta-section',
+  SOURCES: 'sources'
 };
 
 // ============================================================
@@ -96,7 +114,8 @@ export const createArticleObject = ({
     // Content
     title,
     excerpt,
-    content,
+    content, // Legacy: plain text/markdown
+    blocks: [], // Block-based content array
     contentSource,
     mdxPath, // For MDX files: '/content/blog/my-article.mdx'
 

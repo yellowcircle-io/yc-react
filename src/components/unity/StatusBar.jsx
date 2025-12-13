@@ -1,19 +1,40 @@
 /**
  * Unity Notes Status Bar
- * Shows auto-save status, node count, and export/import buttons
+ * Shows auto-save status and node count
+ *
+ * Mobile UX Principles:
+ * - CircleNav is PRIMARY action - never obscure it
+ * - Status info is secondary - move to top on mobile
+ * - Keyboard shortcuts hint hidden on mobile (no keyboard!)
+ * - Minimal footprint, maximum clarity
  */
 
+import { useState, useEffect } from 'react';
 import { UNITY, COLORS } from '../../styles/constants';
+
+// Mobile breakpoint
+const MOBILE_BREAKPOINT = 768;
 
 export default function StatusBar({
   isSaving,
   lastSavedAt,
   nodeCount,
   nodeLimit,
-  onExport,
-  onImport,
   showShortcutsHint = true,
 }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const nodeUsagePercent = Math.min((nodeCount / nodeLimit) * 100, 100);
 
   // Progress bar color based on usage
@@ -23,9 +44,22 @@ export default function StatusBar({
     return UNITY.progress.low;
   };
 
-  return (
-    <div
-      style={{
+  // Mobile: Compact bar at top-right, never obscure CircleNav
+  // Desktop: Full bar at bottom-right
+  const containerStyle = isMobile
+    ? {
+        position: 'fixed',
+        top: '70px', // Below header
+        right: '12px',
+        zIndex: 150,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        alignItems: 'flex-end',
+        fontFamily: 'monospace',
+        fontSize: '10px',
+      }
+    : {
         position: 'fixed',
         bottom: '20px',
         right: '20px',
@@ -36,8 +70,49 @@ export default function StatusBar({
         alignItems: 'flex-end',
         fontFamily: 'monospace',
         fontSize: '11px',
-      }}
-    >
+      };
+
+  // Mobile: Ultra-compact single line
+  if (isMobile) {
+    return (
+      <div style={containerStyle}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            background: 'rgba(20, 20, 20, 0.85)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+        >
+          {/* Save indicator - minimal */}
+          <span style={{ fontSize: '12px' }}>
+            {isSaving ? '⏳' : '✓'}
+          </span>
+
+          {/* Node count - compact */}
+          <span
+            style={{
+              color: nodeUsagePercent >= 90
+                ? UNITY.progress.high
+                : 'rgba(255, 255, 255, 0.6)',
+              fontWeight: nodeUsagePercent >= 90 ? '600' : '400',
+            }}
+          >
+            {nodeCount}/{nodeLimit}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: Full status bar
+  return (
+    <div style={containerStyle}>
       {/* Main status container */}
       <div
         style={{
@@ -86,7 +161,7 @@ export default function StatusBar({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            minWidth: '80px',
+            minWidth: '70px',
           }}
         >
           <div
@@ -118,76 +193,9 @@ export default function StatusBar({
             {nodeCount}/{nodeLimit}
           </span>
         </div>
-
-        {/* Divider */}
-        <div
-          style={{
-            width: '1px',
-            height: '20px',
-            background: 'rgba(255, 255, 255, 0.1)',
-          }}
-        />
-
-        {/* Export/Import buttons */}
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button
-            onClick={onExport}
-            style={{
-              padding: '4px 8px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px',
-              color: COLORS.textSecondaryOnDark,
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontFamily: 'monospace',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.background = 'rgba(251, 191, 36, 0.2)';
-              e.target.style.borderColor = 'rgba(251, 191, 36, 0.3)';
-              e.target.style.color = COLORS.yellow;
-            }}
-            onMouseOut={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-              e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              e.target.style.color = COLORS.textSecondaryOnDark;
-            }}
-            title="Export canvas as JSON (Cmd+E)"
-          >
-            ⬇ EXPORT
-          </button>
-          <button
-            onClick={onImport}
-            style={{
-              padding: '4px 8px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px',
-              color: COLORS.textSecondaryOnDark,
-              cursor: 'pointer',
-              fontSize: '10px',
-              fontFamily: 'monospace',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.target.style.background = 'rgba(251, 191, 36, 0.2)';
-              e.target.style.borderColor = 'rgba(251, 191, 36, 0.3)';
-              e.target.style.color = COLORS.yellow;
-            }}
-            onMouseOut={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-              e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              e.target.style.color = COLORS.textSecondaryOnDark;
-            }}
-            title="Import canvas from JSON (Cmd+N for new card)"
-          >
-            ⬆ IMPORT
-          </button>
-        </div>
       </div>
 
-      {/* Keyboard shortcut hint */}
+      {/* Keyboard shortcut hint - DESKTOP ONLY */}
       {showShortcutsHint && (
         <div
           style={{

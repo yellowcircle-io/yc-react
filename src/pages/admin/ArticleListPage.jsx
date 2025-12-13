@@ -33,7 +33,9 @@ import {
   Clock,
   TrendingUp,
   Globe,
-  FilePlus
+  FilePlus,
+  Blocks,
+  LayoutGrid
 } from 'lucide-react';
 
 // ============================================================
@@ -342,11 +344,24 @@ const ArticleListPage = () => {
                 Refresh
               </button>
               <button
+                onClick={() => navigate('/admin/blocks/new')}
+                style={{
+                  ...styles.button,
+                  ...styles.primaryButton,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <LayoutGrid size={16} />
+                New Block Article
+              </button>
+              <button
                 onClick={() => navigate('/admin/articles/new')}
-                style={{ ...styles.button, ...styles.primaryButton }}
+                style={{ ...styles.button, ...styles.secondaryButton }}
               >
                 <Plus size={16} />
-                New Article
+                New (Legacy)
               </button>
             </div>
           </div>
@@ -573,11 +588,11 @@ const ArticleListPage = () => {
                   : 'Create your first article to get started'}
               </p>
               <button
-                onClick={() => navigate('/admin/articles/new')}
+                onClick={() => navigate('/admin/blocks/new')}
                 style={{ ...styles.button, ...styles.primaryButton, margin: '0 auto' }}
               >
-                <Plus size={16} />
-                Create Article
+                <LayoutGrid size={16} />
+                Create Block Article
               </button>
             </div>
           ) : (
@@ -585,7 +600,7 @@ const ArticleListPage = () => {
               {articles.map(article => (
                 <div
                   key={article.id}
-                  onClick={() => navigate(`/admin/articles/${article.id}`)}
+                  onClick={() => navigate(article.contentSource === 'blocks' ? `/admin/blocks/${article.id}` : `/admin/articles/${article.id}`)}
                   style={{
                     ...styles.card,
                     cursor: 'pointer'
@@ -667,6 +682,22 @@ const ArticleListPage = () => {
                             fontWeight: '500'
                           }}>
                             MDX
+                          </span>
+                        )}
+                        {article.contentSource === 'blocks' && (
+                          <span style={{
+                            backgroundColor: '#fef3c7',
+                            color: '#d97706',
+                            padding: '3px 10px',
+                            borderRadius: '9999px',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <LayoutGrid size={10} />
+                            Blocks
                           </span>
                         )}
                       </div>
@@ -753,20 +784,40 @@ const ArticleListPage = () => {
                         </button>
                       )}
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/admin/articles/${article.id}`);
-                        }}
-                        style={{
-                          ...styles.button,
-                          ...styles.secondaryButton,
-                          padding: '8px'
-                        }}
-                        title="Edit"
-                      >
-                        <Edit2 size={16} />
-                      </button>
+                      {/* Edit button - goes to block editor for block articles */}
+                      {article.contentSource === 'blocks' ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/blocks/${article.id}`);
+                          }}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#fef3c7',
+                            color: '#d97706',
+                            border: '2px solid #fde68a',
+                            padding: '8px'
+                          }}
+                          title="Edit Blocks"
+                        >
+                          <LayoutGrid size={16} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/articles/${article.id}`);
+                          }}
+                          style={{
+                            ...styles.button,
+                            ...styles.secondaryButton,
+                            padding: '8px'
+                          }}
+                          title="Edit"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      )}
 
                       <button
                         onClick={(e) => handleDelete(article.id, article.title, e)}
