@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 13, 2025 at 12:15 AM PST
-**Machine:** MacBook Air
-**Status:** ✅ P2-P3 COMPLETE + DEPLOYED (f174a9d) - Visual polish & performance
+**Updated:** December 13, 2025 at 3:15 PM PST
+**Machine:** Mac Mini
+**Status:** ✅ DELETE BUTTON CLIPPING FIXED - NodeToolbar deployed
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -17,11 +17,37 @@
 ### Current Status (Dec 13, 2025)
 
 - **Day 18** since Rho exit (Nov 25, 2025)
-- **Status:** ✅ P2-P3 ALL COMPLETE (8 of 8 items done)
+- **Status:** ✅ Delete button clipping PROPERLY FIXED with NodeToolbar
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
-- **Latest Commit:** `f174a9d` - "Feature: Unity Notes P2-P3 visual polish + performance"
+- **Latest Deployed:** NodeToolbar fix for TextNoteNode delete button
 
-### Latest Session (Dec 12, 2025 Late Evening)
+### Latest Session (Dec 13, 2025 Afternoon)
+
+**✅ DELETE BUTTON CLIPPING - PROPERLY SOLVED:**
+- ✅ **NodeToolbar Implementation** - Uses React Flow's portal-based NodeToolbar component
+- ✅ **No more clipping** - Delete button renders outside node bounds via React portal
+- ✅ **Clean solution** - Removed CSS hacks, uses official @xyflow/react API
+- ✅ **Deployed:** Firebase hosting at ~3:15 PM PST
+
+**Technical Solution:**
+```jsx
+import { NodeToolbar } from '@xyflow/react';
+
+<NodeToolbar
+  isVisible={isHovered || selected}
+  position={Position.Top}
+  align="end"
+  offset={8}
+>
+  <button>×</button>
+</NodeToolbar>
+```
+
+**Previous UI Refinements (a1e43fc):**
+- ✅ **Zoom Module Unified** - Removed MAP-specific controls (Cloud, Triggers, RUN ALL)
+- ✅ **useCredit hook fix** - Renamed to consumeCredit to avoid ESLint false positive
+
+### Previous Session (Dec 12, 2025 Late Evening)
 
 **🔴 CRITICAL FIXES DEPLOYED + COMMITTED:**
 - ✅ **Contact Form Fixed** - Switched from Web3Forms (failing) to Firestore
