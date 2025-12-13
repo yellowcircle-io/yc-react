@@ -89,15 +89,26 @@ const PhotoUploadModal = ({
 
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX.current - touchEndX;
+    const maxPage = currentMode === 'notes' ? 2 : 1; // 3 pages in notes mode, 2 in map mode
 
     if (Math.abs(diff) > 50) { // Minimum swipe distance
-      if (diff > 0 && currentPage === 0) {
-        setCurrentPage(1); // Swipe left -> go to card types / MAP actions
-      } else if (diff < 0 && currentPage === 1) {
-        setCurrentPage(0); // Swipe right -> go to upload methods
+      if (diff > 0 && currentPage < maxPage) {
+        setCurrentPage(currentPage + 1); // Swipe left -> next page
+      } else if (diff < 0 && currentPage > 0) {
+        setCurrentPage(currentPage - 1); // Swipe right -> previous page
       }
     }
   };
+
+  // Premium node types configuration
+  const PREMIUM_NODE_TYPES = [
+    { type: 'group', icon: '📦', label: 'GROUP', description: 'Container for organizing notes', color: '#6366f1' },
+    { type: 'todo', icon: '✅', label: 'TODO LIST', description: 'Track tasks and checkboxes', color: '#22c55e' },
+    { type: 'sticky', icon: '📌', label: 'STICKY', description: 'Quick colorful sticky notes', color: '#facc15' },
+    { type: 'comment', icon: '💬', label: 'COMMENT', description: 'Add discussion threads', color: '#f97316' },
+    { type: 'swatch', icon: '🎨', label: 'COLOR SWATCH', description: 'Save color palettes', color: '#ec4899' },
+    { type: 'code', icon: '💻', label: 'CODE BLOCK', description: 'Syntax-highlighted code', color: '#64748b' },
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -221,7 +232,7 @@ const PhotoUploadModal = ({
               margin: 0
             }}>
               {step === 'method'
-                ? (currentPage === 0 ? 'ADD NOTE' : (currentMode === 'map' ? 'MAP ACTIONS' : 'CARD TYPES'))
+                ? (currentPage === 0 ? 'ADD NOTE' : currentPage === 1 ? (currentMode === 'map' ? 'MAP ACTIONS' : 'CARD TYPES') : 'PREMIUM')
                 : 'NOTE DETAILS'}
             </h3>
           </div>
@@ -780,14 +791,164 @@ const PhotoUploadModal = ({
                               <span>{config.label.toUpperCase()}</span>
                             </button>
                           ))}
+
+                          {/* Premium Types Button */}
+                          <button
+                            onClick={() => setCurrentPage(2)}
+                            style={{
+                              width: '100%',
+                              marginTop: '8px',
+                              padding: '14px 20px',
+                              border: '1px dashed rgba(255, 255, 255, 0.3)',
+                              backgroundColor: 'transparent',
+                              borderRadius: '0',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.borderColor = '#EECF00';
+                              e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <span style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              letterSpacing: '0.1em',
+                              color: 'rgba(255, 255, 255, 0.7)'
+                            }}>
+                              PREMIUM TYPES
+                            </span>
+                            <span style={{
+                              fontSize: '16px',
+                              color: '#EECF00'
+                            }}>
+                              →
+                            </span>
+                          </button>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
+
+                {/* Page 2: Premium Node Types (Notes mode only) */}
+                {currentMode === 'notes' && hasCardTypes && (
+                  <div style={{
+                    minWidth: '100%',
+                    padding: '32px',
+                    boxSizing: 'border-box'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {/* Back Button */}
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        style={{
+                          alignSelf: 'flex-start',
+                          padding: '8px 16px',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          backgroundColor: 'transparent',
+                          borderRadius: '0',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.3s ease',
+                          marginBottom: '8px'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.borderColor = '#EECF00';
+                          e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.05)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <span style={{ fontSize: '14px', color: '#EECF00' }}>←</span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          letterSpacing: '0.1em',
+                          color: 'rgba(255, 255, 255, 0.7)'
+                        }}>
+                          BACK
+                        </span>
+                      </button>
+
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        letterSpacing: '0.05em',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        margin: '0 0 8px 0'
+                      }}>
+                        Premium node types:
+                      </p>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {PREMIUM_NODE_TYPES.map((nodeType) => (
+                          <button
+                            key={nodeType.type}
+                            onClick={() => {
+                              onAddCard(nodeType.type);
+                              handleClose();
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '16px 20px',
+                              backgroundColor: nodeType.color,
+                              color: nodeType.type === 'sticky' ? 'black' : 'white',
+                              border: 'none',
+                              borderRadius: '0',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: '700',
+                              letterSpacing: '0.08em',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              transition: 'all 0.2s ease',
+                              textAlign: 'left'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.opacity = '0.9';
+                              e.currentTarget.style.transform = 'translateX(4px)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.opacity = '1';
+                              e.currentTarget.style.transform = 'translateX(0)';
+                            }}
+                          >
+                            <span style={{ fontSize: '20px' }}>{nodeType.icon}</span>
+                            <div style={{ flex: 1 }}>
+                              <span style={{ display: 'block' }}>{nodeType.label}</span>
+                              <span style={{
+                                display: 'block',
+                                fontSize: '10px',
+                                fontWeight: '500',
+                                opacity: 0.8,
+                                marginTop: '2px'
+                              }}>
+                                {nodeType.description}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Pagination Dots - Hide in MAP mode since we only show page 1 */}
+              {/* Pagination Dots - Hide in MAP mode */}
               {hasCardTypes && currentMode !== 'map' && (
                 <div style={{
                   position: 'absolute',
@@ -800,7 +961,7 @@ const PhotoUploadModal = ({
                   backgroundColor: 'rgba(0, 0, 0, 0.5)',
                   borderRadius: '20px'
                 }}>
-                  {[0, 1].map((page) => (
+                  {[0, 1, 2].map((page) => (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
@@ -814,7 +975,7 @@ const PhotoUploadModal = ({
                         padding: 0,
                         transition: 'all 0.3s ease'
                       }}
-                      title={page === 0 ? 'Upload Methods' : (currentMode === 'map' ? 'MAP Actions' : 'Card Types')}
+                      title={page === 0 ? 'Upload Methods' : page === 1 ? 'Card Types' : 'Premium'}
                     />
                   ))}
                 </div>
