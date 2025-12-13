@@ -8,6 +8,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
   const [lastTap, setLastTap] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysisMenu, setShowAnalysisMenu] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const resizeStartRef = useRef({ size: 0, x: 0, y: 0 });
 
   // Use size from data, or default to 300px
@@ -97,14 +98,17 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
 
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
+        position: 'relative',
         cursor: 'grab',
         width: `${size}px`,
         height: `${size}px`,
         backgroundColor: 'white',
         borderRadius: '8px',
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        overflow: 'hidden',
+        overflow: 'visible',
         border: selected ? '2px solid #fbbf24' : '2px solid transparent',
         // CSS containment for rendering optimization
         contentVisibility: 'auto',
@@ -122,10 +126,13 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
         }}
       />
 
+      {/* Inner container with overflow hidden for image clipping */}
       <div style={{
         position: 'relative',
         width: `${size}px`,
-        height: `${size}px`
+        height: `${size}px`,
+        borderRadius: '8px',
+        overflow: 'hidden',
       }}>
         {/* Loading State */}
         {!imageLoaded && !imageError && (
@@ -533,6 +540,49 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           </>
         )}
       </div>
+
+      {/* Delete button - Circle, shows on hover or when selected */}
+      {(isHovered || selected) && data.onDelete && (
+        <button
+          className="nodrag nopan"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (data.onDelete) data.onDelete(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            maxWidth: '24px',
+            maxHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: '#1f2937',
+            color: 'white',
+            border: '2px solid white',
+            fontSize: '16px',
+            lineHeight: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            zIndex: 30,
+            opacity: isHovered && !selected ? 0.85 : 1,
+            transition: 'opacity 0.2s ease, transform 0.15s ease',
+            boxSizing: 'border-box',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+          title="Delete"
+        >
+          ×
+        </button>
+      )}
 
       <Handle
         type="source"

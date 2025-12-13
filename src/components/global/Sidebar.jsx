@@ -458,17 +458,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
               style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
             />
           </div>
-          {/* User Menu - right of YC logo */}
-          <div style={{
-            position: 'fixed',
-            left: '80px',
-            bottom: '20px',
-            zIndex: 290,  // Match YC logo z-index to stay above sidebar
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <UserMenu compact dropdownDirection="up" />
-          </div>
+          {/* User Menu removed from hidden variant - should only be in sidebar */}
         </>
       )}
 
@@ -812,6 +802,20 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
         {/* User Menu - Fixed position, always visible on standard variant pages (Home, Services, etc.) */}
         {variant === "standard" && (
+          <div style={{
+            position: 'fixed',
+            left: '80px',
+            bottom: '20px',
+            zIndex: 290,
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <UserMenu compact dropdownDirection="up" />
+          </div>
+        )}
+
+        {/* User Menu for hidden variant - Fixed position at bottom left (matches standard variant) */}
+        {variant === "hidden" && (
           <div style={{
             position: 'fixed',
             left: '80px',

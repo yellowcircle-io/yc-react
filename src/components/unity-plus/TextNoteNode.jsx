@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { getLLMAdapter, getLLMAdapterByName } from '../../adapters/llm';
 import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../contexts/AuthContext';
+import SimpleMarkdown, { hasMarkdown } from './SimpleMarkdown';
 
 // ============================================================================
 // ENCRYPTION UTILITIES - To read Hub's encrypted settings
@@ -92,7 +93,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // Credits hook for AI usage restrictions
-  const { hasCredits, useCredit, creditsRemaining, tier } = useCredits();
+  const { hasCredits, useCredit: consumeCredit, tier } = useCredits();
 
   // Authentication for admin check
   const { isAdmin } = useAuth();
@@ -115,8 +116,15 @@ const TextNoteNode = memo(({ data, id, selected }) => {
   const [aiInput, setAiInput] = useState('');
   const threadRef = useRef(null);
 
-  // Link preview state
-  const [linkPreview, setLinkPreview] = useState(null);
+  // Link preview state - rich Open Graph data
+  const [linkPreview, setLinkPreview] = useState(data.linkPreview || null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+
+  // Determine card type from id prefix or explicit type (needed early for useEffect)
+  const cardType = data.cardType ||
+    (id?.startsWith('link-') ? 'link' :
+     id?.startsWith('ai-') ? 'ai' :
+     id?.startsWith('video-') ? 'video' : 'note');
 
   // Sync local state when data changes from parent
   useEffect(() => {
@@ -126,7 +134,66 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     if (data.aiMessages) {
       setAiMessages(data.aiMessages);
     }
-  }, [data.title, data.content, data.url, data.aiMessages]);
+    if (data.linkPreview) {
+      setLinkPreview(data.linkPreview);
+    }
+  }, [data.title, data.content, data.url, data.aiMessages, data.linkPreview]);
+
+  // Fetch rich link preview (Open Graph) when URL changes
+  useEffect(() => {
+    if (cardType !== 'link' || !localUrl) return;
+
+    // Skip if we already have a preview for this URL
+    if (linkPreview?.url === localUrl) return;
+
+    const fetchLinkPreview = async () => {
+      setIsLoadingPreview(true);
+      try {
+        // Try to fetch Open Graph data via a CORS-friendly service
+        // Using jsonlink.io free tier (no API key needed)
+        const response = await fetch(
+          `https://jsonlink.io/api/extract?url=${encodeURIComponent(localUrl)}`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+
+        if (response.ok) {
+          const ogData = await response.json();
+          const preview = {
+            url: localUrl,
+            title: ogData.title || null,
+            description: ogData.description || null,
+            image: ogData.images?.[0] || null,
+            siteName: ogData.domain || null,
+            favicon: `https://www.google.com/s2/favicons?domain=${new URL(localUrl).hostname}&sz=32`,
+          };
+          setLinkPreview(preview);
+
+          // Save preview to node data for persistence
+          if (data.onUpdate) {
+            data.onUpdate({ linkPreview: preview });
+          }
+        }
+      } catch (err) {
+        // Fallback to basic preview on error
+        console.warn('Link preview fetch failed:', err);
+        const basicPreview = {
+          url: localUrl,
+          title: null,
+          description: null,
+          image: null,
+          siteName: new URL(localUrl).hostname.replace('www.', ''),
+          favicon: `https://www.google.com/s2/favicons?domain=${new URL(localUrl).hostname}&sz=32`,
+        };
+        setLinkPreview(basicPreview);
+      } finally {
+        setIsLoadingPreview(false);
+      }
+    };
+
+    // Debounce the fetch
+    const timer = setTimeout(fetchLinkPreview, 500);
+    return () => clearTimeout(timer);
+  }, [localUrl, cardType, linkPreview?.url, data]);
 
   // Auto-scroll thread to bottom when new messages arrive
   useEffect(() => {
@@ -134,12 +201,6 @@ const TextNoteNode = memo(({ data, id, selected }) => {
       threadRef.current.scrollTop = threadRef.current.scrollHeight;
     }
   }, [aiMessages]);
-
-  // Determine card type from id prefix or explicit type
-  const cardType = data.cardType ||
-    (id?.startsWith('link-') ? 'link' :
-     id?.startsWith('ai-') ? 'ai' :
-     id?.startsWith('video-') ? 'video' : 'note');
 
   const isDarkTheme = data.theme === 'dark';
   const accentColor = data.color || 'rgb(251, 191, 36)';
@@ -384,7 +445,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
 
       // Consume credit after successful AI response (unless unlimited access)
       if (!hasUnlimitedAccess()) {
-        const creditResult = await useCredit();
+        const creditResult = await consumeCredit();
         if (!creditResult.success) {
           console.warn('Failed to consume credit:', creditResult.error);
         }
@@ -423,7 +484,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
     } finally {
       setIsAiLoading(false);
     }
-  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext, hasUnlimitedAccess, hasCredits, useCredit]);
+  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext, hasUnlimitedAccess, hasCredits, consumeCredit]);
 
   const baseStyles = {
     backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
@@ -447,14 +508,70 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           : '0 4px 12px rgba(0,0,0,0.1)',
         overflow: 'visible',
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-        // CSS containment for rendering optimization
-        contentVisibility: 'auto',
-        containIntrinsicSize: '280px 200px',
       }}
     >
       {/* Connection handles */}
-      <Handle type="target" position={Position.Top} style={{ background: accentColor, width: 10, height: 10, border: '2px solid white' }} />
-      <Handle type="source" position={Position.Bottom} style={{ background: accentColor, width: 10, height: 10, border: '2px solid white' }} />
+      <Handle
+        type="target"
+        position={Position.Top}
+        style={{
+          background: accentColor,
+          width: 10,
+          height: 10,
+          border: '2px solid white',
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{
+          background: accentColor,
+          width: 10,
+          height: 10,
+          border: '2px solid white',
+        }}
+      />
+
+      {/* Delete button - overlaps card corner */}
+      {(isHovered || selected) && (
+        <button
+          className="nodrag nopan"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (data.onDelete) data.onDelete(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-12px',
+            right: '-12px',
+            width: '24px',
+            height: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: '#1f2937',
+            color: 'white',
+            border: '2px solid white',
+            fontSize: '16px',
+            lineHeight: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            zIndex: 10,
+            opacity: isHovered && !selected ? 0.85 : 1,
+            transition: 'opacity 0.2s ease, transform 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+          title="Delete"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Card content wrapper */}
+      <div style={{ overflow: 'hidden', borderRadius: '6px' }}>
 
       {/* Header accent */}
       <div style={{ height: '6px', backgroundColor: accentColor }} />
@@ -534,8 +651,8 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               </a>
             )}
           </div>
-          {/* Link Preview */}
-          {localUrl && getLinkPreviewData(localUrl) && (
+          {/* Rich Link Preview (iMessage-style) */}
+          {localUrl && (
             <a
               href={localUrl}
               target="_blank"
@@ -543,54 +660,158 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               onClick={(e) => e.stopPropagation()}
               className="nodrag nopan"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 12px',
+                display: 'block',
                 backgroundColor: isDarkTheme ? '#1f2937' : '#f8fafc',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 border: `1px solid ${isDarkTheme ? '#374151' : '#e2e8f0'}`,
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
                 cursor: 'pointer',
+                overflow: 'hidden',
               }}
             >
-              <img
-                src={getLinkPreviewData(localUrl).favicon}
-                alt=""
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '4px',
-                  flexShrink: 0,
-                }}
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Loading State */}
+              {isLoadingPreview && (
                 <div style={{
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: isDarkTheme ? '#f3f4f6' : '#1e293b',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {localTitle !== 'New Link' ? localTitle : getLinkPreviewData(localUrl).domain}
-                </div>
-                <div style={{
-                  fontSize: '11px',
-                  color: isDarkTheme ? '#9ca3af' : '#64748b',
+                  padding: '16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '8px',
+                  color: isDarkTheme ? '#9ca3af' : '#64748b',
+                  fontSize: '11px',
                 }}>
-                  {getLinkPreviewData(localUrl).isSecure && (
-                    <span style={{ color: '#22c55e' }}>🔒</span>
-                  )}
-                  {getLinkPreviewData(localUrl).domain}
+                  <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                  Loading preview...
                 </div>
-              </div>
-              <span style={{ fontSize: '14px', color: isDarkTheme ? '#6b7280' : '#94a3b8' }}>→</span>
+              )}
+
+              {/* Rich Preview with Image */}
+              {!isLoadingPreview && linkPreview?.image && (
+                <div>
+                  {/* Preview Image */}
+                  <div style={{
+                    width: '100%',
+                    height: '120px',
+                    backgroundColor: isDarkTheme ? '#111827' : '#e5e7eb',
+                    overflow: 'hidden',
+                  }}>
+                    <img
+                      src={linkPreview.image}
+                      alt=""
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                    />
+                  </div>
+                  {/* Text Content */}
+                  <div style={{ padding: '10px 12px' }}>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: isDarkTheme ? '#f3f4f6' : '#1e293b',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      marginBottom: '4px',
+                    }}>
+                      {linkPreview.title || localTitle || linkPreview.siteName}
+                    </div>
+                    {linkPreview.description && (
+                      <div style={{
+                        fontSize: '11px',
+                        color: isDarkTheme ? '#9ca3af' : '#64748b',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        lineHeight: '1.4',
+                        marginBottom: '6px',
+                      }}>
+                        {linkPreview.description}
+                      </div>
+                    )}
+                    <div style={{
+                      fontSize: '10px',
+                      color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}>
+                      <img
+                        src={linkPreview.favicon}
+                        alt=""
+                        style={{ width: '12px', height: '12px', borderRadius: '2px' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                      {linkPreview.siteName || getLinkPreviewData(localUrl)?.domain}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback: Simple Preview (no image) */}
+              {!isLoadingPreview && (!linkPreview?.image) && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                }}>
+                  <img
+                    src={linkPreview?.favicon || getLinkPreviewData(localUrl)?.favicon}
+                    alt=""
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '6px',
+                      flexShrink: 0,
+                      backgroundColor: isDarkTheme ? '#374151' : '#e5e7eb',
+                    }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: isDarkTheme ? '#f3f4f6' : '#1e293b',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {linkPreview?.title || (localTitle !== 'New Link' ? localTitle : linkPreview?.siteName || getLinkPreviewData(localUrl)?.domain)}
+                    </div>
+                    {linkPreview?.description && (
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkTheme ? '#9ca3af' : '#64748b',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: '2px',
+                      }}>
+                        {linkPreview.description}
+                      </div>
+                    )}
+                    <div style={{
+                      fontSize: '10px',
+                      color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginTop: '2px',
+                    }}>
+                      {getLinkPreviewData(localUrl)?.isSecure && (
+                        <span style={{ color: '#22c55e', fontSize: '8px' }}>🔒</span>
+                      )}
+                      {linkPreview?.siteName || getLinkPreviewData(localUrl)?.domain}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '14px', color: isDarkTheme ? '#6b7280' : '#94a3b8' }}>→</span>
+                </div>
+              )}
             </a>
           )}
         </div>
@@ -897,36 +1118,80 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         </div>
       )}
 
-      {/* Content textarea - For non-AI cards only */}
+      {/* Content area - For non-AI cards only */}
       {cardType !== 'ai' && (
         <div style={{ padding: '0 12px 12px' }}>
-          <textarea
-            value={localContent}
-            onChange={(e) => setLocalContent(e.target.value)}
-            onBlur={saveAndClose}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              cardType === 'link' ? 'Add notes about this link...' :
-              cardType === 'video' ? 'Add notes about this video...' :
-              'Add your note content...'
-            }
-            className="nodrag nopan"
-            style={{
-              width: '100%',
-              minHeight: '80px',
-              fontSize: '13px',
-              lineHeight: '1.5',
-              color: isDarkTheme ? '#d1d5db' : '#4b5563',
-              backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
-              border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
-              borderRadius: '4px',
-              padding: '8px',
-              resize: 'vertical',
-              outline: 'none',
-              fontFamily: 'inherit',
-              boxSizing: 'border-box',
-            }}
-          />
+          {/* Edit mode: Show textarea */}
+          {isEditing ? (
+            <textarea
+              value={localContent}
+              onChange={(e) => setLocalContent(e.target.value)}
+              onBlur={() => {
+                setIsEditing(false);
+                saveAndClose();
+              }}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              placeholder={
+                cardType === 'link' ? 'Add notes about this link...' :
+                cardType === 'video' ? 'Add notes about this video...' :
+                'Add your note content... (supports **bold**, *italic*, # headers, - lists)'
+              }
+              className="nodrag nopan"
+              style={{
+                width: '100%',
+                minHeight: '80px',
+                fontSize: '13px',
+                lineHeight: '1.5',
+                color: isDarkTheme ? '#d1d5db' : '#4b5563',
+                backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                borderRadius: '4px',
+                padding: '8px',
+                resize: 'vertical',
+                outline: 'none',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+          ) : (
+            /* View mode: Show rendered markdown or placeholder */
+            <div
+              className="nodrag nopan"
+              onClick={startEditing}
+              style={{
+                minHeight: '40px',
+                padding: '8px',
+                fontSize: '13px',
+                lineHeight: '1.5',
+                color: localContent ? (isDarkTheme ? '#d1d5db' : '#4b5563') : (isDarkTheme ? '#6b7280' : '#9ca3af'),
+                backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                borderRadius: '4px',
+                cursor: 'text',
+                transition: 'border-color 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = isDarkTheme ? '#4b5563' : '#d1d5db';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = isDarkTheme ? '#374151' : '#e5e7eb';
+              }}
+              title="Click to edit"
+            >
+              {localContent ? (
+                hasMarkdown(localContent) ? (
+                  <SimpleMarkdown content={localContent} isDarkTheme={isDarkTheme} />
+                ) : (
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{localContent}</div>
+                )
+              ) : (
+                cardType === 'link' ? 'Add notes about this link...' :
+                cardType === 'video' ? 'Add notes about this video...' :
+                'Click to add note content...'
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -942,49 +1207,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           : `Created ${new Date(data.createdAt || Date.now()).toLocaleDateString()}`
         }
       </div>
-
-      {/* Delete button - Circle, black, shows on hover or when selected */}
-      {(isHovered || selected) && (
-        <button
-          className="nodrag nopan"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (data.onDelete) data.onDelete(id);
-          }}
-          style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '-10px',
-            width: '24px',
-            height: '24px',
-            minWidth: '24px',
-            minHeight: '24px',
-            maxWidth: '24px',
-            maxHeight: '24px',
-            padding: 0,
-            borderRadius: '50%',
-            backgroundColor: '#1f2937',
-            color: 'white',
-            border: '2px solid white',
-            fontSize: '16px',
-            lineHeight: '20px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            zIndex: 10,
-            opacity: isHovered && !selected ? 0.85 : 1,
-            transition: 'opacity 0.2s ease, transform 0.15s ease',
-            boxSizing: 'border-box',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-          title="Delete"
-        >
-          ×
-        </button>
-      )}
+      </div>
     </div>
   );
 });

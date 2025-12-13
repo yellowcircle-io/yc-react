@@ -17,7 +17,7 @@ import addAnimation from '../../assets/lottie/add.json';
  * - Right-click/Long-press: Opens options menu
  */
 
-// Add Icon Circle Component with Lottie animation
+// Add Icon Circle Component - White Lottie "+" on yellow circle
 const AddIconCircle = ({ size = 64, isHovered = false }) => {
   return (
     <div style={{
@@ -34,15 +34,28 @@ const AddIconCircle = ({ size = 64, isHovered = false }) => {
       transform: isHovered ? 'scale(1.05)' : 'scale(1)',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
     }}>
-      <LottieIcon
-        animationData={addAnimation}
-        size={size * 0.7}
-        isHovered={isHovered}
-        useGrayscale={false}
-        alt="Add note"
-      />
+      {/* Hide the yellow circle stroke in Lottie, show only white + */}
+      <style>{`
+        .unity-add-icon svg path[stroke="rgb(250,190,35)"],
+        .unity-add-icon svg path[stroke="rgb(251,191,36)"] {
+          stroke: transparent !important;
+        }
+      `}</style>
+      <div className="unity-add-icon" style={{
+        width: size * 0.7,
+        height: size * 0.7,
+      }}>
+        <LottieIcon
+          animationData={addAnimation}
+          size={size * 0.7}
+          isHovered={isHovered}
+          useGrayscale={false}
+          alwaysAnimate={false}
+          alt="Add Note"
+        />
+      </div>
     </div>
   );
 };
@@ -103,7 +116,7 @@ const SettingsGear = ({ onClick, isHovered, onHover }) => {
   );
 };
 
-// Pill Button Component - Used for Options and AI
+// Pill Button Component - Used for Menu and AI (White background, black text)
 const PillButton = ({ label, icon, onClick, isHovered, onHover, position, isActive = false }) => {
   const isLeft = position === 'left';
 
@@ -117,26 +130,26 @@ const PillButton = ({ label, icon, onClick, isHovered, onHover, position, isActi
         alignItems: 'center',
         justifyContent: 'center',
         gap: '4px',
-        padding: '8px 12px',
+        padding: '8px 14px',
         backgroundColor: isActive
           ? 'rgba(251, 191, 36, 0.2)'
           : isHovered
-            ? 'rgba(255, 255, 255, 0.15)'
+            ? 'rgba(0, 0, 0, 0.06)'
             : 'transparent',
         border: 'none',
         borderRadius: isLeft ? '20px 0 0 20px' : '0 20px 20px 0',
         cursor: 'pointer',
-        color: isActive ? 'rgb(251, 191, 36)' : 'rgba(255, 255, 255, 0.8)',
+        color: isActive ? 'rgb(180, 83, 9)' : 'rgba(0, 0, 0, 0.7)',
         fontSize: '10px',
         fontWeight: '600',
         letterSpacing: '0.03em',
         transition: 'all 0.2s ease',
         textTransform: 'uppercase',
-        minWidth: '60px',
+        width: '58px', // Fixed width for equal sizing
       }}
       title={label}
     >
-      <span style={{ fontSize: '14px' }}>{icon}</span>
+      <span style={{ fontSize: '12px' }}>{icon}</span>
       <span>{label}</span>
     </button>
   );
@@ -167,28 +180,28 @@ const OptionsMenu = ({
 
   const canAddEmail = emailCount < emailLimit;
 
-  // Different menu items based on mode
+  // Different menu items based on mode - Brand colors (yellow/gold gradient, black accents)
   const notesMenuItems = [
-    { label: '+ ADD NOTE', action: onAddNote, color: 'rgb(251, 191, 36)', textColor: 'black', hoverColor: '#d4a000' },
-    { label: 'EXPORT', action: onExport, color: '#3b82f6', textColor: 'white', hoverColor: '#2563eb' },
-    { label: 'IMPORT', action: onImport, color: '#8b5cf6', textColor: 'white', hoverColor: '#7c3aed' },
+    { label: '+ ADD NOTE', action: onAddNote, color: 'rgb(251, 191, 36)', textColor: 'black', hoverColor: '#e5a500' },
+    { label: 'EXPORT', action: onExport, color: 'rgb(234, 179, 8)', textColor: 'black', hoverColor: '#d4a000' },
+    { label: 'IMPORT', action: onImport, color: 'rgb(217, 167, 0)', textColor: 'black', hoverColor: '#c49500' },
     {
       label: isSaving ? 'SAVING...' : 'SHARE',
       action: onShare,
-      color: hasNotes ? '#10b981' : 'rgba(16, 185, 129, 0.3)',
-      textColor: 'white',
-      hoverColor: '#059669',
+      color: hasNotes ? 'rgb(200, 155, 0)' : 'rgba(200, 155, 0, 0.3)',
+      textColor: 'black',
+      hoverColor: '#b08600',
       disabled: isSaving || !hasNotes
     },
-    { label: 'CLEAR', action: onClear, color: '#dc2626', textColor: 'white', hoverColor: '#b91c1c', separator: true },
+    { label: 'CLEAR', action: onClear, color: '#1f2937', textColor: 'white', hoverColor: '#111827', separator: true },
     {
       label: showParallax ? 'HIDE PARALLAX' : 'SHOW PARALLAX',
       action: onToggleParallax,
-      color: '#6b7280',
+      color: '#374151',
       textColor: 'white',
-      hoverColor: '#4b5563'
+      hoverColor: '#1f2937'
     },
-    { label: 'FOOTER', action: onFooter, color: '#1f2937', textColor: 'white', hoverColor: '#111827' }
+    { label: 'FOOTER', action: onFooter, color: '#4b5563', textColor: 'white', hoverColor: '#374151' }
   ];
 
   const mapMenuItems = [
@@ -296,14 +309,14 @@ const OptionsMenu = ({
   );
 };
 
-// AI Menu Component
-const AIMenu = ({ isOpen, onClose, onGenerateNote, onGenerateImage, onSummarize }) => {
+// AI Menu Component - All features Coming Soon
+const AIMenu = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const aiActions = [
-    { label: '✨ GENERATE NOTE', action: onGenerateNote, description: 'AI creates a new note' },
-    { label: '🖼️ GENERATE IMAGE', action: onGenerateImage, description: 'Create AI image card' },
-    { label: '📋 SUMMARIZE ALL', action: onSummarize, description: 'Summarize canvas notes' },
+    { label: '✨ GENERATE NOTE', description: 'Coming Soon', comingSoon: true },
+    { label: '🖼️ GENERATE IMAGE', description: 'Coming Soon', comingSoon: true },
+    { label: '📋 SUMMARIZE ALL', description: 'Coming Soon', comingSoon: true },
   ];
 
   return (
@@ -347,18 +360,15 @@ const AIMenu = ({ isOpen, onClose, onGenerateNote, onGenerateImage, onSummarize 
       {aiActions.map((item, index) => (
         <button
           key={item.label}
-          onClick={() => {
-            if (item.action) item.action();
-            onClose();
-          }}
+          disabled={item.comingSoon}
           style={{
             width: '100%',
             padding: '10px 12px',
             backgroundColor: 'transparent',
-            color: 'rgba(255, 255, 255, 0.9)',
+            color: item.comingSoon ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.9)',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'pointer',
+            cursor: item.comingSoon ? 'not-allowed' : 'pointer',
             fontSize: '10px',
             fontWeight: '600',
             letterSpacing: '0.02em',
@@ -366,24 +376,35 @@ const AIMenu = ({ isOpen, onClose, onGenerateNote, onGenerateImage, onSummarize 
             transition: 'all 0.2s',
             textAlign: 'left',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '2px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            opacity: item.comingSoon ? 0.6 : 1,
           }}
         >
-          <span>{item.label}</span>
-          <span style={{
-            fontSize: '8px',
-            color: 'rgba(255, 255, 255, 0.4)',
-            fontWeight: '400',
-          }}>
-            {item.description}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span>{item.label}</span>
+            <span style={{
+              fontSize: '8px',
+              color: 'rgba(255, 255, 255, 0.3)',
+              fontWeight: '400',
+            }}>
+              {item.description}
+            </span>
+          </div>
+          {item.comingSoon && (
+            <span style={{
+              fontSize: '8px',
+              fontWeight: '600',
+              backgroundColor: 'rgba(251, 191, 36, 0.2)',
+              color: 'rgb(251, 191, 36)',
+              padding: '2px 6px',
+              borderRadius: '3px',
+              letterSpacing: '0.05em'
+            }}>
+              SOON
+            </span>
+          )}
         </button>
       ))}
     </div>
@@ -413,14 +434,19 @@ function UnityCircleNav({
   onAIGenerateNote,
   onAIGenerateImage,
   onAISummarize,
+  // Status bar info
+  nodeCount = 0,
+  nodeLimit = 999,
+  lastSavedAt = null,
+  onShortcutsClick,
 }) {
   const { footerOpen } = useLayout();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showAIMenu, setShowAIMenu] = useState(false);
   const [isCircleHovered, setIsCircleHovered] = useState(false);
-  const [isGearHovered, setIsGearHovered] = useState(false);
   const [isOptionsHovered, setIsOptionsHovered] = useState(false);
   const [isAIHovered, setIsAIHovered] = useState(false);
+  const [showStatusExpanded, setShowStatusExpanded] = useState(false);
   const containerRef = useRef(null);
 
   // Close menus when clicking outside
@@ -482,15 +508,7 @@ function UnityCircleNav({
     longPressTriggered.current = false;
   };
 
-  // Gear click opens options menu
-  const handleGearClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowAIMenu(false);
-    setShowOptionsMenu(!showOptionsMenu);
-  };
-
-  // Options button click
+  // Menu button click
   const handleOptionsClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -512,7 +530,7 @@ function UnityCircleNav({
       <div
         style={{
           position: 'fixed',
-          bottom: '40px',
+          bottom: '24px',
           left: '50%',
           transform: footerOpen
             ? 'translateX(-50%) translateY(-300px)'
@@ -521,24 +539,24 @@ function UnityCircleNav({
           transition: 'transform 0.5s ease-out'
         }}
       >
-        {/* Pill UI with Options | Circle | AI */}
+        {/* Pill UI with Menu | Circle | AI - White background, black text */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: 'rgba(30, 30, 30, 0.95)',
+            backgroundColor: 'rgba(255, 255, 255, 0.98)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderRadius: '40px',
             padding: '6px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
           }}
         >
-          {/* Options Button - Left */}
+          {/* Menu Button - Left */}
           <PillButton
-            label="Options"
-            icon="⚙️"
+            label="Menu"
+            icon="☰"
             onClick={handleOptionsClick}
             isHovered={isOptionsHovered}
             onHover={setIsOptionsHovered}
@@ -546,7 +564,7 @@ function UnityCircleNav({
             isActive={showOptionsMenu}
           />
 
-          {/* Main Circle with Gear */}
+          {/* Main Circle - No gear overlay */}
           <div style={{ position: 'relative', margin: '0 4px' }}>
             <div
               className="clickable-element"
@@ -561,17 +579,10 @@ function UnityCircleNav({
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent'
               }}
-              title="Add Note (right-click for options)"
+              title="Add Note (right-click for menu)"
             >
               <AddIconCircle size={64} isHovered={isCircleHovered} />
             </div>
-
-            {/* Settings Gear - Overlapping bottom-right */}
-            <SettingsGear
-              onClick={handleGearClick}
-              isHovered={isGearHovered}
-              onHover={setIsGearHovered}
-            />
           </div>
 
           {/* AI Button - Right */}
@@ -585,6 +596,73 @@ function UnityCircleNav({
             isActive={showAIMenu}
           />
         </div>
+
+        {/* Status Strip - Compact, toggleable */}
+        <button
+          onClick={() => {
+            if (showStatusExpanded && onShortcutsClick) {
+              onShortcutsClick();
+            }
+            setShowStatusExpanded(!showStatusExpanded);
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            marginTop: '6px',
+            padding: showStatusExpanded ? '4px 10px' : '3px 8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            fontSize: '9px',
+            color: 'rgba(0, 0, 0, 0.5)',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+          title={showStatusExpanded ? "Click for shortcuts" : "Click to expand"}
+        >
+          {/* Save status */}
+          <span style={{
+            color: isSaving ? '#b45309' : 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px'
+          }}>
+            {isSaving ? '⏳' : '✓'}
+            {showStatusExpanded && (
+              <span>
+                {isSaving
+                  ? 'Saving'
+                  : lastSavedAt
+                    ? lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : 'Local'}
+              </span>
+            )}
+          </span>
+
+          {/* Divider */}
+          <span style={{ color: 'rgba(0, 0, 0, 0.15)' }}>|</span>
+
+          {/* Node count */}
+          <span style={{
+            color: (nodeCount / nodeLimit) >= 0.9 ? '#dc2626' : 'rgba(0, 0, 0, 0.5)'
+          }}>
+            {nodeCount}/{nodeLimit}
+          </span>
+
+          {/* Shortcuts hint when expanded */}
+          {showStatusExpanded && (
+            <>
+              <span style={{ color: 'rgba(0, 0, 0, 0.15)' }}>|</span>
+              <span style={{ color: 'rgba(0, 0, 0, 0.35)' }}>⌘/</span>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Options Menu */}
