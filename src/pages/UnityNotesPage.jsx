@@ -2053,6 +2053,28 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     enabled: currentMode === 'notes', // Only enable in notes mode
   });
 
+  // Parallax background toggle (persisted to localStorage)
+  const [showParallax, setShowParallax] = useState(() => {
+    try {
+      const saved = localStorage.getItem('unity-notes-show-parallax');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const handleToggleParallax = useCallback(() => {
+    setShowParallax(prev => {
+      const newVal = !prev;
+      try {
+        localStorage.setItem('unity-notes-show-parallax', JSON.stringify(newVal));
+      } catch {
+        // Ignore storage errors
+      }
+      return newVal;
+    });
+  }, []);
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
       {/* Loading Skeleton - shown while initializing */}
@@ -2150,54 +2172,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       </div>
 
-      {/* Credits Badge - Hidden on mobile via CSS to keep CircleNav prominent */}
-      {/* On mobile, credits info accessible via user menu */}
-      {isAuthenticated && (
-        <div
-          className="credits-badge-desktop"
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            left: '200px',
-            zIndex: 290,
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <style>{`
-            @media (max-width: 767px) {
-              .credits-badge-desktop { display: none !important; }
-            }
-          `}</style>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '5px 10px',
-            backgroundColor: creditsRemaining <= 0 && tier !== 'premium'
-              ? 'rgba(239, 68, 68, 0.15)'
-              : 'rgba(251, 191, 36, 0.15)',
-            border: `1px solid ${creditsRemaining <= 0 && tier !== 'premium'
-              ? 'rgba(239, 68, 68, 0.3)'
-              : 'rgba(251, 191, 36, 0.3)'}`,
-            borderRadius: '16px',
-            fontSize: '10px',
-            color: creditsRemaining <= 0 && tier !== 'premium' ? '#dc2626' : '#d97706',
-            fontWeight: '500'
-          }}>
-            <span style={{ fontSize: '11px' }}>⚡</span>
-            {tier === 'premium' ? 'PRO' : `${creditsRemaining}`}
-          </div>
-        </div>
-      )}
-
-      {/* Status Bar - Bottom Right (minimal: save status + node count) */}
+      {/* Status Bar - Top Right (compact: save status + node count + shortcuts) */}
       <StatusBar
         isSaving={isSavingLocal}
         lastSavedAt={lastSavedAt}
         nodeCount={nodes.length}
         nodeLimit={nodeLimit}
         showShortcutsHint={currentMode === 'notes'}
+        onShortcutsClick={() => setShowShortcutsHelp(true)}
       />
 
       {/* Mobile Node Navigator - Jump between canvas areas */}
@@ -2265,40 +2247,39 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           ))}
         </div>
 
-        {/* Main Zoom Controls */}
+        {/* Main Zoom Controls - Compact */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '10px',
+          gap: '6px',
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(8px)',
-          padding: '12px 8px',
-          borderRadius: showModePanel ? '0 8px 8px 0' : '8px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          padding: '8px 6px',
+          borderRadius: showModePanel ? '0 6px 6px 0' : '6px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)'
         }}>
         {/* Zoom In Button */}
         <button
           onClick={() => zoomIn({ duration: 200 })}
           style={{
-            width: '36px',
-            height: '36px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgb(251, 191, 36)',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '20px',
+            fontSize: '16px',
             fontWeight: '700',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
           }}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = '#f5b000';
-            e.target.style.transform = 'scale(1.05)';
+            e.target.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = 'rgb(251, 191, 36)';
@@ -2311,12 +2292,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
         {/* Zoom Level Indicator */}
         <div style={{
-          fontSize: '11px',
+          fontSize: '9px',
           fontWeight: '600',
-          color: 'rgba(0, 0, 0, 0.7)',
+          color: 'rgba(0, 0, 0, 0.6)',
           letterSpacing: '0.02em',
           textAlign: 'center',
-          minWidth: '45px'
+          minWidth: '32px'
         }}>
           {Math.round(zoomLevel * 100)}%
         </div>
@@ -2325,24 +2306,23 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         <button
           onClick={() => zoomOut({ duration: 200 })}
           style={{
-            width: '36px',
-            height: '36px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgb(251, 191, 36)',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '24px',
+            fontSize: '18px',
             fontWeight: '700',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
           }}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = '#f5b000';
-            e.target.style.transform = 'scale(1.05)';
+            e.target.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = 'rgb(251, 191, 36)';
@@ -2357,26 +2337,26 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         <button
           onClick={() => fitView({ duration: 400, padding: 0.2 })}
           style={{
-            width: '36px',
-            height: '36px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
-            border: '1px solid rgba(0, 0, 0, 0.15)',
-            borderRadius: '6px',
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            border: '1px solid rgba(0, 0, 0, 0.12)',
+            borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '18px',
+            fontSize: '14px',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
-            marginTop: '4px'
+            marginTop: '2px'
           }}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
-            e.target.style.transform = 'scale(1.05)';
+            e.target.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
             e.target.style.transform = 'scale(1)';
           }}
           title="Center View"
@@ -2388,26 +2368,25 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         <button
           onClick={handleAutoLayout}
           style={{
-            width: '36px',
-            height: '36px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
-            border: '1px solid rgba(0, 0, 0, 0.15)',
-            borderRadius: '6px',
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            border: '1px solid rgba(0, 0, 0, 0.12)',
+            borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '14px',
+            fontSize: '12px',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
-            marginTop: '4px'
           }}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
-            e.target.style.transform = 'scale(1.05)';
+            e.target.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
             e.target.style.transform = 'scale(1)';
           }}
           title="Auto-Organize Nodes"
@@ -2421,30 +2400,29 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onClick={handleSaveJourney}
             disabled={isSavingJourney}
             style={{
-              width: '36px',
-              height: '36px',
+              width: '28px',
+              height: '28px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: currentJourneyId ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.05)',
-              border: `1px solid ${currentJourneyId ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
-              borderRadius: '6px',
+              backgroundColor: currentJourneyId ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.04)',
+              border: `1px solid ${currentJourneyId ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.12)'}`,
+              borderRadius: '4px',
               cursor: isSavingJourney ? 'wait' : 'pointer',
-              fontSize: '14px',
+              fontSize: '12px',
               color: currentJourneyId ? '#b45309' : 'black',
               transition: 'all 0.2s ease',
-              marginTop: '4px',
               opacity: isSavingJourney ? 0.6 : 1
             }}
             onMouseEnter={(e) => {
               if (!isSavingJourney) {
                 e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.3)';
-                e.target.style.transform = 'scale(1.05)';
+                e.target.style.transform = 'scale(1.08)';
               }
             }}
             onMouseLeave={(e) => {
               if (!isSavingJourney) {
-                e.target.style.backgroundColor = currentJourneyId ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.05)';
+                e.target.style.backgroundColor = currentJourneyId ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.04)';
                 e.target.style.transform = 'scale(1)';
               }
             }}
@@ -2633,7 +2611,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       </div>
 
-      {/* Unity Circle Nav - Custom Add Note + Options Menu */}
+      {/* Unity Circle Nav - Pill UI with Options | + | AI */}
       <UnityCircleNav
         onAddNote={handleAddNote}
         onExport={handleExportJSON}
@@ -2641,6 +2619,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         onShare={handleSaveAndShare}
         onClear={handleClearAll}
         onFooter={onFooterToggle}
+        onToggleParallax={handleToggleParallax}
+        showParallax={showParallax}
         isSaving={isSaving}
         hasNotes={nodes.length > 0}
         currentMode={currentMode}
@@ -2653,44 +2633,52 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         hasCampaign={hasCampaign}
       />
 
-      {/* Empty State */}
+      {/* Empty State - Centered above CircleNav with chevron */}
       {nodes.length === 0 && (
         <div style={{
           position: 'fixed',
-          bottom: '140px',
-          right: '20px',
+          bottom: '130px',
+          left: '50%',
+          transform: 'translateX(-50%)',
           textAlign: 'right',
-          padding: '20px 24px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '12px 16px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(8px)',
           borderRadius: '8px',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
-          maxWidth: '280px',
+          maxWidth: '200px',
           pointerEvents: 'none',
           zIndex: 85
         }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>📝</div>
           <h2 style={{
-            fontSize: '16px',
+            fontSize: '13px',
             fontWeight: '700',
             color: '#000',
-            marginBottom: '8px'
+            marginBottom: '4px',
+            textAlign: 'right',
           }}>
-            Start Your UnityNotes
+            Start Brainstorming
           </h2>
           <p style={{
-            fontSize: '12px',
+            fontSize: '11px',
             color: 'rgba(0, 0, 0, 0.6)',
-            marginBottom: '12px',
-            lineHeight: '1.4'
+            lineHeight: '1.3',
+            textAlign: 'right',
           }}>
-            Click the yellow circle to add your first note.
+            Click the + below to get started.
           </p>
-          <div style={{ fontSize: '11px', color: 'rgba(0, 0, 0, 0.5)', lineHeight: '1.6' }}>
-            <p>✨ Drag notes to organize</p>
-            <p>🔗 Connect notes together</p>
-            <p>📍 Track locations and dates</p>
-          </div>
+          {/* Chevron pointing down */}
+          <div style={{
+            position: 'absolute',
+            bottom: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid rgba(255, 255, 255, 0.95)',
+          }} />
         </div>
       )}
 
