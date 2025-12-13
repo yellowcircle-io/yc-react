@@ -36,7 +36,7 @@ import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
 import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
-import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal } from '../components/unity';
+import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal, MobileNodeNavigator } from '../components/unity';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -2199,6 +2199,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         nodeLimit={nodeLimit}
         showShortcutsHint={currentMode === 'notes'}
       />
+
+      {/* Mobile Node Navigator - Jump between canvas areas */}
+      <MobileNodeNavigator nodes={nodes} />
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
       <div style={{

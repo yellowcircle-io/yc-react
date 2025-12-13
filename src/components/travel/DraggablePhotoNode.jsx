@@ -105,7 +105,10 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
         borderRadius: '8px',
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         overflow: 'hidden',
-        border: selected ? '2px solid #fbbf24' : '2px solid transparent'
+        border: selected ? '2px solid #fbbf24' : '2px solid transparent',
+        // CSS containment for rendering optimization
+        contentVisibility: 'auto',
+        containIntrinsicSize: `${size}px ${size}px`,
       }}
     >
       <Handle
