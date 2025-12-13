@@ -2,15 +2,13 @@
  * Unity Notes Status Bar
  * Compact status indicator - shows auto-save status and node count
  *
- * Mobile UX Principles:
- * - CircleNav is PRIMARY action - never obscure it
- * - Status info is secondary - move to top on mobile
- * - Minimal footprint, maximum clarity
- *
- * v2: Combined with shortcuts hint into single compact element
+ * v3: Centered under CircleNav with white background (matching pill UI)
+ * - Positioned at bottom center, below CircleNav
+ * - Mobile responsive
  */
 
 import { useState, useEffect } from 'react';
+import { useLayout } from '../../contexts/LayoutContext';
 import { UNITY, COLORS } from '../../styles/constants';
 
 // Mobile breakpoint
@@ -24,6 +22,7 @@ export default function StatusBar({
   showShortcutsHint = true,
   onShortcutsClick,
 }) {
+  const { footerOpen } = useLayout();
   const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile on mount and resize
@@ -46,77 +45,42 @@ export default function StatusBar({
     return UNITY.progress.low;
   };
 
-  // Mobile: Ultra-compact at top-right
-  if (isMobile) {
-    return (
-      <div
-        style={{
-          position: 'fixed',
-          top: '70px',
-          right: '12px',
-          zIndex: 150,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '5px 8px',
-          background: 'rgba(20, 20, 20, 0.85)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '6px',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          fontFamily: 'monospace',
-          fontSize: '9px',
-        }}
-      >
-        <span style={{ fontSize: '10px' }}>
-          {isSaving ? '⏳' : '✓'}
-        </span>
-        <span
-          style={{
-            color: nodeUsagePercent >= 90
-              ? UNITY.progress.high
-              : 'rgba(255, 255, 255, 0.6)',
-            fontWeight: nodeUsagePercent >= 90 ? '600' : '400',
-          }}
-        >
-          {nodeCount}/{nodeLimit}
-        </span>
-      </div>
-    );
-  }
+  // Common centered position under CircleNav
+  const containerStyle = {
+    position: 'fixed',
+    bottom: footerOpen ? '315px' : '12px', // Below CircleNav (40px + pill height ~76px + gap)
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 340, // Below CircleNav (350)
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: isMobile ? '6px' : '8px',
+    padding: isMobile ? '5px 10px' : '6px 12px',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    border: '1px solid rgba(0, 0, 0, 0.08)',
+    borderRadius: '20px',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+    fontFamily: 'monospace',
+    fontSize: isMobile ? '9px' : '10px',
+    transition: 'bottom 0.5s ease-out',
+  };
 
-  // Desktop: Compact combined status bar (smaller than v1)
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '70px',
-        right: '20px',
-        zIndex: 150,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '6px 10px',
-        background: 'rgba(20, 20, 20, 0.9)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '8px',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        fontFamily: 'monospace',
-        fontSize: '10px',
-      }}
-    >
+    <div style={containerStyle}>
       {/* Auto-save indicator - compact */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '4px',
-          color: isSaving ? COLORS.yellow : 'rgba(255, 255, 255, 0.5)',
+          color: isSaving ? '#b45309' : 'rgba(0, 0, 0, 0.5)',
         }}
       >
-        <span style={{ fontSize: '11px' }}>{isSaving ? '⏳' : '✓'}</span>
-        <span>
+        <span style={{ fontSize: isMobile ? '10px' : '11px' }}>{isSaving ? '⏳' : '✓'}</span>
+        <span style={{ textAlign: 'center' }}>
           {isSaving
             ? 'Saving'
             : lastSavedAt
@@ -130,7 +94,7 @@ export default function StatusBar({
         style={{
           width: '1px',
           height: '14px',
-          background: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'rgba(0, 0, 0, 0.1)',
         }}
       />
 
@@ -146,7 +110,7 @@ export default function StatusBar({
           style={{
             width: '32px',
             height: '3px',
-            background: 'rgba(255, 255, 255, 0.1)',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
             borderRadius: '2px',
             overflow: 'hidden',
           }}
@@ -155,7 +119,7 @@ export default function StatusBar({
             style={{
               width: `${nodeUsagePercent}%`,
               height: '100%',
-              background: getProgressColor(),
+              backgroundColor: getProgressColor(),
               transition: 'width 0.3s, background-color 0.3s',
             }}
           />
@@ -164,7 +128,8 @@ export default function StatusBar({
           style={{
             color: nodeUsagePercent >= 90
               ? UNITY.progress.high
-              : 'rgba(255, 255, 255, 0.5)',
+              : 'rgba(0, 0, 0, 0.5)',
+            textAlign: 'center',
           }}
         >
           {nodeCount}/{nodeLimit}
@@ -172,13 +137,13 @@ export default function StatusBar({
       </div>
 
       {/* Shortcuts hint - integrated, clickable */}
-      {showShortcutsHint && (
+      {showShortcutsHint && !isMobile && (
         <>
           <div
             style={{
               width: '1px',
               height: '14px',
-              background: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'rgba(0, 0, 0, 0.1)',
             }}
           />
           <button
@@ -187,18 +152,19 @@ export default function StatusBar({
               background: 'none',
               border: 'none',
               padding: '2px 4px',
-              color: 'rgba(255, 255, 255, 0.35)',
+              color: 'rgba(0, 0, 0, 0.35)',
               fontSize: '9px',
               cursor: 'pointer',
               borderRadius: '3px',
               transition: 'all 0.2s',
+              textAlign: 'center',
             }}
             onMouseEnter={(e) => {
-              e.target.style.color = 'rgba(255, 255, 255, 0.7)';
-              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.color = 'rgba(0, 0, 0, 0.7)';
+              e.target.style.background = 'rgba(0, 0, 0, 0.06)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.color = 'rgba(255, 255, 255, 0.35)';
+              e.target.style.color = 'rgba(0, 0, 0, 0.35)';
               e.target.style.background = 'none';
             }}
             title="View keyboard shortcuts"

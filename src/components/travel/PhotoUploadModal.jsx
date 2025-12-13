@@ -100,14 +100,14 @@ const PhotoUploadModal = ({
     }
   };
 
-  // Premium node types configuration
+  // Premium node types configuration (Coming Soon - UI only)
   const PREMIUM_NODE_TYPES = [
-    { type: 'group', icon: '📦', label: 'GROUP', description: 'Container for organizing notes', color: '#6366f1' },
-    { type: 'todo', icon: '✅', label: 'TODO LIST', description: 'Track tasks and checkboxes', color: '#22c55e' },
-    { type: 'sticky', icon: '📌', label: 'STICKY', description: 'Quick colorful sticky notes', color: '#facc15' },
-    { type: 'comment', icon: '💬', label: 'COMMENT', description: 'Add discussion threads', color: '#f97316' },
-    { type: 'swatch', icon: '🎨', label: 'COLOR SWATCH', description: 'Save color palettes', color: '#ec4899' },
-    { type: 'code', icon: '💻', label: 'CODE BLOCK', description: 'Syntax-highlighted code', color: '#64748b' },
+    { type: 'group', icon: '📦', label: 'GROUP', description: 'Coming Soon', color: '#6366f1', comingSoon: true },
+    { type: 'todo', icon: '✅', label: 'TODO LIST', description: 'Coming Soon', color: '#22c55e', comingSoon: true },
+    { type: 'sticky', icon: '📌', label: 'STICKY', description: 'Coming Soon', color: '#facc15', comingSoon: true },
+    { type: 'comment', icon: '💬', label: 'COMMENT', description: 'Coming Soon', color: '#f97316', comingSoon: true },
+    { type: 'swatch', icon: '🎨', label: 'COLOR SWATCH', description: 'Coming Soon', color: '#ec4899', comingSoon: true },
+    { type: 'code', icon: '💻', label: 'CODE BLOCK', description: 'Coming Soon', color: '#64748b', comingSoon: true },
   ];
 
   const handleSubmit = async (e) => {
@@ -898,17 +898,20 @@ const PhotoUploadModal = ({
                           <button
                             key={nodeType.type}
                             onClick={() => {
-                              onAddCard(nodeType.type);
-                              handleClose();
+                              if (!nodeType.comingSoon) {
+                                onAddCard(nodeType.type);
+                                handleClose();
+                              }
                             }}
+                            disabled={nodeType.comingSoon}
                             style={{
                               width: '100%',
                               padding: '16px 20px',
-                              backgroundColor: nodeType.color,
-                              color: nodeType.type === 'sticky' ? 'black' : 'white',
+                              backgroundColor: nodeType.comingSoon ? 'rgba(75, 85, 99, 0.5)' : nodeType.color,
+                              color: nodeType.comingSoon ? 'rgba(255,255,255,0.5)' : (nodeType.type === 'sticky' ? 'black' : 'white'),
                               border: 'none',
                               borderRadius: '0',
-                              cursor: 'pointer',
+                              cursor: nodeType.comingSoon ? 'not-allowed' : 'pointer',
                               fontSize: '13px',
                               fontWeight: '700',
                               letterSpacing: '0.08em',
@@ -916,15 +919,20 @@ const PhotoUploadModal = ({
                               alignItems: 'center',
                               gap: '12px',
                               transition: 'all 0.2s ease',
-                              textAlign: 'left'
+                              textAlign: 'left',
+                              opacity: nodeType.comingSoon ? 0.6 : 1
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.opacity = '0.9';
-                              e.currentTarget.style.transform = 'translateX(4px)';
+                              if (!nodeType.comingSoon) {
+                                e.currentTarget.style.opacity = '0.9';
+                                e.currentTarget.style.transform = 'translateX(4px)';
+                              }
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.opacity = '1';
-                              e.currentTarget.style.transform = 'translateX(0)';
+                              if (!nodeType.comingSoon) {
+                                e.currentTarget.style.opacity = '1';
+                                e.currentTarget.style.transform = 'translateX(0)';
+                              }
                             }}
                           >
                             <span style={{ fontSize: '20px' }}>{nodeType.icon}</span>
@@ -940,6 +948,18 @@ const PhotoUploadModal = ({
                                 {nodeType.description}
                               </span>
                             </div>
+                            {nodeType.comingSoon && (
+                              <span style={{
+                                fontSize: '9px',
+                                fontWeight: '600',
+                                backgroundColor: 'rgba(0,0,0,0.3)',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                letterSpacing: '0.05em'
+                              }}>
+                                SOON
+                              </span>
+                            )}
                           </button>
                         ))}
                       </div>

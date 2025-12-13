@@ -58,7 +58,7 @@ const CARD_TYPES = {
   video: { label: 'Video', icon: '📹', color: '#f59e0b' },
 };
 
-const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle }) => {
+const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showParallax, setShowParallax }) => {
   const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport } = useReactFlow();
   const { sidebarOpen } = useLayout();
   const navigate = useNavigate();
@@ -150,15 +150,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [journeyTitle, setJourneyTitle] = useState('Untitled Journey');
   const [journeyStatus, setJourneyStatus] = useState('draft'); // draft, active, paused, completed
   const [showProspectModal, setShowProspectModal] = useState(false);
-  const [isSendingEmails, setIsSendingEmails] = useState(false);
+  const [_isSendingEmails, setIsSendingEmails] = useState(false);
   const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
   const [studioContext, setStudioContext] = useState(null); // Context passed from AI Chat to Studio
-  const [associatedTriggers, setAssociatedTriggers] = useState([]); // Trigger rules that enroll into this journey
-  const [isLoadingTriggers, setIsLoadingTriggers] = useState(false);
+  const [_associatedTriggers, setAssociatedTriggers] = useState([]); // Trigger rules that enroll into this journey
+  const [_isLoadingTriggers, setIsLoadingTriggers] = useState(false);
 
   // Auto-save state
   const [lastSavedAt, setLastSavedAt] = useState(null);
-  const [isSavingLocal, setIsSavingLocal] = useState(false);
+  const [_isSavingLocal, setIsSavingLocal] = useState(false);
 
   // Handler for opening Studio from AI Chat with conversation context
   const handleOpenStudio = useCallback((context) => {
@@ -1810,7 +1810,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   };
 
   // Send emails directly from canvas (immediate send via ESP/Resend)
-  const handleSendEmailsNow = async () => {
+  const _handleSendEmailsNow = async () => {
     if (!hasProAccess()) {
       alert(
         '☁️ Send Emails - Pro Feature\n\n' +
@@ -2053,16 +2053,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     enabled: currentMode === 'notes', // Only enable in notes mode
   });
 
-  // Parallax background toggle (persisted to localStorage)
-  const [showParallax, setShowParallax] = useState(() => {
-    try {
-      const saved = localStorage.getItem('unity-notes-show-parallax');
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch {
-      return true;
-    }
-  });
-
+  // Parallax toggle handler (state lifted to parent)
   const handleToggleParallax = useCallback(() => {
     setShowParallax(prev => {
       const newVal = !prev;
@@ -2073,7 +2064,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       }
       return newVal;
     });
-  }, []);
+  }, [setShowParallax]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
@@ -2140,6 +2131,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         )}
         {/* ReactFlow Canvas - Always render but hide when studio is open */}
         <div style={{ display: currentMode === 'studio' ? 'none' : 'block', height: '100%' }}>
+          {/* Override React Flow's default overflow:hidden on nodes to show delete buttons */}
+          <style>{`
+            .react-flow__node,
+            .react-flow__node > div,
+            .react-flow__node-textNode,
+            .react-flow__node-photoNode {
+              overflow: visible !important;
+            }
+          `}</style>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -2172,15 +2172,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       </div>
 
-      {/* Status Bar - Top Right (compact: save status + node count + shortcuts) */}
-      <StatusBar
-        isSaving={isSavingLocal}
-        lastSavedAt={lastSavedAt}
-        nodeCount={nodes.length}
-        nodeLimit={nodeLimit}
-        showShortcutsHint={currentMode === 'notes'}
-        onShortcutsClick={() => setShowShortcutsHelp(true)}
-      />
+      {/* Status Bar is now integrated into UnityCircleNav */}
 
       {/* Mobile Node Navigator - Jump between canvas areas */}
       <MobileNodeNavigator nodes={nodes} />
@@ -2263,8 +2255,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         <button
           onClick={() => zoomIn({ duration: 200 })}
           style={{
-            width: '28px',
-            height: '28px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2272,22 +2264,20 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: '700',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#f5b000';
-            e.target.style.transform = 'scale(1.08)';
+            e.currentTarget.style.backgroundColor = '#f5b000';
+            e.currentTarget.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'rgb(251, 191, 36)';
-            e.target.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Zoom In"
         >
-          +
++
         </button>
 
         {/* Zoom Level Indicator */}
@@ -2306,8 +2296,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         <button
           onClick={() => zoomOut({ duration: 200 })}
           style={{
-            width: '28px',
-            height: '28px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2315,30 +2305,28 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '18px',
-            fontWeight: '700',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#f5b000';
-            e.target.style.transform = 'scale(1.08)';
+            e.currentTarget.style.backgroundColor = '#f5b000';
+            e.currentTarget.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'rgb(251, 191, 36)';
-            e.target.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Zoom Out"
         >
-          −
+−
         </button>
 
         {/* Center/Fit View Button */}
         <button
           onClick={() => fitView({ duration: 400, padding: 0.2 })}
           style={{
-            width: '28px',
-            height: '28px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2346,30 +2334,29 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             border: '1px solid rgba(0, 0, 0, 0.12)',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '14px',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
             marginTop: '2px'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
-            e.target.style.transform = 'scale(1.08)';
+            e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+            e.currentTarget.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
-            e.target.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Center View"
         >
-          ⊙
+⊙
         </button>
 
         {/* Auto-Layout Button */}
         <button
           onClick={handleAutoLayout}
           style={{
-            width: '28px',
-            height: '28px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2377,200 +2364,23 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             border: '1px solid rgba(0, 0, 0, 0.12)',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '12px',
             color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
-            e.target.style.transform = 'scale(1.08)';
+            e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+            e.currentTarget.style.transform = 'scale(1.08)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
-            e.target.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
+            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Auto-Organize Nodes"
         >
-          ⊞
+⊞
         </button>
 
-        {/* Cloud Save Button (MAP mode only) */}
-        {hasJourneyContent && (
-          <button
-            onClick={handleSaveJourney}
-            disabled={isSavingJourney}
-            style={{
-              width: '28px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: currentJourneyId ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.04)',
-              border: `1px solid ${currentJourneyId ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.12)'}`,
-              borderRadius: '4px',
-              cursor: isSavingJourney ? 'wait' : 'pointer',
-              fontSize: '12px',
-              color: currentJourneyId ? '#b45309' : 'black',
-              transition: 'all 0.2s ease',
-              opacity: isSavingJourney ? 0.6 : 1
-            }}
-            onMouseEnter={(e) => {
-              if (!isSavingJourney) {
-                e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.3)';
-                e.target.style.transform = 'scale(1.08)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isSavingJourney) {
-                e.target.style.backgroundColor = currentJourneyId ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 0, 0, 0.04)';
-                e.target.style.transform = 'scale(1)';
-              }
-            }}
-            title={currentJourneyId ? 'Update Journey in Cloud' : 'Save Journey to Cloud'}
-          >
-            {isSavingJourney ? '⏳' : '☁️'}
-          </button>
-        )}
-
-        {/* Trigger Association Indicator (MAP mode only, when journey is saved) */}
-        {currentMode === 'map' && currentJourneyId && (
-          <div
-            onClick={() => navigate('/admin/trigger-rules')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 10px',
-              backgroundColor: associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(156, 163, 175, 0.1)',
-              border: `1px solid ${associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(156, 163, 175, 0.3)'}`,
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '11px',
-              fontWeight: '600',
-              color: associatedTriggers.length > 0 ? '#059669' : '#6b7280',
-              marginTop: '4px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(156, 163, 175, 0.2)';
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = associatedTriggers.length > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(156, 163, 175, 0.1)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title={
-              isLoadingTriggers
-                ? 'Loading triggers...'
-                : associatedTriggers.length > 0
-                  ? `${associatedTriggers.length} trigger${associatedTriggers.length > 1 ? 's' : ''} feed into this journey:\n${associatedTriggers.map(t => `• ${t.name}`).join('\n')}\n\nClick to manage triggers`
-                  : 'No triggers associated with this journey. Click to create one.'
-            }
-          >
-            {isLoadingTriggers ? (
-              <span style={{ fontSize: '12px' }}>⏳</span>
-            ) : associatedTriggers.length > 0 ? (
-              <>
-                <span style={{ fontSize: '12px' }}>⚡</span>
-                <span>{associatedTriggers.length} TRIGGER{associatedTriggers.length > 1 ? 'S' : ''}</span>
-              </>
-            ) : (
-              <>
-                <span style={{ fontSize: '12px', opacity: 0.7 }}>⚡</span>
-                <span style={{ opacity: 0.8 }}>NO TRIGGERS</span>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* RUN ALL / PAUSE ALL Toggle (MAP mode only) */}
-        {hasJourneyContent && (
-          <button
-            onClick={journeyStatus === 'paused' ? handleSendEmailsNow : (journeyStatus === 'active' ? () => setJourneyStatus('paused') : handleSendEmailsNow)}
-            disabled={isSavingJourney || isSendingEmails}
-            style={{
-              minWidth: '36px',
-              height: '36px',
-              padding: '0 10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              backgroundColor: isSendingEmails
-                ? 'rgba(245, 158, 11, 0.2)'
-                : journeyStatus === 'paused'
-                  ? 'rgba(245, 158, 11, 0.15)'
-                  : journeyStatus === 'active'
-                    ? 'rgba(16, 185, 129, 0.15)'
-                    : 'rgba(251, 191, 36, 0.1)',
-              border: `2px solid ${
-                isSendingEmails
-                  ? 'rgba(245, 158, 11, 0.5)'
-                  : journeyStatus === 'paused'
-                    ? 'rgba(245, 158, 11, 0.5)'
-                    : journeyStatus === 'active'
-                      ? 'rgba(16, 185, 129, 0.5)'
-                      : 'rgba(251, 191, 36, 0.4)'
-              }`,
-              borderRadius: '8px',
-              cursor: isSendingEmails ? 'wait' : 'pointer',
-              fontSize: '11px',
-              fontWeight: '700',
-              letterSpacing: '0.05em',
-              color: isSendingEmails
-                ? '#d97706'
-                : journeyStatus === 'paused'
-                  ? '#d97706'
-                  : journeyStatus === 'active'
-                    ? '#059669'
-                    : '#92400e',
-              transition: 'all 0.2s ease',
-              marginTop: '4px'
-            }}
-            onMouseEnter={(e) => {
-              if (!isSendingEmails) {
-                e.currentTarget.style.backgroundColor = journeyStatus === 'active' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(251, 191, 36, 0.2)';
-                e.currentTarget.style.transform = 'scale(1.03)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.25)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isSendingEmails) {
-                e.currentTarget.style.backgroundColor = journeyStatus === 'paused' ? 'rgba(245, 158, 11, 0.15)' : journeyStatus === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(251, 191, 36, 0.1)';
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-              }
-            }}
-            title={
-              isSendingEmails ? 'Sending emails...'
-              : journeyStatus === 'paused' ? 'Resume sending emails'
-              : journeyStatus === 'active' ? 'Pause all campaigns'
-              : 'Run all campaigns'
-            }
-          >
-            {isSendingEmails ? (
-              <>
-                <span style={{ fontSize: '12px' }}>⏳</span>
-                <span>SENDING</span>
-              </>
-            ) : journeyStatus === 'paused' ? (
-              <>
-                <span style={{ fontSize: '12px' }}>▶️</span>
-                <span>RESUME</span>
-              </>
-            ) : journeyStatus === 'active' ? (
-              <>
-                <span style={{ fontSize: '12px' }}>⏸️</span>
-                <span>PAUSE</span>
-              </>
-            ) : (
-              <>
-                <span style={{ fontSize: '14px' }}>🚀</span>
-                <span>RUN ALL</span>
-              </>
-            )}
-          </button>
-        )}
+        {/* MAP-specific controls moved to UnityCircleNav for cleaner zoom module */}
 
         {/* Divider */}
         <div style={{ width: '24px', height: '1px', backgroundColor: '#e5e7eb', margin: '4px 0' }} />
@@ -2579,34 +2389,33 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         <button
           onClick={() => setShowModePanel(!showModePanel)}
           style={{
-            width: '36px',
-            height: '36px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: showModePanel ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.05)',
-            border: `1px solid ${showModePanel ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.15)'}`,
-            borderRadius: '6px',
+            backgroundColor: showModePanel ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.04)',
+            border: `1px solid ${showModePanel ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.12)'}`,
+            borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '14px',
             color: showModePanel ? '#b45309' : 'black',
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
             if (!showModePanel) {
-              e.target.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
-              e.target.style.transform = 'scale(1.05)';
+              e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.1)';
+              e.currentTarget.style.transform = 'scale(1.08)';
             }
           }}
           onMouseLeave={(e) => {
             if (!showModePanel) {
-              e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-              e.target.style.transform = 'scale(1)';
+              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
+              e.currentTarget.style.transform = 'scale(1)';
             }
           }}
           title={showModePanel ? 'Hide Modes' : 'Switch Mode'}
         >
-          {showModePanel ? '◀' : '▶'}
+{showModePanel ? '◀' : '▶'}
         </button>
         </div>
       </div>
@@ -2631,41 +2440,46 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         emailCount={emailNodeCount}
         emailLimit={emailLimit}
         hasCampaign={hasCampaign}
+        // Status bar props
+        nodeCount={nodes.length}
+        nodeLimit={nodeLimit}
+        lastSavedAt={lastSavedAt}
+        onShortcutsClick={() => setShowShortcutsHelp(true)}
       />
 
       {/* Empty State - Centered above CircleNav with chevron */}
       {nodes.length === 0 && (
         <div style={{
           position: 'fixed',
-          bottom: '130px',
+          bottom: '144px',
           left: '50%',
           transform: 'translateX(-50%)',
-          textAlign: 'right',
+          textAlign: 'center',
           padding: '12px 16px',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(8px)',
           borderRadius: '8px',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
-          maxWidth: '200px',
+          maxWidth: '240px',
           pointerEvents: 'none',
           zIndex: 85
         }}>
           <h2 style={{
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: '700',
             color: '#000',
-            marginBottom: '4px',
-            textAlign: 'right',
+            marginBottom: '6px',
+            textAlign: 'center',
           }}>
             Start Brainstorming
           </h2>
           <p style={{
-            fontSize: '11px',
+            fontSize: '12px',
             color: 'rgba(0, 0, 0, 0.6)',
-            lineHeight: '1.3',
-            textAlign: 'right',
+            lineHeight: '1.4',
+            textAlign: 'center',
           }}>
-            Click the + below to get started.
+            Click the <span style={{ color: 'rgb(251, 191, 36)', fontWeight: '700' }}>+</span> below to get started.
           </p>
           {/* Chevron pointing down */}
           <div style={{
@@ -3096,6 +2910,16 @@ function UnityNotesPage() {
   const { handleFooterToggle, handleMenuToggle } = useLayout();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
+  // Parallax background toggle (lifted from UnityNotesFlow for Layout access)
+  const [showParallax, setShowParallax] = useState(() => {
+    try {
+      const saved = localStorage.getItem('unity-notes-show-parallax');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
   const handleHomeClick = (e) => {
     e.preventDefault();
     navigate('/');
@@ -3116,12 +2940,15 @@ function UnityNotesPage() {
           pageLabel="UNITYNOTES"
           sidebarVariant="hidden"
           hideCircleNav={true}
+          hideParallaxCircle={!showParallax}
         >
           <ReactFlowProvider>
             <UnityNotesFlow
               isUploadModalOpen={isUploadModalOpen}
               setIsUploadModalOpen={setIsUploadModalOpen}
               onFooterToggle={handleFooterToggle}
+              showParallax={showParallax}
+              setShowParallax={setShowParallax}
             />
           </ReactFlowProvider>
         </Layout>
