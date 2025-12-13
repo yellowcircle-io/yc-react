@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, NodeToolbar } from '@xyflow/react';
 import { getLLMAdapter, getLLMAdapterByName } from '../../adapters/llm';
 import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../contexts/AuthContext';
@@ -532,8 +532,13 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         }}
       />
 
-      {/* Delete button - overlaps card corner */}
-      {(isHovered || selected) && (
+      {/* Delete button - uses NodeToolbar (portal) to avoid clipping */}
+      <NodeToolbar
+        isVisible={isHovered || selected}
+        position={Position.Top}
+        align="end"
+        offset={8}
+      >
         <button
           className="nodrag nopan"
           onClick={(e) => {
@@ -541,9 +546,6 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
             if (data.onDelete) data.onDelete(id);
           }}
           style={{
-            position: 'absolute',
-            top: '-12px',
-            right: '-12px',
             width: '24px',
             height: '24px',
             padding: 0,
@@ -558,9 +560,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            zIndex: 10,
-            opacity: isHovered && !selected ? 0.85 : 1,
-            transition: 'opacity 0.2s ease, transform 0.15s ease',
+            transition: 'transform 0.15s ease',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
@@ -568,7 +568,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         >
           ×
         </button>
-      )}
+      </NodeToolbar>
 
       {/* Card content wrapper */}
       <div style={{ overflow: 'hidden', borderRadius: '6px' }}>
