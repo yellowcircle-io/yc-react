@@ -41,6 +41,7 @@ const OutreachBusinessPage = lazy(() => import('./pages/experiments/OutreachBusi
 
 // Thoughts sub-routes (lazy loaded)
 const BlogPage = lazy(() => import('./pages/thoughts/BlogPage'));
+const ArticleV2Page = lazy(() => import('./pages/thoughts/ArticleV2Page'));
 
 // Own Your Story - Thought Leadership Series (lazy loaded - large component)
 const OwnYourStoryArticle1Page = lazy(() => import('./pages/OwnYourStoryArticle1Page'));
@@ -59,6 +60,7 @@ const TriggerRulesPage = lazy(() => import('./pages/admin/TriggerRulesPage'));
 const ContactDashboardPage = lazy(() => import('./pages/admin/ContactDashboardPage'));
 const ArticleListPage = lazy(() => import('./pages/admin/ArticleListPage'));
 const ArticleEditorPage = lazy(() => import('./pages/admin/ArticleEditorPage'));
+const BlockEditorPage = lazy(() => import('./pages/admin/BlockEditorPage'));
 
 // Loading spinner for lazy loaded components
 const PageLoader = () => (
@@ -129,6 +131,9 @@ function RouterApp() {
             {/* Own Your Story - Thought Leadership Series */}
             <Route path="/thoughts/why-your-gtm-sucks" element={<OwnYourStoryArticle1Page />} />
 
+            {/* Block-based Article Renderer (v2 - for validation) */}
+            <Route path="/thoughts/:slug" element={<ArticleV2Page />} />
+
             {/* ARCHIVED: Travel Time Capsule
             <Route path="/uk-memories" element={<TimeCapsulePage />} />
             <Route path="/uk-memories/view/:capsuleId" element={<CapsuleViewPage />} />
@@ -174,6 +179,7 @@ function RouterApp() {
             <Route path="/admin/contacts" element={<ContactDashboardPage />} />
             <Route path="/admin/articles" element={<ArticleListPage />} />
             <Route path="/admin/articles/:articleId" element={<ArticleEditorPage />} />
+            <Route path="/admin/blocks/:articleId" element={<BlockEditorPage />} />
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />

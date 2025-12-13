@@ -1,7 +1,7 @@
 # yellowCircle MultiSystem Framework (yC-MSF) - Table of Contents
 
-**Last Updated:** December 7, 2025
-**Framework Version:** 2.2
+**Last Updated:** December 10, 2025
+**Framework Version:** 2.3
 **Purpose:** Central directory of all yC-MSF documentation and tools
 
 > **Note:** yC-MSF is the unified name for the complete yellowCircle infrastructure system, previously called "Multi-Machine Framework (MMF)". It encompasses Dropbox sync, GitHub version control, Notion integration, Firebase deployment, WIP tracking, roadmaps, and automation.
@@ -224,6 +224,35 @@
 
 ---
 
+### 📝 Content Management System
+
+#### Block CMS Documentation
+| Document | Purpose | When to Use | Priority |
+|----------|---------|-------------|----------|
+| [docs/BLOCK_CMS_GUIDE.md](../docs/BLOCK_CMS_GUIDE.md) | Block-based CMS reference | Creating/editing articles | 🔴 Critical |
+| [scripts/article-generator/README.md](../scripts/article-generator/README.md) | Programmatic article creation | CLI/automation article generation | 🟡 Optional |
+| [scripts/article-generator/ssh-shortcuts.md](../scripts/article-generator/ssh-shortcuts.md) | iPhone SSH commands | Mobile article creation | 🟡 Optional |
+
+**Block CMS Components:**
+- `src/components/articles/ArticleBlocks.jsx` - 13 reusable block components
+- `src/components/articles/ArticleRenderer.jsx` - Block-to-component mapper
+- `src/pages/admin/BlockEditorPage.jsx` - Visual block editor
+
+**Article Generator Scripts:**
+- `scripts/article-generator/generate.cjs` - CLI markdown → blocks converter
+- `scripts/article-generator/n8n-webhook-handler.cjs` - n8n/Firebase webhook
+- `scripts/article-generator/templates/` - Article templates
+
+**Key URLs:**
+| Page | URL | Purpose |
+|------|-----|---------|
+| Admin Articles | `/admin/articles` | Article list with block/legacy badges |
+| Block Editor | `/admin/blocks/new` | Create new block article |
+| Block Editor (Edit) | `/admin/blocks/:id` | Edit existing block article |
+| Article View | `/thoughts/:slug` | Public article display |
+
+---
+
 ## 🗂️ File Categories by Purpose
 
 ### 🔴 Critical Files (Must Read)
@@ -296,6 +325,27 @@
 3. Refer: Sync troubleshooting docs
 4. Fix: Based on platform (Dropbox/GitHub)
 
+### "I want to create a new article"
+**Via Admin UI:**
+1. Navigate to `/admin/articles`
+2. Click "New Block Article"
+3. Add blocks and configure content
+4. Save as draft or publish
+
+**Via CLI:**
+```bash
+# Preview first
+node scripts/article-generator/generate.cjs --input article.md --dry-run
+
+# Save to Firestore
+node scripts/article-generator/generate.cjs --input article.md --output firestore
+```
+
+**Via SSH (iPhone):**
+```bash
+pbpaste | ssh mac "cd ~/project && node scripts/article-generator/generate.cjs --input - --output firestore"
+```
+
 ---
 
 ## 🔄 Sync Hierarchy (Order of Priority)
@@ -324,14 +374,16 @@
 
 ## 📊 Framework Metrics
 
-### Current State (as of Dec 7, 2025)
-- **Total Documents:** 40+ documentation files
-- **Scripts:** 8+ executable scripts
+### Current State (as of Dec 10, 2025)
+- **Total Documents:** 45+ documentation files
+- **Scripts:** 12+ executable scripts
 - **Machines Supported:** 2 active (Mac Mini, MacBook Air)
 - **Remote Access Points:** 7 (Desktop, Mobile, Web, Codespaces)
 - **Automation Commands:** 5 (sync, wip, content, deadline, summary)
 - **Slash Commands:** 10 (5 primary + 5 aliases)
 - **Disk Space Reclaimed:** 24 GB (Nov 21 initial cleanup)
+- **Block Types:** 13 (CMS block components)
+- **Article Generator:** CLI + n8n + SSH shortcuts
 
 ### Framework Version History
 - **v1.0** (Nov 2, 2025): Initial multi-machine setup
@@ -339,6 +391,7 @@
 - **v2.0** (Nov 19, 2025): Mobile command system + automation
 - **v2.1** (Nov 21, 2025): Disk maintenance system + TOC
 - **v2.2** (Dec 7, 2025): yC-MSF rebrand + /yc-msf command hub
+- **v2.3** (Dec 10, 2025): Block CMS + Article Generator framework
 
 ---
 
@@ -398,7 +451,7 @@
 ---
 
 **Framework Status:** ✅ Active and Operational
-**Last Major Update:** December 7, 2025 (yC-MSF rebrand + command hub)
+**Last Major Update:** December 10, 2025 (Block CMS + Article Generator)
 **Next Scheduled Maintenance:** January 1, 2026 (Monthly cleanup)
 **Maintained By:** Multi-machine Claude Code instances
 

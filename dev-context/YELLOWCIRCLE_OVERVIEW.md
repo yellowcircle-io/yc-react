@@ -2,7 +2,7 @@
 
 **A Strategic Consulting Practice + Digital Product Studio**
 
-*Last Updated: December 9, 2025*
+*Last Updated: December 10, 2025*
 
 ---
 
@@ -138,6 +138,25 @@ Asset creation suite for GTM campaigns.
 **Tech:** React, Modal-based UI
 **Status:** MVP Complete; SocialPostBuilder & AdCreativeBuilder stubbed
 
+**Expansion Scope (EOY - Q1 2026):**
+
+| Platform | Dimensions | Status |
+|----------|------------|--------|
+| Instagram Feed | 1080×1080 (1:1) or 1080×1350 (4:5) | ⬜ Planned |
+| Instagram Stories | 1080×1920 (9:16) | ⬜ Planned |
+| Reddit | 1200×628 (1.91:1) | ⬜ Planned |
+| LinkedIn Feed | 1200×627 (1.91:1) | ⬜ Planned |
+| LinkedIn Stories | 1080×1920 (9:16) | ⬜ Planned |
+| Twitter/X | 1200×675 (16:9) | ⬜ Planned |
+
+**AI Image Generation Options (Budget-Conscious):**
+| Tool | Cost | Notes |
+|------|------|-------|
+| DALL-E 3 | $0.04-0.12/img | Already integrated |
+| SDXL via Replicate | ~$0.0046/img | Recommended addition |
+| Leonardo.ai | 150 free/day | Good quality free tier |
+| Stable Diffusion (local) | $0 | Requires GPU |
+
 ### Growth Health Check (`/assessment`)
 
 8-question assessment that scores marketing operations health.
@@ -222,32 +241,68 @@ Asset creation suite for GTM campaigns.
 
 ---
 
-## EOY 2025 Roadmap Reference
+## EOY 2025 Roadmap - EXECUTION STATUS (Dec 10, 2025)
 
 **Full Scoping Document:** `dev-context/EOY_ROADMAP_SCOPING_DEC2025.md`
 
-### Priority Items (P1 - Revenue Focus):
-| Item | Status | Notes |
-|------|--------|-------|
-| Prospecting Motion | 🟡 Partial | n8n webhook designed, deployment pending |
-| Outbound Campaign Seed | ⬜ Not Started | Contact list + journey creation |
-| Contact Dashboard | ⬜ Not Started | Firestore UI + lead scoring |
-| Email Nurture System | 🟡 Partial | ESP adapters stubbed |
-| Mobile Optimization | 🟡 In Progress | Testing ongoing |
+### EOY Roadmap Phases - ALL COMPLETE ✅
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Firestore Schemas (contacts, leads, triggerRules) | ✅ COMPLETE |
+| Phase 2 | n8n + Railway Deployment | ✅ COMPLETE |
+| Phase 3 | Trigger System + createProspect API | ✅ COMPLETE |
+| Phase 4 | Contact Dashboard UI + Admin Hub | ✅ COMPLETE |
+| Phase 5 | Block CMS (Hybrid Firestore/MDX) | ✅ COMPLETE |
+| Phase 6 | SendGrid ESP Hot-Swap | ✅ COMPLETE |
 
-### Platform Enhancements (P2):
+### Go-Live Checklist (Today to EOY):
 | Item | Status | Notes |
 |------|--------|-------|
-| UnitySTUDIO Ad Creative | ⬜ Stub Only | Platform specs documented |
-| UnitySTUDIO Social Posts | ⬜ Stub Only | Platform specs documented |
 | Bundle Optimization | ⬜ Not Started | Target: 40% reduction |
-| Blog/CMS | ⬜ Not Started | MDX recommended |
+| Prospecting Motion | 🟢 85% | Triggers live, n8n designed |
+| Email Nurture System | 🟢 85% | ESP hot-swap done, need journey |
+| UnitySTUDIO Optimizations | 🟡 40% | Email builder done; Ad/Social stubbed |
+| Contact Dashboard | 🟢 90% | Live at `/admin/contacts` |
+| Blog/CMS Content | ✅ 100% | Block CMS + generator script |
+| Mobile Optimization | 🟡 In Progress | Testing ongoing |
+| Site Optimizations | 🟡 Partial | Sentry/rate limiting done |
+| Outbound Campaign Seed | ⬜ Not Started | Need contact list + journey |
+| Prospect Discovery/Enrichment | ⬜ Not Started | Apollo.io documented |
 
-### Architecture Gap Identified:
-**Email Capture → UnityMAP Journey Integration**
-- Current: No automated bridge between captures and journeys
-- Required: Firestore trigger + journey enrollment webhook
-- See scoping document for detailed analysis
+### Q1 2026 Roadmap:
+| Item | Status | Notes |
+|------|--------|-------|
+| Cypress E2E Testing | ⬜ Not Started | Test coverage |
+| LinkedIn Content Strategy | ⬜ Not Started | Organic outreach |
+| Paid Ads (Reddit, LinkedIn, Google) | ⬜ Not Started | Budget allocation |
+| Apollo.io Enrichment | ⬜ Not Started | Lead enrichment |
+
+### ✅ Architecture Capability: Email Capture → Journey (WORKING)
+
+**Question Resolved:** Can email captures auto-enroll in UnityMAP journeys?
+
+**Answer: YES - Fully functional.**
+
+```
+LeadGate/Footer/Assessment/SSO
+        ↓
+   createLead() → Firestore `leads`
+        ↓
+   onLeadCreated (Cloud Function)
+        ↓
+   Evaluate triggerRules
+        ↓
+   enroll_journey action → UnityMAP
+        ↓
+   Email via ESP (Resend/SendGrid)
+```
+
+**To Enable:**
+1. Create welcome journey at `/outreach`
+2. Create trigger rule at `/admin/trigger-rules`
+3. Test end-to-end flow
+
+**User Partitioning:** Currently single-tenant (yellowCircle internal). Multi-tenant workspace isolation designed for future.
 
 ---
 
@@ -278,8 +333,8 @@ The platform uses a hot-swappable adapter pattern for flexibility:
 - Claude (stub)
 
 **ESP Adapters:**
-- Resend (✅ Complete)
-- SendGrid (stub)
+- Resend (✅ Complete + Hot-Swap)
+- SendGrid (✅ Complete + Hot-Swap)
 - HubSpot (stub)
 - Mailchimp (stub)
 
@@ -288,6 +343,16 @@ The platform uses a hot-swappable adapter pattern for flexibility:
 - Airtable (stub)
 - LocalStorage (✅ Complete)
 
+**ESP Hot-Swap Commands:**
+```bash
+# Check status
+curl https://us-central1-yellowcircle-app.cloudfunctions.net/getESPStatus
+
+# Switch provider
+firebase functions:config:set esp.provider="sendgrid"
+firebase deploy --only functions
+```
+
 ---
 
 ## Firebase Cloud Functions
@@ -295,7 +360,10 @@ The platform uses a hot-swappable adapter pattern for flexibility:
 | Function | Purpose | Status |
 |----------|---------|--------|
 | `generate` | LLM proxy for free tier (rate limited) | ✅ Live |
-| `sendEmail` | Resend ESP proxy | ✅ Live |
+| `sendEmail` | ESP proxy (Resend/SendGrid hot-swap) | ✅ Live |
+| `getESPStatus` | Check ESP configuration | ✅ Live |
+| `onLeadCreated` | Trigger rules evaluation | ✅ Live |
+| `createProspect` | API: Add prospect to journey | ✅ Live |
 | `health` | Health check endpoint | ✅ Live |
 | `requestAccess` | Client access workflow | ✅ Live |
 | `approveAccess` | Token-based approval | ✅ Live |
@@ -525,5 +593,6 @@ firebase deploy --only functions  # Deploy functions only
 
 ---
 
-*Document Version: 2.1*
+*Document Version: 2.2*
+*Updated: December 10, 2025 - EOY Go-Live Status Assessment*
 *For questions: info@yellowcircle.io*

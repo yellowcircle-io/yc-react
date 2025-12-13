@@ -6,6 +6,7 @@ import { COLORS, TYPOGRAPHY, EFFECTS } from '../styles/constants';
 import { navigationItems } from '../config/navigationItems';
 import { submitAssessment } from '../utils/formSubmit';
 import { sendLeadCapture } from '../config/integrations';
+import { createLead } from '../utils/firestoreLeads';
 
 // Category to Service mapping for recommendations
 const CATEGORY_SERVICE_MAP = {
@@ -274,8 +275,28 @@ function AssessmentPage() {
       const categoryScores = getCategoryScores();
       const recommendations = getRecommendedServices().map(r => r.service);
 
-      // Use shared form submission utility
-      await submitAssessment({
+      // Create lead in Firestore (PRIMARY - triggers onLeadCreated → journey enrollment → welcome email)
+      await createLead({
+        email,
+        submittedData: {
+          name,
+          company,
+          assessmentScore: score,
+          assessmentLevel: level,
+          recommendations: recommendations.join(', ')
+        },
+        source: 'assessment',
+        sourceForm: 'growth_health_check',
+        metadata: {
+          score,
+          level,
+          categoryScores,
+          recommendations
+        }
+      });
+
+      // Web3Forms backup (fire and forget)
+      submitAssessment({
         email,
         name,
         company,
@@ -283,6 +304,8 @@ function AssessmentPage() {
         level,
         categoryScores,
         recommendations
+      }).catch(err => {
+        console.warn('[Assessment] Web3Forms backup failed (non-critical):', err);
       });
 
       // Send to n8n for Airtable + Slack automation (fire and forget)

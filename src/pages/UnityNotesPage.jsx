@@ -2150,17 +2150,25 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       </div>
 
-      {/* Credits Badge - Bottom Left (Sidebar now handles UserMenu via global component) */}
-      {/* Positioned to the right of Sidebar's UserMenu */}
+      {/* Credits Badge - Hidden on mobile via CSS to keep CircleNav prominent */}
+      {/* On mobile, credits info accessible via user menu */}
       {isAuthenticated && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '200px', // Right of Sidebar's UserMenu (logo 20px + gap + UserMenu ~110px)
-          zIndex: 290,  // Match YC logo/UserMenu z-index to stay above sidebar
-          display: 'flex',
-          alignItems: 'center'
-        }}>
+        <div
+          className="credits-badge-desktop"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '200px',
+            zIndex: 290,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <style>{`
+            @media (max-width: 767px) {
+              .credits-badge-desktop { display: none !important; }
+            }
+          `}</style>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -2183,14 +2191,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         </div>
       )}
 
-      {/* Status Bar - Bottom Right */}
+      {/* Status Bar - Bottom Right (minimal: save status + node count) */}
       <StatusBar
         isSaving={isSavingLocal}
         lastSavedAt={lastSavedAt}
         nodeCount={nodes.length}
         nodeLimit={nodeLimit}
-        onExport={handleExportJSON}
-        onImport={handleImportJSON}
         showShortcutsHint={currentMode === 'notes'}
       />
 

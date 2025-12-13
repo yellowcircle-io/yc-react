@@ -11,6 +11,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { createLead } from '../utils/firestoreLeads';
+import { sendLeadCapture } from '../config/integrations';
 
 /**
  * AuthContext - Firebase Authentication with SSO support
@@ -207,6 +209,36 @@ export function AuthProvider({ children }) {
       // Log new client/admin
       if (isPremiumUser) {
         console.log(`✅ New ${autoScope} user created: ${userEmail} (premium tier)`);
+      }
+
+      // Create lead for new SSO signup (triggers journey enrollment + notifications)
+      try {
+        await createLead({
+          email: firebaseUser.email,
+          submittedData: {
+            name: firebaseUser.displayName || '',
+            provider: firebaseUser.providerData[0]?.providerId || 'unknown'
+          },
+          source: 'sso',
+          sourceForm: 'google_auth',
+          metadata: {
+            uid: firebaseUser.uid,
+            isNewUser: true,
+            tier: isPremiumUser ? 'premium' : 'free',
+            scope: autoScope
+          }
+        });
+        console.log(`✅ Lead created for new SSO user: ${userEmail}`);
+
+        // Also send to n8n for Slack notification (fire and forget)
+        sendLeadCapture(
+          { email: firebaseUser.email, name: firebaseUser.displayName || '' },
+          'sso_signup',
+          'New SSO Signup'
+        );
+      } catch (leadErr) {
+        console.error('Failed to create lead for SSO user:', leadErr);
+        // Don't fail auth if lead creation fails
       }
 
       return newProfile;

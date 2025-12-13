@@ -1,0 +1,236 @@
+{
+  "title": "Your Article Title Here",
+  "slug": "your-article-title-here",
+  "excerpt": "A compelling subtitle that hooks the reader",
+  "category": "own-your-story",
+  "tags": [
+    "gtm",
+    "strategy",
+    "operations"
+  ],
+  "author": "yellowCircle",
+  "readingTime": 45,
+  "status": "draft",
+  "contentSource": "blocks",
+  "blocks": [
+    {
+      "type": "hero",
+      "title": "Your Article Title Here",
+      "subtitle": "A compelling subtitle that hooks the reader",
+      "seriesLabel": "OWN YOUR STORY",
+      "readingTime": "10",
+      "date": "December 2025",
+      "author": "yellowCircle"
+    },
+    {
+      "type": "lead-paragraph",
+      "highlight": "Opening hook:",
+      "content": "Your compelling first paragraph that grabs attention and sets up the problem you're addressing. Be direct and confrontational."
+    },
+    {
+      "type": "paragraph",
+      "content": "This isn't another pitch for a solution. This is about the real problem nobody wants to talk about.",
+      "muted": false
+    },
+    {
+      "type": "section-header",
+      "number": "01",
+      "title": "The Problem Nobody Admits"
+    },
+    {
+      "type": "paragraph",
+      "content": "First section content explaining the core issue. Use specific examples and data.",
+      "muted": false
+    },
+    {
+      "type": "stat-grid",
+      "stats": [
+        {
+          "value": "Value",
+          "label": "Label",
+          "source": "Source"
+        },
+        {
+          "value": "68%",
+          "label": "of capability goes unused",
+          "source": "Industry Report 2024"
+        },
+        {
+          "value": "$30B",
+          "label": "wasted annually",
+          "source": "Research Study"
+        },
+        {
+          "value": "47%",
+          "label": "report burnout",
+          "source": "Professional Survey"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": "These aren't abstractions. They represent real people caught in organizational dysfunction.",
+      "muted": false
+    },
+    {
+      "type": "section-header",
+      "number": "02",
+      "title": "What's Really Happening"
+    },
+    {
+      "type": "paragraph",
+      "content": "Second section diving deeper into the problem mechanics.",
+      "muted": false
+    },
+    {
+      "type": "quote",
+      "content": "\"A powerful quote that illustrates the point you're making.\"",
+      "author": "Anonymous Professional, Company Type"
+    },
+    {
+      "type": "bullet-list",
+      "items": [
+        "First observation about the situation",
+        "Second observation with more detail",
+        "Third observation tying it together",
+        "Fourth observation with implications"
+      ]
+    },
+    {
+      "type": "section-header",
+      "number": "03",
+      "title": "The Human Cost"
+    },
+    {
+      "type": "paragraph",
+      "content": "Third section making it personal with specific personas.",
+      "muted": false
+    },
+    {
+      "type": "persona-card",
+      "role": "Operations Manager",
+      "description": "Promised visibility and control. Reality: maintains workarounds to reconcile what systems say versus what's real. Spends off-hours fixing data.",
+      "cost": "15+ hours/week on reconciliation. Considering leaving the field.",
+      "_linesConsumed": 3,
+      "name": "Alex"
+    },
+    {
+      "type": "paragraph",
+      "content": "Promised visibility and control. Reality: maintains workarounds to reconcile what systems say versus what's real. Spends off-hours fixing data.",
+      "muted": false
+    },
+    {
+      "type": "paragraph",
+      "content": "**Cost:** 15+ hours/week on reconciliation. Considering leaving the field.",
+      "muted": false
+    },
+    {
+      "type": "persona-card",
+      "role": "Data Analyst",
+      "description": "Hired to unlock insights. Reality: spends 80% of time cleaning data that should have been structured correctly.",
+      "cost": "Zero strategic analysis. Team sees them as slow when they're drowning.",
+      "_linesConsumed": 3,
+      "name": "Jordan"
+    },
+    {
+      "type": "paragraph",
+      "content": "Hired to unlock insights. Reality: spends 80% of time cleaning data that should have been structured correctly.",
+      "muted": false
+    },
+    {
+      "type": "paragraph",
+      "content": "**Cost:** Zero strategic analysis. Team sees them as slow when they're drowning.",
+      "muted": false
+    },
+    {
+      "type": "section-header",
+      "number": "04",
+      "title": "The Real Problem"
+    },
+    {
+      "type": "paragraph",
+      "content": "Fourth section identifying root causes.",
+      "muted": false
+    },
+    {
+      "type": "numbered-list",
+      "highlighted": true,
+      "items": [
+        {
+          "title": "Process gaps blamed on tools",
+          "description": "Instead of fixing workflows, organizations buy new software."
+        },
+        {
+          "title": "Organizational friction invisible",
+          "description": "Incentives are misaligned and tools can't fix that."
+        },
+        {
+          "title": "Technical debt compounds",
+          "description": "Every workaround creates two more. Nobody budgets for cleanup."
+        },
+        {
+          "title": "Truth-telling disincentivized",
+          "description": "People who see problems are punished for raising them."
+        }
+      ]
+    },
+    {
+      "type": "section-header",
+      "number": "05",
+      "title": "What Now?"
+    },
+    {
+      "type": "paragraph",
+      "content": "Final section with actionable guidance.",
+      "muted": false
+    },
+    {
+      "type": "paragraph",
+      "content": "Stop doing X. Start with:",
+      "muted": false
+    },
+    {
+      "type": "bullet-list",
+      "items": [
+        "First action item with clear guidance",
+        "Second action item explaining the approach",
+        "Third action item with expected outcome",
+        "Fourth action item connecting to bigger picture"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": "The bottom line: Your main argument summarized in one powerful statement. This is the key insight readers should take away.",
+      "muted": false
+    },
+    {
+      "type": "paragraph",
+      "content": "Your choice.",
+      "muted": false
+    },
+    {
+      "type": "cta-section",
+      "prompt": "Ready to stop the pattern?",
+      "buttons": [
+        {
+          "label": "Take the Assessment",
+          "link": "/assessment",
+          "primary": true
+        },
+        {
+          "label": "Explore Services",
+          "link": "/services",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "type": "sources",
+      "sources": [
+        "First Source Name, Year",
+        "Second Source Name, Year",
+        "Third Source Name, Year"
+      ]
+    }
+  ]
+}
