@@ -447,6 +447,9 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           : '0 4px 12px rgba(0,0,0,0.1)',
         overflow: 'visible',
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+        // CSS containment for rendering optimization
+        contentVisibility: 'auto',
+        containIntrinsicSize: '280px 200px',
       }}
     >
       {/* Connection handles */}

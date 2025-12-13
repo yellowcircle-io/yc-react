@@ -186,6 +186,60 @@ export const UNITY = {
     border: 'rgba(255, 255, 255, 0.1)',
     borderHover: 'rgba(251, 191, 36, 0.3)',
     shadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+    borderRadius: '12px',
+    padding: '16px',
+    minWidth: '200px',
+    maxWidth: '320px',
+  },
+
+  // Typography rhythm - consistent vertical spacing
+  typography: {
+    // Card title
+    title: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: '14px',
+      fontWeight: '600',
+      lineHeight: '1.4',
+      letterSpacing: '-0.01em',
+      color: 'rgba(255, 255, 255, 0.95)',
+      marginBottom: '8px',
+    },
+    // Card body text
+    body: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: '13px',
+      fontWeight: '400',
+      lineHeight: '1.5',
+      letterSpacing: '0',
+      color: 'rgba(255, 255, 255, 0.75)',
+    },
+    // Meta text (timestamps, labels)
+    meta: {
+      fontFamily: 'SF Mono, Monaco, "Cascadia Code", monospace',
+      fontSize: '10px',
+      fontWeight: '500',
+      lineHeight: '1.3',
+      letterSpacing: '0.02em',
+      color: 'rgba(255, 255, 255, 0.45)',
+      textTransform: 'uppercase',
+    },
+    // Node type labels
+    label: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: '10px',
+      fontWeight: '600',
+      lineHeight: '1',
+      letterSpacing: '0.05em',
+      textTransform: 'uppercase',
+    },
+  },
+
+  // Vertical rhythm spacing
+  spacing: {
+    cardPadding: '16px',
+    elementGap: '8px',      // Between elements in a card
+    sectionGap: '12px',     // Between sections in a card
+    nodeGap: '24px',        // Between nodes on canvas
   },
 
   // Status bar
@@ -208,6 +262,12 @@ export const UNITY = {
     link: '#06b6d4',      // Cyan
     email: '#f59e0b',     // Orange
     prospect: '#10b981',  // Emerald
+  },
+
+  // Mobile breakpoints
+  breakpoints: {
+    mobile: 768,
+    tablet: 1024,
   }
 };
 
