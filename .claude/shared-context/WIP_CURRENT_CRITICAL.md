@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 12, 2025 at 9:50 PM PST
+**Updated:** December 13, 2025 at 12:15 AM PST
 **Machine:** MacBook Air
-**Status:** ✅ CRITICAL FIXES DEPLOYED - Contact form, SSO notifications, UI clutter
+**Status:** ✅ P2-P3 COMPLETE + DEPLOYED (f174a9d) - Visual polish & performance
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -14,26 +14,29 @@
 
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 12, 2025)
+### Current Status (Dec 13, 2025)
 
-- **Day 17** since Rho exit (Nov 25, 2025)
-- **Status:** ✅ P2/P3 Partial Complete (4 of 8 items done)
+- **Day 18** since Rho exit (Nov 25, 2025)
+- **Status:** ✅ P2-P3 ALL COMPLETE (8 of 8 items done)
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
-- **Latest Commit:** `9136a65` - "Feature: Unity Notes P2-P3 - Visual polish + keyboard shortcuts"
+- **Latest Commit:** `f174a9d` - "Feature: Unity Notes P2-P3 visual polish + performance"
 
 ### Latest Session (Dec 12, 2025 Late Evening)
 
-**🔴 CRITICAL FIXES DEPLOYED:**
+**🔴 CRITICAL FIXES DEPLOYED + COMMITTED:**
 - ✅ **Contact Form Fixed** - Switched from Web3Forms (failing) to Firestore
 - ✅ **Health Check Form Fixed** - Firestore now primary, Web3Forms backup
 - ✅ **SSO Notifications Added** - New Google signups now create leads + notify Slack
-- ✅ **UnityNotes UI Fixed** - Removed redundant EXPORT/IMPORT from StatusBar
-- **Deployed:** Dec 12, 2025 at ~9:45 PM PST
+- ✅ **Mobile UX Fixed** - StatusBar moves to top on mobile, CircleNav has prominence
+- ✅ **UnityNotes UI Fixed** - Removed redundant EXPORT/IMPORT, credits badge hidden on mobile
+- **Deployed:** Dec 12, 2025 at ~10:15 PM PST
+- **Committed:** `a8e7f9c` - pushed to GitHub
 
 **Root Causes Found:**
 - Web3Forms API was failing (quota/service issue)
 - SSO signups were creating user profiles but NOT leads
-- StatusBar was showing redundant buttons already in toolbar
+- StatusBar was overlapping CircleNav on mobile
+- Credits badge positioned at `left: 200px` was off-screen on mobile
 
 ---
 
@@ -60,11 +63,16 @@
 - `src/components/unity/ShortcutsHelpModal.jsx`
 - `src/components/unity/index.js` (barrel export)
 
-**⏳ REMAINING P2-P3 (for MacBook Air session):**
-- P2.2: Mobile section dividers component
-- P2.3: Typography rhythm improvements
-- P3.2: Section jump navigation
-- P3.3: Lazy loading for off-screen cards
+**✅ COMPLETED P2-P3 (Dec 13, 2025 - commit f174a9d):**
+- ✅ P2.2: Mobile section dividers - `MobileNodeNavigator.jsx`
+- ✅ P2.3: Typography rhythm - `constants.js` UNITY tokens + `typography.js` helpers
+- ✅ P3.2: Section jump navigation - Combined with MobileNodeNavigator (cluster-based)
+- ✅ P3.3: Lazy loading - CSS `content-visibility: auto` on node components + `LazyNodeWrapper.jsx`
+
+**New Files Added:**
+- `src/components/unity/MobileNodeNavigator.jsx` - Mobile cluster nav
+- `src/components/unity/typography.js` - Typography helper exports
+- `src/components/unity/LazyNodeWrapper.jsx` - IntersectionObserver wrapper
 
 **Earlier Today (Fixed):**
 - ✅ CI husky failure - Updated prepare script to skip in CI
