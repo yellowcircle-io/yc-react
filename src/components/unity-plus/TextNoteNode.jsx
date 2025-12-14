@@ -533,9 +533,9 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
       />
 
       {/* Delete button - uses NodeToolbar (portal) to avoid clipping */}
-      {/* Styling matches UnityMAP WaitNode for consistency */}
+      {/* Functionality matches UnityMAP WaitNode: hover-only visibility */}
       <NodeToolbar
-        isVisible={isHovered || selected}
+        isVisible={isHovered}
         position={Position.Top}
         align="end"
         offset={8}
@@ -580,6 +580,23 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           ×
         </button>
       </NodeToolbar>
+
+      {/* Edit hint on hover - matches UnityMAP WaitNode pattern */}
+      {isHovered && (
+        <div style={{
+          position: 'absolute',
+          bottom: '-24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontSize: '9px',
+          fontWeight: '600',
+          color: accentColor,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+        }}>
+          Click to edit
+        </div>
+      )}
 
       {/* Card content wrapper */}
       <div style={{ overflow: 'hidden', borderRadius: '6px' }}>
