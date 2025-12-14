@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import LottieIcon from '../shared/LottieIcon';
+import LazyLottieIcon from '../shared/LazyLottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
 import UserMenu from '../auth/UserMenu';
 
@@ -248,7 +248,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             font: 'inherit'
           }}
         >
-          {/* Icon - Uses LottieIcon for unified Lottie/dotLottie support */}
+          {/* Icon - Uses LazyLottieIcon to defer loading lottie-web (~877KB) */}
           {/* Supports: lottieData (local JSON), dotLottieSrc (remote .lottie), or static icon URL */}
           <div style={{
             position: sidebarOpen ? 'relative' : 'absolute',
@@ -265,7 +265,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             flexShrink: 0
           }}>
             {lottieData ? (
-              <LottieIcon
+              <LazyLottieIcon
                 animationData={lottieData}
                 size={28}
                 isHovered={isHovered}

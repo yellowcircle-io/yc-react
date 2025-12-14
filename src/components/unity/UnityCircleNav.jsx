@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import LottieIcon from '../shared/LottieIcon';
+import LazyLottieIcon from '../shared/LazyLottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
 // Import Lottie JSON files directly for reliability
 import settingsAnimation from '../../assets/lottie/settings-gear.json';
@@ -47,7 +47,7 @@ const AddIconCircle = ({ size = 64, isHovered = false }) => {
         width: size * 0.7,
         height: size * 0.7,
       }}>
-        <LottieIcon
+        <LazyLottieIcon
           animationData={addAnimation}
           size={size * 0.7}
           isHovered={isHovered}
@@ -104,7 +104,7 @@ const SettingsGear = ({ onClick, isHovered, onHover }) => {
         justifyContent: 'center',
         filter: 'invert(1) brightness(2) grayscale(1)'
       }}>
-        <LottieIcon
+        <LazyLottieIcon
           animationData={settingsAnimation}
           size={16}
           isHovered={isHovered}
@@ -310,7 +310,7 @@ const OptionsMenu = ({
 };
 
 // AI Menu Component - All features Coming Soon
-const AIMenu = ({ isOpen, onClose }) => {
+const AIMenu = ({ isOpen, onClose: _onClose }) => {
   if (!isOpen) return null;
 
   const aiActions = [
@@ -426,10 +426,10 @@ function UnityCircleNav({
   onAddEmail,
   onAddWait,
   onAddCondition,
-  onEditCampaign,
+  onEditCampaign: _onEditCampaign,
   emailCount = 0,
   emailLimit = 3,
-  hasCampaign = false,
+  hasCampaign: _hasCampaign = false,
   // AI actions
   onAIGenerateNote,
   onAIGenerateImage,

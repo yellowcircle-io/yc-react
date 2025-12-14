@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LottieIcon from '../shared/LottieIcon';
+import LazyLottieIcon from '../shared/LazyLottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
 // Import Lottie JSON files directly for reliability
 import arrowAnimation from '../../assets/lottie/arrow.json';
@@ -73,7 +73,7 @@ const LottieCircle = ({ size = 78, isHovered = false, scrollOffset = 0, isHomePa
           width: '48px',
           height: '48px'
         }}>
-          <LottieIcon
+          <LazyLottieIcon
             animationData={arrowAnimation}
             size={48}
             isHovered={isHovered && showArrow}
@@ -90,7 +90,7 @@ const LottieCircle = ({ size = 78, isHovered = false, scrollOffset = 0, isHomePa
           width: '48px',
           height: '48px'
         }}>
-          <LottieIcon
+          <LazyLottieIcon
             animationData={placeholderAnimation}
             size={48}
             isHovered={isHovered && !showArrow}

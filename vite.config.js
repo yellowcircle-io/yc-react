@@ -9,16 +9,51 @@ export default defineConfig({
     drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   },
   build: {
+    // Increase warning limit - we know about large chunks
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor chunks for better caching
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'firebase/analytics'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-xyflow': ['@xyflow/react'],
-          'vendor-lottie': ['lottie-react', '@lottiefiles/dotlottie-react'],
-          'vendor-sentry': ['@sentry/react'],
+        manualChunks: (id) => {
+          // Core React - always needed
+          if (id.includes('react-dom') || id.includes('react-router') || id.includes('scheduler')) {
+            return 'vendor-react';
+          }
+          if (id.includes('/react/') && !id.includes('lottie')) {
+            return 'vendor-react';
+          }
+
+          // Firebase - split into auth (critical) and other (lazy)
+          if (id.includes('firebase/auth') || id.includes('@firebase/auth')) {
+            return 'vendor-firebase-auth';
+          }
+          if (id.includes('firebase') || id.includes('@firebase')) {
+            return 'vendor-firebase';
+          }
+
+          // Lottie - heavy, lazy loaded
+          if (id.includes('lottie-web') || id.includes('lottie-react') || id.includes('@lottiefiles')) {
+            return 'vendor-lottie';
+          }
+
+          // Sentry - lazy load after initial render
+          if (id.includes('@sentry')) {
+            return 'vendor-sentry';
+          }
+
+          // React Flow - only needed for Unity pages
+          if (id.includes('@xyflow') || id.includes('reactflow')) {
+            return 'vendor-xyflow';
+          }
+
+          // Framer Motion - used for animations
+          if (id.includes('framer-motion')) {
+            return 'vendor-motion';
+          }
+
+          // Lucide icons - split from main bundle
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons';
+          }
         }
       }
     }
