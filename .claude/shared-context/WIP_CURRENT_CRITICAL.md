@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 14, 2025 at 12:55 AM PST
-**Machine:** MacBook Air
-**Status:** ✅ DEPLOYED - TextNoteNode Functionality Matches WaitNode
+**Updated:** December 14, 2025 at 8:50 PM PST
+**Machine:** Mac Mini
+**Status:** ✅ P0-P3 ALL COMPLETE - New Initiatives Scoped
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -117,6 +117,24 @@
 |---------------------|----------|------------------------------|
 | TinaCMS Integration | P2       | SSH/Shortcuts compatible CMS |
 | Notion Integration  | P3       | Project tracking sync        |
+
+---
+
+### 🆕 NEW INITIATIVES SCOPED (Dec 14, 2025)
+
+**Scope Document:** `dev-context/SCOPE_DEC14_2025.md`
+
+| Initiative | Effort | Priority | Summary |
+|------------|--------|----------|---------|
+| Firestore Cleanup | 7 hrs | P2 | Clean old capsules/contacts/journeys, add admin UI |
+| Claude Code Autonomous | 22 hrs | P1 (phased) | Notion/Slack MCPs, Playwright testing, orchestration |
+| Unity Collaboration | 16 hrs | P3 | Share links, collaborators, hybrid storage (low cost) |
+
+**Recommended Sequence:**
+1. Week 1: Firestore Cleanup (quick win)
+2. Weeks 2-3: Claude Autonomous Phase 1-3 (MCPs)
+3. Week 4: Unity Collaboration MVP
+4. Ongoing: Claude Autonomous Phase 4-5
 
 ---
 
