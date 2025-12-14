@@ -3659,3 +3659,281 @@ exports.testLeadCapture = functions.https.onRequest(async (request, response) =>
     });
   }
 });
+
+/**
+ * Get Collection Stats - Admin function to view Firestore collection sizes
+ * Call via: GET /getCollectionStats with admin auth header
+ * Returns document counts and cleanup candidates for each collection
+ */
+exports.getCollectionStats = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  // Auth check
+  const authToken = request.headers["x-admin-token"];
+  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+
+  if (authToken !== expectedToken) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const now = new Date();
+    const cutoff90 = new Date();
+    cutoff90.setDate(cutoff90.getDate() - 90);
+    const cutoff180 = new Date();
+    cutoff180.setDate(cutoff180.getDate() - 180);
+
+    const stats = {
+      timestamp: now.toISOString(),
+      collections: {}
+    };
+
+    // Capsules stats
+    const capsulesSnapshot = await db.collection("capsules").get();
+    let capsuleCleanupCandidates = 0;
+    for (const doc of capsulesSnapshot.docs) {
+      const data = doc.data();
+      const createdAt = data.createdAt?.toDate?.() || new Date(0);
+      const viewCount = data.viewCount || 0;
+      const expiresAt = data.expiresAt?.toDate?.() || null;
+      if ((expiresAt && expiresAt < now) || (createdAt < cutoff90 && viewCount < 3)) {
+        capsuleCleanupCandidates++;
+      }
+    }
+    stats.collections.capsules = {
+      total: capsulesSnapshot.size,
+      cleanupCandidates: capsuleCleanupCandidates,
+      criteria: ">90 days old AND <3 views"
+    };
+
+    // Journeys stats
+    const journeysSnapshot = await db.collection("journeys").get();
+    let journeyCleanupCandidates = 0;
+    let activeJourneys = 0;
+    for (const doc of journeysSnapshot.docs) {
+      const data = doc.data();
+      const updatedAt = data.updatedAt?.toDate?.() || new Date(0);
+      const status = data.status || "draft";
+      if (status === "active") activeJourneys++;
+      if (updatedAt < cutoff90 && status !== "active") {
+        journeyCleanupCandidates++;
+      }
+    }
+    stats.collections.journeys = {
+      total: journeysSnapshot.size,
+      active: activeJourneys,
+      cleanupCandidates: journeyCleanupCandidates,
+      criteria: ">90 days old AND not active"
+    };
+
+    // Contacts stats
+    const contactsSnapshot = await db.collection("contacts").get();
+    let contactCleanupCandidates = 0;
+    for (const doc of contactsSnapshot.docs) {
+      const data = doc.data();
+      const createdAt = data.createdAt?.toDate?.() || new Date(0);
+      const hasJourneys = (data.journeys?.active?.length || 0) > 0 || (data.journeys?.completed?.length || 0) > 0;
+      const source = data.source || "unknown";
+      // Only cleanup old, source=test contacts with no journeys
+      if (createdAt < cutoff180 && !hasJourneys && source === "test") {
+        contactCleanupCandidates++;
+      }
+    }
+    stats.collections.contacts = {
+      total: contactsSnapshot.size,
+      cleanupCandidates: contactCleanupCandidates,
+      criteria: ">180 days old AND source='test' AND no journeys"
+    };
+
+    // Leads stats
+    const leadsSnapshot = await db.collection("leads").get();
+    stats.collections.leads = {
+      total: leadsSnapshot.size,
+      cleanupCandidates: 0,
+      criteria: "N/A - leads are valuable"
+    };
+
+    // Articles stats
+    const articlesSnapshot = await db.collection("articles").get();
+    stats.collections.articles = {
+      total: articlesSnapshot.size,
+      cleanupCandidates: 0,
+      criteria: "N/A - content is permanent"
+    };
+
+    // Shortlinks stats
+    const shortlinksSnapshot = await db.collection("shortlinks").get();
+    stats.collections.shortlinks = {
+      total: shortlinksSnapshot.size,
+      cleanupCandidates: 0,
+      criteria: "N/A - shortlinks are permanent"
+    };
+
+    // Trigger rules stats
+    const triggerRulesSnapshot = await db.collection("triggerRules").get();
+    stats.collections.triggerRules = {
+      total: triggerRulesSnapshot.size,
+      cleanupCandidates: 0,
+      criteria: "N/A - automation rules"
+    };
+
+    response.json({
+      success: true,
+      stats
+    });
+
+  } catch (error) {
+    console.error("❌ getCollectionStats error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Enhanced Cleanup with Dry Run - Preview what would be cleaned before executing
+ * Call via: POST /cleanupWithPreview with admin auth header
+ * Query params:
+ *   - dryRun: "true" to preview without deleting (default)
+ *   - includeContacts: "true" to also clean test contacts
+ */
+exports.cleanupWithPreview = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  // Auth check
+  const authToken = request.headers["x-admin-token"];
+  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+
+  if (authToken !== expectedToken) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const dryRun = request.query.dryRun !== "false";
+  const includeContacts = request.query.includeContacts === "true";
+
+  try {
+    const now = new Date();
+    const cutoff90 = new Date();
+    cutoff90.setDate(cutoff90.getDate() - 90);
+    const cutoff180 = new Date();
+    cutoff180.setDate(cutoff180.getDate() - 180);
+
+    const results = {
+      dryRun,
+      timestamp: now.toISOString(),
+      capsules: { deleted: [], kept: 0 },
+      journeys: { deleted: [], kept: 0 },
+      contacts: { deleted: [], kept: 0 }
+    };
+
+    // Process capsules
+    const capsulesSnapshot = await db.collection("capsules").get();
+    for (const doc of capsulesSnapshot.docs) {
+      const data = doc.data();
+      const createdAt = data.createdAt?.toDate?.() || new Date(0);
+      const viewCount = data.viewCount || 0;
+      const expiresAt = data.expiresAt?.toDate?.() || null;
+
+      if ((expiresAt && expiresAt < now) || (createdAt < cutoff90 && viewCount < 3)) {
+        results.capsules.deleted.push({
+          id: doc.id,
+          title: data.title || "Untitled",
+          createdAt: createdAt.toISOString(),
+          viewCount,
+          reason: expiresAt ? "expired" : "old+lowViews"
+        });
+
+        if (!dryRun) {
+          // Delete subcollections first
+          if (data.version !== 2) {
+            const nodesSnap = await db.collection(`capsules/${doc.id}/nodes`).get();
+            const edgesSnap = await db.collection(`capsules/${doc.id}/edges`).get();
+            const batch = db.batch();
+            nodesSnap.docs.forEach(d => batch.delete(d.ref));
+            edgesSnap.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+          await doc.ref.delete();
+        }
+      } else {
+        results.capsules.kept++;
+      }
+    }
+
+    // Process journeys
+    const journeysSnapshot = await db.collection("journeys").get();
+    for (const doc of journeysSnapshot.docs) {
+      const data = doc.data();
+      const updatedAt = data.updatedAt?.toDate?.() || new Date(0);
+      const status = data.status || "draft";
+
+      if (updatedAt < cutoff90 && status !== "active") {
+        results.journeys.deleted.push({
+          id: doc.id,
+          name: data.name || "Unnamed",
+          status,
+          updatedAt: updatedAt.toISOString(),
+          reason: "old+inactive"
+        });
+
+        if (!dryRun) {
+          await doc.ref.delete();
+        }
+      } else {
+        results.journeys.kept++;
+      }
+    }
+
+    // Process contacts (only if explicitly requested)
+    if (includeContacts) {
+      const contactsSnapshot = await db.collection("contacts").get();
+      for (const doc of contactsSnapshot.docs) {
+        const data = doc.data();
+        const createdAt = data.createdAt?.toDate?.() || new Date(0);
+        const hasJourneys = (data.journeys?.active?.length || 0) > 0 || (data.journeys?.completed?.length || 0) > 0;
+        const source = data.source || "unknown";
+
+        if (createdAt < cutoff180 && !hasJourneys && source === "test") {
+          results.contacts.deleted.push({
+            id: doc.id,
+            email: data.email,
+            source,
+            createdAt: createdAt.toISOString(),
+            reason: "old+test+noJourneys"
+          });
+
+          if (!dryRun) {
+            await doc.ref.delete();
+          }
+        } else {
+          results.contacts.kept++;
+        }
+      }
+    }
+
+    response.json({
+      success: true,
+      dryRun,
+      summary: {
+        capsules: { deleted: results.capsules.deleted.length, kept: results.capsules.kept },
+        journeys: { deleted: results.journeys.deleted.length, kept: results.journeys.kept },
+        contacts: includeContacts ? { deleted: results.contacts.deleted.length, kept: results.contacts.kept } : "skipped"
+      },
+      details: results
+    });
+
+  } catch (error) {
+    console.error("❌ cleanupWithPreview error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
