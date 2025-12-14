@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 14, 2025 at 12:15 AM PST
+**Updated:** December 14, 2025 at 12:45 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ DEPLOYED - Sidebar + Delete Button UX Improvements Live
+**Status:** ✅ DEPLOYED - TextNoteNode Functionality Matches WaitNode
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -19,8 +19,8 @@
 - **Day 19** since Rho exit (Nov 25, 2025)
 - **Status:** ✅ All UX improvements deployed to production
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
-- **Latest Commit:** `597b68b` - Sidebar close on outside click + delete button styling
-- **Latest Deploy:** Dec 14, 2025 ~12:00 AM PST
+- **Latest Commit:** `0405ff7` - TextNoteNode matches WaitNode functionality
+- **Latest Deploy:** Dec 14, 2025 ~12:40 AM PST
 
 ### Latest Session (Dec 13-14, 2025)
 
@@ -35,7 +35,13 @@
 - ✅ **Hover effect** - Darken to #1f2937 + scale(1.1)
 - ✅ **NodeToolbar** - Uses portal to avoid clipping
 
+**✅ TEXTNOTENODE FUNCTIONALITY MATCHES WAITNODE - DEPLOYED:**
+- ✅ **Hover-only delete visibility** - Changed from `isHovered || selected` to `isHovered`
+- ✅ **"Click to edit" hint** - Added below card on hover (matches WaitNode/ConditionNode)
+- ✅ **Accent color hint** - Uses card's accent color for visual consistency
+
 **Session commits:**
+- `0405ff7` - TextNoteNode matches WaitNode functionality
 - `597b68b` - Sidebar closes on outside click + delete button styling
 - `e19104e` - NodeToolbar for delete button clipping
 - `a1e43fc` - Zoom Module Unified + useCredit hook fix
@@ -52,6 +58,7 @@
 | Mobile UX (StatusBar, CircleNav)              | ✅ Complete                  |
 | Sidebar Close on Outside Click                | ✅ Complete (commit 597b68b) |
 | Delete Button Styling (WaitNode match)        | ✅ Complete (commit 597b68b) |
+| TextNoteNode Functionality (WaitNode match)   | ✅ Complete (commit 0405ff7) |
 
 ### 🎯 EOY 2025 Roadmap - All 6 Phases Complete
 
