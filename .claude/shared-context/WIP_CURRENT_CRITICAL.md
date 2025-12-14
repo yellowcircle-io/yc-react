@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 13, 2025 at 3:15 PM PST
+**Updated:** December 14, 2025 at 12:15 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ DELETE BUTTON CLIPPING FIXED - NodeToolbar deployed
+**Status:** ✅ DEPLOYED - Sidebar + Delete Button UX Improvements Live
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -14,38 +14,121 @@
 
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 13, 2025)
+### Current Status (Dec 14, 2025)
 
-- **Day 18** since Rho exit (Nov 25, 2025)
-- **Status:** ✅ Delete button clipping PROPERLY FIXED with NodeToolbar
+- **Day 19** since Rho exit (Nov 25, 2025)
+- **Status:** ✅ All UX improvements deployed to production
 - **Live Site:** https://yellowcircle.io (and backup at yellowcircle-app.web.app)
-- **Latest Deployed:** NodeToolbar fix for TextNoteNode delete button
+- **Latest Commit:** `597b68b` - Sidebar close on outside click + delete button styling
+- **Latest Deploy:** Dec 14, 2025 ~12:00 AM PST
 
-### Latest Session (Dec 13, 2025 Afternoon)
+### Latest Session (Dec 13-14, 2025)
 
-**✅ DELETE BUTTON CLIPPING - PROPERLY SOLVED:**
-- ✅ **NodeToolbar Implementation** - Uses React Flow's portal-based NodeToolbar component
-- ✅ **No more clipping** - Delete button renders outside node bounds via React portal
-- ✅ **Clean solution** - Removed CSS hacks, uses official @xyflow/react API
-- ✅ **Deployed:** Firebase hosting at ~3:15 PM PST
+**✅ SIDEBAR CLOSES ON OUTSIDE CLICK/TOUCH - DEPLOYED:**
+- ✅ **Backdrop overlay** - Transparent div covers viewport when sidebar open
+- ✅ **Click/touch to close** - Clicking outside sidebar closes it
+- ✅ **Z-index 49** - Below sidebar (50) but above content
 
-**Technical Solution:**
-```jsx
-import { NodeToolbar } from '@xyflow/react';
+**✅ DELETE BUTTON STYLING UNIFIED - DEPLOYED:**
+- ✅ **Matches UnityMAP WaitNode** - Consistent styling across NOTE and MAP
+- ✅ **backgroundColor: #374151** - Lighter gray (was #1f2937)
+- ✅ **Hover effect** - Darken to #1f2937 + scale(1.1)
+- ✅ **NodeToolbar** - Uses portal to avoid clipping
 
-<NodeToolbar
-  isVisible={isHovered || selected}
-  position={Position.Top}
-  align="end"
-  offset={8}
->
-  <button>×</button>
-</NodeToolbar>
-```
+**Session commits:**
+- `597b68b` - Sidebar closes on outside click + delete button styling
+- `e19104e` - NodeToolbar for delete button clipping
+- `a1e43fc` - Zoom Module Unified + useCredit hook fix
 
-**Previous UI Refinements (a1e43fc):**
-- ✅ **Zoom Module Unified** - Removed MAP-specific controls (Cloud, Triggers, RUN ALL)
-- ✅ **useCredit hook fix** - Renamed to consumeCredit to avoid ESLint false positive
+---
+
+### ✅ Recently Completed (Session Tonight)
+
+| Item                                          | Status                       |
+|-----------------------------------------------|------------------------------|
+| P2-P3 Unity Notes Visual Polish + Performance | ✅ Complete (commit f174a9d) |
+| Critical Forms Fix (Contact, Health Check)    | ✅ Complete                  |
+| SSO Lead Notifications                        | ✅ Complete                  |
+| Mobile UX (StatusBar, CircleNav)              | ✅ Complete                  |
+| Sidebar Close on Outside Click                | ✅ Complete (commit 597b68b) |
+| Delete Button Styling (WaitNode match)        | ✅ Complete (commit 597b68b) |
+
+### 🎯 EOY 2025 Roadmap - All 6 Phases Complete
+
+| Phase   | Description                         | Status |
+|---------|-------------------------------------|--------|
+| Phase 1 | Firestore Schemas                   | ✅     |
+| Phase 2 | n8n + Railway Deployment            | ✅     |
+| Phase 3 | Trigger System + createProspect API | ✅     |
+| Phase 4 | Contact Dashboard + Admin Hub       | ✅     |
+| Phase 5 | Blog CMS (Block-based)              | ✅     |
+| Phase 6 | SendGrid ESP Hot-Swap               | ✅     |
+
+---
+
+### 🔴 Immediate Priorities (Dec 13-31)
+
+**P1 - Revenue Focus**
+
+| Task                     | Effort  | Notes                                                        | Reference |
+|--------------------------|---------|--------------------------------------------------------------|-----------|
+| Outbound Campaign Seed   | 4-6 hrs | Create yellowCircle welcome journey, deploy initial campaign | `EOY_ROADMAP_SCOPING_DEC2025.md:824` |
+| LinkedIn Transition Post | 2-3 hrs | Availability announcement + Article 1 share                  | `LINKEDIN_CONTENT_CALENDAR.md` |
+| Discovery Calls          | Ongoing | Target 3-5 calls scheduled this month                        | `STRATEGIC_PIVOT_POST_RHO.md` |
+
+**P1 - Platform Gaps**
+
+| Task                | Effort  | Notes                                         | Reference |
+|---------------------|---------|-----------------------------------------------|-----------|
+| Bundle Optimization | 4-6 hrs | Reduce initial load (currently 500KB+ chunks) | `EOY_ROADMAP_SCOPING_DEC2025.md:509` |
+| Mobile Testing      | 4-6 hrs | Test on iPhone SE, iPad, Android              | `EOY_ROADMAP_SCOPING_DEC2025.md:759` |
+
+---
+
+### ⏳ Q1 2026 Roadmap
+
+**Product Expansion**
+
+| Item                                | Priority | Effort    | Reference |
+|-------------------------------------|----------|-----------|-----------|
+| UnitySTUDIO - Ad Creative Builder   | P2       | 12-16 hrs | `UNITY_STUDIO_SCOPE.md:146` |
+| UnitySTUDIO - Social Post Builder   | P2       | 12-16 hrs | `UNITY_STUDIO_SCOPE.md:147` |
+| Article 2: "Why Your MAP Is a Mess" | P2       | TBD       | `OWN_YOUR_STORY_SERIES_BLUEPRINT.md:161` |
+| Cypress E2E Testing                 | P2       | 16-24 hrs | `EOY_ROADMAP_SCOPING_DEC2025.md:874` |
+
+**Marketing & Growth**
+
+| Item                    | Priority | Notes                                     |
+|-------------------------|----------|-------------------------------------------|
+| Organic Outreach        | P1       | 2-3 LinkedIn posts/week                   |
+| Paid Amplification      | P2       | Reddit/LinkedIn ads ($500-1K test budget) |
+| Prospect Enrichment MVP | P2       | Apollo.io integration                     |
+
+**Infrastructure**
+
+| Item                | Priority | Notes                        |
+|---------------------|----------|------------------------------|
+| TinaCMS Integration | P2       | SSH/Shortcuts compatible CMS |
+| Notion Integration  | P3       | Project tracking sync        |
+
+---
+
+### 📊 Current Platform Status
+
+**Live at:** https://yellowcircle.io
+
+| Feature            | Status                      |
+|--------------------|-----------------------------|
+| Admin Hub (/admin) | ✅ Live                     |
+| Contacts Dashboard | ✅ Live                     |
+| Trigger Rules      | ✅ Live                     |
+| Articles/Blog CMS  | ✅ Live                     |
+| Unity Notes        | ✅ Live (P2-P3 complete)    |
+| Unity MAP          | ✅ Live                     |
+| Unity Studio       | ✅ MVP (expansion planned)  |
+| ESP Hot-Swap       | ✅ Live (Resend + SendGrid) |
+
+---
 
 ### Previous Session (Dec 12, 2025 Late Evening)
 
