@@ -23,8 +23,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
   const {
     sidebarOpen,
     setSidebarOpen,
-    expandedSection,
-    setExpandedSection
+    expandedSection: _expandedSection,
+    setExpandedSection: _setExpandedSection
   } = useLayout();
 
   // Mobile detection
@@ -129,7 +129,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
   // Navigation Item Component - with slide-over trigger
   // Supports both Lottie animations (lottieData) and static images (icon URL)
-  const NavigationItem = ({ icon, lottieData, label, subItems, itemKey, index, route }) => {
+  const NavigationItem = ({ icon, lottieData, label, subItems, itemKey, index: _index, route }) => {
     const [isHovered, setIsHovered] = useState(false);
     const hoverTimeoutRef = useRef(null);
     const hasSubItems = subItems && subItems.length > 0;
@@ -185,7 +185,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
     };
 
     // Touch handlers for mobile hover simulation
-    const handleTouchStart = (e) => {
+    const handleTouchStart = (_e) => {
       // Trigger hover state on touch
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
@@ -369,6 +369,22 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
 
   return (
     <>
+      {/* Backdrop overlay - closes sidebar on click/touch outside */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          onTouchEnd={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 49, // Below sidebar (50) but above content
+            backgroundColor: 'transparent',
+            cursor: 'default',
+          }}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar Toggle Button */}
       <button
         type="button"

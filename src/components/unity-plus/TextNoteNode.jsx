@@ -533,6 +533,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
       />
 
       {/* Delete button - uses NodeToolbar (portal) to avoid clipping */}
+      {/* Styling matches UnityMAP WaitNode for consistency */}
       <NodeToolbar
         isVisible={isHovered || selected}
         position={Position.Top}
@@ -548,23 +549,33 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           style={{
             width: '24px',
             height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
             padding: 0,
             borderRadius: '50%',
-            backgroundColor: '#1f2937',
-            color: 'white',
+            backgroundColor: '#374151',
             border: '2px solid white',
-            fontSize: '16px',
-            lineHeight: '20px',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '400',
+            lineHeight: 1,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            transition: 'transform 0.15s ease',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-          title="Delete"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#1f2937';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#374151';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Delete node"
         >
           ×
         </button>
