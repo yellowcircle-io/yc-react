@@ -62,8 +62,8 @@ const checkRateLimit = async (ip, limit = 3) => {
 // CORS middleware
 const setCors = (response) => {
   response.set("Access-Control-Allow-Origin", "*");
-  response.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  response.set("Access-Control-Allow-Headers", "Content-Type");
+  response.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-token");
 };
 
 // ============================================
