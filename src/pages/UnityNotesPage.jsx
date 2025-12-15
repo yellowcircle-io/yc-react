@@ -1561,6 +1561,56 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
     await addCollaborator(currentCapsuleId, email, role);
     setCollaborators(prev => [...prev, { email, role, addedAt: new Date().toISOString() }]);
+
+    // Send email notification to collaborator
+    try {
+      const canvasUrl = `${window.location.origin}/unity-notes/view/${currentCapsuleId}`;
+      const ownerName = userProfile?.displayName || user?.email || 'Someone';
+      const roleLabel = role === 'editor' ? 'edit' : 'view';
+
+      const emailHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: #fbbf24; border-radius: 50%; margin: 0 auto 15px;"></div>
+            <h1 style="color: #1f2937; font-size: 24px; margin: 0;">You've Been Invited!</h1>
+          </div>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            <strong>${ownerName}</strong> has invited you to <strong>${roleLabel}</strong> their Unity Notes canvas: <strong>"${canvasTitle}"</strong>
+          </p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${canvasUrl}" style="display: inline-block; background: #fbbf24; color: #000; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+              Open Canvas
+            </a>
+          </div>
+
+          <p style="color: #6b7280; font-size: 14px;">
+            Unity Notes is a visual canvas for organizing ideas, notes, and images. Click the button above to access the shared canvas.
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+            yellowCircle · <a href="https://yellowcircle.io" style="color: #9ca3af;">yellowcircle.io</a>
+          </p>
+        </div>
+      `;
+
+      await fetch('https://us-central1-yellowcircle-app.cloudfunctions.net/sendEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: email,
+          subject: `${ownerName} invited you to collaborate on Unity Notes`,
+          html: emailHtml
+        })
+      });
+      console.log(`✅ Collaboration invite sent to ${email}`);
+    } catch (emailErr) {
+      // Don't throw - collaborator was added successfully, email is secondary
+      console.error('Failed to send collaboration invite email:', emailErr);
+    }
   };
 
   const handleRemoveCollaborator = async (collaboratorId) => {
