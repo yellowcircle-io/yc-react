@@ -22,7 +22,8 @@ import {
   Shield,
   Map,
   Brain,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react';
 
 // ============================================================
@@ -105,6 +106,15 @@ const ADMIN_TOOLS = [
     route: '/journeys',
     color: '#84cc16',
     bgColor: '#ecfccb'
+  },
+  {
+    id: 'storage-cleanup',
+    title: 'Storage Cleanup',
+    description: 'View collection stats and clean up old Firestore data',
+    icon: Trash2,
+    route: '/admin/storage-cleanup',
+    color: '#ef4444',
+    bgColor: '#fee2e2'
   }
 ];
 

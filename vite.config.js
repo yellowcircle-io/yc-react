@@ -22,10 +22,7 @@ export default defineConfig({
             return 'vendor-react';
           }
 
-          // Firebase - split into auth (critical) and other (lazy)
-          if (id.includes('firebase/auth') || id.includes('@firebase/auth')) {
-            return 'vendor-firebase-auth';
-          }
+          // Firebase - keep together to avoid initialization order issues
           if (id.includes('firebase') || id.includes('@firebase')) {
             return 'vendor-firebase';
           }
