@@ -21,7 +21,7 @@ import { useCredits } from '../hooks/useCredits';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
-import ShareModal from '../components/travel/ShareModal';
+import ShareModal from '../components/unity/ShareModal';
 import LightboxModal from '../components/travel/LightboxModal';
 import EditMemoryModal from '../components/travel/EditMemoryModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
@@ -124,10 +124,26 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   }, [navigate, searchParams, hasJourneyContent]);
 
   // Firebase hook for shareable URLs (gated for pro/admin users)
-  const { saveCapsule, isSaving, cleanupOldCapsules, getCapsuleStats, migrateToV2 } = useFirebaseCapsule();
+  const {
+    saveCapsule,
+    isSaving,
+    cleanupOldCapsules,
+    getCapsuleStats,
+    migrateToV2,
+    // v3 Collaboration functions
+    addCollaborator,
+    removeCollaborator,
+    updateVisibility
+  } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Collaboration state (v3)
+  const [collaborators, setCollaborators] = useState([]);
+  const [isPublic, setIsPublic] = useState(false);
+  // Canvas title - shown in ShareModal header
+  const canvasTitle = 'Unity Notes Canvas';
 
   // Firebase hook for UnityMAP journey persistence
   const {
@@ -1538,6 +1554,29 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   };
 
+  // Collaboration handlers (v3)
+  const handleAddCollaborator = async (email, role) => {
+    if (!currentCapsuleId) {
+      throw new Error('Please save your canvas first');
+    }
+    await addCollaborator(currentCapsuleId, email, role);
+    setCollaborators(prev => [...prev, { email, role, addedAt: new Date().toISOString() }]);
+  };
+
+  const handleRemoveCollaborator = async (collaboratorId) => {
+    if (!currentCapsuleId) return;
+    await removeCollaborator(currentCapsuleId, collaboratorId);
+    setCollaborators(prev => prev.filter(c => (c.id || c.email) !== collaboratorId));
+  };
+
+  const handleUpdateVisibility = async (newIsPublic) => {
+    if (!currentCapsuleId) {
+      throw new Error('Please save your canvas first');
+    }
+    await updateVisibility(currentCapsuleId, newIsPublic);
+    setIsPublic(newIsPublic);
+  };
+
   const handlePhotoUpload = async (filesOrUrls, metadata, uploadType) => {
 
     try {
@@ -2517,8 +2556,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        shareUrl={shareUrl}
         capsuleId={currentCapsuleId}
+        title={canvasTitle}
+        isPublic={isPublic}
+        collaborators={collaborators}
+        onUpdateVisibility={handleUpdateVisibility}
+        onAddCollaborator={handleAddCollaborator}
+        onRemoveCollaborator={handleRemoveCollaborator}
+        shareLink={shareUrl}
       />
 
       {/* Lightbox Modal */}
