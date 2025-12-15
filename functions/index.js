@@ -3665,7 +3665,9 @@ exports.testLeadCapture = functions.https.onRequest(async (request, response) =>
  * Call via: GET /getCollectionStats with admin auth header
  * Returns document counts and cleanup candidates for each collection
  */
-exports.getCollectionStats = functions.https.onRequest(async (request, response) => {
+exports.getCollectionStats = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
   setCors(response);
 
   if (request.method === "OPTIONS") {
@@ -3694,8 +3696,10 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
       collections: {}
     };
 
-    // Capsules stats
-    const capsulesSnapshot = await db.collection("capsules").get();
+    // Capsules stats - use select() to only fetch needed fields
+    const capsulesSnapshot = await db.collection("capsules")
+      .select("createdAt", "viewCount", "expiresAt")
+      .get();
     let capsuleCleanupCandidates = 0;
     for (const doc of capsulesSnapshot.docs) {
       const data = doc.data();
@@ -3712,8 +3716,10 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
       criteria: ">90 days old AND <3 views"
     };
 
-    // Journeys stats
-    const journeysSnapshot = await db.collection("journeys").get();
+    // Journeys stats - use select() to reduce memory
+    const journeysSnapshot = await db.collection("journeys")
+      .select("updatedAt", "status")
+      .get();
     let journeyCleanupCandidates = 0;
     let activeJourneys = 0;
     for (const doc of journeysSnapshot.docs) {
@@ -3732,8 +3738,10 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
       criteria: ">90 days old AND not active"
     };
 
-    // Contacts stats
-    const contactsSnapshot = await db.collection("contacts").get();
+    // Contacts stats - use select() to reduce memory
+    const contactsSnapshot = await db.collection("contacts")
+      .select("createdAt", "journeys", "source")
+      .get();
     let contactCleanupCandidates = 0;
     for (const doc of contactsSnapshot.docs) {
       const data = doc.data();
@@ -3751,8 +3759,9 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
       criteria: ">180 days old AND source='test' AND no journeys"
     };
 
+    // For count-only collections, use select() with empty fields to minimize data
     // Leads stats
-    const leadsSnapshot = await db.collection("leads").get();
+    const leadsSnapshot = await db.collection("leads").select().get();
     stats.collections.leads = {
       total: leadsSnapshot.size,
       cleanupCandidates: 0,
@@ -3760,7 +3769,7 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
     };
 
     // Articles stats
-    const articlesSnapshot = await db.collection("articles").get();
+    const articlesSnapshot = await db.collection("articles").select().get();
     stats.collections.articles = {
       total: articlesSnapshot.size,
       cleanupCandidates: 0,
@@ -3768,7 +3777,7 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
     };
 
     // Shortlinks stats
-    const shortlinksSnapshot = await db.collection("shortlinks").get();
+    const shortlinksSnapshot = await db.collection("shortlinks").select().get();
     stats.collections.shortlinks = {
       total: shortlinksSnapshot.size,
       cleanupCandidates: 0,
@@ -3776,7 +3785,7 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
     };
 
     // Trigger rules stats
-    const triggerRulesSnapshot = await db.collection("triggerRules").get();
+    const triggerRulesSnapshot = await db.collection("triggerRules").select().get();
     stats.collections.triggerRules = {
       total: triggerRulesSnapshot.size,
       cleanupCandidates: 0,
@@ -3801,7 +3810,9 @@ exports.getCollectionStats = functions.https.onRequest(async (request, response)
  *   - dryRun: "true" to preview without deleting (default)
  *   - includeContacts: "true" to also clean test contacts
  */
-exports.cleanupWithPreview = functions.https.onRequest(async (request, response) => {
+exports.cleanupWithPreview = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
   setCors(response);
 
   if (request.method === "OPTIONS") {
