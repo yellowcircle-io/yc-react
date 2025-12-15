@@ -3666,7 +3666,7 @@ exports.testLeadCapture = functions.https.onRequest(async (request, response) =>
  * Returns document counts and cleanup candidates for each collection
  */
 exports.getCollectionStats = functions
-  .runWith({ memory: "512MB", timeoutSeconds: 120 })
+  .runWith({ memory: "256MB", timeoutSeconds: 30 })
   .https.onRequest(async (request, response) => {
   setCors(response);
 
@@ -3685,117 +3685,33 @@ exports.getCollectionStats = functions
   }
 
   try {
-    const now = new Date();
-    const cutoff90 = new Date();
-    cutoff90.setDate(cutoff90.getDate() - 90);
-    const cutoff180 = new Date();
-    cutoff180.setDate(cutoff180.getDate() - 180);
-
     const stats = {
-      timestamp: now.toISOString(),
+      timestamp: new Date().toISOString(),
       collections: {}
     };
 
-    // Capsules stats - use select() to only fetch needed fields
-    const capsulesSnapshot = await db.collection("capsules")
-      .select("createdAt", "viewCount", "expiresAt")
-      .get();
-    let capsuleCleanupCandidates = 0;
-    for (const doc of capsulesSnapshot.docs) {
-      const data = doc.data();
-      const createdAt = data.createdAt?.toDate?.() || new Date(0);
-      const viewCount = data.viewCount || 0;
-      const expiresAt = data.expiresAt?.toDate?.() || null;
-      if ((expiresAt && expiresAt < now) || (createdAt < cutoff90 && viewCount < 3)) {
-        capsuleCleanupCandidates++;
-      }
-    }
-    stats.collections.capsules = {
-      total: capsulesSnapshot.size,
-      cleanupCandidates: capsuleCleanupCandidates,
-      criteria: ">90 days old AND <3 views"
+    // Get counts sequentially with limits to avoid timeout
+    // Small collections first
+    const articlesSnap = await db.collection("articles").select().limit(1000).get();
+    const shortlinksSnap = await db.collection("shortlinks").select().limit(1000).get();
+    const triggerRulesSnap = await db.collection("triggerRules").select().limit(1000).get();
+    const capsulesSnap = await db.collection("capsules").select().limit(1000).get();
+    const journeysSnap = await db.collection("journeys").select().limit(1000).get();
+    const leadsSnap = await db.collection("leads").select().limit(1000).get();
+    // Contacts last - likely largest
+    const contactsSnap = await db.collection("contacts").select().limit(1000).get();
+
+    stats.collections = {
+      capsules: { total: capsulesSnap.size >= 1000 ? "1000+" : capsulesSnap.size, cleanupCandidates: "preview", criteria: ">90d, <3 views" },
+      journeys: { total: journeysSnap.size >= 1000 ? "1000+" : journeysSnap.size, cleanupCandidates: "preview", criteria: ">90d, inactive" },
+      contacts: { total: contactsSnap.size >= 1000 ? "1000+" : contactsSnap.size, cleanupCandidates: "preview", criteria: ">180d, test" },
+      leads: { total: leadsSnap.size >= 1000 ? "1000+" : leadsSnap.size, cleanupCandidates: 0, criteria: "N/A" },
+      articles: { total: articlesSnap.size >= 1000 ? "1000+" : articlesSnap.size, cleanupCandidates: 0, criteria: "N/A" },
+      shortlinks: { total: shortlinksSnap.size >= 1000 ? "1000+" : shortlinksSnap.size, cleanupCandidates: 0, criteria: "N/A" },
+      triggerRules: { total: triggerRulesSnap.size >= 1000 ? "1000+" : triggerRulesSnap.size, cleanupCandidates: 0, criteria: "N/A" }
     };
 
-    // Journeys stats - use select() to reduce memory
-    const journeysSnapshot = await db.collection("journeys")
-      .select("updatedAt", "status")
-      .get();
-    let journeyCleanupCandidates = 0;
-    let activeJourneys = 0;
-    for (const doc of journeysSnapshot.docs) {
-      const data = doc.data();
-      const updatedAt = data.updatedAt?.toDate?.() || new Date(0);
-      const status = data.status || "draft";
-      if (status === "active") activeJourneys++;
-      if (updatedAt < cutoff90 && status !== "active") {
-        journeyCleanupCandidates++;
-      }
-    }
-    stats.collections.journeys = {
-      total: journeysSnapshot.size,
-      active: activeJourneys,
-      cleanupCandidates: journeyCleanupCandidates,
-      criteria: ">90 days old AND not active"
-    };
-
-    // Contacts stats - use select() to reduce memory
-    const contactsSnapshot = await db.collection("contacts")
-      .select("createdAt", "journeys", "source")
-      .get();
-    let contactCleanupCandidates = 0;
-    for (const doc of contactsSnapshot.docs) {
-      const data = doc.data();
-      const createdAt = data.createdAt?.toDate?.() || new Date(0);
-      const hasJourneys = (data.journeys?.active?.length || 0) > 0 || (data.journeys?.completed?.length || 0) > 0;
-      const source = data.source || "unknown";
-      // Only cleanup old, source=test contacts with no journeys
-      if (createdAt < cutoff180 && !hasJourneys && source === "test") {
-        contactCleanupCandidates++;
-      }
-    }
-    stats.collections.contacts = {
-      total: contactsSnapshot.size,
-      cleanupCandidates: contactCleanupCandidates,
-      criteria: ">180 days old AND source='test' AND no journeys"
-    };
-
-    // For count-only collections, use select() with empty fields to minimize data
-    // Leads stats
-    const leadsSnapshot = await db.collection("leads").select().get();
-    stats.collections.leads = {
-      total: leadsSnapshot.size,
-      cleanupCandidates: 0,
-      criteria: "N/A - leads are valuable"
-    };
-
-    // Articles stats
-    const articlesSnapshot = await db.collection("articles").select().get();
-    stats.collections.articles = {
-      total: articlesSnapshot.size,
-      cleanupCandidates: 0,
-      criteria: "N/A - content is permanent"
-    };
-
-    // Shortlinks stats
-    const shortlinksSnapshot = await db.collection("shortlinks").select().get();
-    stats.collections.shortlinks = {
-      total: shortlinksSnapshot.size,
-      cleanupCandidates: 0,
-      criteria: "N/A - shortlinks are permanent"
-    };
-
-    // Trigger rules stats
-    const triggerRulesSnapshot = await db.collection("triggerRules").select().get();
-    stats.collections.triggerRules = {
-      total: triggerRulesSnapshot.size,
-      cleanupCandidates: 0,
-      criteria: "N/A - automation rules"
-    };
-
-    response.json({
-      success: true,
-      stats
-    });
+    response.json({ success: true, stats });
 
   } catch (error) {
     console.error("❌ getCollectionStats error:", error);
