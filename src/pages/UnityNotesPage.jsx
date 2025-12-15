@@ -1505,7 +1505,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
       const capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
         title: 'UnityNotes'
-      });
+      }, user?.uid);
 
       const url = `${window.location.origin}/unity-notes/view/${capsuleId}`;
       setShareUrl(url);

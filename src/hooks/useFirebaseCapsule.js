@@ -66,7 +66,7 @@ export const useFirebaseCapsule = () => {
    * @param {Object} metadata - Optional metadata (title, description)
    * @returns {Promise<string>} capsuleId - Unique ID for shareable URL
    */
-  const saveCapsule = async (nodes, edges, metadata = {}) => {
+  const saveCapsule = async (nodes, edges, metadata = {}, ownerId = null) => {
     setIsSaving(true);
     setError(null);
 
@@ -79,7 +79,7 @@ export const useFirebaseCapsule = () => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 90);
 
-      // Single document with embedded arrays (v2 model)
+      // Single document with embedded arrays (v3 model with collaboration)
       const capsuleDoc = {
         id: capsuleId,
         title: metadata.title || 'Travel Memories',
@@ -89,7 +89,10 @@ export const useFirebaseCapsule = () => {
         expiresAt: expiresAt,
         isPublic: true,
         viewCount: 0,
-        version: 2, // Mark as v2 embedded model
+        version: 3, // v3 with collaboration support
+        // Collaboration fields (v3)
+        ownerId: ownerId || null,
+        collaborators: [],
         // Embedded arrays (cost-efficient)
         nodes: nodes.map(serializeNode),
         edges: edges.map(serializeEdge),

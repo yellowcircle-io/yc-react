@@ -22,7 +22,7 @@
     "@lottiefiles/dotlottie-react": "^0.17.8",
     "@sentry/react": "^10.29.0",
     "@tailwindcss/vite": "^4.1.11",
-    "@xyflow/react": "^12.8.6",
+    "@xyflow/react": "^12.10.0",
     "firebase": "^12.4.0",
     "framer-motion": "^11.18.2",
     "lottie-react": "^2.4.1",

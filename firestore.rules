@@ -153,9 +153,18 @@ service cloud.firestore {
                     && request.resource.data.title is string
                     && request.resource.data.title.size() <= 200;
 
-      // Allow view count updates only
+      // Allow view count updates (anonymous increment)
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'updatedAt'])
                     && request.resource.data.viewCount == resource.data.viewCount + 1;
+
+      // Allow owner to update their capsule (collaboration, visibility, content)
+      allow update: if request.auth != null
+                    && resource.data.ownerId == request.auth.uid;
+
+      // Allow authenticated users to update capsules without owner (legacy)
+      // or capsules they have access to (collaborator check done in app code)
+      allow update: if request.auth != null
+                    && (!('ownerId' in resource.data) || resource.data.ownerId == null);
 
       // Allow delete for cleanup
       allow delete: if true;
