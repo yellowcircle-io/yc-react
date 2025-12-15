@@ -5,7 +5,6 @@ import {
   writeBatch,
   getDoc,
   getDocs,
-  deleteDoc,
   serverTimestamp,
   increment,
   updateDoc,
@@ -462,7 +461,263 @@ export const useFirebaseCapsule = () => {
     }
   };
 
+  // ============================================
+  // COLLABORATION FEATURES (v3)
+  // ============================================
+
+  /**
+   * Save capsule with owner and collaboration support (v3)
+   * @param {Array} nodes - React Flow nodes
+   * @param {Array} edges - React Flow edges
+   * @param {Object} metadata - title, description
+   * @param {string} ownerId - User ID of owner
+   * @returns {Promise<string>} capsuleId
+   */
+  const saveCapsuleWithOwner = async (nodes, edges, metadata = {}, ownerId) => {
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const capsuleRef = doc(collection(db, 'capsules'));
+      const capsuleId = capsuleRef.id;
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 90);
+
+      // Generate share link slug
+      const shareSlug = `${capsuleId.slice(0, 8)}`;
+
+      const capsuleDoc = {
+        id: capsuleId,
+        title: metadata.title || 'Untitled Canvas',
+        description: metadata.description || '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        expiresAt: expiresAt,
+        isPublic: false, // Private by default for owned capsules
+        viewCount: 0,
+        version: 3, // v3 with collaboration
+        // Owner and collaboration
+        ownerId: ownerId || null,
+        collaborators: [], // Array of { id, email, role, addedAt }
+        shareSlug: shareSlug,
+        // Embedded arrays
+        nodes: nodes.map(serializeNode),
+        edges: edges.map(serializeEdge),
+        stats: {
+          nodeCount: nodes.length,
+          edgeCount: edges.length,
+          photoCount: nodes.filter(n => n.type === 'photoNode').length
+        }
+      };
+
+      const { setDoc } = await import('firebase/firestore');
+      await setDoc(capsuleRef, capsuleDoc);
+
+      console.log('✅ Capsule saved (v3 with owner):', capsuleId);
+      return capsuleId;
+
+    } catch (err) {
+      console.error('❌ Save failed:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /**
+   * Add a collaborator to a capsule
+   * @param {string} capsuleId
+   * @param {string} email - Collaborator email
+   * @param {string} role - 'viewer' or 'editor'
+   * @returns {Promise<Object>} Updated collaborators array
+   */
+  const addCollaborator = async (capsuleId, email, role = 'viewer') => {
+    try {
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      const capsuleSnap = await getDoc(capsuleRef);
+
+      if (!capsuleSnap.exists()) {
+        throw new Error('Capsule not found');
+      }
+
+      const data = capsuleSnap.data();
+      const collaborators = data.collaborators || [];
+
+      // Check if already a collaborator
+      if (collaborators.find(c => c.email === email)) {
+        throw new Error('User is already a collaborator');
+      }
+
+      const newCollaborator = {
+        id: `collab-${Date.now()}`,
+        email: email.toLowerCase().trim(),
+        role: role,
+        addedAt: new Date().toISOString()
+      };
+
+      const { arrayUnion } = await import('firebase/firestore');
+      await updateDoc(capsuleRef, {
+        collaborators: arrayUnion(newCollaborator),
+        updatedAt: serverTimestamp()
+      });
+
+      console.log('✅ Collaborator added:', email);
+      return [...collaborators, newCollaborator];
+
+    } catch (err) {
+      console.error('❌ Add collaborator failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Remove a collaborator from a capsule
+   * @param {string} capsuleId
+   * @param {string} collaboratorId - ID or email to remove
+   */
+  const removeCollaborator = async (capsuleId, collaboratorId) => {
+    try {
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      const capsuleSnap = await getDoc(capsuleRef);
+
+      if (!capsuleSnap.exists()) {
+        throw new Error('Capsule not found');
+      }
+
+      const data = capsuleSnap.data();
+      const collaborators = data.collaborators || [];
+
+      // Find and remove collaborator
+      const updated = collaborators.filter(c =>
+        c.id !== collaboratorId && c.email !== collaboratorId
+      );
+
+      await updateDoc(capsuleRef, {
+        collaborators: updated,
+        updatedAt: serverTimestamp()
+      });
+
+      console.log('✅ Collaborator removed:', collaboratorId);
+      return updated;
+
+    } catch (err) {
+      console.error('❌ Remove collaborator failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Update capsule visibility (public/private)
+   * @param {string} capsuleId
+   * @param {boolean} isPublic
+   */
+  const updateVisibility = async (capsuleId, isPublic) => {
+    try {
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      await updateDoc(capsuleRef, {
+        isPublic: isPublic,
+        updatedAt: serverTimestamp()
+      });
+
+      console.log('✅ Visibility updated:', isPublic ? 'public' : 'private');
+
+    } catch (err) {
+      console.error('❌ Update visibility failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Get capsules owned by or shared with a user
+   * @param {string} userId - User ID
+   * @param {string} userEmail - User email (for collaborator lookup)
+   * @returns {Promise<Array>} Array of capsules
+   */
+  const getUserCapsules = async (userId, userEmail) => {
+    try {
+      const capsulesRef = collection(db, 'capsules');
+
+      // Query owned capsules
+      const ownedQuery = query(
+        capsulesRef,
+        where('ownerId', '==', userId),
+        orderBy('updatedAt', 'desc'),
+        limit(50)
+      );
+      const ownedSnap = await getDocs(ownedQuery);
+      const owned = ownedSnap.docs.map(doc => ({
+        ...doc.data(),
+        _source: 'owned'
+      }));
+
+      // For shared capsules, we need to query all and filter client-side
+      // (Firestore doesn't support array-contains with object matching)
+      // In production, consider denormalizing to a separate collection
+      const allQuery = query(capsulesRef, limit(200));
+      const allSnap = await getDocs(allQuery);
+      const shared = allSnap.docs
+        .map(doc => doc.data())
+        .filter(cap =>
+          cap.ownerId !== userId &&
+          cap.collaborators?.some(c => c.email === userEmail?.toLowerCase())
+        )
+        .map(cap => ({ ...cap, _source: 'shared' }));
+
+      console.log(`✅ Found ${owned.length} owned, ${shared.length} shared capsules`);
+      return [...owned, ...shared];
+
+    } catch (err) {
+      console.error('❌ Get user capsules failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Check if user has access to a capsule
+   * @param {string} capsuleId
+   * @param {string} userId
+   * @param {string} userEmail
+   * @returns {Promise<Object>} { hasAccess, role, isOwner }
+   */
+  const checkAccess = async (capsuleId, userId, userEmail) => {
+    try {
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      const capsuleSnap = await getDoc(capsuleRef);
+
+      if (!capsuleSnap.exists()) {
+        return { hasAccess: false, role: null, isOwner: false };
+      }
+
+      const data = capsuleSnap.data();
+
+      // Public capsule
+      if (data.isPublic) {
+        return { hasAccess: true, role: 'viewer', isOwner: data.ownerId === userId };
+      }
+
+      // Owner
+      if (data.ownerId === userId) {
+        return { hasAccess: true, role: 'owner', isOwner: true };
+      }
+
+      // Collaborator
+      const collab = data.collaborators?.find(c => c.email === userEmail?.toLowerCase());
+      if (collab) {
+        return { hasAccess: true, role: collab.role, isOwner: false };
+      }
+
+      return { hasAccess: false, role: null, isOwner: false };
+
+    } catch (err) {
+      console.error('❌ Check access failed:', err);
+      return { hasAccess: false, role: null, isOwner: false };
+    }
+  };
+
   return {
+    // Original functions
     saveCapsule,
     loadCapsule,
     updateCapsule,
@@ -470,6 +725,14 @@ export const useFirebaseCapsule = () => {
     cleanupOldCapsules,
     getCapsuleStats,
     migrateToV2,
+    // Collaboration functions (v3)
+    saveCapsuleWithOwner,
+    addCollaborator,
+    removeCollaborator,
+    updateVisibility,
+    getUserCapsules,
+    checkAccess,
+    // State
     isSaving,
     isLoading,
     error

@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 15, 2025 at 1:15 AM PST
+**Updated:** December 15, 2025 at 2:30 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ Scope 1-2 Complete - Firestore Cleanup + MCP Servers
+**Status:** ✅ MCP Framework + Unity Collaboration MVP Complete
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,7 +12,50 @@
 
 ---
 
-## 🔥 Latest Session (Dec 14-15, 2025)
+## 🔥 Latest Session (Dec 15, 2025 ~2:00 AM)
+
+### ✅ SCOPE 3: MCP FULL EXECUTION - COMPLETE
+
+**All MCP Servers Tested:**
+- ✅ **Notion** - Search, fetch, and CREATE pages working (task created in Trimurti database)
+- ✅ **Playwright** - Homepage, Unity Notes, Assessment tested + mobile viewport screenshots
+- ✅ **GitHub** - Connected and ready for PR automation
+
+**MCP Test Results:**
+- ✅ Notion task created: "MCP Integration Test - Dec 15" in Trimurti database
+- ✅ Playwright screenshots: `unity-notes-test.png`, `assessment-mobile.png`
+- ✅ Mobile viewport (375x812) rendering verified
+- ⚠️ Found: `/unity-map` returns 404 (route doesn't exist)
+
+### ✅ SCOPE 4: UNITY COLLABORATION MVP - COMPLETE
+
+**New Components:**
+- ✅ `src/components/unity/ShareModal.jsx` - Full sharing UI with:
+  - Copy share link
+  - Public/Private visibility toggle
+  - Add/remove collaborators by email
+  - Viewer/Editor role selection
+
+**Updated Hooks:**
+- ✅ `src/hooks/useFirebaseCapsule.js` - v3 collaboration features:
+  - `saveCapsuleWithOwner(nodes, edges, metadata, ownerId)`
+  - `addCollaborator(capsuleId, email, role)`
+  - `removeCollaborator(capsuleId, collaboratorId)`
+  - `updateVisibility(capsuleId, isPublic)`
+  - `getUserCapsules(userId, userEmail)`
+  - `checkAccess(capsuleId, userId, userEmail)`
+
+**Schema v3 Fields:**
+- `ownerId` - User who owns the capsule
+- `collaborators[]` - Array of {id, email, role, addedAt}
+- `shareSlug` - Short share link slug
+- `version: 3` - Marks v3 collaboration model
+
+**Build:** ✅ Passed (4.63s)
+
+---
+
+## 🔥 Previous Session (Dec 14-15, 2025)
 
 ### ✅ SCOPE 1: FIRESTORE CLEANUP ADMIN - COMPLETE
 
@@ -28,14 +71,22 @@
 - `9b24e01` - Feature: Firestore Cleanup Admin - Stats + Preview
 - `b387e96` - Fix: Firebase chunk order bug + add Storage Cleanup to Admin Hub
 
-### ✅ SCOPE 2: MCP SERVERS - COMPLETE
+### ✅ SCOPE 2: MCP SERVERS - COMPLETE + EXPANDED
 
 **Configured MCP Servers:**
 - ✅ **Notion** - Connected via OAuth, ready for roadmap sync
-- ✅ **Playwright** - Connected, ready for browser testing
+- ✅ **Playwright** - Connected + Tested (yellowcircle.io homepage verified)
+- ✅ **GitHub** - Connected (Dec 15, 2025), ready for PR automation
 - ❌ **Slack** - Removed (requires manual app registration, not compatible with dynamic OAuth)
 
-**Documentation:** `.claude/MCP_SERVERS_SETUP.md`
+**Playwright Test Results:**
+- ✅ yellowcircle.io homepage loaded successfully
+- ✅ Screenshot captured: `.playwright-mcp/playwright-test-yellowcircle.png`
+- ✅ All UI elements rendered (sidebar, hero, footer)
+
+**Documentation:**
+- `.claude/MCP_SERVERS_SETUP.md`
+- `dev-context/SCOPE_CLAUDE_AUTONOMOUS_DEC15_2025.md` (comprehensive framework scope)
 
 **Commits:**
 - `6289c05` - Docs: MCP servers setup guide for Claude Code autonomous

@@ -19,6 +19,12 @@
 - **Status:** ✓ Connected (Dec 14, 2025)
 - **Purpose:** Browser testing, screenshot capture, debugging
 
+### 3. GitHub (`github`)
+- **Type:** stdio
+- **Command:** `npx -y @modelcontextprotocol/server-github`
+- **Status:** ✓ Connected (Dec 15, 2025)
+- **Purpose:** PR creation, issue tracking, repository operations
+
 ### Removed: Slack
 - Slack MCP requires manual app registration (doesn't support dynamic OAuth)
 - Can be added later with pre-configured Slack app credentials
@@ -56,11 +62,11 @@ Both Notion and Slack require OAuth authentication before use:
 
 ## Planned Additional Servers
 
-| Server | Purpose | Priority |
-|--------|---------|----------|
-| `@modelcontextprotocol/server-github` | PR creation, issue tracking | HIGH |
-| `@modelcontextprotocol/server-memory` | Persistent context | MEDIUM |
-| `@modelcontextprotocol/server-sentry` | Error monitoring | LOW |
+| Server | Purpose | Priority | Status |
+|--------|---------|----------|--------|
+| `@modelcontextprotocol/server-github` | PR creation, issue tracking | HIGH | ✅ Installed |
+| `@modelcontextprotocol/server-memory` | Persistent context | MEDIUM | Planned |
+| `@modelcontextprotocol/server-sentry` | Error monitoring | LOW | Planned |
 
 ---
 
@@ -106,6 +112,9 @@ projects["/Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/ye
 2. [x] Install Playwright MCP server
 3. [x] Authenticate Notion ✓
 4. [x] Playwright connected ✓
-5. [ ] Test Playwright with yellowcircle.io pages
-6. [ ] Add GitHub MCP server for PR automation
+5. [x] Test Playwright with yellowcircle.io pages ✓ (Dec 14, 2025)
+6. [x] Add GitHub MCP server for PR automation ✓ (Dec 15, 2025)
 7. [ ] (Optional) Add Slack with manual app registration
+8. [ ] Test GitHub MCP with yellowcircle repo operations
+9. [ ] Create Playwright test scenarios for critical pages
+10. [ ] Set up Notion Roadmap database sync
