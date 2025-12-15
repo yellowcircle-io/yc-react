@@ -1,6 +1,7 @@
 /**
  * ShareModal - Unity Collaboration sharing component
  * Enables sharing canvases with collaborators
+ * Uses inline styles for reliable rendering
  */
 
 import { useState } from 'react';
@@ -65,92 +66,294 @@ const ShareModal = ({
 
   if (!isOpen) return null;
 
+  const styles = {
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 100,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backdropFilter: 'blur(4px)',
+    },
+    modal: {
+      position: 'relative',
+      backgroundColor: '#1a1a1a',
+      borderRadius: '12px',
+      width: '100%',
+      maxWidth: '420px',
+      margin: '16px',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '16px',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    },
+    headerTitle: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    title: {
+      fontSize: '18px',
+      fontWeight: '600',
+      color: '#fff',
+      margin: 0,
+    },
+    closeBtn: {
+      padding: '4px',
+      background: 'transparent',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      color: 'rgba(255, 255, 255, 0.6)',
+    },
+    content: {
+      padding: '16px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+    },
+    section: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    },
+    label: {
+      fontSize: '13px',
+      color: 'rgba(255, 255, 255, 0.6)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    inputRow: {
+      display: 'flex',
+      gap: '8px',
+    },
+    input: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      padding: '10px 12px',
+      fontSize: '14px',
+      color: 'rgba(255, 255, 255, 0.8)',
+      outline: 'none',
+    },
+    copyBtn: {
+      padding: '10px 16px',
+      backgroundColor: '#F5A623',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      color: '#000',
+      fontWeight: '500',
+      fontSize: '14px',
+    },
+    toggleRow: {
+      display: 'flex',
+      gap: '8px',
+    },
+    toggleBtn: (active) => ({
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      padding: '10px 16px',
+      borderRadius: '8px',
+      border: active ? '1px solid #F5A623' : '1px solid rgba(255, 255, 255, 0.1)',
+      backgroundColor: active ? 'rgba(245, 166, 35, 0.2)' : 'rgba(0, 0, 0, 0.3)',
+      color: active ? '#F5A623' : 'rgba(255, 255, 255, 0.6)',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '500',
+    }),
+    hint: {
+      fontSize: '12px',
+      color: 'rgba(255, 255, 255, 0.4)',
+      margin: 0,
+    },
+    select: {
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      padding: '10px 12px',
+      fontSize: '14px',
+      color: '#fff',
+      outline: 'none',
+      cursor: 'pointer',
+    },
+    addBtn: {
+      padding: '10px 16px',
+      backgroundColor: '#F5A623',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      color: '#000',
+      fontWeight: '500',
+      fontSize: '14px',
+    },
+    addBtnDisabled: {
+      padding: '10px 16px',
+      backgroundColor: 'rgba(245, 166, 35, 0.5)',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'not-allowed',
+      color: '#000',
+      fontWeight: '500',
+      fontSize: '14px',
+    },
+    error: {
+      fontSize: '12px',
+      color: '#f87171',
+      margin: 0,
+    },
+    collabList: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      maxHeight: '160px',
+      overflowY: 'auto',
+    },
+    collabItem: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      borderRadius: '8px',
+      padding: '10px 12px',
+    },
+    collabInfo: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+    },
+    avatar: {
+      width: '32px',
+      height: '32px',
+      borderRadius: '50%',
+      backgroundColor: 'rgba(245, 166, 35, 0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#F5A623',
+    },
+    collabName: {
+      fontSize: '14px',
+      color: '#fff',
+      margin: 0,
+    },
+    collabRole: {
+      fontSize: '12px',
+      color: 'rgba(255, 255, 255, 0.4)',
+      margin: 0,
+      textTransform: 'capitalize',
+    },
+    removeBtn: {
+      padding: '4px',
+      background: 'transparent',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      color: 'rgba(255, 255, 255, 0.4)',
+    },
+    footer: {
+      padding: '16px',
+      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+    },
+    doneBtn: {
+      width: '100%',
+      padding: '10px',
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      color: 'rgba(255, 255, 255, 0.8)',
+      fontSize: '14px',
+    },
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div style={styles.overlay}>
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div style={styles.backdrop} onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#1a1a1a] rounded-xl w-full max-w-md mx-4 shadow-2xl border border-white/10">
+      <div style={styles.modal}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#F5A623]" />
-            <h2 className="text-lg font-semibold text-white">Share "{title}"</h2>
+        <div style={styles.header}>
+          <div style={styles.headerTitle}>
+            <Users size={20} color="#F5A623" />
+            <h2 style={styles.title}>Share "{title}"</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-white/60" />
+          <button style={styles.closeBtn} onClick={onClose}>
+            <X size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-6">
+        <div style={styles.content}>
           {/* Share Link Section */}
-          <div className="space-y-2">
-            <label className="text-sm text-white/60 flex items-center gap-2">
-              <Link2 className="w-4 h-4" />
+          <div style={styles.section}>
+            <label style={styles.label}>
+              <Link2 size={16} />
               Share link
             </label>
-            <div className="flex gap-2">
+            <div style={styles.inputRow}>
               <input
                 type="text"
                 value={fullShareLink}
                 readOnly
-                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80"
+                style={styles.input}
               />
-              <button
-                onClick={handleCopy}
-                className="px-3 py-2 bg-[#F5A623] hover:bg-[#F5A623]/90 rounded-lg transition-colors flex items-center gap-2"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 text-black" />
-                    <span className="text-sm font-medium text-black">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 text-black" />
-                    <span className="text-sm font-medium text-black">Copy</span>
-                  </>
-                )}
+              <button style={styles.copyBtn} onClick={handleCopy}>
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+                {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
           </div>
 
           {/* Visibility Toggle */}
-          <div className="space-y-2">
-            <label className="text-sm text-white/60">Visibility</label>
-            <div className="flex gap-2">
+          <div style={styles.section}>
+            <label style={styles.label}>Visibility</label>
+            <div style={styles.toggleRow}>
               <button
+                style={styles.toggleBtn(isPublic)}
                 onClick={() => onUpdateVisibility(true)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                  isPublic
-                    ? 'bg-[#F5A623]/20 border-[#F5A623] text-[#F5A623]'
-                    : 'bg-black/30 border-white/10 text-white/60 hover:border-white/30'
-                }`}
               >
-                <Globe className="w-4 h-4" />
-                <span className="text-sm font-medium">Public</span>
+                <Globe size={16} />
+                Public
               </button>
               <button
+                style={styles.toggleBtn(!isPublic)}
                 onClick={() => onUpdateVisibility(false)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                  !isPublic
-                    ? 'bg-[#F5A623]/20 border-[#F5A623] text-[#F5A623]'
-                    : 'bg-black/30 border-white/10 text-white/60 hover:border-white/30'
-                }`}
               >
-                <Lock className="w-4 h-4" />
-                <span className="text-sm font-medium">Private</span>
+                <Lock size={16} />
+                Private
               </button>
             </div>
-            <p className="text-xs text-white/40">
+            <p style={styles.hint}>
               {isPublic
                 ? 'Anyone with the link can view this canvas'
                 : 'Only you and collaborators can access'}
@@ -158,23 +361,23 @@ const ShareModal = ({
           </div>
 
           {/* Add Collaborator */}
-          <div className="space-y-2">
-            <label className="text-sm text-white/60 flex items-center gap-2">
-              <Mail className="w-4 h-4" />
+          <div style={styles.section}>
+            <label style={styles.label}>
+              <Mail size={16} />
               Add collaborators
             </label>
-            <form onSubmit={handleAddCollaborator} className="flex gap-2">
+            <form onSubmit={handleAddCollaborator} style={styles.inputRow}>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colleague@company.com"
-                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#F5A623]/50"
+                style={styles.input}
               />
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
+                style={styles.select}
               >
                 <option value="viewer">Viewer</option>
                 <option value="editor">Editor</option>
@@ -182,44 +385,37 @@ const ShareModal = ({
               <button
                 type="submit"
                 disabled={isAdding || !email.trim()}
-                className="px-4 py-2 bg-[#F5A623] hover:bg-[#F5A623]/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-black transition-colors"
+                style={isAdding || !email.trim() ? styles.addBtnDisabled : styles.addBtn}
               >
                 {isAdding ? '...' : 'Add'}
               </button>
             </form>
-            {error && (
-              <p className="text-xs text-red-400">{error}</p>
-            )}
+            {error && <p style={styles.error}>{error}</p>}
           </div>
 
           {/* Collaborators List */}
           {collaborators.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm text-white/60">
+            <div style={styles.section}>
+              <label style={styles.label}>
                 Collaborators ({collaborators.length})
               </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <div style={styles.collabList}>
                 {collaborators.map((collab) => (
-                  <div
-                    key={collab.id || collab.email}
-                    className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#F5A623]/20 flex items-center justify-center">
-                        <span className="text-sm font-medium text-[#F5A623]">
-                          {(collab.email || collab.name || '?')[0].toUpperCase()}
-                        </span>
+                  <div key={collab.id || collab.email} style={styles.collabItem}>
+                    <div style={styles.collabInfo}>
+                      <div style={styles.avatar}>
+                        {(collab.email || collab.name || '?')[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm text-white">{collab.email || collab.name}</p>
-                        <p className="text-xs text-white/40 capitalize">{collab.role}</p>
+                        <p style={styles.collabName}>{collab.email || collab.name}</p>
+                        <p style={styles.collabRole}>{collab.role}</p>
                       </div>
                     </div>
                     <button
+                      style={styles.removeBtn}
                       onClick={() => handleRemove(collab.id || collab.email)}
-                      className="p-1 hover:bg-white/10 rounded transition-colors"
                     >
-                      <Trash2 className="w-4 h-4 text-white/40 hover:text-red-400" />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 ))}
@@ -229,11 +425,8 @@ const ShareModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-white/80 transition-colors"
-          >
+        <div style={styles.footer}>
+          <button style={styles.doneBtn} onClick={onClose}>
             Done
           </button>
         </div>
