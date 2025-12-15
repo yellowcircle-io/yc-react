@@ -10,34 +10,18 @@
 ### 1. Notion (`notion`)
 - **Type:** HTTP
 - **URL:** `https://mcp.notion.com/mcp`
-- **Status:** Needs authentication
+- **Status:** ✓ Connected (Dec 14, 2025)
 - **Purpose:** Roadmap sync, task tracking, database operations
 
-**To authenticate:**
-```bash
-# In Claude Code, run:
-/mcp
-# Then select "notion" and "Authenticate"
-```
-
-### 2. Slack (`slack`)
-- **Type:** HTTP
-- **URL:** `https://mcp.slack.com/mcp`
-- **Status:** Needs OAuth setup
-- **Purpose:** Notifications, commands, progress updates
-
-**To authenticate:**
-```bash
-# In Claude Code, run:
-/mcp
-# Then select "slack" and "Authenticate"
-```
-
-### 3. Playwright (`playwright`)
+### 2. Playwright (`playwright`)
 - **Type:** stdio
-- **Command:** `npx @anthropic-ai/mcp-server-playwright`
-- **Status:** Ready (installs on first use)
+- **Command:** `npx -y @playwright/mcp`
+- **Status:** ✓ Connected (Dec 14, 2025)
 - **Purpose:** Browser testing, screenshot capture, debugging
+
+### Removed: Slack
+- Slack MCP requires manual app registration (doesn't support dynamic OAuth)
+- Can be added later with pre-configured Slack app credentials
 
 ---
 
@@ -119,9 +103,9 @@ projects["/Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/ye
 ## Next Steps
 
 1. [x] Install Notion MCP server
-2. [x] Install Slack MCP server
-3. [x] Install Playwright MCP server
-4. [ ] Authenticate Notion (requires user action)
-5. [ ] Authenticate Slack (requires user action)
-6. [ ] Test Playwright with yellowcircle.io pages
-7. [ ] Add GitHub MCP server for PR automation
+2. [x] Install Playwright MCP server
+3. [x] Authenticate Notion ✓
+4. [x] Playwright connected ✓
+5. [ ] Test Playwright with yellowcircle.io pages
+6. [ ] Add GitHub MCP server for PR automation
+7. [ ] (Optional) Add Slack with manual app registration
