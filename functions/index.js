@@ -3727,7 +3727,7 @@ exports.getCollectionStats = functions
  *   - includeContacts: "true" to also clean test contacts
  */
 exports.cleanupWithPreview = functions
-  .runWith({ memory: "512MB", timeoutSeconds: 120 })
+  .runWith({ memory: "256MB", timeoutSeconds: 60 })
   .https.onRequest(async (request, response) => {
   setCors(response);
 
@@ -3763,8 +3763,11 @@ exports.cleanupWithPreview = functions
       contacts: { deleted: [], kept: 0 }
     };
 
-    // Process capsules
-    const capsulesSnapshot = await db.collection("capsules").get();
+    // Process capsules - limit to 100 per run to avoid timeout
+    const capsulesSnapshot = await db.collection("capsules")
+      .select("title", "createdAt", "viewCount", "expiresAt", "version")
+      .limit(100)
+      .get();
     for (const doc of capsulesSnapshot.docs) {
       const data = doc.data();
       const createdAt = data.createdAt?.toDate?.() || new Date(0);
@@ -3797,8 +3800,11 @@ exports.cleanupWithPreview = functions
       }
     }
 
-    // Process journeys
-    const journeysSnapshot = await db.collection("journeys").get();
+    // Process journeys - limit to 100 per run
+    const journeysSnapshot = await db.collection("journeys")
+      .select("name", "status", "updatedAt")
+      .limit(100)
+      .get();
     for (const doc of journeysSnapshot.docs) {
       const data = doc.data();
       const updatedAt = data.updatedAt?.toDate?.() || new Date(0);
@@ -3821,9 +3827,12 @@ exports.cleanupWithPreview = functions
       }
     }
 
-    // Process contacts (only if explicitly requested)
+    // Process contacts (only if explicitly requested) - limit to 100 per run
     if (includeContacts) {
-      const contactsSnapshot = await db.collection("contacts").get();
+      const contactsSnapshot = await db.collection("contacts")
+        .select("email", "source", "createdAt", "journeys")
+        .limit(100)
+        .get();
       for (const doc of contactsSnapshot.docs) {
         const data = doc.data();
         const createdAt = data.createdAt?.toDate?.() || new Date(0);
