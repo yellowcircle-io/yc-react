@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 14, 2025 at 8:50 PM PST
+**Updated:** December 15, 2025 at 1:15 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ P0-P3 ALL COMPLETE - New Initiatives Scoped
+**Status:** ✅ Scope 1-2 Complete - Firestore Cleanup + MCP Servers
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,9 +12,45 @@
 
 ---
 
+## 🔥 Latest Session (Dec 14-15, 2025)
+
+### ✅ SCOPE 1: FIRESTORE CLEANUP ADMIN - COMPLETE
+
+**Admin UI at `/admin/storage-cleanup`:**
+- ✅ Collection stats display (Capsules, Journeys, Contacts, Leads, Articles, Shortlinks, TriggerRules)
+- ✅ Preview Cleanup (Dry Run) working - shows what would be deleted
+- ✅ Actual cleanup with confirmation (for production use)
+- ✅ Firebase Functions optimized with `.select()` and `.limit()` for performance
+- ✅ CORS configured correctly for admin token auth
+- ✅ Added to Admin Hub with Trash2 icon
+
+**Commits:**
+- `9b24e01` - Feature: Firestore Cleanup Admin - Stats + Preview
+- `b387e96` - Fix: Firebase chunk order bug + add Storage Cleanup to Admin Hub
+
+### ✅ SCOPE 2: MCP SERVERS - COMPLETE
+
+**Configured MCP Servers:**
+- ✅ **Notion** - Connected via OAuth, ready for roadmap sync
+- ✅ **Playwright** - Connected, ready for browser testing
+- ❌ **Slack** - Removed (requires manual app registration, not compatible with dynamic OAuth)
+
+**Documentation:** `.claude/MCP_SERVERS_SETUP.md`
+
+**Commits:**
+- `6289c05` - Docs: MCP servers setup guide for Claude Code autonomous
+
+### ✅ BUNDLE OPTIMIZATION - COMPLETE
+
+- ✅ Main chunk reduced: 494KB → 313KB
+- ✅ Firebase chunk consolidated (fixed initialization order bug)
+- ✅ Lottie icons lazy-loaded
+
+---
+
 ## 📋 PROJECT STATUS REVIEW
 
-### Current Status (Dec 14, 2025)
+### Current Status (Dec 15, 2025)
 
 - **Day 19** since Rho exit (Nov 25, 2025)
 - **Status:** ✅ All UX improvements deployed to production

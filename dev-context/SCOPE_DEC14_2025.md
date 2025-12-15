@@ -1,8 +1,9 @@
 # Scope Document - December 14, 2025
 
 **Created:** December 14, 2025
+**Updated:** December 15, 2025
 **Machine:** Mac Mini
-**Status:** Scoping Document for Three Initiatives
+**Status:** ✅ Scope 1-2 COMPLETE | Scope 3 Deferred
 
 ---
 
@@ -47,7 +48,18 @@
 
 ---
 
-## SCOPE 1: Firestore Cleanup for Old Collections
+## SCOPE 1: Firestore Cleanup for Old Collections ✅ COMPLETE
+
+**Implemented:** December 14-15, 2025
+**Commits:** `9b24e01`, `b387e96`
+
+### Implementation Summary
+
+- ✅ Admin UI at `/admin/storage-cleanup` with stats display
+- ✅ Firebase Functions: `getCollectionStats`, `cleanupWithPreview`
+- ✅ Preview Cleanup (Dry Run) working
+- ✅ Optimized with `.select()` and `.limit()` for performance
+- ✅ CORS configured for admin token auth
 
 ### Problem Statement
 
@@ -131,7 +143,17 @@ Add cleanup controls to `/admin` dashboard:
 
 ---
 
-## SCOPE 2: Claude Code Autonomous Execution
+## SCOPE 2: Claude Code Autonomous Execution ✅ COMPLETE
+
+**Implemented:** December 14-15, 2025
+**Commit:** `6289c05`
+
+### Implementation Summary
+
+- ✅ **Notion MCP** - Connected via OAuth, ready for roadmap sync
+- ✅ **Playwright MCP** - Connected for browser testing/debugging
+- ❌ **Slack MCP** - Removed (requires manual app registration, not compatible)
+- ✅ Documentation at `.claude/MCP_SERVERS_SETUP.md`
 
 ### Objectives
 
@@ -334,7 +356,10 @@ When debugging frontend issues:
 
 ---
 
-## SCOPE 3: Unity Platform Collaboration
+## SCOPE 3: Unity Platform Collaboration ⏳ DEFERRED
+
+**Status:** Deferred to Q1 2026
+**Effort:** 16 hours estimated
 
 ### Problem Statement
 
