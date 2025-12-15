@@ -3758,14 +3758,17 @@ exports.cleanupWithPreview = functions
     const results = {
       dryRun,
       timestamp: now.toISOString(),
-      capsules: { deleted: [], kept: 0 },
+      cutoff90: cutoff90.toISOString(),
+      cutoff180: cutoff180.toISOString(),
+      capsules: { deleted: [], kept: 0, samples: [] },
       journeys: { deleted: [], kept: 0 },
       contacts: { deleted: [], kept: 0 }
     };
 
-    // Process capsules - limit to 100 per run to avoid timeout
+    // Process capsules - order by createdAt to find oldest first
     const capsulesSnapshot = await db.collection("capsules")
       .select("title", "createdAt", "viewCount", "expiresAt", "version")
+      .orderBy("createdAt", "asc")
       .limit(100)
       .get();
     for (const doc of capsulesSnapshot.docs) {
@@ -3774,13 +3777,33 @@ exports.cleanupWithPreview = functions
       const viewCount = data.viewCount || 0;
       const expiresAt = data.expiresAt?.toDate?.() || null;
 
-      if ((expiresAt && expiresAt < now) || (createdAt < cutoff90 && viewCount < 3)) {
+      // Collect first 5 samples for debugging
+      if (results.capsules.samples.length < 5) {
+        results.capsules.samples.push({
+          id: doc.id,
+          title: data.title || "Untitled",
+          createdAt: createdAt.toISOString(),
+          viewCount,
+          expiresAt: expiresAt?.toISOString() || null,
+          olderThan90: createdAt < cutoff90
+        });
+      }
+
+      // Cleanup criteria:
+      // 1. Expired capsules
+      // 2. Old (>90 days) with low views (<3)
+      // 3. Auto-saved capsules with 0 views (duplicates from runaway auto-save)
+      const isExpired = expiresAt && expiresAt < now;
+      const isOldLowViews = createdAt < cutoff90 && viewCount < 3;
+      const isAutoSavedNoViews = (data.title || "").includes("(Auto-saved)") && viewCount === 0;
+
+      if (isExpired || isOldLowViews || isAutoSavedNoViews) {
         results.capsules.deleted.push({
           id: doc.id,
           title: data.title || "Untitled",
           createdAt: createdAt.toISOString(),
           viewCount,
-          reason: expiresAt ? "expired" : "old+lowViews"
+          reason: isExpired ? "expired" : isOldLowViews ? "old+lowViews" : "autoSaved+noViews"
         });
 
         if (!dryRun) {
@@ -3800,9 +3823,10 @@ exports.cleanupWithPreview = functions
       }
     }
 
-    // Process journeys - limit to 100 per run
+    // Process journeys - order by updatedAt to find oldest first
     const journeysSnapshot = await db.collection("journeys")
       .select("name", "status", "updatedAt")
+      .orderBy("updatedAt", "asc")
       .limit(100)
       .get();
     for (const doc of journeysSnapshot.docs) {
@@ -3827,10 +3851,11 @@ exports.cleanupWithPreview = functions
       }
     }
 
-    // Process contacts (only if explicitly requested) - limit to 100 per run
+    // Process contacts (only if explicitly requested) - order by createdAt to find oldest first
     if (includeContacts) {
       const contactsSnapshot = await db.collection("contacts")
         .select("email", "source", "createdAt", "journeys")
+        .orderBy("createdAt", "asc")
         .limit(100)
         .get();
       for (const doc of contactsSnapshot.docs) {
