@@ -20,6 +20,7 @@ import { useApiKeyStorage } from '../hooks/useApiKeyStorage';
 import { useCredits } from '../hooks/useCredits';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import TextNoteNode from '../components/unity-plus/TextNoteNode';
+import { premiumNodeTypes, PREMIUM_CARD_TYPES } from '../components/unity-plus/nodes';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
 import ShareModal from '../components/unity/ShareModal';
 import LightboxModal from '../components/travel/LightboxModal';
@@ -42,7 +43,9 @@ const nodeTypes = {
   photoNode: DraggablePhotoNode,
   textNode: TextNoteNode,
   // UnityMAP journey node types
-  ...mapNodeTypes
+  ...mapNodeTypes,
+  // Premium Unity+ node types
+  ...premiumNodeTypes
 };
 
 const STORAGE_KEY = 'unity-notes-data';
@@ -1125,6 +1128,132 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           onDelete: handleDeleteNode,
         }
       };
+    } else if (type === 'sticky') {
+      // Premium: Sticky Note
+      newNode = {
+        id: `sticky-${timestamp}`,
+        type: 'stickyNode',
+        position: {
+          x: 300 + gridX * 200,
+          y: 100 + gridY * 200
+        },
+        data: {
+          content: '',
+          color: 'yellow',
+          size: 150,
+          createdAt: timestamp,
+          onContentChange: (id, content) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, content } } : n));
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
+    } else if (type === 'todo') {
+      // Premium: To-Do List
+      newNode = {
+        id: `todo-${timestamp}`,
+        type: 'todoNode',
+        position: {
+          x: 300 + gridX * 280,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: 'To-Do List',
+          items: [],
+          createdAt: timestamp,
+          onTitleChange: (id, title) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, title } } : n));
+          },
+          onItemsChange: (id, items) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, items } } : n));
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
+    } else if (type === 'comment') {
+      // Premium: Comment
+      newNode = {
+        id: `comment-${timestamp}`,
+        type: 'commentNode',
+        position: {
+          x: 300 + gridX * 320,
+          y: 100 + gridY * 280
+        },
+        data: {
+          content: '',
+          author: user?.displayName || userProfile?.name || 'User',
+          timestamp: new Date().toISOString(),
+          createdAt: timestamp,
+          onContentChange: (id, content) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, content } } : n));
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
+    } else if (type === 'colorSwatch' || type === 'swatch') {
+      // Premium: Color Palette
+      newNode = {
+        id: `swatch-${timestamp}`,
+        type: 'colorSwatchNode',
+        position: {
+          x: 300 + gridX * 250,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: 'Color Palette',
+          colors: ['#fbbf24', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6'],
+          createdAt: timestamp,
+          onUpdateColors: (id, colors) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, colors } } : n));
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
+    } else if (type === 'codeBlock' || type === 'code') {
+      // Premium: Code Block
+      newNode = {
+        id: `code-${timestamp}`,
+        type: 'codeBlockNode',
+        position: {
+          x: 300 + gridX * 360,
+          y: 100 + gridY * 350
+        },
+        data: {
+          code: '// Your code here',
+          language: 'javascript',
+          filename: '',
+          createdAt: timestamp,
+          onCodeChange: (id, code) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, code } } : n));
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
+    } else if (type === 'group') {
+      // Premium: Group Container
+      newNode = {
+        id: `group-${timestamp}`,
+        type: 'groupNode',
+        position: {
+          x: 200 + gridX * 350,
+          y: 50 + gridY * 250
+        },
+        data: {
+          label: 'Group',
+          color: 'gray',
+          width: 300,
+          height: 200,
+          createdAt: timestamp,
+          onLabelChange: (id, label) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, label } } : n));
+          },
+          onResize: (id, width, height) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, width, height } } : n));
+          },
+          onDelete: handleDeleteNode,
+        },
+        style: { zIndex: -1 }, // Groups should be behind other nodes
+      };
     }
 
     if (newNode) {
@@ -1133,7 +1262,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         fitView({ duration: 400, padding: 0.2 });
       }, 100);
     }
-  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio]);
+  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio, user, userProfile]);
 
   // Handle Deploy from ProspectNode - opens prospect modal
   // Uses refs to avoid circular dependency with useEffect that injects callbacks

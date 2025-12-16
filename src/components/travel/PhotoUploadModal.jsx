@@ -12,10 +12,10 @@ const PhotoUploadModal = ({
   onAddEmail,
   onAddWait,
   onAddCondition,
-  onEditCampaign,
+  _onEditCampaign,
   emailCount = 0,
   emailLimit = 3,
-  hasCampaign = false
+  _hasCampaign = false
 }) => {
   const [step, setStep] = useState('method');
   const [uploadMethod, setUploadMethod] = useState(null);
@@ -100,14 +100,14 @@ const PhotoUploadModal = ({
     }
   };
 
-  // Premium node types configuration (Coming Soon - UI only)
+  // Premium node types configuration
   const PREMIUM_NODE_TYPES = [
-    { type: 'group', icon: '📦', label: 'GROUP', description: 'Coming Soon', color: '#6366f1', comingSoon: true },
-    { type: 'todo', icon: '✅', label: 'TODO LIST', description: 'Coming Soon', color: '#22c55e', comingSoon: true },
-    { type: 'sticky', icon: '📌', label: 'STICKY', description: 'Coming Soon', color: '#facc15', comingSoon: true },
-    { type: 'comment', icon: '💬', label: 'COMMENT', description: 'Coming Soon', color: '#f97316', comingSoon: true },
-    { type: 'swatch', icon: '🎨', label: 'COLOR SWATCH', description: 'Coming Soon', color: '#ec4899', comingSoon: true },
-    { type: 'code', icon: '💻', label: 'CODE BLOCK', description: 'Coming Soon', color: '#64748b', comingSoon: true },
+    { type: 'group', icon: '📦', label: 'GROUP', description: 'Visual container', color: '#9ca3af' },
+    { type: 'todo', icon: '✅', label: 'TODO LIST', description: 'Checklist with progress', color: '#22c55e' },
+    { type: 'sticky', icon: '📌', label: 'STICKY', description: 'Quick colored note', color: '#fbbf24' },
+    { type: 'comment', icon: '💬', label: 'COMMENT', description: 'Annotation bubble', color: '#6366f1' },
+    { type: 'swatch', icon: '🎨', label: 'COLOR SWATCH', description: 'Color collection', color: '#f97316' },
+    { type: 'code', icon: '💻', label: 'CODE BLOCK', description: 'Code snippet', color: '#1e1e1e' },
   ];
 
   const handleSubmit = async (e) => {
@@ -898,20 +898,17 @@ const PhotoUploadModal = ({
                           <button
                             key={nodeType.type}
                             onClick={() => {
-                              if (!nodeType.comingSoon) {
-                                onAddCard(nodeType.type);
-                                handleClose();
-                              }
+                              onAddCard(nodeType.type);
+                              handleClose();
                             }}
-                            disabled={nodeType.comingSoon}
                             style={{
                               width: '100%',
                               padding: '16px 20px',
-                              backgroundColor: nodeType.comingSoon ? 'rgba(75, 85, 99, 0.5)' : nodeType.color,
-                              color: nodeType.comingSoon ? 'rgba(255,255,255,0.5)' : (nodeType.type === 'sticky' ? 'black' : 'white'),
+                              backgroundColor: nodeType.color,
+                              color: nodeType.type === 'sticky' ? 'black' : 'white',
                               border: 'none',
                               borderRadius: '0',
-                              cursor: nodeType.comingSoon ? 'not-allowed' : 'pointer',
+                              cursor: 'pointer',
                               fontSize: '13px',
                               fontWeight: '700',
                               letterSpacing: '0.08em',
@@ -920,19 +917,14 @@ const PhotoUploadModal = ({
                               gap: '12px',
                               transition: 'all 0.2s ease',
                               textAlign: 'left',
-                              opacity: nodeType.comingSoon ? 0.6 : 1
                             }}
                             onMouseOver={(e) => {
-                              if (!nodeType.comingSoon) {
-                                e.currentTarget.style.opacity = '0.9';
-                                e.currentTarget.style.transform = 'translateX(4px)';
-                              }
+                              e.currentTarget.style.opacity = '0.9';
+                              e.currentTarget.style.transform = 'translateX(4px)';
                             }}
                             onMouseOut={(e) => {
-                              if (!nodeType.comingSoon) {
-                                e.currentTarget.style.opacity = '1';
-                                e.currentTarget.style.transform = 'translateX(0)';
-                              }
+                              e.currentTarget.style.opacity = '1';
+                              e.currentTarget.style.transform = 'translateX(0)';
                             }}
                           >
                             <span style={{ fontSize: '20px' }}>{nodeType.icon}</span>
@@ -948,18 +940,6 @@ const PhotoUploadModal = ({
                                 {nodeType.description}
                               </span>
                             </div>
-                            {nodeType.comingSoon && (
-                              <span style={{
-                                fontSize: '9px',
-                                fontWeight: '600',
-                                backgroundColor: 'rgba(0,0,0,0.3)',
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                letterSpacing: '0.05em'
-                              }}>
-                                SOON
-                              </span>
-                            )}
                           </button>
                         ))}
                       </div>
