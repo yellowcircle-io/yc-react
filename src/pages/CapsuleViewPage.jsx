@@ -250,33 +250,63 @@ const CapsuleView = () => {
             👁️ {metadata?.viewCount || 0} views • Read-only view
           </p>
         </div>
-        <button
-          onClick={() => navigate('/uk-memories')}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#EECF00',
-            border: 'none',
-            borderRadius: '0',
-            fontWeight: '700',
-            cursor: 'pointer',
-            fontSize: '14px',
-            letterSpacing: '0.05em',
-            transition: 'all 0.3s ease',
-            boxShadow: '0 2px 4px rgba(238, 207, 0, 0.3)'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#fbbf24';
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 4px 8px rgba(238, 207, 0, 0.4)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#EECF00';
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 2px 4px rgba(238, 207, 0, 0.3)';
-          }}
-        >
-          CREATE YOUR OWN
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => navigate(`/unity-notes?capsule=${capsuleId}`)}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0',
+              fontWeight: '700',
+              cursor: 'pointer',
+              fontSize: '14px',
+              letterSpacing: '0.05em',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#333';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#000';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+            }}
+          >
+            ✏️ EDIT CAPSULE
+          </button>
+          <button
+            onClick={() => navigate('/unity-notes')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#EECF00',
+              border: 'none',
+              borderRadius: '0',
+              fontWeight: '700',
+              cursor: 'pointer',
+              fontSize: '14px',
+              letterSpacing: '0.05em',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 2px 4px rgba(238, 207, 0, 0.3)'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#fbbf24';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 4px 8px rgba(238, 207, 0, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#EECF00';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 2px 4px rgba(238, 207, 0, 0.3)';
+            }}
+          >
+            CREATE NEW
+          </button>
+        </div>
       </div>
 
       {/* YC Logo - Fixed to viewport, bottom left */}

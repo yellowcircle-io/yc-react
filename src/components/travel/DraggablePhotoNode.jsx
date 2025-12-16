@@ -4,7 +4,7 @@ import { Handle, Position } from '@xyflow/react';
 const DraggablePhotoNode = memo(({ id, data, selected }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
+  const [_isResizing, setIsResizing] = useState(false);
   const [lastTap, setLastTap] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysisMenu, setShowAnalysisMenu] = useState(false);
@@ -193,7 +193,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
             setImageLoaded(true);
             setImageError(false);
           }}
-          onError={(e) => {
+          onError={(_e) => {
             console.error('Image failed to load:', data.imageUrl);
             setImageError(true);
             setImageLoaded(false);
@@ -541,7 +541,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
         )}
       </div>
 
-      {/* Delete button - Circle, shows on hover or when selected */}
+      {/* Delete button - Circle, matches UnityMAP WaitNode styling */}
       {(isHovered || selected) && data.onDelete && (
         <button
           className="nodrag nopan"
@@ -551,34 +551,37 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           }}
           style={{
             position: 'absolute',
-            top: '-10px',
-            right: '-10px',
+            top: '-6px',
+            right: '-6px',
             width: '24px',
             height: '24px',
             minWidth: '24px',
             minHeight: '24px',
-            maxWidth: '24px',
-            maxHeight: '24px',
             padding: 0,
             borderRadius: '50%',
-            backgroundColor: '#1f2937',
-            color: 'white',
+            backgroundColor: '#374151',
             border: '2px solid white',
-            fontSize: '16px',
-            lineHeight: '20px',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '400',
+            lineHeight: 1,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            zIndex: 30,
-            opacity: isHovered && !selected ? 0.85 : 1,
-            transition: 'opacity 0.2s ease, transform 0.15s ease',
-            boxSizing: 'border-box',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-          title="Delete"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#1f2937';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#374151';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Delete node"
         >
           ×
         </button>

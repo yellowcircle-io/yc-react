@@ -126,7 +126,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   // Firebase hook for shareable URLs (gated for pro/admin users)
   const {
     saveCapsule,
+    updateCapsule,
+    loadCapsule,
     isSaving,
+    isLoading: _isLoadingCapsule,
     cleanupOldCapsules,
     getCapsuleStats,
     migrateToV2,
@@ -193,6 +196,41 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       });
     }
   }, [isAuthenticated, isCloudSynced, migrateLocalToCloud]);
+
+  // Load capsule from URL parameter (for editing shared capsules)
+  useEffect(() => {
+    const capsuleParam = searchParams.get('capsule');
+    if (capsuleParam && isInitialized && !currentCapsuleId) {
+      const loadSharedCapsule = async () => {
+        try {
+          console.log('📂 Loading shared capsule for editing:', capsuleParam);
+          const capsuleData = await loadCapsule(capsuleParam);
+          if (capsuleData) {
+            // Set the capsule ID so updates go to the same document
+            setCurrentCapsuleId(capsuleParam);
+
+            // Restore nodes and edges from the capsule
+            if (capsuleData.nodes && capsuleData.nodes.length > 0) {
+              setNodes(capsuleData.nodes);
+            }
+            if (capsuleData.edges) {
+              setEdges(capsuleData.edges);
+            }
+
+            // Generate share URL for the loaded capsule
+            const url = `${window.location.origin}/unity-notes/view/${capsuleParam}`;
+            setShareUrl(url);
+
+            console.log('✅ Loaded capsule:', capsuleParam, '- Nodes:', capsuleData.nodes?.length || 0);
+          }
+        } catch (err) {
+          console.error('❌ Failed to load capsule:', err);
+          alert('Failed to load the capsule for editing. It may have been deleted or the link is invalid.');
+        }
+      };
+      loadSharedCapsule();
+    }
+  }, [searchParams, isInitialized, currentCapsuleId, loadCapsule, setNodes, setEdges]);
 
   // Persist journey ID to localStorage when it changes
   useEffect(() => {
@@ -1503,13 +1541,24 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         type: edge.type || 'default'
       }));
 
-      const capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
-        title: 'UnityNotes'
-      }, user?.uid);
+      let capsuleId;
+
+      // If we already have a capsule, update it instead of creating new
+      if (currentCapsuleId) {
+        await updateCapsule(currentCapsuleId, serializableNodes, serializableEdges);
+        capsuleId = currentCapsuleId;
+        console.log('✅ Updated existing capsule:', capsuleId);
+      } else {
+        // Create new capsule
+        capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
+          title: 'UnityNotes'
+        }, user?.uid);
+        setCurrentCapsuleId(capsuleId);
+        console.log('✅ Created new capsule:', capsuleId);
+      }
 
       const url = `${window.location.origin}/unity-notes/view/${capsuleId}`;
       setShareUrl(url);
-      setCurrentCapsuleId(capsuleId);
 
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
