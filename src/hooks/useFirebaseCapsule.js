@@ -15,6 +15,113 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
+// Rate limiting configuration
+const RATE_LIMIT_CONFIG = {
+  minIntervalMs: 30000,      // Minimum 30 seconds between saves
+  maxSavesPerHour: 60,       // Maximum 60 saves per hour
+  cooldownAfterBurstMs: 300000  // 5 minute cooldown after hitting limit
+};
+
+/**
+ * Check if save is allowed based on rate limits
+ * Uses localStorage for persistence across page reloads
+ */
+const checkRateLimit = (capsuleId) => {
+  const now = Date.now();
+  const storageKey = 'capsule_save_history';
+
+  try {
+    const history = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    const capsuleHistory = history[capsuleId] || { saves: [], cooldownUntil: 0 };
+
+    // Check if in cooldown
+    if (capsuleHistory.cooldownUntil > now) {
+      const remainingMs = capsuleHistory.cooldownUntil - now;
+      const remainingMins = Math.ceil(remainingMs / 60000);
+      return {
+        allowed: false,
+        reason: `Rate limit cooldown. Try again in ${remainingMins} minute(s).`,
+        remainingMs
+      };
+    }
+
+    // Check minimum interval since last save
+    const lastSave = capsuleHistory.saves[capsuleHistory.saves.length - 1] || 0;
+    if (now - lastSave < RATE_LIMIT_CONFIG.minIntervalMs) {
+      const remainingMs = RATE_LIMIT_CONFIG.minIntervalMs - (now - lastSave);
+      const remainingSecs = Math.ceil(remainingMs / 1000);
+      return {
+        allowed: false,
+        reason: `Please wait ${remainingSecs} seconds before saving again.`,
+        remainingMs
+      };
+    }
+
+    // Check hourly limit
+    const oneHourAgo = now - 3600000;
+    const recentSaves = capsuleHistory.saves.filter(t => t > oneHourAgo);
+    if (recentSaves.length >= RATE_LIMIT_CONFIG.maxSavesPerHour) {
+      // Enter cooldown
+      capsuleHistory.cooldownUntil = now + RATE_LIMIT_CONFIG.cooldownAfterBurstMs;
+      history[capsuleId] = capsuleHistory;
+      localStorage.setItem(storageKey, JSON.stringify(history));
+
+      return {
+        allowed: false,
+        reason: `Hourly save limit reached (${RATE_LIMIT_CONFIG.maxSavesPerHour}/hour). Cooldown for 5 minutes.`,
+        remainingMs: RATE_LIMIT_CONFIG.cooldownAfterBurstMs
+      };
+    }
+
+    return { allowed: true };
+
+  } catch (err) {
+    // If localStorage fails, allow the save
+    console.warn('Rate limit check failed:', err);
+    return { allowed: true };
+  }
+};
+
+/**
+ * Record a save in rate limit history
+ */
+const recordSave = (capsuleId) => {
+  const storageKey = 'capsule_save_history';
+
+  try {
+    const now = Date.now();
+    const history = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    const capsuleHistory = history[capsuleId] || { saves: [], cooldownUntil: 0 };
+
+    // Add new save timestamp
+    capsuleHistory.saves.push(now);
+
+    // Keep only last hour of saves (cleanup)
+    const oneHourAgo = now - 3600000;
+    capsuleHistory.saves = capsuleHistory.saves.filter(t => t > oneHourAgo);
+
+    history[capsuleId] = capsuleHistory;
+    localStorage.setItem(storageKey, JSON.stringify(history));
+
+  } catch (err) {
+    console.warn('Failed to record save:', err);
+  }
+};
+
+// Export rate limit config for UI display
+export { RATE_LIMIT_CONFIG };
+
+// Utility to check rate limit status (for UI feedback)
+export const getRateLimitStatus = (capsuleId = 'new_capsule') => {
+  const check = checkRateLimit(capsuleId);
+  return {
+    canSave: check.allowed,
+    message: check.reason || null,
+    waitTimeMs: check.remainingMs || 0,
+    waitTimeSecs: check.remainingMs ? Math.ceil(check.remainingMs / 1000) : 0
+  };
+};
+
 export const useFirebaseCapsule = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,16 +171,30 @@ export const useFirebaseCapsule = () => {
    * @param {Array} nodes - React Flow nodes array
    * @param {Array} edges - React Flow edges array
    * @param {Object} metadata - Optional metadata (title, description)
+   * @param {Object} options - { skipRateLimit: false, ownerId: null }
    * @returns {Promise<string>} capsuleId - Unique ID for shareable URL
    */
-  const saveCapsule = async (nodes, edges, metadata = {}, ownerId = null) => {
+  const saveCapsule = async (nodes, edges, metadata = {}, ownerId = null, options = {}) => {
+    const { skipRateLimit = false } = options;
+
+    // Generate capsule ID early for rate limit check
+    const capsuleRef = doc(collection(db, 'capsules'));
+    const capsuleId = capsuleRef.id;
+
+    // Rate limit check (skip for first save of a capsule)
+    if (!skipRateLimit) {
+      const rateLimitCheck = checkRateLimit('new_capsule');
+      if (!rateLimitCheck.allowed) {
+        console.warn('⚠️ Rate limited:', rateLimitCheck.reason);
+        setError(rateLimitCheck.reason);
+        throw new Error(rateLimitCheck.reason);
+      }
+    }
+
     setIsSaving(true);
     setError(null);
 
     try {
-      // Generate unique capsule ID
-      const capsuleRef = doc(collection(db, 'capsules'));
-      const capsuleId = capsuleRef.id;
 
       // Calculate expiry (90 days from now)
       const expiresAt = new Date();
@@ -107,6 +228,9 @@ export const useFirebaseCapsule = () => {
       // Single write instead of batch writes to subcollections
       const { setDoc } = await import('firebase/firestore');
       await setDoc(capsuleRef, capsuleDoc);
+
+      // Record save for rate limiting
+      recordSave(capsuleId);
 
       console.log('✅ Capsule saved (v2 embedded):', capsuleId, '- Nodes:', nodes.length);
       return capsuleId;
@@ -223,8 +347,21 @@ export const useFirebaseCapsule = () => {
    * @param {string} capsuleId - Existing capsule ID
    * @param {Array} nodes - Updated nodes array
    * @param {Array} edges - Updated edges array
+   * @param {Object} options - { skipRateLimit: false }
    */
-  const updateCapsule = async (capsuleId, nodes, edges) => {
+  const updateCapsule = async (capsuleId, nodes, edges, options = {}) => {
+    const { skipRateLimit = false } = options;
+
+    // Rate limit check
+    if (!skipRateLimit) {
+      const rateLimitCheck = checkRateLimit(capsuleId);
+      if (!rateLimitCheck.allowed) {
+        console.warn('⚠️ Rate limited:', rateLimitCheck.reason);
+        setError(rateLimitCheck.reason);
+        throw new Error(rateLimitCheck.reason);
+      }
+    }
+
     setIsSaving(true);
     setError(null);
 
@@ -245,6 +382,8 @@ export const useFirebaseCapsule = () => {
           'stats.edgeCount': edges.length,
           'stats.photoCount': nodes.filter(n => n.type === 'photoNode').length
         });
+        // Record save for rate limiting
+        recordSave(capsuleId);
         console.log('✅ Capsule updated (v2 embedded)');
       } else {
         // v1 subcollection model (legacy) - batch updates
@@ -265,6 +404,8 @@ export const useFirebaseCapsule = () => {
         });
 
         await batch.commit();
+        // Record save for rate limiting
+        recordSave(capsuleId);
         console.log('✅ Capsule updated (v1 subcollection)');
       }
 
@@ -474,16 +615,30 @@ export const useFirebaseCapsule = () => {
    * @param {Array} edges - React Flow edges
    * @param {Object} metadata - title, description
    * @param {string} ownerId - User ID of owner
+   * @param {Object} options - { skipRateLimit: false }
    * @returns {Promise<string>} capsuleId
    */
-  const saveCapsuleWithOwner = async (nodes, edges, metadata = {}, ownerId) => {
+  const saveCapsuleWithOwner = async (nodes, edges, metadata = {}, ownerId, options = {}) => {
+    const { skipRateLimit = false } = options;
+
+    // Generate capsule ID early for rate limit check
+    const capsuleRef = doc(collection(db, 'capsules'));
+    const capsuleId = capsuleRef.id;
+
+    // Rate limit check
+    if (!skipRateLimit) {
+      const rateLimitCheck = checkRateLimit('new_capsule');
+      if (!rateLimitCheck.allowed) {
+        console.warn('⚠️ Rate limited:', rateLimitCheck.reason);
+        setError(rateLimitCheck.reason);
+        throw new Error(rateLimitCheck.reason);
+      }
+    }
+
     setIsSaving(true);
     setError(null);
 
     try {
-      const capsuleRef = doc(collection(db, 'capsules'));
-      const capsuleId = capsuleRef.id;
-
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 90);
 
@@ -516,6 +671,9 @@ export const useFirebaseCapsule = () => {
 
       const { setDoc } = await import('firebase/firestore');
       await setDoc(capsuleRef, capsuleDoc);
+
+      // Record save for rate limiting
+      recordSave(capsuleId);
 
       console.log('✅ Capsule saved (v3 with owner):', capsuleId);
       return capsuleId;

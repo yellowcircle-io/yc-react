@@ -148,10 +148,13 @@ service cloud.firestore {
       // Allow anyone to read capsules (for shared links)
       allow read: if true;
 
-      // Allow create with validation (max 50 capsules total enforced by cleanup)
+      // Allow create with validation
+      // BLOCKED: "Travel Memories" titles (runaway auto-save created 50K+ documents)
       allow create: if request.resource.data.keys().hasAll(['title', 'createdAt', 'isPublic'])
                     && request.resource.data.title is string
-                    && request.resource.data.title.size() <= 200;
+                    && request.resource.data.title.size() <= 200
+                    && !request.resource.data.title.matches('.*[Tt]ravel [Mm]emories.*')
+                    && !request.resource.data.title.matches('.*UK Travel.*');
 
       // Allow view count updates (anonymous increment)
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'updatedAt'])

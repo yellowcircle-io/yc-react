@@ -3898,3 +3898,121 @@ exports.cleanupWithPreview = functions
     response.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * Cleanup capsules by title pattern - for removing auto-saved test capsules
+ * Call via: POST /cleanupByTitlePattern with admin auth header
+ * Query params:
+ *   - dryRun: "true" to preview without deleting (default: true)
+ *   - pattern: comma-separated keywords to match in title (default: "travel memories,uk travel,travel memory")
+ *   - maxViewCount: only delete if viewCount <= this value (default: 0)
+ */
+exports.cleanupByTitlePattern = functions
+  .runWith({ memory: "512MB", timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  // Auth check
+  const authToken = request.headers["x-admin-token"];
+  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+
+  if (authToken !== expectedToken) {
+    response.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const dryRun = request.query.dryRun !== "false";
+  const patternParam = request.query.pattern || "travel memories,uk travel,travel memory";
+  const patterns = patternParam.toLowerCase().split(",").map(p => p.trim());
+  const maxViewCount = parseInt(request.query.maxViewCount || "0", 10);
+
+  try {
+    const results = {
+      dryRun,
+      patterns,
+      maxViewCount,
+      timestamp: new Date().toISOString(),
+      toDelete: [],
+      toKeep: [],
+      deleted: 0,
+      errors: []
+    };
+
+    // Get all capsules and filter by title pattern
+    const capsulesSnapshot = await db.collection("capsules")
+      .select("title", "createdAt", "viewCount", "version")
+      .limit(500)
+      .get();
+
+    for (const doc of capsulesSnapshot.docs) {
+      const data = doc.data();
+      const title = (data.title || "").toLowerCase();
+      const viewCount = data.viewCount || 0;
+      const createdAt = data.createdAt?.toDate?.() || new Date(0);
+
+      // Check if title matches any pattern
+      const matchedPattern = patterns.find(p => title.includes(p));
+
+      if (matchedPattern && viewCount <= maxViewCount) {
+        results.toDelete.push({
+          id: doc.id,
+          title: data.title,
+          viewCount,
+          createdAt: createdAt.toISOString(),
+          matchedPattern
+        });
+
+        if (!dryRun) {
+          try {
+            // Delete subcollections first if not v2
+            if (data.version !== 2) {
+              const nodesSnap = await db.collection(`capsules/${doc.id}/nodes`).limit(100).get();
+              const edgesSnap = await db.collection(`capsules/${doc.id}/edges`).limit(100).get();
+              const batch = db.batch();
+              nodesSnap.docs.forEach(d => batch.delete(d.ref));
+              edgesSnap.docs.forEach(d => batch.delete(d.ref));
+              await batch.commit();
+            }
+            await doc.ref.delete();
+            results.deleted++;
+          } catch (deleteErr) {
+            results.errors.push({ id: doc.id, error: deleteErr.message });
+          }
+        }
+      } else {
+        results.toKeep.push({
+          id: doc.id,
+          title: data.title,
+          viewCount,
+          createdAt: createdAt.toISOString()
+        });
+      }
+    }
+
+    response.json({
+      success: true,
+      dryRun,
+      summary: {
+        total: capsulesSnapshot.size,
+        toDelete: results.toDelete.length,
+        toKeep: results.toKeep.length,
+        deleted: dryRun ? 0 : results.deleted,
+        errors: results.errors.length
+      },
+      details: {
+        toDelete: results.toDelete,
+        toKeep: results.toKeep.slice(0, 10), // Only show first 10 kept
+        errors: results.errors
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ cleanupByTitlePattern error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
