@@ -1895,6 +1895,193 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   };
 
+  // AI Canvas Actions
+  const handleAIGenerateNote = useCallback(async () => {
+    try {
+      // Collect context from existing nodes
+      const existingContent = nodes
+        .filter(n => n.data?.content || n.data?.title)
+        .map(n => n.data?.content || n.data?.title)
+        .join('\n');
+
+      const { getLLMAdapter } = await import('../adapters/llm');
+      const llm = await getLLMAdapter();
+
+      const prompt = existingContent
+        ? `Based on these existing notes:\n\n${existingContent}\n\nGenerate a thoughtful new note that builds on or relates to these ideas. Keep it concise (2-3 sentences).`
+        : 'Generate a thoughtful brainstorming prompt or creative idea for a visual planning canvas. Keep it concise (2-3 sentences).';
+
+      const response = await llm.generate(prompt, { maxTokens: 200 });
+
+      // Create new note node with AI content
+      const timestamp = Date.now();
+      const totalNodes = nodes.length;
+      const gridX = totalNodes % 8;
+      const gridY = Math.floor(totalNodes / 8);
+
+      const newNode = {
+        id: `ai-note-${timestamp}`,
+        type: 'textNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: '✨ AI Generated',
+          content: response,
+          cardType: 'note',
+          color: 'rgb(147, 51, 234)', // Purple for AI
+          createdAt: timestamp,
+          onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
+        }
+      };
+
+      setNodes(nds => [...nds, newNode]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
+
+    } catch (error) {
+      console.error('AI Generate Note failed:', error);
+      alert(`❌ AI Generation failed: ${error.message}\n\nMake sure you have an LLM API key configured.`);
+    }
+  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView]);
+
+  const handleAIGenerateImage = useCallback(async () => {
+    try {
+      // Check for OpenAI key (needed for DALL-E)
+      const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!openaiKey) {
+        alert('🖼️ Image Generation requires an OpenAI API key.\n\nAdd VITE_OPENAI_API_KEY to your .env file.');
+        return;
+      }
+
+      // Get context from canvas
+      const existingContent = nodes
+        .filter(n => n.data?.content || n.data?.title)
+        .map(n => n.data?.content || n.data?.title)
+        .slice(0, 3)
+        .join(', ');
+
+      const imagePrompt = existingContent
+        ? `Create an abstract, colorful illustration representing: ${existingContent}. Modern, minimalist style.`
+        : 'Create an abstract, colorful brainstorming illustration. Modern, minimalist style with geometric shapes.';
+
+      // Call DALL-E API
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiKey}`
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: imagePrompt,
+          n: 1,
+          size: '1024x1024',
+          quality: 'standard'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`DALL-E API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const imageUrl = data.data?.[0]?.url;
+
+      if (!imageUrl) {
+        throw new Error('No image URL in response');
+      }
+
+      // Create photo node with generated image
+      const timestamp = Date.now();
+      const totalNodes = nodes.length;
+      const gridX = totalNodes % 8;
+      const gridY = Math.floor(totalNodes / 8);
+
+      const newNode = {
+        id: `ai-image-${timestamp}`,
+        type: 'photoNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          imageUrl,
+          thumbnail: imageUrl,
+          caption: '✨ AI Generated Image',
+          createdAt: timestamp,
+          onDelete: handleDeleteNode,
+        }
+      };
+
+      setNodes(nds => [...nds, newNode]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
+
+    } catch (error) {
+      console.error('AI Generate Image failed:', error);
+      alert(`❌ Image Generation failed: ${error.message}`);
+    }
+  }, [nodes, handleDeleteNode, setNodes, fitView]);
+
+  const handleAISummarize = useCallback(async () => {
+    try {
+      // Collect all content from nodes
+      const allContent = nodes
+        .filter(n => n.data?.content || n.data?.title)
+        .map(n => {
+          const title = n.data?.title || '';
+          const content = n.data?.content || '';
+          return `${title}${title && content ? ': ' : ''}${content}`;
+        })
+        .filter(Boolean)
+        .join('\n\n');
+
+      if (!allContent) {
+        alert('📋 Nothing to summarize.\n\nAdd some notes or content first!');
+        return;
+      }
+
+      const { getLLMAdapter } = await import('../adapters/llm');
+      const llm = await getLLMAdapter();
+
+      const prompt = `Summarize the following canvas notes into a concise overview with key points:\n\n${allContent}\n\nProvide a brief summary (3-5 bullet points).`;
+
+      const response = await llm.generate(prompt, { maxTokens: 500 });
+
+      // Create summary note
+      const timestamp = Date.now();
+      const totalNodes = nodes.length;
+      const gridX = totalNodes % 8;
+      const gridY = Math.floor(totalNodes / 8);
+
+      const newNode = {
+        id: `summary-${timestamp}`,
+        type: 'textNode',
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
+        data: {
+          title: '📋 Canvas Summary',
+          content: response,
+          cardType: 'note',
+          color: 'rgb(34, 197, 94)', // Green for summary
+          createdAt: timestamp,
+          onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
+        }
+      };
+
+      setNodes(nds => [...nds, newNode]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
+
+    } catch (error) {
+      console.error('AI Summarize failed:', error);
+      alert(`❌ Summarize failed: ${error.message}\n\nMake sure you have an LLM API key configured.`);
+    }
+  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView]);
+
   // Save UnityMAP journey to cloud (Pro feature)
   const handleSaveJourney = async () => {
     // Gate cloud saving for pro/admin users only
@@ -2707,6 +2894,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         emailCount={emailNodeCount}
         emailLimit={emailLimit}
         hasCampaign={hasCampaign}
+        // AI action props
+        onAIGenerateNote={handleAIGenerateNote}
+        onAIGenerateImage={handleAIGenerateImage}
+        onAISummarize={handleAISummarize}
         // Status bar props
         nodeCount={nodes.length}
         nodeLimit={nodeLimit}

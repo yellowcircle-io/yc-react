@@ -309,14 +309,29 @@ const OptionsMenu = ({
   );
 };
 
-// AI Menu Component - All features Coming Soon
-const AIMenu = ({ isOpen, onClose: _onClose }) => {
+// AI Menu Component
+const AIMenu = ({ isOpen, onClose, onGenerateNote, onGenerateImage, onSummarize }) => {
   if (!isOpen) return null;
 
   const aiActions = [
-    { label: '✨ GENERATE NOTE', description: 'Coming Soon', comingSoon: true },
-    { label: '🖼️ GENERATE IMAGE', description: 'Coming Soon', comingSoon: true },
-    { label: '📋 SUMMARIZE ALL', description: 'Coming Soon', comingSoon: true },
+    {
+      label: '✨ GENERATE NOTE',
+      description: 'AI writes a note based on context',
+      onClick: onGenerateNote,
+      enabled: !!onGenerateNote,
+    },
+    {
+      label: '🖼️ GENERATE IMAGE',
+      description: 'AI creates an image',
+      onClick: onGenerateImage,
+      enabled: !!onGenerateImage,
+    },
+    {
+      label: '📋 SUMMARIZE ALL',
+      description: 'Summarize all canvas content',
+      onClick: onSummarize,
+      enabled: !!onSummarize,
+    },
   ];
 
   return (
@@ -360,15 +375,21 @@ const AIMenu = ({ isOpen, onClose: _onClose }) => {
       {aiActions.map((item, index) => (
         <button
           key={item.label}
-          disabled={item.comingSoon}
+          disabled={!item.enabled}
+          onClick={() => {
+            if (item.enabled && item.onClick) {
+              item.onClick();
+              onClose();
+            }
+          }}
           style={{
             width: '100%',
             padding: '10px 12px',
             backgroundColor: 'transparent',
-            color: item.comingSoon ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.9)',
+            color: !item.enabled ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.9)',
             border: 'none',
             borderRadius: '4px',
-            cursor: item.comingSoon ? 'not-allowed' : 'pointer',
+            cursor: !item.enabled ? 'not-allowed' : 'pointer',
             fontSize: '10px',
             fontWeight: '600',
             letterSpacing: '0.02em',
@@ -379,7 +400,15 @@ const AIMenu = ({ isOpen, onClose: _onClose }) => {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '8px',
-            opacity: item.comingSoon ? 0.6 : 1,
+            opacity: !item.enabled ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (item.enabled) {
+              e.currentTarget.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -392,7 +421,7 @@ const AIMenu = ({ isOpen, onClose: _onClose }) => {
               {item.description}
             </span>
           </div>
-          {item.comingSoon && (
+          {!item.enabled && (
             <span style={{
               fontSize: '8px',
               fontWeight: '600',
