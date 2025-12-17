@@ -4752,23 +4752,28 @@ exports.searchProspects = functions.https.onRequest(async (request, response) =>
 
 /**
  * Get configured enrichment providers in priority order
- * Priority: Apollo (most data) → Hunter (email focus) → PDL (basic)
+ * Priority: PDL (most free) → Hunter (email focus) → Apollo (paid only)
+ *
+ * Note: Clay does NOT have a public enrichment API - it only supports
+ * webhook-based async processing or enterprise-only limited API.
  */
 const getEnrichmentProviders = () => {
   const providers = [];
 
-  // Apollo - most comprehensive but requires paid plan
-  const apolloKey = functions.config().apollo?.api_key;
-  if (apolloKey) {
+  // People Data Labs - 100 free lookups/month, good basic data
+  // Priority 1: Best free tier for general enrichment
+  const pdlKey = functions.config().pdl?.api_key;
+  if (pdlKey) {
     providers.push({
-      name: "apollo",
-      apiKey: apolloKey,
+      name: "pdl",
+      apiKey: pdlKey,
       priority: 1,
-      fields: ["name", "company", "title", "linkedin", "phone", "email_status"]
+      fields: ["name", "company", "title", "linkedin", "phone", "location", "industry"]
     });
   }
 
-  // Hunter.io - 25 free searches/month, good for email verification
+  // Hunter.io - 25 free searches/month, excellent for email verification
+  // Priority 2: Good for email-focused enrichment
   const hunterKey = functions.config().hunter?.api_key;
   if (hunterKey) {
     providers.push({
@@ -4779,14 +4784,15 @@ const getEnrichmentProviders = () => {
     });
   }
 
-  // People Data Labs - 100 free lookups/month (basic fields only)
-  const pdlKey = functions.config().pdl?.api_key;
-  if (pdlKey) {
+  // Apollo.io - Requires paid plan for enrichment API
+  // Priority 3: Only used if paid plan is active
+  const apolloKey = functions.config().apollo?.api_key;
+  if (apolloKey) {
     providers.push({
-      name: "pdl",
-      apiKey: pdlKey,
+      name: "apollo",
+      apiKey: apolloKey,
       priority: 3,
-      fields: ["name", "company", "title", "linkedin"]
+      fields: ["name", "company", "title", "linkedin", "phone", "email_status"]
     });
   }
 
@@ -5119,12 +5125,18 @@ exports.listEnrichmentProviders = functions.https.onRequest(async (request, resp
       hasApiKey: !!p.apiKey
     })),
     freeOptions: [
-      { name: "hunter", freeQuota: "25 searches + 50 verifications/month", signup: "https://hunter.io" },
-      { name: "pdl", freeQuota: "100 lookups/month (basic fields)", signup: "https://peopledatalabs.com" }
+      { name: "pdl", freeQuota: "100 lookups/month", signup: "https://peopledatalabs.com", priority: 1 },
+      { name: "hunter", freeQuota: "25 searches + 50 verifications/month", signup: "https://hunter.io", priority: 2 }
+    ],
+    paidOnly: [
+      { name: "apollo", note: "Enrichment API requires paid plan", signup: "https://apollo.io" }
+    ],
+    notSupported: [
+      { name: "clay", reason: "No public enrichment API - only webhook-based async or enterprise API", info: "https://www.clay.com/university/guide/using-clay-as-an-api" }
     ],
     configCommands: {
-      hunter: "firebase functions:config:set hunter.api_key=YOUR_KEY",
       pdl: "firebase functions:config:set pdl.api_key=YOUR_KEY",
+      hunter: "firebase functions:config:set hunter.api_key=YOUR_KEY",
       apollo: "firebase functions:config:set apollo.api_key=YOUR_KEY (requires paid plan)"
     }
   });
