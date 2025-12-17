@@ -2,9 +2,9 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 17, 2025 at 4:15 AM PST
-**Machine:** Mac Mini → Ready for MacBook Air
-**Status:** ✅ Production Deployed + Security Fix Applied
+**Updated:** December 17, 2025 at 4:30 AM PST
+**Machine:** Mac Mini → **HANDOFF TO MacBook Air**
+**Status:** 🚨 SECURITY AUDIT IN PROGRESS - Critical Issues Found
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,25 +12,64 @@
 
 ---
 
-## 🔥 Latest Session (Dec 17, 2025 ~4:15 AM) - Mac Mini
+## 🚨 SECURITY AUDIT FINDINGS (Dec 17, 2025 ~4:30 AM) - FOR MacBook Air
+
+### CRITICAL ISSUES TO FIX:
+
+**1. Admin Token Exposed in Frontend (SEVERE)**
+Files with hardcoded `yc-admin-2025`:
+- `src/pages/admin/TriggerRulesPage.jsx:278`
+- `src/pages/admin/StorageCleanupPage.jsx:34`
+- `src/components/admin/PipelineStatsCard.jsx:74`
+
+**Risk:** Anyone can view browser source and call admin functions.
+
+**2. Hardcoded Token in Firebase Functions (SEVERE)**
+~20 occurrences in `functions/index.js`:
+```javascript
+if (adminToken !== "yc-admin-2025") {  // BAD - should use config
+```
+Should use: `functions.config().admin.token`
+
+**3. Admin Token in Git-Tracked Docs (HIGH)**
+Token appears in:
+- `dev-context/REMAINING_USER_ACTIONS.md`
+- `.claude/shared-context/ACTIVE_SPRINT.md`
+- `dev-context/DUAL_PROJECT_IMPLEMENTATION_CHANGELOG.md`
+
+**4. Firebase API Key in Docs (MEDIUM)**
+- `docs/YELLOWCIRCLE_APP_UPDATES.md` contains `.env` key
+
+### RECOMMENDED FIXES:
+1. Frontend: Use Firebase Auth for admin routes (not static tokens)
+2. Functions: Replace all hardcoded tokens with `functions.config().admin.token`
+3. Docs: Remove all hardcoded tokens from markdown files
+4. Rotate the admin token (it's been exposed in git history)
+
+### TODO (for MacBook Air):
+- [ ] Fix hardcoded admin token in frontend code
+- [ ] Move admin token to Firebase config (not hardcoded)
+- [ ] Remove admin tokens from documentation files
+- [ ] Review Firebase Security Rules
+- [ ] Check .env exposure in docs
+
+---
+
+## 🔥 Previous Session (Dec 17, 2025 ~4:15 AM) - Mac Mini
 
 ### ✅ DEPLOYED TO PRODUCTION + SECURITY FIX
 
 **Completed:**
 - Built and deployed to Firebase Hosting (https://yellowcircle.io)
-- Pushed to GitHub (commit `2762d9e`)
+- Pushed to GitHub (commit `f3bf7e9`)
 - Added entry to Notion Trimurti database
 - **SECURITY FIX:** Removed exposed Google API key from git history (force push)
 - Rotated API key and configured new key in Firebase functions
 
 **Google Places API:**
 - Old key rotated (was exposed in commit)
-- New key configured: `firebase functions:config:set googleplaces.api_key="[CONFIGURED]"`
+- New key configured in Firebase functions config
 - Still need to deploy functions for key to take effect
-
-**Next Steps:**
-1. Deploy Firebase functions: `firebase deploy --only functions`
-2. Test pipeline discovery functions
 
 ---
 
