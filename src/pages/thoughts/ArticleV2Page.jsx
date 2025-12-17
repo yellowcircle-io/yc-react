@@ -2,29 +2,92 @@
  * ArticleV2Page
  *
  * Renders block-based articles using the ArticleRenderer.
- * This page serves as the validation endpoint for the new CMS.
+ * Fetches articles from Firestore CMS.
  *
- * Route: /thoughts/:slug-v2 (for comparison with original JSX pages)
- * Example: /thoughts/why-your-gtm-sucks-v2
+ * Route: /thoughts/:slug
+ * Example: /thoughts/why-your-gtm-sucks
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArticleRenderer } from '../../components/articles/ArticleRenderer';
+import { getArticleBySlug, incrementViewCount } from '../../utils/firestoreArticles';
 
-// Import article data (static for now, will be Firestore later)
+// Fallback static articles (for backwards compatibility)
 import { WHY_YOUR_GTM_SUCKS_V2 } from '../../data/articles/why-your-gtm-sucks-v2';
 
-// Article registry (will be replaced by Firestore queries)
-const ARTICLES = {
+const STATIC_ARTICLES = {
+  'why-your-gtm-sucks': WHY_YOUR_GTM_SUCKS_V2,
   'why-your-gtm-sucks-v2': WHY_YOUR_GTM_SUCKS_V2
 };
 
 function ArticleV2Page() {
   const { slug } = useParams();
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [_error, setError] = useState(null);
 
-  // Look up article by slug
-  const article = ARTICLES[slug];
+  useEffect(() => {
+    async function fetchArticle() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // First try Firestore
+        const firestoreArticle = await getArticleBySlug(slug);
+
+        if (firestoreArticle && firestoreArticle.status === 'published') {
+          setArticle(firestoreArticle);
+          // Track view
+          incrementViewCount(firestoreArticle.id).catch(() => {});
+        } else if (STATIC_ARTICLES[slug]) {
+          // Fall back to static articles
+          setArticle(STATIC_ARTICLES[slug]);
+        } else {
+          setArticle(null);
+        }
+      } catch (err) {
+        console.error('Error fetching article:', err);
+        // Try static fallback on error
+        if (STATIC_ARTICLES[slug]) {
+          setArticle(STATIC_ARTICLES[slug]);
+        } else {
+          setError(err.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchArticle();
+  }, [slug]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fafafa'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #fbbf24',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <p style={{ color: '#666' }}>Loading article...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
 
   // Show not found state for unknown slugs
   if (!article) {
