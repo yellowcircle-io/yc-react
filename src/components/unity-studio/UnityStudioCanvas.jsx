@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import EmailTemplateBuilder from './EmailTemplateBuilder';
 import SocialPostBuilder from './SocialPostBuilder';
 import AdCreativeBuilder from './AdCreativeBuilder';
+import CampaignQuickstart from './CampaignQuickstart';
 
 /**
  * UnityStudioCanvas - Main container for STUDIO mode
@@ -16,11 +17,21 @@ import AdCreativeBuilder from './AdCreativeBuilder';
  * StudioModalContainer - Stable modal wrapper component
  * Defined outside UnityStudioCanvas to prevent remounting on parent re-renders
  */
-const StudioModalContainer = ({ children, onClose, isDarkTheme }) => {
+const StudioModalContainer = ({ children, onClose, isDarkTheme, hasUnsavedChanges = false }) => {
+  const [showExitWarning, setShowExitWarning] = React.useState(false);
+
+  const handleCloseAttempt = () => {
+    if (hasUnsavedChanges) {
+      setShowExitWarning(true);
+    } else {
+      onClose && onClose();
+    }
+  };
+
   const handleBackdropMouseDown = (e) => {
     // Only close if mousedown is directly on the backdrop (not bubbled from children)
-    if (e.target === e.currentTarget && onClose) {
-      onClose();
+    if (e.target === e.currentTarget) {
+      handleCloseAttempt();
     }
   };
 
@@ -42,6 +53,87 @@ const StudioModalContainer = ({ children, onClose, isDarkTheme }) => {
       }}
       onMouseDown={handleBackdropMouseDown}
     >
+      {/* Exit Warning Modal */}
+      {showExitWarning && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 200
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            style={{
+              backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '90%',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              color: isDarkTheme ? '#f9fafb' : '#111827',
+              marginBottom: '8px'
+            }}>
+              Unsaved Changes
+            </h3>
+            <p style={{
+              fontSize: '14px',
+              color: isDarkTheme ? '#9ca3af' : '#6b7280',
+              marginBottom: '20px'
+            }}>
+              You have unsaved work in the studio. Are you sure you want to close? Your changes will be lost.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowExitWarning(false)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: isDarkTheme ? '#374151' : '#f3f4f6',
+                  color: isDarkTheme ? '#d1d5db' : '#374151',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Keep Editing
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitWarning(false);
+                  onClose && onClose();
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Discard & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div
         style={{
           width: '90%',
@@ -62,7 +154,7 @@ const StudioModalContainer = ({ children, onClose, isDarkTheme }) => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onClose && onClose();
+            handleCloseAttempt();
           }}
           style={{
             position: 'absolute',
@@ -105,6 +197,15 @@ const StudioModalContainer = ({ children, onClose, isDarkTheme }) => {
 
 const ASSET_TYPES = [
   {
+    id: 'campaign',
+    label: 'Campaign Quickstart',
+    icon: '⚡',
+    description: 'Generate content for ALL platforms at once',
+    available: true,
+    color: '#FBBF24', // Yellow - featured
+    featured: true
+  },
+  {
     id: 'email',
     label: 'Email Template',
     icon: '📧',
@@ -133,6 +234,8 @@ const ASSET_TYPES = [
 function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme = false, initialContext = null }) {
   // User selects asset type manually - don't auto-select even with AI context
   const [selectedAssetType, setSelectedAssetType] = useState(null);
+  // State for loading assets from recent list
+  const [loadedContent, setLoadedContent] = useState(null);
   const [savedAssets, setSavedAssets] = useState(() => {
     try {
       const stored = localStorage.getItem('unity-studio-assets');
@@ -192,15 +295,36 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
   }, [onSaveToCanvas]);
 
   // Render asset-specific builder
+  if (selectedAssetType === 'campaign') {
+    return (
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme} hasUnsavedChanges={true}>
+        <CampaignQuickstart
+          onBack={() => {
+            handleBack();
+            setLoadedContent(null);
+          }}
+          onSave={handleSaveAsset}
+          onSaveToCanvas={handleSaveToCanvas}
+          isDarkTheme={isDarkTheme}
+          aiContext={initialContext}
+        />
+      </StudioModalContainer>
+    );
+  }
+
   if (selectedAssetType === 'email') {
     return (
-      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme} hasUnsavedChanges={true}>
         <EmailTemplateBuilder
-          onBack={handleBack}
+          onBack={() => {
+            handleBack();
+            setLoadedContent(null);
+          }}
           onSave={handleSaveAsset}
           onSaveToCanvas={handleSaveToCanvas}
           onExportToMAP={handleExportToMAP}
           isDarkTheme={isDarkTheme}
+          initialContent={loadedContent || null}
           aiContext={initialContext}
         />
       </StudioModalContainer>
@@ -209,12 +333,16 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
 
   if (selectedAssetType === 'ad') {
     return (
-      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme} hasUnsavedChanges={true}>
         <AdCreativeBuilder
-          onBack={handleBack}
+          onBack={() => {
+            handleBack();
+            setLoadedContent(null); // Clear loaded content when going back
+          }}
           onSave={handleSaveAsset}
           onSaveToCanvas={handleSaveToCanvas}
           isDarkTheme={isDarkTheme}
+          initialContent={loadedContent || initialContext?.content || null}
           aiContext={initialContext}
         />
       </StudioModalContainer>
@@ -223,12 +351,16 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
 
   if (selectedAssetType === 'social') {
     return (
-      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme}>
+      <StudioModalContainer onClose={onClose} isDarkTheme={isDarkTheme} hasUnsavedChanges={true}>
         <SocialPostBuilder
-          onBack={handleBack}
+          onBack={() => {
+            handleBack();
+            setLoadedContent(null);
+          }}
           onSave={handleSaveAsset}
           onSaveToCanvas={handleSaveToCanvas}
           isDarkTheme={isDarkTheme}
+          initialContent={loadedContent || null}
           aiContext={initialContext}
         />
       </StudioModalContainer>
@@ -325,37 +457,61 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '32px 40px',
-              backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+              padding: assetType.featured ? '36px 44px' : '32px 40px',
+              backgroundColor: assetType.featured
+                ? (isDarkTheme ? '#292524' : '#fffbeb')
+                : (isDarkTheme ? '#1f2937' : '#ffffff'),
               border: `2px solid ${assetType.available ? assetType.color : (isDarkTheme ? '#374151' : '#e5e7eb')}`,
               borderRadius: '16px',
               cursor: assetType.available ? 'pointer' : 'not-allowed',
               opacity: assetType.available ? 1 : 0.5,
               transition: 'all 0.2s ease',
               minWidth: '200px',
-              boxShadow: assetType.available
-                ? '0 4px 12px rgba(0, 0, 0, 0.1)'
-                : 'none'
+              boxShadow: assetType.featured
+                ? '0 6px 20px rgba(251, 191, 36, 0.25)'
+                : (assetType.available ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none'),
+              position: 'relative'
             }}
             onMouseEnter={(e) => {
               if (assetType.available) {
                 e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
+                e.currentTarget.style.boxShadow = assetType.featured
+                  ? '0 12px 32px rgba(251, 191, 36, 0.35)'
+                  : '0 8px 24px rgba(0, 0, 0, 0.15)';
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = assetType.available
-                ? '0 4px 12px rgba(0, 0, 0, 0.1)'
-                : 'none';
+              e.currentTarget.style.boxShadow = assetType.featured
+                ? '0 6px 20px rgba(251, 191, 36, 0.25)'
+                : (assetType.available ? '0 4px 12px rgba(0, 0, 0, 0.1)' : 'none');
             }}
           >
-            <span style={{ fontSize: '48px', marginBottom: '16px' }}>
+            {assetType.featured && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-10px',
+                  right: '-10px',
+                  backgroundColor: '#FBBF24',
+                  color: '#000',
+                  fontSize: '10px',
+                  fontWeight: '700',
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                NEW
+              </span>
+            )}
+            <span style={{ fontSize: assetType.featured ? '56px' : '48px', marginBottom: '16px' }}>
               {assetType.icon}
             </span>
             <span
               style={{
-                fontSize: '16px',
+                fontSize: assetType.featured ? '18px' : '16px',
                 fontWeight: '700',
                 color: isDarkTheme ? '#f9fafb' : '#111827',
                 marginBottom: '8px'
@@ -424,15 +580,38 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
             }}
           >
             {savedAssets.slice(-5).reverse().map((asset) => (
-              <div
+              <button
                 key={asset.id}
+                onClick={() => {
+                  // Load asset into appropriate editor based on type
+                  const content = asset.content || { name: asset.name };
+                  setLoadedContent(content);
+                  if (asset.type === 'ad' || asset.type === 'ad-creative') {
+                    setSelectedAssetType('ad');
+                  } else if (asset.type === 'social') {
+                    setSelectedAssetType('social');
+                  } else if (asset.type === 'email') {
+                    setSelectedAssetType('email');
+                  }
+                }}
                 style={{
                   padding: '16px',
                   backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
                   border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
                   borderRadius: '8px',
                   minWidth: '180px',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#FBBF24';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = isDarkTheme ? '#374151' : '#e5e7eb';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 <div
@@ -453,7 +632,7 @@ function UnityStudioCanvas({ onExportToMAP, onClose, onSaveToCanvas, isDarkTheme
                 >
                   {asset.type} • {new Date(asset.createdAt).toLocaleDateString()}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

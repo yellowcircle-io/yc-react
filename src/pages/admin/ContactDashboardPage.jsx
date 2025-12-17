@@ -15,13 +15,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   listContacts,
   searchContacts,
-  updateContact,
-  archiveContact,
-  getContact
+  archiveContact
 } from '../../utils/firestoreContacts';
 import {
   listLeads
 } from '../../utils/firestoreLeads';
+import PipelineStatsCard from '../../components/admin/PipelineStatsCard';
+import PESignalsPanel from '../../components/admin/PESignalsPanel';
 import {
   Users,
   UserPlus,
@@ -175,7 +175,10 @@ const ContactDashboardPage = () => {
   const [contactsLoading, setContactsLoading] = useState(true);
   const [contactsError, setContactsError] = useState(null);
   const [contactSearch, setContactSearch] = useState('');
-  const [contactFilter, setContactFilter] = useState({ type: null, stage: null });
+  const [contactFilter, setContactFilter] = useState({ type: null, stage: null, pipeline: null });
+
+  // PE Signals panel state
+  const [showPESignals, setShowPESignals] = useState(false);
 
   // Leads state
   const [leads, setLeads] = useState([]);
@@ -430,6 +433,9 @@ const ContactDashboardPage = () => {
             </div>
           </div>
 
+          {/* Pipeline Stats Card */}
+          <PipelineStatsCard />
+
           {/* Tabs */}
           <div style={{
             display: 'flex',
@@ -536,6 +542,21 @@ const ContactDashboardPage = () => {
                   <option value="qualified">Qualified</option>
                   <option value="opportunity">Opportunity</option>
                   <option value="customer">Customer</option>
+                </select>
+
+                <select
+                  value={contactFilter.pipeline || ''}
+                  onChange={(e) => setContactFilter(prev => ({ ...prev, pipeline: e.target.value || null }))}
+                  style={styles.select}
+                >
+                  <option value="">All Pipelines</option>
+                  <option value="A">Pipeline A (Traditional)</option>
+                  <option value="B">Pipeline B (Digital-First)</option>
+                  <option value="AB">Dual Pipeline (A+B)</option>
+                  <option value="QUALIFIED">Qualified</option>
+                  <option value="EXCLUDED_PE">PE Excluded</option>
+                  <option value="FLAGGED">Flagged for Review</option>
+                  <option value="PENDING">Pending Analysis</option>
                 </select>
               </div>
 
@@ -671,6 +692,46 @@ const ContactDashboardPage = () => {
                                 fontWeight: '500'
                               }}>
                                 {contact.stage}
+                              </span>
+                            )}
+                            {/* Pipeline Assignment Badge */}
+                            {contact.pipelineAssignment?.primaryPipeline && (
+                              <span style={{
+                                backgroundColor: contact.pipelineAssignment.primaryPipeline === 'A' ? '#dbeafe' :
+                                                 contact.pipelineAssignment.primaryPipeline === 'B' ? '#f3e8ff' : '#e0e7ff',
+                                color: contact.pipelineAssignment.primaryPipeline === 'A' ? '#1d4ed8' :
+                                       contact.pipelineAssignment.primaryPipeline === 'B' ? '#7c3aed' : '#4f46e5',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                fontSize: '11px',
+                                fontWeight: '500'
+                              }}>
+                                Pipeline {contact.pipelineAssignment.primaryPipeline}
+                              </span>
+                            )}
+                            {/* PE Status Badge */}
+                            {contact.pipelineAssignment?.pipelineAStatus === 'EXCLUDED_PE' && (
+                              <span style={{
+                                backgroundColor: '#fee2e2',
+                                color: '#dc2626',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                fontSize: '11px',
+                                fontWeight: '500'
+                              }}>
+                                PE Excluded
+                              </span>
+                            )}
+                            {contact.pipelineAssignment?.pipelineAStatus === 'FLAGGED' && (
+                              <span style={{
+                                backgroundColor: '#fef3c7',
+                                color: '#d97706',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                fontSize: '11px',
+                                fontWeight: '500'
+                              }}>
+                                Flagged
                               </span>
                             )}
                           </div>
@@ -978,7 +1039,7 @@ const ContactDashboardPage = () => {
             justifyContent: 'center',
             padding: '20px'
           }}
-          onClick={() => setDetailModal(null)}
+          onClick={() => { setDetailModal(null); setShowPESignals(false); }}
         >
           <div
             style={{
@@ -986,11 +1047,12 @@ const ContactDashboardPage = () => {
               border: `2px solid ${COLORS.border}`,
               borderRadius: '16px',
               padding: '28px',
-              maxWidth: '600px',
+              maxWidth: showPESignals ? '900px' : '600px',
               width: '100%',
-              maxHeight: '80vh',
+              maxHeight: '85vh',
               overflow: 'auto',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              transition: 'max-width 0.3s ease'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1025,7 +1087,7 @@ const ContactDashboardPage = () => {
                 )}
               </h2>
               <button
-                onClick={() => setDetailModal(null)}
+                onClick={() => { setDetailModal(null); setShowPESignals(false); }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -1215,6 +1277,132 @@ const ContactDashboardPage = () => {
                   </div>
                 )}
 
+                {/* PE Signals Section */}
+                {(detailModal.data.peSignals || detailModal.data.pipelineAssignment) && (
+                  <div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '8px'
+                    }}>
+                      <label style={styles.label}>Pipeline Analysis</label>
+                      <button
+                        onClick={() => setShowPESignals(!showPESignals)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: COLORS.primary,
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        {showPESignals ? 'Hide' : 'Show'} PE Signals
+                        <ChevronDown
+                          size={14}
+                          style={{
+                            transform: showPESignals ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s'
+                          }}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Quick Pipeline Summary */}
+                    {detailModal.data.pipelineAssignment && (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: '8px',
+                        marginBottom: showPESignals ? '16px' : '0'
+                      }}>
+                        <div style={{
+                          backgroundColor: '#dbeafe',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '11px', color: '#3b82f6', marginBottom: '2px' }}>Pipeline</div>
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: '#1d4ed8' }}>
+                            {detailModal.data.pipelineAssignment.primaryPipeline || '-'}
+                          </div>
+                        </div>
+                        <div style={{
+                          backgroundColor: detailModal.data.pipelineAssignment.pipelineAStatus === 'QUALIFIED' ? '#dcfce7' :
+                                          detailModal.data.pipelineAssignment.pipelineAStatus === 'EXCLUDED_PE' ? '#fee2e2' :
+                                          detailModal.data.pipelineAssignment.pipelineAStatus === 'FLAGGED' ? '#fef3c7' : '#f3f4f6',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '2px' }}>Status</div>
+                          <div style={{
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            color: detailModal.data.pipelineAssignment.pipelineAStatus === 'QUALIFIED' ? '#15803d' :
+                                   detailModal.data.pipelineAssignment.pipelineAStatus === 'EXCLUDED_PE' ? '#dc2626' :
+                                   detailModal.data.pipelineAssignment.pipelineAStatus === 'FLAGGED' ? '#d97706' : '#6b7280'
+                          }}>
+                            {detailModal.data.pipelineAssignment.pipelineAStatus || 'PENDING'}
+                          </div>
+                        </div>
+                        <div style={{
+                          backgroundColor: '#f3f4f6',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '2px' }}>A Score</div>
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: '#374151' }}>
+                            {detailModal.data.pipelineAssignment.pipelineAScore?.toFixed(2) || '0.00'}
+                          </div>
+                        </div>
+                        <div style={{
+                          backgroundColor: '#f3f4f6',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '2px' }}>B Score</div>
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: '#374151' }}>
+                            {detailModal.data.pipelineAssignment.pipelineBScore?.toFixed(2) || '0.00'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* PE Exclusion Reason */}
+                    {detailModal.data.pipelineAssignment?.peExclusionReason && (
+                      <div style={{
+                        backgroundColor: '#fee2e2',
+                        color: '#dc2626',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        marginBottom: showPESignals ? '16px' : '0',
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <AlertTriangle size={16} />
+                        <span><strong>Exclusion Reason:</strong> {detailModal.data.pipelineAssignment.peExclusionReason}</span>
+                      </div>
+                    )}
+
+                    {/* Full PE Signals Panel */}
+                    {showPESignals && (
+                      <PESignalsPanel
+                        contact={detailModal.data}
+                        onClose={() => setShowPESignals(false)}
+                      />
+                    )}
+                  </div>
+                )}
+
                 {detailModal.data.tags?.length > 0 && (
                   <div>
                     <label style={styles.label}>Tags</label>
@@ -1375,7 +1563,7 @@ const ContactDashboardPage = () => {
               justifyContent: 'flex-end'
             }}>
               <button
-                onClick={() => setDetailModal(null)}
+                onClick={() => { setDetailModal(null); setShowPESignals(false); }}
                 style={{
                   ...styles.button,
                   ...styles.secondaryButton

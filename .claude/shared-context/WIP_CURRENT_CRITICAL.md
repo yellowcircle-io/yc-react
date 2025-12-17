@@ -2,9 +2,9 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 16, 2025 at 8:00 PM PST
+**Updated:** December 17, 2025 at 3:30 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ Unity Sharing Bug Fixed + GitGuardian/Sentry Fixed + Whitelist Function Added
+**Status:** ✅ Dual-Project Implementation Complete + Scope Updates Applied
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,7 +12,110 @@
 
 ---
 
-## 🔥 Latest Session (Dec 16, 2025 ~8:00 PM)
+## 🔥 Latest Session (Dec 17, 2025 ~3:30 AM)
+
+### ✅ SCOPE CHANGES + BUG FIXES APPLIED
+
+**Scope Changes:**
+- Replaced Crunchbase with **Y Combinator** (GitHub public data)
+- Replaced OpenCorporates with **Growjo** (growth data)
+- Google Places API Key: ⚠️ ROTATED - Get new key from GCP Console
+
+**Bug Fixes:**
+- Fixed ContactDashboardPage dynamic import error (cleared Vite cache)
+- Updated all Playwright tests from `/unity-studio` to `/unity-notes` (correct route)
+- UnitySTUDIO components exist within `/unity-notes`, not separate route
+
+**Files Modified:**
+- `functions/index.js` - Updated discoverPipelineB for YC + Growjo sources
+- `tests/e2e/unity-studio.spec.js` - All routes changed to /unity-notes
+- `dev-context/REMAINING_USER_ACTIONS.md` - Updated API key info + routes
+
+**Remaining User Actions:**
+1. Re-authenticate Firebase: `firebase login --reauth`
+2. Configure Google Places API key (get new key from GCP Console first):
+   ```bash
+   firebase functions:config:set googleplaces.api_key="YOUR_NEW_API_KEY"
+   ```
+3. Deploy functions: `firebase deploy --only functions`
+4. Run test scripts to verify implementation
+
+---
+
+## 🔥 Previous Session (Dec 17, 2025 ~2:00 AM)
+
+### ✅ DUAL-PROJECT IMPLEMENTATION COMPLETE
+
+**Project 1: Outbound Motion Enhancement**
+- Extended contacts schema with pipeline fields + 27 PE signals
+- Created 5 Firebase functions: discoverPipelineA, discoverPipelineB, collectSignals, filterPEBacked, scorePipelines
+- Added PipelineStatsCard and PESignalsPanel UI components
+- Enhanced ContactDashboard with pipeline filters and PE signals integration
+
+**Project 2: UnitySTUDIO Rearchitecture**
+- Created platform-specs.js with all platform dimensions (IG, FB, LI, Reddit, Google)
+- Built CreativeCanvas.jsx (~1000 lines) - visual editor with drag-drop, safe zones, PNG export
+- Built ExportManager.jsx (~500 lines) - batch export with campaign presets
+- Built useAIGeneration.js (~580 lines) - AI copy generation via Groq API
+
+**Files Created:**
+- `src/components/unity-studio/platform-specs.js`
+- `src/components/unity-studio/CreativeCanvas.jsx`
+- `src/components/unity-studio/ExportManager.jsx`
+- `src/components/unity-studio/useAIGeneration.js`
+- `src/components/admin/PipelineStatsCard.jsx`
+- `src/components/admin/PESignalsPanel.jsx`
+- `dev-context/DUAL_PROJECT_IMPLEMENTATION_CHANGELOG.md`
+
+---
+
+## 🔥 Previous Session (Dec 16, 2025 ~11:30 PM)
+
+### ✅ UNITYSTUDIO REARCHITECTURE + PROSPECT ANALYSIS
+
+**New Documentation Created:**
+
+1. **`dev-context/UNITY_STUDIO_REARCHITECTURE.md`** - Complete plan for production-ready creative generation:
+   - Full platform specs: Instagram, Facebook, LinkedIn, Reddit, Google Display
+   - New architecture with platform-compliant templates
+   - AI-powered copy generation integration
+   - Export manager for deployment-ready assets
+   - 6-week implementation roadmap
+
+2. **`dev-context/PROSPECT_CAPACITY_ANALYSIS.md`** - Comprehensive capacity assessment:
+   - Current capacity: ~5-6 enriched prospects/day (free tier)
+   - Goal gap analysis: 10-50/day requires paid tools or manual building
+   - Outbound motion design: LinkedIn + Manual + Bulk Import
+   - Phase-by-phase scaling plan: Bootstrap ($0) → Scale ($50) → Optimize ($150)
+   - Path to 10 clients/month breakdown
+
+**Previous Session Commits:**
+- `aabe78d` - Update: Cascade enrichment order PDL > Hunter > Apollo
+
+**Key Findings:**
+
+**Enrichment Cascade (Now Configured):**
+- PDL (Priority 1): 100 free lookups/month
+- Hunter.io (Priority 2): 25 searches + 50 verifications/month
+- Apollo (Priority 3): Requires paid plan
+- **Clay: NO PUBLIC API** - webhook-only, not usable for enrichment
+
+**Platform Creative Specs Researched:**
+- Instagram: 1080x1350 (Feed 4:5), 1080x1920 (Stories 9:16)
+- Facebook: 1080x1350 (Feed 4:5), 1080x1920 (Stories 9:16)
+- LinkedIn: 1200x627 (1.91:1), 1200x1200 (1:1 Square)
+- Reddit: 1200x628 (4:3), 1080x1080 (1:1)
+- Google Display: 300x250, 728x90, 320x50, 1200x628 (Responsive)
+
+**Prospect Infrastructure:**
+- Current free tier: ~155 enriched prospects/month
+- Bulk import: 100 contacts/request (unlimited manual)
+- Outbound motion: LinkedIn (25/day) + Manual list + Bulk import
+- Path to goal: Consistent outreach → 3-10 clients/month achievable
+
+---
+
+## 🔥 Previous Session (Dec 16, 2025 ~8:00 PM)
 
 ### ✅ CRITICAL BUG FIX + INFRASTRUCTURE AUDIT
 

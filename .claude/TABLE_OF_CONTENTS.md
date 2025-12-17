@@ -1,7 +1,7 @@
 # yellowCircle MultiSystem Framework (yC-MSF) - Table of Contents
 
-**Last Updated:** December 10, 2025
-**Framework Version:** 2.3
+**Last Updated:** December 17, 2025
+**Framework Version:** 2.4
 **Purpose:** Central directory of all yC-MSF documentation and tools
 
 > **Note:** yC-MSF is the unified name for the complete yellowCircle infrastructure system, previously called "Multi-Machine Framework (MMF)". It encompasses Dropbox sync, GitHub version control, Notion integration, Firebase deployment, WIP tracking, roadmaps, and automation.
@@ -374,9 +374,9 @@ pbpaste | ssh mac "cd ~/project && node scripts/article-generator/generate.cjs -
 
 ## 📊 Framework Metrics
 
-### Current State (as of Dec 10, 2025)
-- **Total Documents:** 45+ documentation files
-- **Scripts:** 12+ executable scripts
+### Current State (as of Dec 17, 2025)
+- **Total Documents:** 50+ documentation files
+- **Scripts:** 15+ executable scripts
 - **Machines Supported:** 2 active (Mac Mini, MacBook Air)
 - **Remote Access Points:** 7 (Desktop, Mobile, Web, Codespaces)
 - **Automation Commands:** 5 (sync, wip, content, deadline, summary)
@@ -384,6 +384,9 @@ pbpaste | ssh mac "cd ~/project && node scripts/article-generator/generate.cjs -
 - **Disk Space Reclaimed:** 24 GB (Nov 21 initial cleanup)
 - **Block Types:** 13 (CMS block components)
 - **Article Generator:** CLI + n8n + SSH shortcuts
+- **Pipeline Functions:** 5 (discoverPipelineA/B, collectSignals, filterPEBacked, scorePipelines)
+- **UnitySTUDIO Components:** 4 (platform-specs, CreativeCanvas, ExportManager, useAIGeneration)
+- **Test Scripts:** 3 (Playwright E2E, API tests)
 
 ### Framework Version History
 - **v1.0** (Nov 2, 2025): Initial multi-machine setup
@@ -392,6 +395,7 @@ pbpaste | ssh mac "cd ~/project && node scripts/article-generator/generate.cjs -
 - **v2.1** (Nov 21, 2025): Disk maintenance system + TOC
 - **v2.2** (Dec 7, 2025): yC-MSF rebrand + /yc-msf command hub
 - **v2.3** (Dec 10, 2025): Block CMS + Article Generator framework
+- **v2.4** (Dec 17, 2025): Dual-Pipeline Prospecting + UnitySTUDIO Rearchitecture
 
 ---
 
@@ -451,7 +455,7 @@ pbpaste | ssh mac "cd ~/project && node scripts/article-generator/generate.cjs -
 ---
 
 **Framework Status:** ✅ Active and Operational
-**Last Major Update:** December 10, 2025 (Block CMS + Article Generator)
+**Last Major Update:** December 17, 2025 (Dual-Pipeline Prospecting + UnitySTUDIO)
 **Next Scheduled Maintenance:** January 1, 2026 (Monthly cleanup)
 **Maintained By:** Multi-machine Claude Code instances
 

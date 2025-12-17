@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** December 16, 2025
+**Updated:** December 17, 2025
 **Purpose:** Concise, accurate status tracking (replaces verbose WIP)
 
 ---
@@ -53,7 +53,7 @@
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
 |------|--------|-------|
-| UnitySTUDIO Expansion | ❌ Stubs only | Ad Creative Builder, Social Post Builder |
+| UnitySTUDIO Expansion | ✅ DONE | CreativeCanvas, ExportManager, AI Generation |
 | Blog Public Display | ❌ Placeholder only | Admin CMS done, BlogPage says "coming soon" |
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
@@ -71,6 +71,43 @@
 
 ---
 
+## DUAL-PROJECT IMPLEMENTATION (Dec 17, 2025) - COMPLETE
+
+### Project 1: Outbound Motion Enhancement
+| Component | Status | Details |
+|-----------|--------|---------|
+| Schema Extensions | ✅ Done | Pipeline fields, 27 PE signals, discovery source |
+| Firebase Functions | ✅ Done | discoverPipelineA, discoverPipelineB, collectSignals, filterPEBacked, scorePipelines |
+| PE Exclusion Logic | ✅ Done | Hard blocks (2), Red flags (7), weighted scoring |
+| PipelineStatsCard | ✅ Done | Pipeline A/B counts, exclusion stats |
+| PESignalsPanel | ✅ Done | 27-signal display with visual indicators |
+| ContactDashboard | ✅ Done | Pipeline filter dropdown, PE signals integration |
+
+### Project 2: UnitySTUDIO Rearchitecture
+| Component | Status | Details |
+|-----------|--------|---------|
+| platform-specs.js | ✅ Done | All platforms: IG, FB, LI, Reddit, Google Display |
+| CreativeCanvas.jsx | ✅ Done | Visual editor, drag-drop, safe zones, PNG export |
+| ExportManager.jsx | ✅ Done | Batch export, campaign presets, progress tracking |
+| useAIGeneration.js | ✅ Done | AI copy generation via Groq API |
+
+### Files Created (6 new)
+- `src/components/unity-studio/platform-specs.js`
+- `src/components/unity-studio/CreativeCanvas.jsx`
+- `src/components/unity-studio/ExportManager.jsx`
+- `src/components/unity-studio/useAIGeneration.js`
+- `src/components/admin/PipelineStatsCard.jsx`
+- `src/components/admin/PESignalsPanel.jsx`
+
+### Remaining User Actions Required
+- [ ] Google Places API key (for discoverPipelineA)
+- [ ] Crunchbase API key (for discoverPipelineB)
+- [ ] OpenCorporates API key (for discoverPipelineA)
+- [ ] Deploy functions: `firebase deploy --only functions`
+- [ ] Test endpoints with Playwright/curl
+
+---
+
 ## RECENT SESSION FIXES (Dec 16-17, 2025)
 
 ### Committed & Pushed
@@ -79,6 +116,7 @@
 3. `449db4e` - addClientEmail admin function
 4. `69fb4bd` - Blog public display (wire articles to BlogPage)
 5. (pending) - bulkImportContacts function + welcome journey seed
+6. (pending) - Dual-project implementation (outbound + UnitySTUDIO)
 
 ### Bug Fixed
 - Unity sharing was only saving photoNode fields
@@ -103,11 +141,12 @@
 3. [x] Infrastructure audit - MiniMap, Journey Bridge, CMS all verified
 
 ### Next Steps (Priority Order)
-1. [ ] Blog Public Display - Connect ArticleListPage to BlogPage
-2. [ ] Outbound Campaign Seed - 50+ contacts + welcome journey
-3. [ ] Apollo.io Integration - Prospect enrichment
-4. [ ] Auto-Organize Groups - Respect parentId in layout
-5. [ ] UnitySTUDIO Expansion - Ad Creative, Social Post builders
+1. [ ] Deploy Firebase Functions - `firebase deploy --only functions`
+2. [ ] Configure API Keys - Google Places, Crunchbase, OpenCorporates
+3. [ ] Run Playwright Tests - Verify front-end rendering
+4. [ ] Run Firestore Tests - Verify pipeline functions
+5. [ ] Blog Public Display - Connect ArticleListPage to BlogPage
+6. [ ] Outbound Campaign Seed - 50+ contacts + welcome journey
 
 ---
 

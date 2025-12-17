@@ -1,4 +1,8 @@
 import React, { useState, useCallback } from 'react';
+import CreativeCanvas from './CreativeCanvas';
+import ExportManager from './ExportManager';
+import { PLATFORM_SPECS, getSpecsByPlatform } from './platform-specs';
+import { useAIGeneration } from './useAIGeneration';
 
 /**
  * AdCreativeBuilder - Create ad copy for multiple platforms
@@ -9,6 +13,9 @@ import React, { useState, useCallback } from 'react';
  * - CTA button options
  * - Character limits per platform
  * - Copy to clipboard
+ * - Visual canvas editor (NEW)
+ * - Platform dimension presets (NEW)
+ * - Export manager (NEW)
  */
 
 const AD_PLATFORMS = [
@@ -144,15 +151,109 @@ const AD_TEMPLATES = [
   }
 ];
 
-function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false }) {
+function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false, initialContent = null, aiContext = null }) {
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [headline, setHeadline] = useState('');
-  const [description, setDescription] = useState('');
+  const [headline, setHeadline] = useState(initialContent?.headline || '');
+  const [description, setDescription] = useState(initialContent?.description || '');
   const [selectedCta, setSelectedCta] = useState('');
-  const [adName, setAdName] = useState('');
+  const [adName, setAdName] = useState(initialContent?.name || '');
+
+  // NEW: Visual editor states
+  const [editorMode, setEditorMode] = useState('visual'); // 'text' | 'visual' - default to visual
+  const [selectedDimension, setSelectedDimension] = useState(null);
+  const [showExportManager, setShowExportManager] = useState(false);
+  const [canvasData, setCanvasData] = useState(null);
+
+  // AI Generation - pre-populate from aiContext if available
+  const [showAIPanel, setShowAIPanel] = useState(!!aiContext);
+  const [aiInputs, setAiInputs] = useState({
+    brand: aiContext?.brand || '',
+    product: aiContext?.product || aiContext?.summary || '',
+    targetAudience: aiContext?.audience || '',
+    uniqueValue: aiContext?.value || '',
+    campaignType: aiContext?.campaignType || 'awareness'
+  });
+  const [aiVariants, setAiVariants] = useState([]);
+  const {
+    generateAdCopy,
+    generateCTAs: _generateCTAs,
+    isGenerating,
+    error: aiError,
+    CAMPAIGN_TYPES,
+    AI_PROVIDERS,
+    provider,
+    setProvider,
+    usageCount: _usageCount,
+    remainingGenerations
+  } = useAIGeneration();
 
   const platform = AD_PLATFORMS.find(p => p.id === selectedPlatform);
+
+  // Get platform-specific dimensions
+  const platformDimensions = selectedPlatform ? getSpecsByPlatform(
+    selectedPlatform === 'meta' ? 'facebook' : selectedPlatform
+  ) : [];
+
+  // Helper function to replace {{placeholder}} with actual values
+  const replacePlaceholders = useCallback((text) => {
+    if (!text) return text;
+
+    // Map aiInputs to template variables
+    const replacements = {
+      // From user inputs
+      '{{product}}': aiInputs.product || '[your product]',
+      '{{brand}}': aiInputs.brand || '[your brand]',
+      '{{audience}}': aiInputs.targetAudience || '[target audience]',
+      '{{unique_value}}': aiInputs.uniqueValue || '[your unique value]',
+
+      // Common defaults - encourage user to fill these
+      '{{pain_point}}': '[pain point]',
+      '{{benefit}}': '[key benefit]',
+      '{{social_proof}}': '1,000+',
+      '{{feature_1}}': 'Feature one',
+      '{{feature_2}}': 'Feature two',
+      '{{feature_3}}': 'Feature three',
+      '{{company}}': aiInputs.brand || '[company]',
+      '{{result}}': '[specific result]',
+
+      // Testimonial placeholders
+      '{{testimonial}}': '[customer quote]',
+      '{{customer_name}}': '[Customer Name]',
+      '{{title}}': '[Title]',
+      '{{rating}}': '4.9/5',
+
+      // Offer placeholders
+      '{{offer}}': '[Your Offer]',
+      '{{offer_details}}': '[offer details]',
+      '{{deadline}}': '[deadline]',
+      '{{urgency}}': '[call to action]',
+
+      // How it works
+      '{{step_1}}': 'Step 1',
+      '{{step_2}}': 'Step 2',
+      '{{step_3}}': 'Step 3',
+      '{{complexity}}': 'complexity',
+
+      // Comparison
+      '{{competitor}}': '[Competitor]',
+      '{{competitor_weakness}}': '[weakness]',
+      '{{our_strength}}': '[your advantage]',
+      '{{benefit_1}}': 'Benefit 1',
+      '{{benefit_2}}': 'Benefit 2',
+      '{{benefit_3}}': 'Benefit 3',
+      '{{brands}}': '[notable brands]',
+      '{{stat_1}}': '50% faster',
+      '{{stat_2}}': '2x ROI',
+      '{{stat_3}}': '99% uptime'
+    };
+
+    let result = text;
+    for (const [placeholder, value] of Object.entries(replacements)) {
+      result = result.split(placeholder).join(value);
+    }
+    return result;
+  }, [aiInputs]);
 
   const handleSelectPlatform = (platformId) => {
     setSelectedPlatform(platformId);
@@ -166,8 +267,9 @@ function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false
   const handleSelectTemplate = (template) => {
     setSelectedTemplate(template);
     const content = template.content[selectedPlatform];
-    setHeadline(content?.headline || '');
-    setDescription(content?.description || '');
+    // Apply placeholder replacements when loading template
+    setHeadline(replacePlaceholders(content?.headline || ''));
+    setDescription(replacePlaceholders(content?.description || ''));
     setAdName(`${template.name} - ${platform.name}`);
   };
 
@@ -203,6 +305,46 @@ function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false
       onSaveToCanvas(asset);
       alert('Saved to canvas!');
     }
+  };
+
+  // AI Generation handler
+  const handleGenerateAI = async () => {
+    if (!aiInputs.brand || !aiInputs.product) {
+      alert('Please provide at least a brand name and product/service description');
+      return;
+    }
+
+    const platformMap = {
+      reddit: 'reddit',
+      linkedin: 'linkedin',
+      meta: 'facebook'
+    };
+
+    const result = await generateAdCopy({
+      platform: platformMap[selectedPlatform] || 'facebook',
+      campaignType: aiInputs.campaignType,
+      brand: aiInputs.brand,
+      product: aiInputs.product,
+      targetAudience: aiInputs.targetAudience || 'general audience',
+      uniqueValue: aiInputs.uniqueValue || 'exceptional quality',
+      variants: 3
+    });
+
+    if (result && result.variants && result.variants.length > 0) {
+      setAiVariants(result.variants);
+    }
+  };
+
+  const handleSelectAIVariant = (variant) => {
+    setHeadline(variant.headline || '');
+    setDescription(variant.body || '');
+    if (variant.cta) {
+      // Try to find matching CTA or use first one
+      const matchingCta = platform.cta.find(c => c.toLowerCase().includes(variant.cta.toLowerCase()));
+      setSelectedCta(matchingCta || platform.cta[0]);
+    }
+    setShowAIPanel(false);
+    setAiVariants([]);
   };
 
   // Platform selector
@@ -436,6 +578,24 @@ function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
+            onClick={() => setShowAIPanel(!showAIPanel)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: showAIPanel ? '#8b5cf6' : (isDarkTheme ? '#5b21b6' : '#7c3aed'),
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            ✨ AI Generate
+          </button>
+          <button
             onClick={handleCopy}
             style={{
               padding: '8px 16px',
@@ -483,9 +643,346 @@ function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false
         </div>
       </div>
 
+      {/* Mode Toggle & Dimension Selector */}
+      <div style={{
+        padding: '12px 20px',
+        borderBottom: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: isDarkTheme ? '#111827' : '#f9fafb'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: isDarkTheme ? '#9ca3af' : '#6b7280', fontWeight: '600' }}>MODE:</span>
+          <button
+            onClick={() => setEditorMode('text')}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: editorMode === 'text' ? '#FBBF24' : (isDarkTheme ? '#374151' : '#e5e7eb'),
+              color: editorMode === 'text' ? '#000' : (isDarkTheme ? '#9ca3af' : '#6b7280'),
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}
+          >
+            📝 Text
+          </button>
+          <button
+            onClick={() => setEditorMode('visual')}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: editorMode === 'visual' ? '#FBBF24' : (isDarkTheme ? '#374151' : '#e5e7eb'),
+              color: editorMode === 'visual' ? '#000' : (isDarkTheme ? '#9ca3af' : '#6b7280'),
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}
+          >
+            🎨 Visual
+          </button>
+        </div>
+
+        {editorMode === 'visual' && platformDimensions.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: isDarkTheme ? '#9ca3af' : '#6b7280', fontWeight: '600' }}>SIZE:</span>
+            <select
+              value={selectedDimension || ''}
+              onChange={(e) => setSelectedDimension(e.target.value)}
+              style={{
+                padding: '6px 12px',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                borderRadius: '4px',
+                backgroundColor: isDarkTheme ? '#1f2937' : '#fff',
+                color: isDarkTheme ? '#f9fafb' : '#111827',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="">Select dimension...</option>
+              {platformDimensions.map(spec => (
+                <option key={spec.key} value={spec.key}>
+                  {spec.label} ({spec.width}x{spec.height})
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowExportManager(true)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#10b981',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '600'
+              }}
+            >
+              📦 Export
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* AI Generation Panel */}
+      {showAIPanel && (
+        <div style={{
+          padding: '16px 20px',
+          borderBottom: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+          backgroundColor: isDarkTheme ? '#1f1b2e' : '#f3e8ff'
+        }}>
+          {/* Provider Selection */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
+            paddingBottom: '12px',
+            borderBottom: `1px solid ${isDarkTheme ? '#4c1d95' : '#ddd6fe'}`
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: isDarkTheme ? '#a78bfa' : '#7c3aed', fontWeight: '600' }}>
+                AI MODE:
+              </span>
+              {AI_PROVIDERS && Object.entries(AI_PROVIDERS).map(([key, prov]) => (
+                <button
+                  key={key}
+                  onClick={() => !prov.disabled && setProvider(key)}
+                  disabled={prov.disabled}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: provider === key
+                      ? (key === 'free' ? '#10b981' : key === 'standard' ? '#7c3aed' : '#6b7280')
+                      : (isDarkTheme ? '#2d2640' : '#ede9fe'),
+                    color: provider === key ? '#fff' : (isDarkTheme ? '#a78bfa' : '#7c3aed'),
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: prov.disabled ? 'not-allowed' : 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    opacity: prov.disabled ? 0.5 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                  title={prov.description}
+                >
+                  <span>{prov.icon}</span>
+                  <span>{prov.name}</span>
+                </button>
+              ))}
+            </div>
+            {/* Usage Counter for Standard mode */}
+            {provider === 'standard' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 12px',
+                backgroundColor: remainingGenerations <= 3
+                  ? (isDarkTheme ? '#7f1d1d' : '#fef2f2')
+                  : (isDarkTheme ? '#2d2640' : '#ede9fe'),
+                borderRadius: '6px',
+                color: remainingGenerations <= 3
+                  ? '#ef4444'
+                  : (isDarkTheme ? '#a78bfa' : '#7c3aed'),
+                fontSize: '12px',
+                fontWeight: '500'
+              }}>
+                <span>⚡</span>
+                <span>{remainingGenerations} / 10 remaining today</span>
+              </div>
+            )}
+            {provider === 'free' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: isDarkTheme ? '#064e3b' : '#d1fae5',
+                borderRadius: '6px',
+                color: isDarkTheme ? '#34d399' : '#059669',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}>
+                <span>✓</span>
+                <span>Unlimited - No API calls</span>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 150px', minWidth: '150px' }}>
+              <label style={{ fontSize: '11px', color: isDarkTheme ? '#a78bfa' : '#7c3aed', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
+                Brand Name *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. yellowCircle"
+                value={aiInputs.brand}
+                onChange={(e) => setAiInputs(prev => ({ ...prev, brand: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: `1px solid ${isDarkTheme ? '#4c1d95' : '#c4b5fd'}`,
+                  borderRadius: '6px',
+                  backgroundColor: isDarkTheme ? '#2d2640' : '#fff',
+                  color: isDarkTheme ? '#f9fafb' : '#111827',
+                  fontSize: '13px'
+                }}
+              />
+            </div>
+            <div style={{ flex: '2 1 200px', minWidth: '200px' }}>
+              <label style={{ fontSize: '11px', color: isDarkTheme ? '#a78bfa' : '#7c3aed', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
+                Product/Service *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. AI-powered marketing automation"
+                value={aiInputs.product}
+                onChange={(e) => setAiInputs(prev => ({ ...prev, product: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: `1px solid ${isDarkTheme ? '#4c1d95' : '#c4b5fd'}`,
+                  borderRadius: '6px',
+                  backgroundColor: isDarkTheme ? '#2d2640' : '#fff',
+                  color: isDarkTheme ? '#f9fafb' : '#111827',
+                  fontSize: '13px'
+                }}
+              />
+            </div>
+            <div style={{ flex: '1 1 150px', minWidth: '150px' }}>
+              <label style={{ fontSize: '11px', color: isDarkTheme ? '#a78bfa' : '#7c3aed', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
+                Target Audience
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Small business owners"
+                value={aiInputs.targetAudience}
+                onChange={(e) => setAiInputs(prev => ({ ...prev, targetAudience: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: `1px solid ${isDarkTheme ? '#4c1d95' : '#c4b5fd'}`,
+                  borderRadius: '6px',
+                  backgroundColor: isDarkTheme ? '#2d2640' : '#fff',
+                  color: isDarkTheme ? '#f9fafb' : '#111827',
+                  fontSize: '13px'
+                }}
+              />
+            </div>
+            <div style={{ flex: '1 1 120px', minWidth: '120px' }}>
+              <label style={{ fontSize: '11px', color: isDarkTheme ? '#a78bfa' : '#7c3aed', fontWeight: '600', display: 'block', marginBottom: '4px' }}>
+                Campaign Type
+              </label>
+              <select
+                value={aiInputs.campaignType}
+                onChange={(e) => setAiInputs(prev => ({ ...prev, campaignType: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: `1px solid ${isDarkTheme ? '#4c1d95' : '#c4b5fd'}`,
+                  borderRadius: '6px',
+                  backgroundColor: isDarkTheme ? '#2d2640' : '#fff',
+                  color: isDarkTheme ? '#f9fafb' : '#111827',
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                {Object.entries(CAMPAIGN_TYPES).map(([key, val]) => (
+                  <option key={key} value={key}>{val.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ flex: '0 0 auto', alignSelf: 'flex-end' }}>
+              <button
+                onClick={handleGenerateAI}
+                disabled={isGenerating || (provider === 'standard' && remainingGenerations <= 0)}
+                style={{
+                  padding: '8px 20px',
+                  backgroundColor: isGenerating || (provider === 'standard' && remainingGenerations <= 0)
+                    ? '#6b7280'
+                    : provider === 'free' ? '#10b981' : '#7c3aed',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: isGenerating || (provider === 'standard' && remainingGenerations <= 0) ? 'not-allowed' : 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {isGenerating
+                  ? '⏳ Generating...'
+                  : provider === 'standard' && remainingGenerations <= 0
+                    ? '❌ Rate Limited'
+                    : provider === 'free'
+                      ? '🆓 Generate (Free)'
+                      : '⚡ Generate (API)'
+                }
+              </button>
+            </div>
+          </div>
+
+          {/* AI Error */}
+          {aiError && (
+            <div style={{ marginTop: '12px', padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '6px', color: '#dc2626', fontSize: '12px' }}>
+              Error: {aiError}
+            </div>
+          )}
+
+          {/* AI Variants */}
+          {aiVariants.length > 0 && (
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ fontSize: '12px', color: isDarkTheme ? '#a78bfa' : '#7c3aed', fontWeight: '600', marginBottom: '8px' }}>
+                Select a variant to use:
+              </div>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                {aiVariants.map((variant, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSelectAIVariant(variant)}
+                    style={{
+                      flex: '1 1 250px',
+                      padding: '12px',
+                      backgroundColor: isDarkTheme ? '#2d2640' : '#fff',
+                      border: `1px solid ${isDarkTheme ? '#4c1d95' : '#c4b5fd'}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: isDarkTheme ? '#f9fafb' : '#111827', marginBottom: '6px' }}>
+                      {variant.headline?.substring(0, 50)}{variant.headline?.length > 50 ? '...' : ''}
+                    </div>
+                    <div style={{ fontSize: '12px', color: isDarkTheme ? '#9ca3af' : '#6b7280', lineHeight: '1.4' }}>
+                      {variant.body?.substring(0, 80)}{variant.body?.length > 80 ? '...' : ''}
+                    </div>
+                    <div style={{ marginTop: '8px', fontSize: '11px', color: '#7c3aed', fontWeight: '600' }}>
+                      CTA: {variant.cta || 'Learn More'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Editor */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Form */}
+        {editorMode === 'text' ? (
+        <>
+        {/* Text Form */}
         <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
           {/* Headline */}
           <div style={{ marginBottom: '24px' }}>
@@ -694,7 +1191,81 @@ function AdCreativeBuilder({ onBack, onSave, onSaveToCanvas, isDarkTheme = false
             Preview is approximate. Actual appearance may vary.
           </p>
         </div>
+        </>
+        ) : (
+        /* Visual Canvas Editor */
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {selectedDimension && PLATFORM_SPECS[selectedDimension] ? (
+            <CreativeCanvas
+              dimension={PLATFORM_SPECS[selectedDimension]}
+              isDarkTheme={isDarkTheme}
+              initialContent={{
+                headline: headline,
+                description: description,
+                cta: selectedCta
+              }}
+              onExport={(data) => setCanvasData(data)}
+            />
+          ) : (
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+              gap: '16px'
+            }}>
+              <span style={{ fontSize: '48px' }}>🎨</span>
+              <h3 style={{
+                color: isDarkTheme ? '#f9fafb' : '#111827',
+                margin: 0,
+                fontSize: '18px',
+                fontWeight: '600'
+              }}>
+                Select a dimension to start designing
+              </h3>
+              <p style={{
+                color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                margin: 0,
+                fontSize: '14px'
+              }}>
+                Choose a platform size from the dropdown above
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxWidth: '400px', justifyContent: 'center' }}>
+                {platformDimensions.slice(0, 4).map(spec => (
+                  <button
+                    key={spec.key}
+                    onClick={() => setSelectedDimension(spec.key)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: isDarkTheme ? '#374151' : '#e5e7eb',
+                      color: isDarkTheme ? '#f9fafb' : '#111827',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {spec.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        )}
       </div>
+
+      {/* Export Manager Modal */}
+      {showExportManager && canvasData && (
+        <ExportManager
+          canvasData={canvasData}
+          platform={selectedPlatform === 'meta' ? 'facebook' : selectedPlatform}
+          isDarkTheme={isDarkTheme}
+          onClose={() => setShowExportManager(false)}
+        />
+      )}
     </div>
   );
 }

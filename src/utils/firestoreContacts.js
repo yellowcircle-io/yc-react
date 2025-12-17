@@ -19,7 +19,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   limit,
   startAfter,
   serverTimestamp,
@@ -174,6 +173,77 @@ export const createContactObject = ({
     // Metadata (extensibility)
     metadata: {},
 
+    // ============================================================
+    // DUAL-PIPELINE PROSPECTING (Added Dec 2025)
+    // ============================================================
+
+    // Pipeline Assignment
+    pipelineAssignment: {
+      primaryPipeline: null,  // 'A' | 'B' | 'AB' | null
+      pipelineAScore: 0,      // -1 to 1 weighted score
+      pipelineAStatus: 'PENDING',  // 'QUALIFIED' | 'EXCLUDED_PE' | 'LOW_SCORE' | 'PENDING' | 'FLAGGED'
+      pipelineBScore: 0,
+      pipelineBStatus: 'PENDING',
+      peExclusionReason: null,
+      confidenceScore: 0,     // 0-1
+      lastScoredAt: null
+    },
+
+    // 27 PE (Private Equity) Signals for Exclusion
+    peSignals: {
+      fundingHistory: {
+        noFundingRecorded: null,           // +0.15 Pipeline A
+        seedAngelOnlyUnder500k: null,      // +0.10 Pipeline A
+        seriesABWithFounderControl: null,  // +0.05 Pipeline A
+        seriesCPlusOrLateStage: null,      // RED FLAG
+        peVcInvestorTagsPresent: null      // HARD BLOCK
+      },
+      corporateStructure: {
+        singleFounderFlatOrg: null,        // +0.10 Pipeline A
+        parentCompanyExists: null,         // RED FLAG
+        foreignBranchStatus: null          // RED FLAG
+      },
+      digitalFootprint: {
+        productHuntLaunchRecent: null,     // +0.12 Pipeline B
+        ycBadgePresent: null,              // +0.10 Pipeline B
+        foundedWithin36Months: null,       // +0.08 Pipeline B
+        nonDilutiveFundingMentioned: null  // +0.05 Pipeline A
+      },
+      executiveProfile: {
+        founderCeoStillActive: null,       // +0.12 both pipelines
+        cfoHiredPostFunding: null,         // RED FLAG
+        salesVpHiredYearOne: null          // RED FLAG
+      },
+      hiring: {
+        employeeCountUnder50: null,        // +0.08 Pipeline A
+        rapidExpansion6mo: null,           // RED FLAG
+        founderLedSalesDominance: null     // +0.10 Pipeline A
+      },
+      revenue: {
+        revenueBasedFinancingActive: null, // +0.06 Pipeline A
+        recurringRevenueModel: null,       // +0.15 Pipeline B
+        organicGrowth50Percent: null       // +0.08 both pipelines
+      },
+      websiteLanguage: {
+        bootstrappedInDescription: null,   // +0.10 Pipeline A
+        founderLedPositioning: null,       // +0.08 Pipeline A
+        portfolioCompanyMention: null      // HARD BLOCK
+      },
+      investorConnections: {
+        noInvestorsListedOrFounderOnly: null,  // +0.10 Pipeline A
+        listIncludesPeVcFirms: null,           // RED FLAG
+        exclusivelyAngelsSeedLimited: null     // +0.05 Pipeline A
+      }
+    },
+
+    // Discovery Source Tracking
+    discoverySource: {
+      primary: null,  // 'google_places' | 'crunchbase' | 'yc' | 'producthunt' | 'opencorporates' | 'sos' | 'manual'
+      sources: [],
+      discoveredAt: null,
+      rawDataRef: null  // Reference to companies_raw collection
+    },
+
     // Audit
     status: 'active',
     mergedInto: null,
@@ -308,8 +378,8 @@ export const listContacts = async ({
   maxScore = null,
   pageSize = 25,
   lastDoc = null,
-  orderByField = 'updatedAt',
-  orderDirection = 'desc'
+  orderByField: _orderByField = 'updatedAt',
+  orderDirection: _orderDirection = 'desc'
 } = {}) => {
   const contactsRef = collection(db, 'contacts');
   const constraints = [];
@@ -543,7 +613,7 @@ export const recordToolUsage = async (contactId, toolName) => {
 /**
  * Record email event
  */
-export const recordEmailEvent = async (contactId, eventType, eventData = {}) => {
+export const recordEmailEvent = async (contactId, eventType, _eventData = {}) => {
   const contact = await getContact(contactId);
   if (!contact) return null;
 
@@ -573,23 +643,368 @@ export const recordEmailEvent = async (contactId, eventType, eventData = {}) => 
 };
 
 // ============================================================
+// Dual-Pipeline Prospecting Operations
+// ============================================================
+
+/**
+ * PE Signal Weights for scoring
+ */
+const PE_SIGNAL_WEIGHTS = {
+  pipelineA: {
+    // Funding History
+    noFundingRecorded: 0.15,
+    seedAngelOnlyUnder500k: 0.10,
+    seriesABWithFounderControl: 0.05,
+    nonDilutiveFundingMentioned: 0.05,
+    // Corporate Structure
+    singleFounderFlatOrg: 0.10,
+    // Executive Profile
+    founderCeoStillActive: 0.12,
+    // Hiring
+    employeeCountUnder50: 0.08,
+    founderLedSalesDominance: 0.10,
+    // Revenue
+    revenueBasedFinancingActive: 0.06,
+    organicGrowth50Percent: 0.08,
+    // Website Language
+    bootstrappedInDescription: 0.10,
+    founderLedPositioning: 0.08,
+    // Investor Connections
+    noInvestorsListedOrFounderOnly: 0.10,
+    exclusivelyAngelsSeedLimited: 0.05
+  },
+  pipelineB: {
+    // Digital Footprint
+    productHuntLaunchRecent: 0.12,
+    ycBadgePresent: 0.10,
+    foundedWithin36Months: 0.08,
+    // Executive Profile
+    founderCeoStillActive: 0.12,
+    // Revenue
+    recurringRevenueModel: 0.15,
+    organicGrowth50Percent: 0.08
+  },
+  hardBlocks: [
+    'peVcInvestorTagsPresent',
+    'portfolioCompanyMention'
+  ],
+  redFlags: [
+    'seriesCPlusOrLateStage',
+    'parentCompanyExists',
+    'foreignBranchStatus',
+    'cfoHiredPostFunding',
+    'salesVpHiredYearOne',
+    'rapidExpansion6mo',
+    'listIncludesPeVcFirms'
+  ]
+};
+
+/**
+ * Evaluate PE signals and return exclusion status
+ * Returns: { status: 'QUALIFIED' | 'EXCLUDED_PE' | 'FLAGGED', reason, confidence, redFlagCount }
+ */
+export const evaluatePESignals = (peSignals) => {
+  if (!peSignals) {
+    return { status: 'PENDING', reason: 'No signals collected', confidence: 0, redFlagCount: 0 };
+  }
+
+  // Check for hard blocks first
+  const hardBlocks = [];
+  if (peSignals.fundingHistory?.peVcInvestorTagsPresent === true) {
+    hardBlocks.push('PE/VC investor tags present');
+  }
+  if (peSignals.websiteLanguage?.portfolioCompanyMention === true) {
+    hardBlocks.push('Portfolio company mention detected');
+  }
+
+  if (hardBlocks.length > 0) {
+    return {
+      status: 'EXCLUDED_PE',
+      reason: `Hard block: ${hardBlocks.join(', ')}`,
+      confidence: 1.0,
+      redFlagCount: hardBlocks.length
+    };
+  }
+
+  // Count red flags
+  const redFlags = [];
+  if (peSignals.fundingHistory?.seriesCPlusOrLateStage === true) redFlags.push('Series C+ funding');
+  if (peSignals.corporateStructure?.parentCompanyExists === true) redFlags.push('Parent company exists');
+  if (peSignals.corporateStructure?.foreignBranchStatus === true) redFlags.push('Foreign branch');
+  if (peSignals.executiveProfile?.cfoHiredPostFunding === true) redFlags.push('CFO hired post-funding');
+  if (peSignals.executiveProfile?.salesVpHiredYearOne === true) redFlags.push('Sales VP hired Y1');
+  if (peSignals.hiring?.rapidExpansion6mo === true) redFlags.push('Rapid expansion');
+  if (peSignals.investorConnections?.listIncludesPeVcFirms === true) redFlags.push('PE/VC in investor list');
+
+  // 3+ red flags = excluded, 2 = flagged for review
+  if (redFlags.length >= 3) {
+    return {
+      status: 'EXCLUDED_PE',
+      reason: `Red flags (${redFlags.length}): ${redFlags.join(', ')}`,
+      confidence: 0.85,
+      redFlagCount: redFlags.length
+    };
+  }
+
+  if (redFlags.length === 2) {
+    return {
+      status: 'FLAGGED',
+      reason: `Review needed - Red flags (${redFlags.length}): ${redFlags.join(', ')}`,
+      confidence: 0.65,
+      redFlagCount: redFlags.length
+    };
+  }
+
+  return {
+    status: 'QUALIFIED',
+    reason: redFlags.length === 1 ? `Minor concern: ${redFlags[0]}` : 'No PE indicators',
+    confidence: redFlags.length === 1 ? 0.80 : 0.95,
+    redFlagCount: redFlags.length
+  };
+};
+
+/**
+ * Calculate pipeline scores from PE signals
+ * Returns: { pipelineAScore, pipelineBScore, primaryPipeline }
+ */
+export const calculatePipelineScores = (peSignals) => {
+  if (!peSignals) {
+    return { pipelineAScore: 0, pipelineBScore: 0, primaryPipeline: null };
+  }
+
+  let pipelineAScore = 0;
+  let pipelineBScore = 0;
+
+  // Flatten signals for easier access
+  const flatSignals = {
+    ...peSignals.fundingHistory,
+    ...peSignals.corporateStructure,
+    ...peSignals.digitalFootprint,
+    ...peSignals.executiveProfile,
+    ...peSignals.hiring,
+    ...peSignals.revenue,
+    ...peSignals.websiteLanguage,
+    ...peSignals.investorConnections
+  };
+
+  // Calculate Pipeline A score
+  for (const [signal, weight] of Object.entries(PE_SIGNAL_WEIGHTS.pipelineA)) {
+    if (flatSignals[signal] === true) {
+      pipelineAScore += weight;
+    } else if (flatSignals[signal] === false) {
+      pipelineAScore -= weight * 0.5; // Negative signals reduce score by half weight
+    }
+  }
+
+  // Calculate Pipeline B score
+  for (const [signal, weight] of Object.entries(PE_SIGNAL_WEIGHTS.pipelineB)) {
+    if (flatSignals[signal] === true) {
+      pipelineBScore += weight;
+    } else if (flatSignals[signal] === false) {
+      pipelineBScore -= weight * 0.5;
+    }
+  }
+
+  // Clamp scores to [-1, 1]
+  pipelineAScore = Math.max(-1, Math.min(1, pipelineAScore));
+  pipelineBScore = Math.max(-1, Math.min(1, pipelineBScore));
+
+  // Determine primary pipeline
+  let primaryPipeline = null;
+  const threshold = 0.3; // Minimum score to qualify
+
+  if (pipelineAScore >= threshold && pipelineBScore >= threshold) {
+    primaryPipeline = 'AB'; // Qualifies for both
+  } else if (pipelineAScore >= threshold) {
+    primaryPipeline = 'A';
+  } else if (pipelineBScore >= threshold) {
+    primaryPipeline = 'B';
+  }
+
+  return {
+    pipelineAScore: Math.round(pipelineAScore * 100) / 100,
+    pipelineBScore: Math.round(pipelineBScore * 100) / 100,
+    primaryPipeline
+  };
+};
+
+/**
+ * Full pipeline assessment for a contact
+ * Combines PE evaluation and scoring
+ */
+export const assessPipeline = async (contactId) => {
+  const contact = await getContact(contactId);
+  if (!contact) return null;
+
+  const peEvaluation = evaluatePESignals(contact.peSignals);
+  const pipelineScores = calculatePipelineScores(contact.peSignals);
+
+  // Determine final statuses
+  let pipelineAStatus = 'PENDING';
+  let pipelineBStatus = 'PENDING';
+
+  if (peEvaluation.status === 'EXCLUDED_PE') {
+    pipelineAStatus = 'EXCLUDED_PE';
+    pipelineBStatus = 'EXCLUDED_PE';
+  } else if (peEvaluation.status === 'FLAGGED') {
+    pipelineAStatus = 'FLAGGED';
+    pipelineBStatus = 'FLAGGED';
+  } else {
+    // Check score thresholds
+    pipelineAStatus = pipelineScores.pipelineAScore >= 0.3 ? 'QUALIFIED' : 'LOW_SCORE';
+    pipelineBStatus = pipelineScores.pipelineBScore >= 0.3 ? 'QUALIFIED' : 'LOW_SCORE';
+  }
+
+  const updates = {
+    'pipelineAssignment.primaryPipeline': pipelineScores.primaryPipeline,
+    'pipelineAssignment.pipelineAScore': pipelineScores.pipelineAScore,
+    'pipelineAssignment.pipelineAStatus': pipelineAStatus,
+    'pipelineAssignment.pipelineBScore': pipelineScores.pipelineBScore,
+    'pipelineAssignment.pipelineBStatus': pipelineBStatus,
+    'pipelineAssignment.peExclusionReason': peEvaluation.status !== 'QUALIFIED' ? peEvaluation.reason : null,
+    'pipelineAssignment.confidenceScore': peEvaluation.confidence,
+    'pipelineAssignment.lastScoredAt': serverTimestamp()
+  };
+
+  await updateContact(contactId, updates, 'system');
+
+  return {
+    contactId,
+    ...pipelineScores,
+    pipelineAStatus,
+    pipelineBStatus,
+    peEvaluation
+  };
+};
+
+/**
+ * List contacts by pipeline
+ */
+export const listContactsByPipeline = async ({
+  pipeline = 'A',  // 'A' | 'B' | 'AB' | 'FLAGGED' | 'EXCLUDED'
+  status = null,   // Optional status filter
+  pageSize = 25,
+  lastDoc = null
+} = {}) => {
+  const contactsRef = collection(db, 'contacts');
+  const constraints = [where('status', '==', 'active')];
+
+  if (pipeline === 'FLAGGED') {
+    constraints.push(where('pipelineAssignment.pipelineAStatus', '==', 'FLAGGED'));
+  } else if (pipeline === 'EXCLUDED') {
+    constraints.push(where('pipelineAssignment.pipelineAStatus', '==', 'EXCLUDED_PE'));
+  } else {
+    constraints.push(where('pipelineAssignment.primaryPipeline', '==', pipeline));
+    if (status) {
+      constraints.push(where(`pipelineAssignment.pipeline${pipeline}Status`, '==', status));
+    }
+  }
+
+  constraints.push(limit(pageSize + 1));
+
+  if (lastDoc) {
+    constraints.push(startAfter(lastDoc));
+  }
+
+  const q = query(contactsRef, ...constraints);
+  const snapshot = await getDocs(q);
+
+  const contacts = [];
+  let lastVisible = null;
+  let hasMore = false;
+
+  snapshot.docs.forEach((doc, index) => {
+    if (index < pageSize) {
+      contacts.push({ id: doc.id, ...doc.data() });
+      lastVisible = doc;
+    } else {
+      hasMore = true;
+    }
+  });
+
+  return { contacts, lastDoc: lastVisible, hasMore };
+};
+
+/**
+ * Get pipeline statistics
+ */
+export const getPipelineStats = async () => {
+  const contactsRef = collection(db, 'contacts');
+
+  // Note: For production, use Firestore aggregation queries or maintain counters
+  // This is a simplified version that works for smaller datasets
+  const activeQuery = query(contactsRef, where('status', '==', 'active'), limit(1000));
+  const snapshot = await getDocs(activeQuery);
+
+  const stats = {
+    total: 0,
+    pipelineA: { qualified: 0, excluded: 0, flagged: 0, lowScore: 0, pending: 0 },
+    pipelineB: { qualified: 0, excluded: 0, flagged: 0, lowScore: 0, pending: 0 },
+    dualPipeline: 0,
+    unassigned: 0
+  };
+
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    stats.total++;
+
+    const pipeline = data.pipelineAssignment?.primaryPipeline;
+
+    if (!pipeline) {
+      stats.unassigned++;
+    } else if (pipeline === 'AB') {
+      stats.dualPipeline++;
+    }
+
+    // Count by status
+    const statusA = data.pipelineAssignment?.pipelineAStatus || 'PENDING';
+    const statusB = data.pipelineAssignment?.pipelineBStatus || 'PENDING';
+
+    const statusMap = {
+      'QUALIFIED': 'qualified',
+      'EXCLUDED_PE': 'excluded',
+      'FLAGGED': 'flagged',
+      'LOW_SCORE': 'lowScore',
+      'PENDING': 'pending'
+    };
+
+    if (statusMap[statusA]) stats.pipelineA[statusMap[statusA]]++;
+    if (statusMap[statusB]) stats.pipelineB[statusMap[statusB]]++;
+  });
+
+  return stats;
+};
+
+// ============================================================
 // Export
 // ============================================================
 
 export default {
+  // ID Generation
   generateContactId,
   hashEmail,
+  // CRUD
   createContactObject,
   getContact,
   getContactByEmail,
   upsertContact,
   updateContact,
   archiveContact,
+  // Query
   listContacts,
   searchContacts,
+  // Scoring (legacy)
   updateContactScore,
+  // Journey
   addContactToJourney,
   removeContactFromJourney,
+  // Engagement
   recordToolUsage,
-  recordEmailEvent
+  recordEmailEvent,
+  // Dual-Pipeline Prospecting (Dec 2025)
+  evaluatePESignals,
+  calculatePipelineScores,
+  assessPipeline,
+  listContactsByPipeline,
+  getPipelineStats
 };

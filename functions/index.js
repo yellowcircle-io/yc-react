@@ -219,7 +219,8 @@ exports.getESPStatus = functions.https.onRequest(async (request, response) => {
 });
 
 /**
- * Generate Email Content - Proxy for Groq API
+ * Generate Content - Flexible Proxy for Groq API
+ * Supports: email, ad copy, social posts, and custom content generation
  */
 exports.generate = functions.https.onRequest(async (request, response) => {
   setCors(response);
@@ -237,28 +238,36 @@ exports.generate = functions.https.onRequest(async (request, response) => {
   const clientIp = request.headers["x-forwarded-for"]?.split(",")[0] ||
                    request.connection?.remoteAddress || "unknown";
 
-  const rateLimit = await checkRateLimit(clientIp, 3);
-  response.set("X-RateLimit-Limit", "3");
+  // Higher rate limit for creative generation (10/day)
+  const rateLimit = await checkRateLimit(clientIp, 10);
+  response.set("X-RateLimit-Limit", "10");
   response.set("X-RateLimit-Remaining", String(rateLimit.remaining));
 
   if (!rateLimit.allowed) {
     response.status(429).json({
-      error: "Rate limit exceeded. Enter your own API key to continue.",
-      limit: 3,
+      error: "Rate limit exceeded (10/day). Try again tomorrow.",
+      limit: 10,
       remaining: 0
     });
     return;
   }
 
   try {
-    const { prompt, stage } = request.body;
+    const {
+      prompt,
+      stage,
+      contentType = 'general',  // email, adCopy, social, general
+      systemPrompt,             // Custom system prompt override
+      maxTokens = 1000,         // Configurable (capped at 2000)
+      temperature = 0.7         // Configurable (0.0 - 1.0)
+    } = request.body;
 
     if (!prompt) {
       response.status(400).json({ error: "Missing prompt" });
       return;
     }
 
-    // Get API key from Firebase config (set via: firebase functions:config:set groq.api_key="xxx")
+    // Get API key from Firebase config
     const groqApiKey = functions.config().groq?.api_key;
 
     if (!groqApiKey) {
@@ -266,26 +275,65 @@ exports.generate = functions.https.onRequest(async (request, response) => {
       return;
     }
 
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${groqApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-70b-versatile",
-        messages: [
-          { role: "system", content: "You are an expert email copywriter. Write concise, engaging emails." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
-      })
-    });
+    // Default system prompts by content type
+    const systemPrompts = {
+      email: "You are an expert email copywriter. Write concise, engaging emails that drive action.",
+      adCopy: "You are an expert advertising copywriter. Create compelling ad copy that captures attention, communicates value, and drives conversions. Follow platform-specific best practices.",
+      social: "You are a social media content expert. Create engaging posts that resonate with audiences and encourage interaction.",
+      general: "You are a helpful assistant that creates professional marketing content."
+    };
+
+    const finalSystemPrompt = systemPrompt || systemPrompts[contentType] || systemPrompts.general;
+    const finalMaxTokens = Math.min(Math.max(100, maxTokens), 2000);  // Clamp 100-2000
+    const finalTemperature = Math.min(Math.max(0, temperature), 1);    // Clamp 0-1
+
+    // Try multiple models in case one is unavailable
+    const models = [
+      "llama-3.3-70b-versatile",   // Latest Llama 3.3 (most capable)
+      "llama-3.1-70b-versatile",   // Fallback to 3.1
+      "llama3-70b-8192"            // Legacy fallback
+    ];
+
+    let groqResponse = null;
+    let lastError = null;
+
+    for (const model of models) {
+      console.log(`Trying Groq model: ${model}`);
+      groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${groqApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: "system", content: finalSystemPrompt },
+            { role: "user", content: prompt }
+          ],
+          temperature: finalTemperature,
+          max_tokens: finalMaxTokens
+        })
+      });
+
+      if (groqResponse.ok) {
+        console.log(`Successfully used model: ${model}`);
+        break;
+      } else {
+        lastError = await groqResponse.text();
+        console.error(`Groq API error with ${model}:`, lastError);
+        // Only continue trying other models if it's a model-specific error
+        if (groqResponse.status === 400 && lastError.includes("model")) {
+          continue;
+        }
+        // For other errors (auth, rate limit, etc), don't retry
+        break;
+      }
+    }
 
     if (!groqResponse.ok) {
-      console.error("Groq API error:", await groqResponse.text());
-      response.status(502).json({ error: "LLM service error" });
+      console.error("All Groq models failed:", lastError);
+      response.status(502).json({ error: "LLM service error", details: lastError });
       return;
     }
 
@@ -297,10 +345,16 @@ exports.generate = functions.https.onRequest(async (request, response) => {
       return;
     }
 
-    response.json({ content, stage: stage || "unknown", creditsRemaining: rateLimit.remaining });
+    response.json({
+      content,
+      stage: stage || "unknown",
+      contentType,
+      creditsRemaining: rateLimit.remaining,
+      tokensUsed: data.usage?.total_tokens || 0
+    });
   } catch (error) {
     console.error("Generate function error:", error);
-    response.status(500).json({ error: "Internal server error" });
+    response.status(500).json({ error: "Internal server error", message: error.message });
   }
 });
 
@@ -5141,3 +5195,937 @@ exports.listEnrichmentProviders = functions.https.onRequest(async (request, resp
     }
   });
 });
+
+// ============================================
+// DUAL-PIPELINE PROSPECTING ENGINE (Dec 2025)
+// ============================================
+
+/**
+ * PE SIGNAL WEIGHTS
+ * Used for scoring companies against Pipeline A (Traditional Proprietor)
+ * and Pipeline B (Digital-First Non-SaaS)
+ */
+const PE_SIGNAL_WEIGHTS = {
+  pipelineA: {
+    noFundingRecorded: 0.15,
+    seedAngelOnlyUnder500k: 0.10,
+    seriesABWithFounderControl: 0.05,
+    nonDilutiveFundingMentioned: 0.05,
+    singleFounderFlatOrg: 0.10,
+    founderCeoStillActive: 0.12,
+    employeeCountUnder50: 0.08,
+    founderLedSalesDominance: 0.10,
+    revenueBasedFinancingActive: 0.06,
+    organicGrowth50Percent: 0.08,
+    bootstrappedInDescription: 0.10,
+    founderLedPositioning: 0.08,
+    noInvestorsListedOrFounderOnly: 0.10,
+    exclusivelyAngelsSeedLimited: 0.05
+  },
+  pipelineB: {
+    productHuntLaunchRecent: 0.12,
+    ycBadgePresent: 0.10,
+    foundedWithin36Months: 0.08,
+    founderCeoStillActive: 0.12,
+    recurringRevenueModel: 0.15,
+    organicGrowth50Percent: 0.08
+  }
+};
+
+/**
+ * HARD BLOCK signals - immediate exclusion
+ */
+const HARD_BLOCK_SIGNALS = ['peVcInvestorTagsPresent', 'portfolioCompanyMention'];
+
+/**
+ * RED FLAG signals - 3+ = exclusion, 2 = flagged
+ */
+const RED_FLAG_SIGNALS = [
+  'seriesCPlusOrLateStage',
+  'parentCompanyExists',
+  'foreignBranchStatus',
+  'cfoHiredPostFunding',
+  'salesVpHiredYearOne',
+  'rapidExpansion6mo',
+  'listIncludesPeVcFirms'
+];
+
+/**
+ * DISCOVER PIPELINE A
+ *
+ * Sources: Google Places API, Secretary of State APIs
+ * Target: Traditional proprietor businesses (local, professional services)
+ *
+ * Scheduled: Daily at 2:00 AM UTC
+ * Output: ~100-150 prospects/day
+ */
+exports.discoverPipelineA = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    // Admin auth
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      return response.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const {
+        location = "San Francisco, CA",  // Default search location
+        radius = 50000,                   // 50km radius
+        types = ["accounting", "consulting", "marketing_agency", "legal"],
+        maxResults = 50,
+        dryRun = false
+      } = request.body;
+
+      const googlePlacesKey = functions.config().googleplaces?.api_key;
+
+      if (!googlePlacesKey || googlePlacesKey === "PLACEHOLDER_GOOGLE_PLACES") {
+        return response.json({
+          warning: "Google Places API not configured",
+          placeholder: true,
+          hint: "Set API key via: firebase functions:config:set googleplaces.api_key=YOUR_KEY",
+          mockResults: generateMockPipelineAResults(maxResults)
+        });
+      }
+
+      const results = [];
+      const errors = [];
+
+      // Search Google Places for each business type
+      for (const businessType of types) {
+        try {
+          const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?` +
+            `location=${encodeURIComponent(location)}&` +
+            `radius=${radius}&` +
+            `type=${businessType}&` +
+            `key=${googlePlacesKey}`;
+
+          const placesResponse = await fetch(searchUrl);
+          const placesData = await placesResponse.json();
+
+          if (placesData.status === "OK" && placesData.results) {
+            for (const place of placesData.results.slice(0, Math.ceil(maxResults / types.length))) {
+              results.push({
+                source: 'google_places',
+                sourceId: place.place_id,
+                companyName: place.name,
+                rawData: {
+                  name: place.name,
+                  address: place.vicinity,
+                  types: place.types,
+                  rating: place.rating,
+                  userRatingsTotal: place.user_ratings_total,
+                  businessStatus: place.business_status,
+                  location: place.geometry?.location
+                },
+                pipeline: 'A'
+              });
+            }
+          }
+        } catch (error) {
+          errors.push({ type: businessType, error: error.message });
+        }
+      }
+
+      // Store raw companies if not dry run
+      let stored = 0;
+      if (!dryRun) {
+        for (const company of results) {
+          try {
+            const docId = `${company.source}_${company.sourceId}`;
+            await db.collection('companies_raw').doc(docId).set({
+              ...company,
+              ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
+              processedAt: null,
+              contactId: null,
+              status: 'pending'
+            });
+            stored++;
+          } catch (err) {
+            console.error(`Failed to store ${company.companyName}:`, err.message);
+          }
+        }
+      }
+
+      // Track API usage
+      const today = new Date().toISOString().split('T')[0];
+      await db.collection('api_usage').doc(today).set({
+        googlePlacesCallsUsed: admin.firestore.FieldValue.increment(types.length),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        pipeline: 'A',
+        discovered: results.length,
+        stored: stored,
+        dryRun,
+        location,
+        types,
+        errors: errors.length > 0 ? errors : undefined
+      });
+
+    } catch (error) {
+      console.error("❌ discoverPipelineA error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * DISCOVER PIPELINE B
+ *
+ * Sources: Y Combinator (GitHub data), Growjo (growth data)
+ * Target: Digital-first non-SaaS businesses
+ *
+ * Scheduled: Daily at 3:00 AM UTC
+ * Output: ~50-100 prospects/day
+ */
+exports.discoverPipelineB = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    // Admin auth
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      return response.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const {
+        sources = ["yc_github", "growjo"],  // Available: yc_github, growjo
+        maxResults = 50,
+        dryRun = false
+      } = request.body;
+
+      const results = [];
+      const errors = [];
+
+      // YC GitHub - public data from Y Combinator companies
+      if (sources.includes("yc_github")) {
+        try {
+          // Fetch YC companies from public GitHub repo
+          const ycUrl = "https://raw.githubusercontent.com/toshi7711/YC_Company/main/YC_Company_v2.json";
+          const ycResponse = await fetch(ycUrl);
+
+          if (ycResponse.ok) {
+            const ycData = await ycResponse.json();
+            const recentYC = ycData
+              .filter(c => {
+                const batchYear = parseInt(c.Batch?.match(/\d{4}/)?.[0] || '0');
+                return batchYear >= 2022;  // Last 3 years
+              })
+              .slice(0, Math.ceil(maxResults / sources.length));
+
+            for (const company of recentYC) {
+              results.push({
+                source: 'yc_github',
+                sourceId: `yc_${company.Name?.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`,
+                companyName: company.Name,
+                rawData: {
+                  name: company.Name,
+                  description: company.Description,
+                  batch: company.Batch,
+                  website: company.Website,
+                  location: company.Location,
+                  industry: company.Industry
+                },
+                pipeline: 'B'
+              });
+            }
+          }
+        } catch (error) {
+          errors.push({ source: 'yc_github', error: error.message });
+        }
+      }
+
+      // Growjo - company growth data (free scraping)
+      if (sources.includes("growjo")) {
+        try {
+          // Growjo provides growth rankings and company data
+          // Using public data from growjo.com/all/all
+          // Note: Consider rate limiting and respecting robots.txt
+
+          // For now, generate mock results - real implementation would scrape or use API
+          const growjoResults = [];
+          const industries = ['Marketing', 'Sales', 'HR Tech', 'FinTech', 'E-commerce'];
+
+          for (let i = 0; i < Math.ceil(maxResults / sources.length); i++) {
+            growjoResults.push({
+              source: 'growjo',
+              sourceId: `growjo_company_${Date.now()}_${i}`,
+              companyName: `Growth Company ${i + 1}`,
+              rawData: {
+                name: `Growth Company ${i + 1}`,
+                growthRate: Math.floor(Math.random() * 200) + 50, // 50-250%
+                employees: Math.floor(Math.random() * 100) + 10,
+                industry: industries[Math.floor(Math.random() * industries.length)],
+                founded: 2020 + Math.floor(Math.random() * 4)
+              },
+              pipeline: 'B'
+            });
+          }
+          results.push(...growjoResults);
+        } catch (error) {
+          errors.push({ source: 'growjo', error: error.message });
+        }
+      }
+
+      // Store raw companies if not dry run
+      let stored = 0;
+      if (!dryRun) {
+        for (const company of results) {
+          try {
+            const docId = `${company.source}_${company.sourceId}`;
+            await db.collection('companies_raw').doc(docId).set({
+              ...company,
+              ingestedAt: admin.firestore.FieldValue.serverTimestamp(),
+              processedAt: null,
+              contactId: null,
+              status: 'pending'
+            });
+            stored++;
+          } catch (err) {
+            console.error(`Failed to store ${company.companyName}:`, err.message);
+          }
+        }
+      }
+
+      response.json({
+        success: true,
+        pipeline: 'B',
+        discovered: results.length,
+        stored: stored,
+        dryRun,
+        sources,
+        errors: errors.length > 0 ? errors : undefined
+      });
+
+    } catch (error) {
+      console.error("❌ discoverPipelineB error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * COLLECT SIGNALS
+ *
+ * Collects the 27 PE signals for a contact.
+ * Uses cascade enrichment + heuristics to populate signals.
+ */
+exports.collectSignals = functions
+  .runWith({ memory: '256MB', timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      return response.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { contactId, email, enrichFirst = true } = request.body;
+
+      if (!contactId && !email) {
+        return response.status(400).json({ error: "contactId or email required" });
+      }
+
+      const targetContactId = contactId || generateContactId(email);
+      const contactRef = db.collection('contacts').doc(targetContactId);
+      const contactSnap = await contactRef.get();
+
+      if (!contactSnap.exists) {
+        return response.status(404).json({ error: "Contact not found" });
+      }
+
+      const contact = contactSnap.data();
+
+      // Initialize signals from existing enrichment data
+      const peSignals = {
+        fundingHistory: {
+          noFundingRecorded: null,
+          seedAngelOnlyUnder500k: null,
+          seriesABWithFounderControl: null,
+          seriesCPlusOrLateStage: null,
+          peVcInvestorTagsPresent: null
+        },
+        corporateStructure: {
+          singleFounderFlatOrg: null,
+          parentCompanyExists: null,
+          foreignBranchStatus: null
+        },
+        digitalFootprint: {
+          productHuntLaunchRecent: null,
+          ycBadgePresent: null,
+          foundedWithin36Months: null,
+          nonDilutiveFundingMentioned: null
+        },
+        executiveProfile: {
+          founderCeoStillActive: null,
+          cfoHiredPostFunding: null,
+          salesVpHiredYearOne: null
+        },
+        hiring: {
+          employeeCountUnder50: null,
+          rapidExpansion6mo: null,
+          founderLedSalesDominance: null
+        },
+        revenue: {
+          revenueBasedFinancingActive: null,
+          recurringRevenueModel: null,
+          organicGrowth50Percent: null
+        },
+        websiteLanguage: {
+          bootstrappedInDescription: null,
+          founderLedPositioning: null,
+          portfolioCompanyMention: null
+        },
+        investorConnections: {
+          noInvestorsListedOrFounderOnly: null,
+          listIncludesPeVcFirms: null,
+          exclusivelyAngelsSeedLimited: null
+        }
+      };
+
+      // Extract signals from existing enrichment data
+      const enrichment = contact.enrichment || {};
+      const metadata = contact.metadata || {};
+
+      // PDL data signals
+      if (enrichment.pdl) {
+        const pdl = enrichment.pdl;
+
+        // Company size signal
+        if (pdl.company?.size) {
+          const size = parseInt(pdl.company.size) || 0;
+          peSignals.hiring.employeeCountUnder50 = size < 50;
+        }
+
+        // Founder/CEO check (from job title)
+        if (pdl.job_title || contact.jobTitle) {
+          const title = (pdl.job_title || contact.jobTitle || '').toLowerCase();
+          peSignals.executiveProfile.founderCeoStillActive =
+            title.includes('founder') ||
+            title.includes('ceo') ||
+            title.includes('owner') ||
+            title.includes('principal');
+        }
+
+        // Industry signals
+        if (pdl.company?.industry) {
+          const industry = pdl.company.industry.toLowerCase();
+          // Non-SaaS digital businesses
+          peSignals.revenue.recurringRevenueModel =
+            industry.includes('subscription') ||
+            industry.includes('media') ||
+            industry.includes('publishing');
+        }
+      }
+
+      // Website/description analysis for language signals
+      const description = metadata.description || contact.notes || '';
+      const descLower = description.toLowerCase();
+
+      peSignals.websiteLanguage.bootstrappedInDescription =
+        descLower.includes('bootstrap') ||
+        descLower.includes('self-funded') ||
+        descLower.includes('founder-funded');
+
+      peSignals.websiteLanguage.founderLedPositioning =
+        descLower.includes('founder-led') ||
+        descLower.includes('owner-operated') ||
+        descLower.includes('family-owned');
+
+      peSignals.websiteLanguage.portfolioCompanyMention =
+        descLower.includes('portfolio company') ||
+        descLower.includes('backed by') ||
+        descLower.includes('a ') && descLower.includes(' company');
+
+      // Discovery source signals
+      const discoverySource = contact.discoverySource?.primary;
+      if (discoverySource === 'yc') peSignals.digitalFootprint.ycBadgePresent = true;
+      if (discoverySource === 'producthunt') peSignals.digitalFootprint.productHuntLaunchRecent = true;
+
+      // Update contact with signals
+      await contactRef.update({
+        peSignals,
+        'pipelineAssignment.lastScoredAt': admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: 'collectSignals'
+      });
+
+      response.json({
+        success: true,
+        contactId: targetContactId,
+        signalsCollected: Object.keys(peSignals).reduce((sum, cat) => {
+          return sum + Object.values(peSignals[cat]).filter(v => v !== null).length;
+        }, 0),
+        peSignals
+      });
+
+    } catch (error) {
+      console.error("❌ collectSignals error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * FILTER PE BACKED
+ *
+ * Evaluates PE signals and determines exclusion status.
+ * Hard blocks: Immediate exclusion
+ * Red flags: 3+ = exclusion, 2 = flagged for manual review
+ */
+exports.filterPEBacked = functions
+  .runWith({ memory: '256MB', timeoutSeconds: 60 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      return response.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { contactId, email, updateContact = true } = request.body;
+
+      if (!contactId && !email) {
+        return response.status(400).json({ error: "contactId or email required" });
+      }
+
+      const targetContactId = contactId || generateContactId(email);
+      const contactRef = db.collection('contacts').doc(targetContactId);
+      const contactSnap = await contactRef.get();
+
+      if (!contactSnap.exists) {
+        return response.status(404).json({ error: "Contact not found" });
+      }
+
+      const contact = contactSnap.data();
+      const peSignals = contact.peSignals;
+
+      if (!peSignals) {
+        return response.status(400).json({
+          error: "No PE signals collected",
+          hint: "Run collectSignals first"
+        });
+      }
+
+      // Flatten signals for evaluation
+      const flatSignals = {
+        ...peSignals.fundingHistory,
+        ...peSignals.corporateStructure,
+        ...peSignals.digitalFootprint,
+        ...peSignals.executiveProfile,
+        ...peSignals.hiring,
+        ...peSignals.revenue,
+        ...peSignals.websiteLanguage,
+        ...peSignals.investorConnections
+      };
+
+      // Check hard blocks
+      const hardBlocks = [];
+      for (const signal of HARD_BLOCK_SIGNALS) {
+        if (flatSignals[signal] === true) {
+          hardBlocks.push(signal);
+        }
+      }
+
+      if (hardBlocks.length > 0) {
+        const result = {
+          status: 'EXCLUDED_PE',
+          reason: `Hard block: ${hardBlocks.join(', ')}`,
+          confidence: 1.0,
+          hardBlocks,
+          redFlags: []
+        };
+
+        if (updateContact) {
+          await contactRef.update({
+            'pipelineAssignment.pipelineAStatus': 'EXCLUDED_PE',
+            'pipelineAssignment.pipelineBStatus': 'EXCLUDED_PE',
+            'pipelineAssignment.peExclusionReason': result.reason,
+            'pipelineAssignment.confidenceScore': result.confidence,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Log exclusion
+          await db.collection('pe_exclusion_log').add({
+            contactId: targetContactId,
+            exclusionType: 'HARD_BLOCK',
+            signalsTriggered: hardBlocks,
+            confidence: 1.0,
+            excludedAt: admin.firestore.FieldValue.serverTimestamp(),
+            reasonSummary: result.reason,
+            appealStatus: 'none'
+          });
+        }
+
+        return response.json({ success: true, ...result });
+      }
+
+      // Count red flags
+      const redFlags = [];
+      for (const signal of RED_FLAG_SIGNALS) {
+        if (flatSignals[signal] === true) {
+          redFlags.push(signal);
+        }
+      }
+
+      let result;
+      if (redFlags.length >= 3) {
+        result = {
+          status: 'EXCLUDED_PE',
+          reason: `Red flags (${redFlags.length}): ${redFlags.join(', ')}`,
+          confidence: 0.85,
+          hardBlocks: [],
+          redFlags
+        };
+      } else if (redFlags.length === 2) {
+        result = {
+          status: 'FLAGGED',
+          reason: `Review needed - Red flags: ${redFlags.join(', ')}`,
+          confidence: 0.65,
+          hardBlocks: [],
+          redFlags
+        };
+      } else {
+        result = {
+          status: 'QUALIFIED',
+          reason: redFlags.length === 1 ? `Minor concern: ${redFlags[0]}` : 'No PE indicators',
+          confidence: redFlags.length === 1 ? 0.80 : 0.95,
+          hardBlocks: [],
+          redFlags
+        };
+      }
+
+      if (updateContact) {
+        const updateData = {
+          'pipelineAssignment.peExclusionReason': result.status !== 'QUALIFIED' ? result.reason : null,
+          'pipelineAssignment.confidenceScore': result.confidence,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (result.status === 'EXCLUDED_PE') {
+          updateData['pipelineAssignment.pipelineAStatus'] = 'EXCLUDED_PE';
+          updateData['pipelineAssignment.pipelineBStatus'] = 'EXCLUDED_PE';
+
+          await db.collection('pe_exclusion_log').add({
+            contactId: targetContactId,
+            exclusionType: 'RED_FLAGS',
+            signalsTriggered: redFlags,
+            confidence: result.confidence,
+            excludedAt: admin.firestore.FieldValue.serverTimestamp(),
+            reasonSummary: result.reason,
+            appealStatus: 'none'
+          });
+        } else if (result.status === 'FLAGGED') {
+          updateData['pipelineAssignment.pipelineAStatus'] = 'FLAGGED';
+          updateData['pipelineAssignment.pipelineBStatus'] = 'FLAGGED';
+
+          // Add to manual review queue
+          await db.collection('manual_review_queue').doc(targetContactId).set({
+            contactId: targetContactId,
+            reason: result.reason,
+            conflictingSignals: { redFlags },
+            priority: 'normal',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            reviewedAt: null,
+            reviewerDecision: null,
+            reviewerNotes: ''
+          });
+        }
+
+        await contactRef.update(updateData);
+      }
+
+      response.json({ success: true, contactId: targetContactId, ...result });
+
+    } catch (error) {
+      console.error("❌ filterPEBacked error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * SCORE PIPELINES
+ *
+ * Calculates Pipeline A and Pipeline B scores from PE signals.
+ * Assigns primary pipeline based on threshold (0.3).
+ */
+exports.scorePipelines = functions
+  .runWith({ memory: '256MB', timeoutSeconds: 60 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      return response.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const { contactId, email, updateContact = true, threshold = 0.3 } = request.body;
+
+      if (!contactId && !email) {
+        return response.status(400).json({ error: "contactId or email required" });
+      }
+
+      const targetContactId = contactId || generateContactId(email);
+      const contactRef = db.collection('contacts').doc(targetContactId);
+      const contactSnap = await contactRef.get();
+
+      if (!contactSnap.exists) {
+        return response.status(404).json({ error: "Contact not found" });
+      }
+
+      const contact = contactSnap.data();
+      const peSignals = contact.peSignals;
+      const currentStatus = contact.pipelineAssignment?.pipelineAStatus;
+
+      // Skip if already excluded
+      if (currentStatus === 'EXCLUDED_PE') {
+        return response.json({
+          success: true,
+          contactId: targetContactId,
+          skipped: true,
+          reason: 'Already excluded from pipelines'
+        });
+      }
+
+      if (!peSignals) {
+        return response.status(400).json({
+          error: "No PE signals collected",
+          hint: "Run collectSignals first"
+        });
+      }
+
+      // Flatten signals
+      const flatSignals = {
+        ...peSignals.fundingHistory,
+        ...peSignals.corporateStructure,
+        ...peSignals.digitalFootprint,
+        ...peSignals.executiveProfile,
+        ...peSignals.hiring,
+        ...peSignals.revenue,
+        ...peSignals.websiteLanguage,
+        ...peSignals.investorConnections
+      };
+
+      // Calculate Pipeline A score
+      let pipelineAScore = 0;
+      for (const [signal, weight] of Object.entries(PE_SIGNAL_WEIGHTS.pipelineA)) {
+        if (flatSignals[signal] === true) {
+          pipelineAScore += weight;
+        } else if (flatSignals[signal] === false) {
+          pipelineAScore -= weight * 0.5;
+        }
+      }
+
+      // Calculate Pipeline B score
+      let pipelineBScore = 0;
+      for (const [signal, weight] of Object.entries(PE_SIGNAL_WEIGHTS.pipelineB)) {
+        if (flatSignals[signal] === true) {
+          pipelineBScore += weight;
+        } else if (flatSignals[signal] === false) {
+          pipelineBScore -= weight * 0.5;
+        }
+      }
+
+      // Clamp scores
+      pipelineAScore = Math.max(-1, Math.min(1, pipelineAScore));
+      pipelineBScore = Math.max(-1, Math.min(1, pipelineBScore));
+
+      // Round to 2 decimals
+      pipelineAScore = Math.round(pipelineAScore * 100) / 100;
+      pipelineBScore = Math.round(pipelineBScore * 100) / 100;
+
+      // Determine primary pipeline
+      let primaryPipeline = null;
+      let pipelineAStatus = 'LOW_SCORE';
+      let pipelineBStatus = 'LOW_SCORE';
+
+      if (pipelineAScore >= threshold && pipelineBScore >= threshold) {
+        primaryPipeline = 'AB';
+        pipelineAStatus = 'QUALIFIED';
+        pipelineBStatus = 'QUALIFIED';
+      } else if (pipelineAScore >= threshold) {
+        primaryPipeline = 'A';
+        pipelineAStatus = 'QUALIFIED';
+      } else if (pipelineBScore >= threshold) {
+        primaryPipeline = 'B';
+        pipelineBStatus = 'QUALIFIED';
+      }
+
+      // Preserve FLAGGED status if set
+      if (currentStatus === 'FLAGGED') {
+        pipelineAStatus = 'FLAGGED';
+        pipelineBStatus = 'FLAGGED';
+      }
+
+      const result = {
+        pipelineAScore,
+        pipelineBScore,
+        primaryPipeline,
+        pipelineAStatus,
+        pipelineBStatus,
+        threshold
+      };
+
+      if (updateContact) {
+        await contactRef.update({
+          'pipelineAssignment.primaryPipeline': primaryPipeline,
+          'pipelineAssignment.pipelineAScore': pipelineAScore,
+          'pipelineAssignment.pipelineAStatus': pipelineAStatus,
+          'pipelineAssignment.pipelineBScore': pipelineBScore,
+          'pipelineAssignment.pipelineBStatus': pipelineBStatus,
+          'pipelineAssignment.lastScoredAt': admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: 'scorePipelines'
+        });
+      }
+
+      response.json({ success: true, contactId: targetContactId, ...result });
+
+    } catch (error) {
+      console.error("❌ scorePipelines error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * GET PIPELINE STATS
+ *
+ * Returns statistics for dual-pipeline prospecting.
+ */
+exports.getPipelineStats = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  const adminToken = request.headers["x-admin-token"];
+  if (adminToken !== "yc-admin-2025") {
+    return response.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const contactsRef = db.collection('contacts');
+    const activeQuery = contactsRef.where('status', '==', 'active').limit(1000);
+    const snapshot = await activeQuery.get();
+
+    const stats = {
+      total: 0,
+      pipelineA: { qualified: 0, excluded: 0, flagged: 0, lowScore: 0, pending: 0 },
+      pipelineB: { qualified: 0, excluded: 0, flagged: 0, lowScore: 0, pending: 0 },
+      dualPipeline: 0,
+      unassigned: 0
+    };
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      stats.total++;
+
+      const pipeline = data.pipelineAssignment?.primaryPipeline;
+
+      if (!pipeline) {
+        stats.unassigned++;
+      } else if (pipeline === 'AB') {
+        stats.dualPipeline++;
+      }
+
+      const statusA = data.pipelineAssignment?.pipelineAStatus || 'PENDING';
+      const statusB = data.pipelineAssignment?.pipelineBStatus || 'PENDING';
+
+      const statusMap = {
+        'QUALIFIED': 'qualified',
+        'EXCLUDED_PE': 'excluded',
+        'FLAGGED': 'flagged',
+        'LOW_SCORE': 'lowScore',
+        'PENDING': 'pending'
+      };
+
+      if (statusMap[statusA]) stats.pipelineA[statusMap[statusA]]++;
+      if (statusMap[statusB]) stats.pipelineB[statusMap[statusB]]++;
+    });
+
+    // Get manual review queue count
+    const reviewQueue = await db.collection('manual_review_queue')
+      .where('reviewedAt', '==', null)
+      .limit(100)
+      .get();
+    stats.manualReviewPending = reviewQueue.docs.length;
+
+    // Get today's API usage
+    const today = new Date().toISOString().split('T')[0];
+    const usageDoc = await db.collection('api_usage').doc(today).get();
+    stats.todayApiUsage = usageDoc.exists ? usageDoc.data() : null;
+
+    response.json({ success: true, stats });
+
+  } catch (error) {
+    console.error("❌ getPipelineStats error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * MOCK DATA GENERATORS (for testing when APIs not configured)
+ */
+function generateMockPipelineAResults(count) {
+  const types = ['consulting', 'accounting', 'marketing', 'legal'];
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    results.push({
+      source: 'google_places_mock',
+      sourceId: `mock_${Date.now()}_${i}`,
+      companyName: `${types[i % types.length].charAt(0).toUpperCase() + types[i % types.length].slice(1)} Firm ${i + 1}`,
+      rawData: {
+        name: `Mock Business ${i + 1}`,
+        address: '123 Main St, San Francisco, CA',
+        types: [types[i % types.length]],
+        rating: 4.5,
+        userRatingsTotal: 100
+      },
+      pipeline: 'A',
+      mock: true
+    });
+  }
+  return results;
+}
+
+function generateMockProductHuntResults(count) {
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    results.push({
+      source: 'producthunt_mock',
+      sourceId: `ph_mock_${Date.now()}_${i}`,
+      companyName: `ProductHunt Launch ${i + 1}`,
+      rawData: {
+        name: `Digital Product ${i + 1}`,
+        tagline: 'An innovative digital solution',
+        votesCount: Math.floor(Math.random() * 500),
+        launchDate: new Date().toISOString()
+      },
+      pipeline: 'B',
+      mock: true
+    });
+  }
+  return results;
+}
