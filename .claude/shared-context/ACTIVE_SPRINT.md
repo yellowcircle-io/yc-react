@@ -41,24 +41,33 @@
 
 ---
 
-## ACTUALLY NOT DONE (Verified)
+## ACTUALLY NOT DONE (Verified Dec 16 8PM)
 
 ### P1 - Revenue Critical
 | Item | Status | Blocker |
 |------|--------|---------|
 | Apollo.io Integration | ❌ Not started | Needs API key + implementation |
 | Prospect Enrichment | ❌ Not started | Depends on Apollo |
-| Email → Journey Bridge | ❌ Architecture only | Need `onLeadCreated` trigger logic |
 | Outbound Campaign Seed | ❌ Not started | Need 50+ contacts + journey |
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
 |------|--------|-------|
 | UnitySTUDIO Expansion | ❌ Stubs only | Ad Creative Builder, Social Post Builder |
-| Blog/CMS Frontend | ❌ Backend only | ArticleEditor exists, no public blog |
-| MiniMap Navigation | ❌ Not started | React Flow MiniMap component |
+| Blog Public Display | ❌ Placeholder only | Admin CMS done, BlogPage says "coming soon" |
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
+
+## ACTUALLY DONE (Was marked not done)
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Unity MiniMap | ✅ DONE | Line 6, 153, 3566 in UnityNotesPage.jsx |
+| Email → Journey Bridge | ✅ DONE | `onLeadCreated` Firestore trigger (line 2333 functions/index.js) |
+| n8n Deployment | ✅ DONE | Live on Railway, `{"status":"ok"}` |
+| Contact Dashboard | ✅ DONE | 1,395 lines, full implementation |
+| Trigger Rules | ✅ DONE | 1,281 lines, full implementation |
+| Article CMS Admin | ✅ DONE | ArticleEditorPage, ArticleListPage |
 
 ---
 
@@ -74,22 +83,25 @@
 - ALL other node types lost content when shared
 - Now properly serializes all node data
 
-### Pending Deploy
-- `firebase login --reauth` required (auth expired)
-- Then `firebase deploy --only hosting`
+### Deployed ✅
+- Firebase reauth completed
+- Hosting deployed to production
 
 ---
 
 ## IMMEDIATE ACTIONS
 
-### This Session
-1. [ ] Firebase re-auth and deploy
-2. [ ] Verify Unity sharing fix works in production
+### This Session ✅
+1. [x] Firebase re-auth and deploy - DONE
+2. [x] Verify Unity sharing fix works in production - DONE (screenshot shows working)
+3. [x] Infrastructure audit - MiniMap, Journey Bridge, CMS all verified
 
-### Next Session
-1. [ ] Email → Journey Bridge (connect onLeadCreated to journey)
-2. [ ] Seed outbound campaign (50 contacts)
-3. [ ] Unity MiniMap navigation
+### Next Steps (Priority Order)
+1. [ ] Blog Public Display - Connect ArticleListPage to BlogPage
+2. [ ] Outbound Campaign Seed - 50+ contacts + welcome journey
+3. [ ] Apollo.io Integration - Prospect enrichment
+4. [ ] Auto-Organize Groups - Respect parentId in layout
+5. [ ] UnitySTUDIO Expansion - Ad Creative, Social Post builders
 
 ---
 
