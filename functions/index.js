@@ -4236,3 +4236,510 @@ exports.bulkImportContacts = functions.https.onRequest(async (request, response)
     response.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================
+// Apollo.io Integration for Prospect Enrichment
+// ============================================================
+
+/**
+ * Enrich a single contact using Apollo.io People Enrichment API
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: yc-admin-2025" \
+ *        -d '{"email": "user@company.com"}'
+ */
+exports.enrichContact = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Admin token check
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+      return;
+    }
+
+    const apolloApiKey = functions.config().apollo?.api_key;
+    if (!apolloApiKey) {
+      response.status(500).json({ error: "Apollo API key not configured" });
+      return;
+    }
+
+    const { email, firstName, lastName, domain, linkedinUrl, contactId, updateContact = true } = request.body;
+
+    if (!email && !linkedinUrl) {
+      response.status(400).json({ error: "Either email or linkedinUrl is required" });
+      return;
+    }
+
+    // Build Apollo API request
+    const apolloParams = new URLSearchParams();
+    if (email) apolloParams.append("email", email);
+    if (firstName) apolloParams.append("first_name", firstName);
+    if (lastName) apolloParams.append("last_name", lastName);
+    if (domain) apolloParams.append("domain", domain);
+    if (linkedinUrl) apolloParams.append("linkedin_url", linkedinUrl);
+    apolloParams.append("reveal_personal_emails", "false");
+    apolloParams.append("reveal_phone_number", "true");
+
+    console.log(`🔍 Apollo enrichment request for: ${email || linkedinUrl}`);
+
+    const apolloResponse = await fetch(
+      `https://api.apollo.io/api/v1/people/match?${apolloParams.toString()}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apolloApiKey
+        }
+      }
+    );
+
+    const apolloData = await apolloResponse.json();
+
+    if (!apolloResponse.ok) {
+      console.error("❌ Apollo API error:", apolloData);
+      response.status(apolloResponse.status).json({
+        error: "Apollo API error",
+        details: apolloData
+      });
+      return;
+    }
+
+    const person = apolloData.person;
+    if (!person) {
+      response.json({
+        success: false,
+        message: "No match found in Apollo database",
+        input: { email, firstName, lastName, domain, linkedinUrl }
+      });
+      return;
+    }
+
+    // Extract enriched data
+    const enrichedData = {
+      // Personal info
+      firstName: person.first_name,
+      lastName: person.last_name,
+      name: person.name,
+      email: person.email,
+      phone: person.phone_numbers?.[0]?.sanitized_number || person.phone_numbers?.[0]?.raw_number || null,
+      linkedinUrl: person.linkedin_url,
+      title: person.title,
+      headline: person.headline,
+      photoUrl: person.photo_url,
+
+      // Company info
+      company: person.organization?.name,
+      companyDomain: person.organization?.primary_domain,
+      companyWebsite: person.organization?.website_url,
+      companyLinkedin: person.organization?.linkedin_url,
+      companySize: person.organization?.estimated_num_employees,
+      companyIndustry: person.organization?.industry,
+      companyDescription: person.organization?.short_description,
+      companyFounded: person.organization?.founded_year,
+      companyLocation: person.organization?.city ?
+        `${person.organization.city}, ${person.organization.state}, ${person.organization.country}` : null,
+
+      // Professional details
+      seniority: person.seniority,
+      departments: person.departments,
+      functions: person.functions,
+
+      // Location
+      city: person.city,
+      state: person.state,
+      country: person.country,
+
+      // Apollo metadata
+      apolloId: person.id,
+      apolloEnrichedAt: new Date().toISOString()
+    };
+
+    // Update contact in Firestore if requested
+    let contactUpdated = false;
+    let firestoreContactId = contactId;
+
+    if (updateContact && email) {
+      firestoreContactId = firestoreContactId || generateContactId(email);
+      const contactRef = db.collection("contacts").doc(firestoreContactId);
+      const existingContact = await contactRef.get();
+
+      if (existingContact.exists) {
+        await contactRef.update({
+          // Only update fields that are empty or explicitly from Apollo
+          ...(enrichedData.firstName && !existingContact.data().firstName ? { firstName: enrichedData.firstName } : {}),
+          ...(enrichedData.lastName && !existingContact.data().lastName ? { lastName: enrichedData.lastName } : {}),
+          ...(enrichedData.name && !existingContact.data().name ? { name: enrichedData.name } : {}),
+          ...(enrichedData.phone && !existingContact.data().phone ? { phone: enrichedData.phone } : {}),
+          ...(enrichedData.linkedinUrl && !existingContact.data().linkedinUrl ? { linkedinUrl: enrichedData.linkedinUrl } : {}),
+          ...(enrichedData.title && !existingContact.data().jobTitle ? { jobTitle: enrichedData.title } : {}),
+          ...(enrichedData.company && !existingContact.data().company ? { company: enrichedData.company } : {}),
+          ...(enrichedData.photoUrl && !existingContact.data().avatar ? { avatar: enrichedData.photoUrl } : {}),
+
+          // Always update Apollo enrichment metadata
+          "enrichment.apollo": {
+            ...enrichedData,
+            enrichedAt: admin.firestore.FieldValue.serverTimestamp()
+          },
+          "externalIds.apolloId": enrichedData.apolloId,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: "apollo_enrichment"
+        });
+        contactUpdated = true;
+        console.log(`✅ Contact ${firestoreContactId} enriched with Apollo data`);
+      }
+    }
+
+    response.json({
+      success: true,
+      enriched: enrichedData,
+      contactUpdated,
+      contactId: firestoreContactId
+    });
+
+  } catch (error) {
+    console.error("❌ enrichContact error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Bulk enrich contacts using Apollo.io (up to 10 per request)
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkEnrichContacts" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: yc-admin-2025" \
+ *        -d '{"emails": ["a@b.com", "c@d.com"], "updateContacts": true}'
+ */
+exports.bulkEnrichContacts = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Admin token check
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+      return;
+    }
+
+    const apolloApiKey = functions.config().apollo?.api_key;
+    if (!apolloApiKey) {
+      response.status(500).json({ error: "Apollo API key not configured" });
+      return;
+    }
+
+    const { emails, updateContacts = true } = request.body;
+
+    if (!emails || !Array.isArray(emails) || emails.length === 0) {
+      response.status(400).json({ error: "emails array is required and must not be empty" });
+      return;
+    }
+
+    if (emails.length > 10) {
+      response.status(400).json({ error: "Maximum 10 emails per request (Apollo API limit)" });
+      return;
+    }
+
+    console.log(`🔍 Apollo bulk enrichment for ${emails.length} emails`);
+
+    // Apollo Bulk People Enrichment API
+    const apolloResponse = await fetch(
+      "https://api.apollo.io/api/v1/people/bulk_match",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apolloApiKey
+        },
+        body: JSON.stringify({
+          details: emails.map(email => ({ email })),
+          reveal_personal_emails: false,
+          reveal_phone_number: true
+        })
+      }
+    );
+
+    const apolloData = await apolloResponse.json();
+
+    if (!apolloResponse.ok) {
+      console.error("❌ Apollo API error:", apolloData);
+      response.status(apolloResponse.status).json({
+        error: "Apollo API error",
+        details: apolloData
+      });
+      return;
+    }
+
+    const results = {
+      total: emails.length,
+      enriched: 0,
+      notFound: 0,
+      contactsUpdated: 0,
+      details: []
+    };
+
+    const matches = apolloData.matches || [];
+
+    for (let i = 0; i < emails.length; i++) {
+      const email = emails[i];
+      const match = matches[i];
+      const person = match?.person;
+
+      if (!person) {
+        results.notFound++;
+        results.details.push({ email, status: "not_found" });
+        continue;
+      }
+
+      results.enriched++;
+
+      const enrichedData = {
+        firstName: person.first_name,
+        lastName: person.last_name,
+        name: person.name,
+        email: person.email,
+        phone: person.phone_numbers?.[0]?.sanitized_number || null,
+        linkedinUrl: person.linkedin_url,
+        title: person.title,
+        company: person.organization?.name,
+        companyDomain: person.organization?.primary_domain,
+        companySize: person.organization?.estimated_num_employees,
+        companyIndustry: person.organization?.industry,
+        seniority: person.seniority,
+        apolloId: person.id
+      };
+
+      // Update contact in Firestore
+      if (updateContacts) {
+        const contactId = generateContactId(email);
+        const contactRef = db.collection("contacts").doc(contactId);
+        const existingContact = await contactRef.get();
+
+        if (existingContact.exists) {
+          await contactRef.update({
+            ...(enrichedData.firstName && !existingContact.data().firstName ? { firstName: enrichedData.firstName } : {}),
+            ...(enrichedData.lastName && !existingContact.data().lastName ? { lastName: enrichedData.lastName } : {}),
+            ...(enrichedData.name && !existingContact.data().name ? { name: enrichedData.name } : {}),
+            ...(enrichedData.phone && !existingContact.data().phone ? { phone: enrichedData.phone } : {}),
+            ...(enrichedData.linkedinUrl && !existingContact.data().linkedinUrl ? { linkedinUrl: enrichedData.linkedinUrl } : {}),
+            ...(enrichedData.title && !existingContact.data().jobTitle ? { jobTitle: enrichedData.title } : {}),
+            ...(enrichedData.company && !existingContact.data().company ? { company: enrichedData.company } : {}),
+            "enrichment.apollo": enrichedData,
+            "externalIds.apolloId": enrichedData.apolloId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: "apollo_bulk_enrichment"
+          });
+          results.contactsUpdated++;
+        }
+      }
+
+      results.details.push({ email, status: "enriched", data: enrichedData });
+    }
+
+    console.log(`✅ Apollo bulk enrichment: ${results.enriched} enriched, ${results.notFound} not found, ${results.contactsUpdated} contacts updated`);
+
+    response.json({
+      success: true,
+      results
+    });
+
+  } catch (error) {
+    console.error("❌ bulkEnrichContacts error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Search Apollo.io for prospects matching criteria
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchProspects" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: yc-admin-2025" \
+ *        -d '{"titles": ["VP Marketing", "CMO"], "industries": ["Software"], "employeeCount": "11,50", "limit": 25}'
+ */
+exports.searchProspects = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Admin token check
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+      return;
+    }
+
+    const apolloApiKey = functions.config().apollo?.api_key;
+    if (!apolloApiKey) {
+      response.status(500).json({ error: "Apollo API key not configured" });
+      return;
+    }
+
+    const {
+      titles = [],
+      industries = [],
+      keywords = [],
+      employeeCount = null, // e.g., "11,50" for 11-50 employees
+      locations = [],
+      seniorities = [], // e.g., ["vp", "c_suite", "director"]
+      limit = 25,
+      page = 1,
+      importToFirestore = false,
+      tags = []
+    } = request.body;
+
+    console.log(`🔍 Apollo prospect search: titles=${titles.join(",")}, industries=${industries.join(",")}`);
+
+    // Build Apollo search request
+    const searchParams = {
+      page,
+      per_page: Math.min(limit, 100),
+      person_titles: titles,
+      organization_industry_tag_ids: industries,
+      q_keywords: keywords.join(" "),
+      person_seniorities: seniorities
+    };
+
+    // Add employee count range if specified
+    if (employeeCount) {
+      const [min, max] = employeeCount.split(",").map(n => parseInt(n.trim()));
+      searchParams.organization_num_employees_ranges = [`${min},${max}`];
+    }
+
+    // Add locations
+    if (locations.length > 0) {
+      searchParams.person_locations = locations;
+    }
+
+    const apolloResponse = await fetch(
+      "https://api.apollo.io/api/v1/mixed_people/search",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apolloApiKey
+        },
+        body: JSON.stringify(searchParams)
+      }
+    );
+
+    const apolloData = await apolloResponse.json();
+
+    if (!apolloResponse.ok) {
+      console.error("❌ Apollo API error:", apolloData);
+      response.status(apolloResponse.status).json({
+        error: "Apollo API error",
+        details: apolloData
+      });
+      return;
+    }
+
+    const people = apolloData.people || [];
+    const pagination = apolloData.pagination || {};
+
+    const results = {
+      total: pagination.total_entries || people.length,
+      page: pagination.page || page,
+      perPage: pagination.per_page || limit,
+      totalPages: pagination.total_pages || 1,
+      returned: people.length,
+      imported: 0,
+      prospects: []
+    };
+
+    for (const person of people) {
+      const prospect = {
+        email: person.email,
+        firstName: person.first_name,
+        lastName: person.last_name,
+        name: person.name,
+        title: person.title,
+        linkedinUrl: person.linkedin_url,
+        phone: person.phone_numbers?.[0]?.sanitized_number || null,
+        company: person.organization?.name,
+        companyDomain: person.organization?.primary_domain,
+        companySize: person.organization?.estimated_num_employees,
+        companyIndustry: person.organization?.industry,
+        seniority: person.seniority,
+        city: person.city,
+        state: person.state,
+        country: person.country,
+        apolloId: person.id
+      };
+
+      results.prospects.push(prospect);
+
+      // Import to Firestore if requested
+      if (importToFirestore && prospect.email) {
+        const contactId = generateContactId(prospect.email);
+        const contactRef = db.collection("contacts").doc(contactId);
+        const existing = await contactRef.get();
+
+        if (!existing.exists) {
+          await contactRef.set({
+            id: contactId,
+            email: prospect.email.toLowerCase().trim(),
+            firstName: prospect.firstName || "",
+            lastName: prospect.lastName || "",
+            name: prospect.name || "",
+            company: prospect.company || "",
+            jobTitle: prospect.title || "",
+            linkedinUrl: prospect.linkedinUrl || "",
+            phone: prospect.phone || "",
+            type: "lead",
+            stage: "new",
+            tags: ["apollo-search", ...tags],
+            score: 0,
+            scoreBreakdown: { engagement: 0, behavior: 0, profile: 0, recency: 0 },
+            source: {
+              original: "apollo_search",
+              medium: "outbound",
+              campaign: tags[0] || "prospect-search",
+              referrer: "",
+              landingPage: ""
+            },
+            engagement: { emailsSent: 0, emailsOpened: 0, emailsClicked: 0, toolsUsed: [], assessmentScore: null, pageViews: 0 },
+            journeys: { active: [], completed: [], history: [] },
+            externalIds: { apolloId: prospect.apolloId, airtableId: null, hubspotId: null, stripeId: null },
+            syncStatus: { airtable: "not_synced", airtableLastSync: null },
+            preferences: { emailOptIn: true, emailFrequency: "weekly", doNotContact: false },
+            notes: "",
+            customFields: {},
+            metadata: { importedVia: "apollo_search" },
+            "enrichment.apollo": prospect,
+            status: "active",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: "apollo_search",
+            updatedBy: "apollo_search"
+          });
+          results.imported++;
+        }
+      }
+    }
+
+    console.log(`✅ Apollo search: ${results.returned} prospects found, ${results.imported} imported`);
+
+    response.json({
+      success: true,
+      results
+    });
+
+  } catch (error) {
+    console.error("❌ searchProspects error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});

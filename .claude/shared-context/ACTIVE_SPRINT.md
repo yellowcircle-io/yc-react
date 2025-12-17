@@ -41,14 +41,14 @@
 
 ---
 
-## ACTUALLY NOT DONE (Verified Dec 16 11PM)
+## ACTUALLY NOT DONE (Verified Dec 17 2AM)
 
 ### P1 - Revenue Critical
 | Item | Status | Blocker |
 |------|--------|---------|
-| Apollo.io Integration | ❌ Not started | Needs API key + implementation |
-| Prospect Enrichment | ❌ Not started | Depends on Apollo |
-| Import 50+ Contacts | ❌ Waiting | Infrastructure ready, need prospect list |
+| Apollo.io Integration | ⚠️ Functions deployed | API key on free plan - needs upgrade |
+| Prospect Enrichment | ⚠️ Ready | Waiting for Apollo paid plan |
+| Import 50+ Contacts | ❌ Waiting | Need prospect list from Apollo search |
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
@@ -143,6 +143,24 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImport
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/seedWelcomeJourney" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: yc-admin-2025"
+```
+
+**Apollo.io Functions (requires paid plan):**
+```bash
+# Enrich single contact
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
+  -H "x-admin-token: yc-admin-2025" \
+  -d '{"email": "user@company.com"}'
+
+# Bulk enrich (up to 10)
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkEnrichContacts" \
+  -H "x-admin-token: yc-admin-2025" \
+  -d '{"emails": ["a@b.com", "c@d.com"]}'
+
+# Search prospects + import
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchProspects" \
+  -H "x-admin-token: yc-admin-2025" \
+  -d '{"titles": ["VP Marketing"], "seniorities": ["vp", "director"], "limit": 50, "importToFirestore": true}'
 ```
 
 ### Key URLs
