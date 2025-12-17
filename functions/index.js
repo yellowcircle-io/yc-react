@@ -4079,3 +4079,160 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
     response.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * Admin: Bulk import contacts for outbound campaigns
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: yc-admin-2025" \
+ *        -d '{"contacts": [{"email": "a@b.com", "name": "Test", "company": "Acme"}], "source": "outbound", "tags": ["outbound-campaign"]}'
+ */
+exports.bulkImportContacts = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Admin token check
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+      return;
+    }
+
+    const { contacts, source = "outbound", tags = [], enrollJourney = null, dryRun = false } = request.body;
+
+    if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {
+      response.status(400).json({ error: "contacts array is required and must not be empty" });
+      return;
+    }
+
+    if (contacts.length > 100) {
+      response.status(400).json({ error: "Maximum 100 contacts per request" });
+      return;
+    }
+
+    const results = {
+      total: contacts.length,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: [],
+      contacts: []
+    };
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const batch = db.batch();
+
+    for (const contact of contacts) {
+      const { email, name, company, jobTitle, linkedinUrl, phone, customFields } = contact;
+
+      if (!email) {
+        results.skipped++;
+        results.errors.push({ email: null, error: "Missing email" });
+        continue;
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+      const contactId = generateContactId(normalizedEmail);
+      const contactRef = db.collection("contacts").doc(contactId);
+
+      try {
+        const existing = await contactRef.get();
+        const nameParts = (name || "").trim().split(/\s+/);
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || "";
+
+        const contactData = {
+          id: contactId,
+          email: normalizedEmail,
+          name: (name || "").trim(),
+          firstName,
+          lastName,
+          company: (company || "").trim(),
+          jobTitle: (jobTitle || "").trim(),
+          linkedinUrl: (linkedinUrl || "").trim(),
+          phone: (phone || "").trim(),
+          type: "lead",
+          stage: "new",
+          tags: [...new Set([...(existing.exists ? existing.data().tags || [] : []), ...tags])],
+          score: existing.exists ? existing.data().score || 0 : 0,
+          scoreBreakdown: existing.exists ? existing.data().scoreBreakdown : { engagement: 0, behavior: 0, profile: 0, recency: 0 },
+          source: {
+            original: source,
+            medium: "outbound",
+            campaign: tags[0] || "bulk-import",
+            referrer: "",
+            landingPage: ""
+          },
+          engagement: existing.exists ? existing.data().engagement : {
+            emailsSent: 0,
+            emailsOpened: 0,
+            emailsClicked: 0,
+            toolsUsed: [],
+            assessmentScore: null,
+            pageViews: 0
+          },
+          journeys: existing.exists ? existing.data().journeys : { active: [], completed: [], history: [] },
+          externalIds: existing.exists ? existing.data().externalIds : { airtableId: null, hubspotId: null, stripeId: null },
+          syncStatus: existing.exists ? existing.data().syncStatus : { airtable: "not_synced", airtableLastSync: null },
+          preferences: existing.exists ? existing.data().preferences : {
+            emailOptIn: true,
+            emailFrequency: "weekly",
+            doNotContact: false
+          },
+          notes: existing.exists ? existing.data().notes : "",
+          customFields: { ...(existing.exists ? existing.data().customFields : {}), ...(customFields || {}) },
+          metadata: { ...(existing.exists ? existing.data().metadata : {}), importedVia: "bulkImportContacts" },
+          status: "active",
+          updatedAt: now,
+          updatedBy: "bulkImportContacts"
+        };
+
+        if (!existing.exists) {
+          contactData.createdAt = now;
+          contactData.createdBy = "bulkImportContacts";
+        }
+
+        if (!dryRun) {
+          batch.set(contactRef, contactData, { merge: true });
+        }
+
+        if (existing.exists) {
+          results.updated++;
+        } else {
+          results.created++;
+        }
+
+        results.contacts.push({
+          email: normalizedEmail,
+          contactId,
+          status: existing.exists ? "updated" : "created"
+        });
+
+      } catch (contactError) {
+        results.skipped++;
+        results.errors.push({ email, error: contactError.message });
+      }
+    }
+
+    if (!dryRun && (results.created + results.updated) > 0) {
+      await batch.commit();
+    }
+
+    console.log(`✅ Bulk import: ${results.created} created, ${results.updated} updated, ${results.skipped} skipped (dryRun: ${dryRun})`);
+
+    response.json({
+      success: true,
+      dryRun,
+      results
+    });
+
+  } catch (error) {
+    console.error("❌ bulkImportContacts error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});

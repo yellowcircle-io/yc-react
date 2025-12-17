@@ -41,14 +41,14 @@
 
 ---
 
-## ACTUALLY NOT DONE (Verified Dec 16 8PM)
+## ACTUALLY NOT DONE (Verified Dec 16 11PM)
 
 ### P1 - Revenue Critical
 | Item | Status | Blocker |
 |------|--------|---------|
 | Apollo.io Integration | ❌ Not started | Needs API key + implementation |
 | Prospect Enrichment | ❌ Not started | Depends on Apollo |
-| Outbound Campaign Seed | ❌ Not started | Need 50+ contacts + journey |
+| Import 50+ Contacts | ❌ Waiting | Infrastructure ready, need prospect list |
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
@@ -71,21 +71,27 @@
 
 ---
 
-## RECENT SESSION FIXES (Dec 16, 2025)
+## RECENT SESSION FIXES (Dec 16-17, 2025)
 
 ### Committed & Pushed
 1. `67387ef` - GitGuardian + Sentry URL fixes
 2. `0b398fb` - **CRITICAL:** Unity sharing now preserves ALL node data
 3. `449db4e` - addClientEmail admin function
+4. `69fb4bd` - Blog public display (wire articles to BlogPage)
+5. (pending) - bulkImportContacts function + welcome journey seed
 
 ### Bug Fixed
 - Unity sharing was only saving photoNode fields
 - ALL other node types lost content when shared
 - Now properly serializes all node data
 
+### New Features
+- **Blog Public Display**: BlogPage now fetches and displays published articles from Firestore
+- **Outbound Infrastructure**: Welcome journey seeded, bulk import function deployed
+
 ### Deployed ✅
-- Firebase reauth completed
-- Hosting deployed to production
+- Firebase Hosting: yellowcircle.io (blog page live)
+- Firebase Functions: bulkImportContacts deployed
 
 ---
 
@@ -107,12 +113,36 @@
 
 ## QUICK REFERENCE
 
-### New Admin Function (Dec 16)
+### Admin Functions (Dec 16-17)
+
+**Add Client to Whitelist:**
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: yc-admin-2025" \
   -d '{"email": "user@example.com"}'
+```
+
+**Bulk Import Contacts:**
+```bash
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
+  -H "Content-Type: application/json" \
+  -H "x-admin-token: yc-admin-2025" \
+  -d '{
+    "contacts": [
+      {"email": "a@b.com", "name": "Test User", "company": "Acme Corp", "jobTitle": "CEO"}
+    ],
+    "source": "outbound",
+    "tags": ["outbound-campaign"],
+    "dryRun": false
+  }'
+```
+
+**Seed Welcome Journey:**
+```bash
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/seedWelcomeJourney" \
+  -H "Content-Type: application/json" \
+  -H "x-admin-token: yc-admin-2025"
 ```
 
 ### Key URLs
