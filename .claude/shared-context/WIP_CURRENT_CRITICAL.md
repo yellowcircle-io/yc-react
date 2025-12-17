@@ -2,9 +2,9 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 17, 2025 at 3:30 AM PST
-**Machine:** Mac Mini
-**Status:** ✅ Dual-Project Implementation Complete + Scope Updates Applied
+**Updated:** December 17, 2025 at 4:15 AM PST
+**Machine:** Mac Mini → Ready for MacBook Air
+**Status:** ✅ Production Deployed + Security Fix Applied
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,37 +12,29 @@
 
 ---
 
-## 🔥 Latest Session (Dec 17, 2025 ~3:30 AM)
+## 🔥 Latest Session (Dec 17, 2025 ~4:15 AM) - Mac Mini
 
-### ✅ SCOPE CHANGES + BUG FIXES APPLIED
+### ✅ DEPLOYED TO PRODUCTION + SECURITY FIX
 
-**Scope Changes:**
-- Replaced Crunchbase with **Y Combinator** (GitHub public data)
-- Replaced OpenCorporates with **Growjo** (growth data)
-- Google Places API Key: ⚠️ ROTATED - Get new key from GCP Console
+**Completed:**
+- Built and deployed to Firebase Hosting (https://yellowcircle.io)
+- Pushed to GitHub (commit `2762d9e`)
+- Added entry to Notion Trimurti database
+- **SECURITY FIX:** Removed exposed Google API key from git history (force push)
+- Rotated API key and configured new key in Firebase functions
 
-**Bug Fixes:**
-- Fixed ContactDashboardPage dynamic import error (cleared Vite cache)
-- Updated all Playwright tests from `/unity-studio` to `/unity-notes` (correct route)
-- UnitySTUDIO components exist within `/unity-notes`, not separate route
+**Google Places API:**
+- Old key rotated (was exposed in commit)
+- New key configured: `firebase functions:config:set googleplaces.api_key="[CONFIGURED]"`
+- Still need to deploy functions for key to take effect
 
-**Files Modified:**
-- `functions/index.js` - Updated discoverPipelineB for YC + Growjo sources
-- `tests/e2e/unity-studio.spec.js` - All routes changed to /unity-notes
-- `dev-context/REMAINING_USER_ACTIONS.md` - Updated API key info + routes
-
-**Remaining User Actions:**
-1. Re-authenticate Firebase: `firebase login --reauth`
-2. Configure Google Places API key (get new key from GCP Console first):
-   ```bash
-   firebase functions:config:set googleplaces.api_key="YOUR_NEW_API_KEY"
-   ```
-3. Deploy functions: `firebase deploy --only functions`
-4. Run test scripts to verify implementation
+**Next Steps:**
+1. Deploy Firebase functions: `firebase deploy --only functions`
+2. Test pipeline discovery functions
 
 ---
 
-## 🔥 Previous Session (Dec 17, 2025 ~2:00 AM)
+## 🔥 Previous Session (Dec 17, 2025 ~3:30 AM)
 
 ### ✅ DUAL-PROJECT IMPLEMENTATION COMPLETE
 
