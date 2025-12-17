@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { Handle, Position, NodeToolbar } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 
 /**
  * TodoNode - Checklist/task list node
@@ -87,49 +87,96 @@ const TodoNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Delete button toolbar */}
-      <NodeToolbar isVisible={isHovered || selected} position={Position.Top}>
-        {data.onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onDelete(id);
-            }}
-            style={{
-              width: '24px',
-              height: '24px',
-              minWidth: '24px',
-              minHeight: '24px',
-              padding: 0,
-              borderRadius: '50%',
-              backgroundColor: '#374151',
-              border: '2px solid white',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '400',
-              lineHeight: 1,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              zIndex: 10,
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1f2937';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#374151';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title="Delete node"
-          >
-            ×
-          </button>
-        )}
-      </NodeToolbar>
+      {/* Delete button - positioned directly on node like WaitNode */}
+      {(isHovered || selected) && data.onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onDelete(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            right: '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: '#374151',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#1f2937';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#374151';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Delete node"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Star button - visible on hover or if starred */}
+      {(isHovered || selected || data.isStarred) && data.onToggleStar && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onToggleStar(id);
+          }}
+          className="nodrag"
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            left: '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: data.isStarred ? '#fbbf24' : '#6b7280',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#f59e0b' : '#4b5563';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#fbbf24' : '#6b7280';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={data.isStarred ? 'Unstar node' : 'Star node'}
+        >
+          ★
+        </button>
+      )}
 
       {/* Header */}
       <div style={{

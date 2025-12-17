@@ -31,12 +31,13 @@ const PhotoUploadModal = ({
   const touchStartX = useRef(0);
   const hasCardTypes = cardTypes && onAddCard;
 
-  // In MAP mode, start directly on page 1 (MAP Actions) when modal opens
+  // Start on page 1 (Card Types / MAP Actions) when modal opens
+  // Both notes and map modes now default to the card/action selection
   React.useEffect(() => {
-    if (isOpen && currentMode === 'map') {
-      setCurrentPage(1);
+    if (isOpen) {
+      setCurrentPage(1); // Card Types (notes mode) or MAP Actions (map mode)
     }
-  }, [isOpen, currentMode]);
+  }, [isOpen]);
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);

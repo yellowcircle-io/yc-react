@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
-import { Handle, Position, NodeToolbar } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 import { getLLMAdapter, getLLMAdapterByName } from '../../adapters/llm';
 import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../contexts/AuthContext';
@@ -49,13 +49,15 @@ async function decryptSettings(encryptedObj, password) {
 }
 
 // Get API keys from Hub's encrypted settings or environment
-async function getHubApiKeys() {
+// userId is required to decrypt Hub settings (encryption is user-specific)
+async function getHubApiKeys(userId) {
   try {
     const savedSettings = localStorage.getItem('outreach_business_settings_v4');
-    if (savedSettings) {
+    if (savedSettings && userId) {
       const parsed = JSON.parse(savedSettings);
-      // Try to decrypt with the known password hash
-      const decrypted = await decryptSettings(parsed, atob('eWMyMDI1b3V0cmVhY2g='));
+      // Decrypt with user-specific key (matches OutreachBusinessPage)
+      const encryptionPassword = `yc-outreach-${userId}`;
+      const decrypted = await decryptSettings(parsed, encryptionPassword);
       if (decrypted) {
         // Hub stores keys directly as groqApiKey, perplexityApiKey
         return {
@@ -92,11 +94,16 @@ const TextNoteNode = memo(({ data, id, selected }) => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // AI Regeneration state (for AI-generated notes)
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratePrompt, setRegeneratePrompt] = useState(data.aiPrompt || '');
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
   // Credits hook for AI usage restrictions
   const { hasCredits, useCredit: consumeCredit, tier } = useCredits();
 
-  // Authentication for admin check
-  const { isAdmin } = useAuth();
+  // Authentication for admin check and user ID (needed for Hub API key decryption)
+  const { isAdmin, user } = useAuth();
 
   // Check if user has unlimited access (admin/premium)
   const hasUnlimitedAccess = useCallback(() => {
@@ -139,6 +146,45 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     }
   }, [data.title, data.content, data.url, data.aiMessages, data.linkPreview]);
 
+  // Detect video/media type from URL
+  const detectMediaType = useCallback((url) => {
+    if (!url) return null;
+    const lowerUrl = url.toLowerCase();
+
+    // YouTube
+    const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+
+    // Vimeo
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+
+    // Twitter/X
+    if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
+      const tweetMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+      if (tweetMatch) return { type: 'twitter', id: tweetMatch[1] };
+    }
+
+    // TikTok
+    if (lowerUrl.includes('tiktok.com')) {
+      return { type: 'tiktok', url };
+    }
+
+    // Instagram
+    if (lowerUrl.includes('instagram.com')) {
+      const postMatch = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+      if (postMatch) return { type: 'instagram', id: postMatch[1] };
+    }
+
+    // Spotify
+    if (lowerUrl.includes('spotify.com')) {
+      const spotifyMatch = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
+      if (spotifyMatch) return { type: 'spotify', mediaType: spotifyMatch[1], id: spotifyMatch[2] };
+    }
+
+    return null;
+  }, []);
+
   // Fetch rich link preview (Open Graph) when URL changes
   useEffect(() => {
     if (cardType !== 'link' || !localUrl) return;
@@ -149,40 +195,88 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     const fetchLinkPreview = async () => {
       setIsLoadingPreview(true);
       try {
-        // Try to fetch Open Graph data via a CORS-friendly service
-        // Using jsonlink.io free tier (no API key needed)
-        const response = await fetch(
-          `https://jsonlink.io/api/extract?url=${encodeURIComponent(localUrl)}`,
-          { signal: AbortSignal.timeout(5000) }
-        );
+        // Detect if this is a video/media URL
+        const mediaInfo = detectMediaType(localUrl);
+        const hostname = new URL(localUrl).hostname;
+        const favicon = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
 
-        if (response.ok) {
-          const ogData = await response.json();
-          const preview = {
-            url: localUrl,
-            title: ogData.title || null,
-            description: ogData.description || null,
-            image: ogData.images?.[0] || null,
-            siteName: ogData.domain || null,
-            favicon: `https://www.google.com/s2/favicons?domain=${new URL(localUrl).hostname}&sz=32`,
-          };
-          setLinkPreview(preview);
+        let ogData = null;
 
-          // Save preview to node data for persistence
-          if (data.onUpdate) {
-            data.onUpdate({ linkPreview: preview });
+        // Try microlink.io first (more reliable for OG data)
+        try {
+          const microlinkResponse = await fetch(
+            `https://api.microlink.io?url=${encodeURIComponent(localUrl)}`,
+            { signal: AbortSignal.timeout(8000) }
+          );
+          if (microlinkResponse.ok) {
+            const result = await microlinkResponse.json();
+            if (result.status === 'success' && result.data) {
+              ogData = {
+                title: result.data.title,
+                description: result.data.description,
+                image: result.data.image?.url || result.data.logo?.url,
+                siteName: result.data.publisher || hostname.replace('www.', ''),
+              };
+            }
           }
+        } catch (e) {
+          console.warn('Microlink fetch failed, trying fallback:', e.message);
+        }
+
+        // Fallback to jsonlink.io if microlink fails
+        if (!ogData?.title && !ogData?.image) {
+          try {
+            const jsonlinkResponse = await fetch(
+              `https://jsonlink.io/api/extract?url=${encodeURIComponent(localUrl)}`,
+              { signal: AbortSignal.timeout(5000) }
+            );
+            if (jsonlinkResponse.ok) {
+              const jsonData = await jsonlinkResponse.json();
+              ogData = {
+                title: jsonData.title || ogData?.title,
+                description: jsonData.description || ogData?.description,
+                image: jsonData.images?.[0] || ogData?.image,
+                siteName: jsonData.domain || ogData?.siteName,
+              };
+            }
+          } catch (e) {
+            console.warn('Jsonlink fetch also failed:', e.message);
+          }
+        }
+
+        const preview = {
+          url: localUrl,
+          title: ogData?.title || null,
+          description: ogData?.description || null,
+          image: ogData?.image || null,
+          siteName: ogData?.siteName || hostname.replace('www.', ''),
+          favicon: favicon,
+          mediaType: mediaInfo?.type || null,
+          mediaId: mediaInfo?.id || null,
+          mediaInfo: mediaInfo,
+        };
+
+        setLinkPreview(preview);
+
+        // Save preview to node data for persistence
+        if (data.onUpdate) {
+          data.onUpdate({ linkPreview: preview });
         }
       } catch (err) {
         // Fallback to basic preview on error
         console.warn('Link preview fetch failed:', err);
+        const mediaInfo = detectMediaType(localUrl);
+        const hostname = new URL(localUrl).hostname;
         const basicPreview = {
           url: localUrl,
           title: null,
           description: null,
           image: null,
-          siteName: new URL(localUrl).hostname.replace('www.', ''),
-          favicon: `https://www.google.com/s2/favicons?domain=${new URL(localUrl).hostname}&sz=32`,
+          siteName: hostname.replace('www.', ''),
+          favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`,
+          mediaType: mediaInfo?.type || null,
+          mediaId: mediaInfo?.id || null,
+          mediaInfo: mediaInfo,
         };
         setLinkPreview(basicPreview);
       } finally {
@@ -193,7 +287,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     // Debounce the fetch
     const timer = setTimeout(fetchLinkPreview, 500);
     return () => clearTimeout(timer);
-  }, [localUrl, cardType, linkPreview?.url, data]);
+  }, [localUrl, cardType, linkPreview?.url, data, detectMediaType]);
 
   // Auto-scroll thread to bottom when new messages arrive
   useEffect(() => {
@@ -380,8 +474,8 @@ const TextNoteNode = memo(({ data, id, selected }) => {
 
     setIsAiLoading(true);
     try {
-      // First try to get API keys from Hub's encrypted settings
-      const hubKeys = await getHubApiKeys();
+      // First try to get API keys from Hub's encrypted settings (requires user ID)
+      const hubKeys = await getHubApiKeys(user?.uid);
       let adapter = null;
       let providerUsed = '';
 
@@ -484,7 +578,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
     } finally {
       setIsAiLoading(false);
     }
-  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext, hasUnlimitedAccess, hasCredits, consumeCredit]);
+  }, [aiInput, aiMessages, isAiLoading, id, cardType, data, localTitle, localContent, localUrl, gatherPageContext, hasUnlimitedAccess, hasCredits, consumeCredit, user]);
 
   const baseStyles = {
     backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
@@ -532,21 +626,18 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         }}
       />
 
-      {/* Delete button - uses NodeToolbar (portal) to avoid clipping */}
-      {/* Functionality matches UnityMAP WaitNode: hover-only visibility */}
-      <NodeToolbar
-        isVisible={isHovered}
-        position={Position.Top}
-        align="end"
-        offset={8}
-      >
+      {/* Delete button - positioned directly on node like WaitNode */}
+      {isHovered && data.onDelete && (
         <button
           className="nodrag nopan"
           onClick={(e) => {
             e.stopPropagation();
-            if (data.onDelete) data.onDelete(id);
+            data.onDelete(id);
           }}
           style={{
+            position: 'absolute',
+            top: '-6px',
+            right: '-6px',
             width: '24px',
             height: '24px',
             minWidth: '24px',
@@ -579,7 +670,53 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         >
           ×
         </button>
-      </NodeToolbar>
+      )}
+
+      {/* Star button - visible on hover or if starred */}
+      {(isHovered || selected || data.isStarred) && data.onToggleStar && (
+        <button
+          className="nodrag nopan"
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onToggleStar(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            left: '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: data.isStarred ? '#fbbf24' : '#6b7280',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#f59e0b' : '#4b5563';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#fbbf24' : '#6b7280';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={data.isStarred ? 'Unstar node' : 'Star node'}
+        >
+          ★
+        </button>
+      )}
 
       {/* Edit hint on hover - matches UnityMAP WaitNode pattern */}
       {isHovered && (
@@ -679,31 +816,24 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               </a>
             )}
           </div>
-          {/* Rich Link Preview (iMessage-style) */}
+          {/* Rich Link Preview (iMessage-style with multimedia) */}
           {localUrl && (
-            <a
-              href={localUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <div
               className="nodrag nopan"
               style={{
-                display: 'block',
                 backgroundColor: isDarkTheme ? '#1f2937' : '#f8fafc',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 border: `1px solid ${isDarkTheme ? '#374151' : '#e2e8f0'}`,
-                textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                cursor: 'pointer',
                 overflow: 'hidden',
               }}
             >
               {/* Loading State */}
               {isLoadingPreview && (
                 <div style={{
-                  padding: '16px',
+                  padding: '20px',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '8px',
                   color: isDarkTheme ? '#9ca3af' : '#64748b',
                   fontSize: '11px',
@@ -713,28 +843,232 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
                 </div>
               )}
 
-              {/* Rich Preview with Image */}
-              {!isLoadingPreview && linkPreview?.image && (
+              {/* YouTube Embed */}
+              {!isLoadingPreview && linkPreview?.mediaType === 'youtube' && linkPreview?.mediaId && (
                 <div>
-                  {/* Preview Image */}
                   <div style={{
+                    position: 'relative',
                     width: '100%',
-                    height: '120px',
-                    backgroundColor: isDarkTheme ? '#111827' : '#e5e7eb',
-                    overflow: 'hidden',
+                    paddingBottom: '56.25%', // 16:9 aspect ratio
+                    backgroundColor: '#000',
                   }}>
-                    <img
-                      src={linkPreview.image}
-                      alt=""
+                    <iframe
+                      src={`https://www.youtube.com/embed/${linkPreview.mediaId}?rel=0`}
+                      title={linkPreview.title || 'YouTube video'}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
                       style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
                       }}
-                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
                     />
                   </div>
-                  {/* Text Content */}
+                  <a
+                    href={localUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div style={{ padding: '10px 12px' }}>
+                      <div style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: isDarkTheme ? '#f3f4f6' : '#1e293b',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginBottom: '4px',
+                      }}>
+                        {linkPreview.title || 'YouTube Video'}
+                      </div>
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        <span style={{ color: '#ff0000' }}>▶</span> youtube.com
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              )}
+
+              {/* Vimeo Embed */}
+              {!isLoadingPreview && linkPreview?.mediaType === 'vimeo' && linkPreview?.mediaId && (
+                <div>
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '56.25%',
+                    backgroundColor: '#000',
+                  }}>
+                    <iframe
+                      src={`https://player.vimeo.com/video/${linkPreview.mediaId}?title=0&byline=0&portrait=0`}
+                      title={linkPreview.title || 'Vimeo video'}
+                      frameBorder="0"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </div>
+                  <a
+                    href={localUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div style={{ padding: '10px 12px' }}>
+                      <div style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: isDarkTheme ? '#f3f4f6' : '#1e293b',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {linkPreview.title || 'Vimeo Video'}
+                      </div>
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        marginTop: '4px',
+                      }}>
+                        <span style={{ color: '#1ab7ea' }}>▶</span> vimeo.com
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              )}
+
+              {/* Spotify Embed */}
+              {!isLoadingPreview && linkPreview?.mediaType === 'spotify' && linkPreview?.mediaInfo && (
+                <div>
+                  <iframe
+                    src={`https://open.spotify.com/embed/${linkPreview.mediaInfo.mediaType}/${linkPreview.mediaInfo.id}?theme=0`}
+                    width="100%"
+                    height={linkPreview.mediaInfo.mediaType === 'track' ? '80' : '152'}
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    style={{ borderRadius: '12px 12px 0 0' }}
+                  />
+                  <a
+                    href={localUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div style={{ padding: '8px 12px', borderTop: `1px solid ${isDarkTheme ? '#374151' : '#e2e8f0'}` }}>
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        <span style={{ color: '#1db954' }}>●</span> spotify.com
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              )}
+
+              {/* Instagram Embed */}
+              {!isLoadingPreview && linkPreview?.mediaType === 'instagram' && linkPreview?.mediaId && (
+                <div>
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '125%', // Instagram aspect ratio (4:5)
+                    backgroundColor: isDarkTheme ? '#111827' : '#fafafa',
+                    overflow: 'hidden',
+                  }}>
+                    <iframe
+                      src={`https://www.instagram.com/p/${linkPreview.mediaId}/embed/captioned/`}
+                      title={linkPreview.title || 'Instagram post'}
+                      frameBorder="0"
+                      scrolling="no"
+                      allowFullScreen
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                      }}
+                    />
+                  </div>
+                  <a
+                    href={localUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div style={{ padding: '8px 12px', borderTop: `1px solid ${isDarkTheme ? '#374151' : '#e2e8f0'}` }}>
+                      <div style={{
+                        fontSize: '10px',
+                        color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        <span style={{
+                          background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontWeight: '700',
+                        }}>●</span> instagram.com
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              )}
+
+              {/* Twitter/X Preview with large image */}
+              {!isLoadingPreview && linkPreview?.mediaType === 'twitter' && (
+                <a
+                  href={localUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ textDecoration: 'none', display: 'block' }}
+                >
+                  {linkPreview.image && (
+                    <div style={{
+                      width: '100%',
+                      height: '140px',
+                      backgroundColor: isDarkTheme ? '#111827' : '#e5e7eb',
+                      overflow: 'hidden',
+                    }}>
+                      <img
+                        src={linkPreview.image}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
                   <div style={{ padding: '10px 12px' }}>
                     <div style={{
                       fontSize: '12px',
@@ -745,7 +1079,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
                       whiteSpace: 'nowrap',
                       marginBottom: '4px',
                     }}>
-                      {linkPreview.title || localTitle || linkPreview.siteName}
+                      {linkPreview.title || 'Post on X'}
                     </div>
                     {linkPreview.description && (
                       <div style={{
@@ -768,33 +1102,108 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
                       alignItems: 'center',
                       gap: '4px',
                     }}>
+                      <span style={{ fontWeight: '700' }}>𝕏</span> x.com
+                    </div>
+                  </div>
+                </a>
+              )}
+
+              {/* Standard Rich Preview with Large Hero Image */}
+              {!isLoadingPreview && !linkPreview?.mediaType && linkPreview?.image && (
+                <a
+                  href={localUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ textDecoration: 'none', display: 'block' }}
+                >
+                  {/* Large Hero Image */}
+                  <div style={{
+                    width: '100%',
+                    height: '150px',
+                    backgroundColor: isDarkTheme ? '#111827' : '#e5e7eb',
+                    overflow: 'hidden',
+                  }}>
+                    <img
+                      src={linkPreview.image}
+                      alt=""
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.2s ease',
+                      }}
+                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                    />
+                  </div>
+                  {/* Text Content */}
+                  <div style={{ padding: '12px' }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: isDarkTheme ? '#f3f4f6' : '#1e293b',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      marginBottom: '4px',
+                    }}>
+                      {linkPreview.title || localTitle || linkPreview.siteName}
+                    </div>
+                    {linkPreview.description && (
+                      <div style={{
+                        fontSize: '11px',
+                        color: isDarkTheme ? '#9ca3af' : '#64748b',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        lineHeight: '1.5',
+                        marginBottom: '8px',
+                      }}>
+                        {linkPreview.description}
+                      </div>
+                    )}
+                    <div style={{
+                      fontSize: '10px',
+                      color: isDarkTheme ? '#6b7280' : '#94a3b8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}>
                       <img
                         src={linkPreview.favicon}
                         alt=""
-                        style={{ width: '12px', height: '12px', borderRadius: '2px' }}
+                        style={{ width: '14px', height: '14px', borderRadius: '3px' }}
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                       {linkPreview.siteName || getLinkPreviewData(localUrl)?.domain}
                     </div>
                   </div>
-                </div>
+                </a>
               )}
 
-              {/* Fallback: Simple Preview (no image) */}
-              {!isLoadingPreview && (!linkPreview?.image) && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 12px',
-                }}>
+              {/* Fallback: Simple Preview (no image, no special media) */}
+              {!isLoadingPreview && !linkPreview?.mediaType && !linkPreview?.image && (
+                <a
+                  href={localUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px',
+                  }}
+                >
                   <img
                     src={linkPreview?.favicon || getLinkPreviewData(localUrl)?.favicon}
                     alt=""
                     style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '6px',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
                       flexShrink: 0,
                       backgroundColor: isDarkTheme ? '#374151' : '#e5e7eb',
                     }}
@@ -802,7 +1211,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontSize: '12px',
+                      fontSize: '13px',
                       fontWeight: '600',
                       color: isDarkTheme ? '#f3f4f6' : '#1e293b',
                       overflow: 'hidden',
@@ -838,9 +1247,9 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
                     </div>
                   </div>
                   <span style={{ fontSize: '14px', color: isDarkTheme ? '#6b7280' : '#94a3b8' }}>→</span>
-                </div>
+                </a>
               )}
-            </a>
+            </div>
           )}
         </div>
       )}
@@ -1223,6 +1632,174 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         </div>
       )}
 
+      {/* AI Regenerate Button - Only for AI-generated notes (not AI chat cards) */}
+      {cardType === 'note' && data.aiGenerated && data.onRegenerate && (
+        <div style={{ padding: '0 12px 8px' }}>
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRegeneratePrompt(data.aiPrompt || '');
+              setShowRegenerateModal(true);
+            }}
+            disabled={isRegenerating}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              backgroundColor: isRegenerating ? 'rgba(147, 51, 234, 0.9)' : (isDarkTheme ? '#374151' : '#f3f4f6'),
+              color: isRegenerating ? 'white' : (isDarkTheme ? '#e5e7eb' : '#374151'),
+              border: `2px solid ${isRegenerating ? '#9333ea' : (isDarkTheme ? '#4b5563' : '#e5e7eb')}`,
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '600',
+              cursor: isRegenerating ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!isRegenerating) {
+                e.currentTarget.style.borderColor = '#9333ea';
+                e.currentTarget.style.backgroundColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isRegenerating) {
+                e.currentTarget.style.borderColor = isDarkTheme ? '#4b5563' : '#e5e7eb';
+                e.currentTarget.style.backgroundColor = isDarkTheme ? '#374151' : '#f3f4f6';
+              }
+            }}
+          >
+            {isRegenerating ? '⏳ GENERATING...' : '🔄 REGENERATE WITH AI'}
+          </button>
+        </div>
+      )}
+
+      {/* AI Regenerate Modal */}
+      {showRegenerateModal && data.aiGenerated && cardType === 'note' && (
+        <div
+          className="nodrag nopan"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '300px',
+            padding: '16px',
+            backgroundColor: isDarkTheme ? '#1f2937' : '#ffffff',
+            border: `2px solid #9333ea`,
+            borderRadius: '12px',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+            zIndex: 100,
+          }}
+        >
+          <h4 style={{
+            margin: '0 0 12px 0',
+            fontSize: '14px',
+            fontWeight: '700',
+            color: isDarkTheme ? '#f3f4f6' : '#111827',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            🔄 Regenerate Note
+          </h4>
+
+          <label style={{
+            display: 'block',
+            fontSize: '11px',
+            fontWeight: '600',
+            color: isDarkTheme ? '#9ca3af' : '#6b7280',
+            marginBottom: '6px',
+          }}>
+            Edit prompt:
+          </label>
+
+          <textarea
+            value={regeneratePrompt}
+            onChange={(e) => setRegeneratePrompt(e.target.value)}
+            placeholder="Describe what you want the AI to generate..."
+            style={{
+              width: '100%',
+              minHeight: '80px',
+              padding: '10px',
+              fontSize: '12px',
+              lineHeight: '1.5',
+              color: isDarkTheme ? '#e5e7eb' : '#374151',
+              backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
+              border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+              borderRadius: '8px',
+              outline: 'none',
+              resize: 'vertical',
+              fontFamily: 'inherit',
+              boxSizing: 'border-box',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = '#9333ea';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = isDarkTheme ? '#374151' : '#e5e7eb';
+            }}
+          />
+
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            marginTop: '12px',
+            justifyContent: 'flex-end',
+          }}>
+            <button
+              onClick={() => setShowRegenerateModal(false)}
+              style={{
+                padding: '8px 16px',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: isDarkTheme ? '#9ca3af' : '#6b7280',
+                backgroundColor: 'transparent',
+                border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!regeneratePrompt.trim()) return;
+                setIsRegenerating(true);
+                setShowRegenerateModal(false);
+                try {
+                  await data.onRegenerate(id, regeneratePrompt);
+                } catch (error) {
+                  console.error('Regenerate failed:', error);
+                } finally {
+                  setIsRegenerating(false);
+                }
+              }}
+              disabled={!regeneratePrompt.trim()}
+              style={{
+                padding: '8px 16px',
+                fontSize: '12px',
+                fontWeight: '700',
+                color: '#ffffff',
+                backgroundColor: regeneratePrompt.trim() ? '#9333ea' : '#6b7280',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: regeneratePrompt.trim() ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              ✨ Generate
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div style={{
         padding: '8px 12px',
@@ -1234,6 +1811,9 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           ? `Updated ${new Date(data.updatedAt).toLocaleDateString()}`
           : `Created ${new Date(data.createdAt || Date.now()).toLocaleDateString()}`
         }
+        {data.aiGenerated && (
+          <span style={{ marginLeft: '8px', color: '#9333ea' }}>✨ AI Generated</span>
+        )}
       </div>
       </div>
     </div>

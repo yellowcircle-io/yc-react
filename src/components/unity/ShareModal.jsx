@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { X, Copy, Check, Link2, Users, Globe, Lock, Mail, Trash2 } from 'lucide-react';
+import { X, Copy, Check, Link2, Users, Globe, Lock, Mail, Trash2, Star } from 'lucide-react';
 
 const ShareModal = ({
   isOpen,
@@ -13,8 +13,10 @@ const ShareModal = ({
   capsuleId,
   title,
   isPublic,
+  isBookmarked = false,
   collaborators = [],
   onUpdateVisibility,
+  onToggleBookmark,
   onAddCollaborator,
   onRemoveCollaborator,
   shareLink
@@ -359,6 +361,32 @@ const ShareModal = ({
                 : 'Only you and collaborators can access'}
             </p>
           </div>
+
+          {/* Bookmark Toggle */}
+          {onToggleBookmark && (
+            <div style={styles.section}>
+              <label style={styles.label}>
+                <Star size={16} />
+                Quick Access
+              </label>
+              <button
+                style={{
+                  ...styles.toggleBtn(isBookmarked),
+                  width: '100%',
+                  justifyContent: 'center',
+                }}
+                onClick={onToggleBookmark}
+              >
+                <Star size={16} fill={isBookmarked ? '#F5A623' : 'none'} />
+                {isBookmarked ? 'Bookmarked' : 'Add to Bookmarks'}
+              </button>
+              <p style={styles.hint}>
+                {isBookmarked
+                  ? 'This canvas is bookmarked for quick access'
+                  : 'Bookmark this canvas for easy access later'}
+              </p>
+            </div>
+          )}
 
           {/* Add Collaborator */}
           <div style={styles.section}>

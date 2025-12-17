@@ -232,7 +232,7 @@ export const useFirebaseCapsule = () => {
       // Record save for rate limiting
       recordSave(capsuleId);
 
-      console.log('✅ Capsule saved (v2 embedded):', capsuleId, '- Nodes:', nodes.length);
+      console.log('✅ Capsule saved (v3 embedded):', capsuleId, '- Nodes:', nodes.length);
       return capsuleId;
 
     } catch (err) {
@@ -281,12 +281,12 @@ export const useFirebaseCapsule = () => {
       const capsuleData = capsuleSnap.data();
       let nodes, edges;
 
-      // Check if v2 (embedded) or v1 (subcollections)
-      if (capsuleData.version === 2 && capsuleData.nodes) {
-        // v2 embedded model - read directly from document
+      // Check if v2/v3 (embedded) or v1 (subcollections)
+      if (capsuleData.version >= 2 && capsuleData.nodes) {
+        // v2/v3 embedded model - read directly from document
         nodes = capsuleData.nodes || [];
         edges = capsuleData.edges || [];
-        console.log('📦 Loaded v2 embedded capsule');
+        console.log(`📦 Loaded v${capsuleData.version} embedded capsule`);
       } else {
         // v1 subcollection model (legacy) - read from subcollections
         const nodesRef = collection(db, `capsules/${capsuleId}/nodes`);
@@ -877,6 +877,66 @@ export const useFirebaseCapsule = () => {
     }
   };
 
+  /**
+   * Toggle bookmark status for a capsule
+   * @param {string} capsuleId - Capsule ID to bookmark/unbookmark
+   * @returns {Promise<boolean>} New bookmark status
+   */
+  const toggleBookmark = async (capsuleId) => {
+    try {
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      const capsuleSnap = await getDoc(capsuleRef);
+
+      if (!capsuleSnap.exists()) {
+        throw new Error('Capsule not found');
+      }
+
+      const data = capsuleSnap.data();
+      const newBookmarkStatus = !data.isBookmarked;
+
+      await updateDoc(capsuleRef, {
+        isBookmarked: newBookmarkStatus,
+        updatedAt: serverTimestamp()
+      });
+
+      console.log('✅ Bookmark toggled:', newBookmarkStatus ? 'bookmarked' : 'unbookmarked');
+      return newBookmarkStatus;
+
+    } catch (err) {
+      console.error('❌ Toggle bookmark failed:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Get bookmarked capsules for a user
+   * @param {string} userId - User ID
+   * @returns {Promise<Array>} Array of bookmarked capsules
+   */
+  const getBookmarkedCapsules = async (userId) => {
+    try {
+      const capsulesRef = collection(db, 'capsules');
+
+      // Query bookmarked capsules owned by user
+      const bookmarkedQuery = query(
+        capsulesRef,
+        where('ownerId', '==', userId),
+        where('isBookmarked', '==', true),
+        orderBy('updatedAt', 'desc'),
+        limit(50)
+      );
+      const bookmarkedSnap = await getDocs(bookmarkedQuery);
+      const bookmarked = bookmarkedSnap.docs.map(doc => doc.data());
+
+      console.log(`✅ Found ${bookmarked.length} bookmarked capsules`);
+      return bookmarked;
+
+    } catch (err) {
+      console.error('❌ Get bookmarked capsules failed:', err);
+      throw err;
+    }
+  };
+
   return {
     // Original functions
     saveCapsule,
@@ -893,6 +953,9 @@ export const useFirebaseCapsule = () => {
     updateVisibility,
     getUserCapsules,
     checkAccess,
+    // Bookmark functions
+    toggleBookmark,
+    getBookmarkedCapsules,
     // State
     isSaving,
     isLoading,

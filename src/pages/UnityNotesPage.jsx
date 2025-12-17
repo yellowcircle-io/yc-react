@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ReactFlow,
   Background,
+  MiniMap,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -23,6 +24,8 @@ import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import { premiumNodeTypes, PREMIUM_CARD_TYPES } from '../components/unity-plus/nodes';
 import PhotoUploadModal from '../components/travel/PhotoUploadModal';
 import ShareModal from '../components/unity/ShareModal';
+import AIGenerateCanvasModal from '../components/unity/AIGenerateCanvasModal';
+import OverviewTray from '../components/unity/OverviewTray';
 import LightboxModal from '../components/travel/LightboxModal';
 import EditMemoryModal from '../components/travel/EditMemoryModal';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
@@ -62,7 +65,7 @@ const CARD_TYPES = {
 };
 
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showParallax, setShowParallax }) => {
-  const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport } = useReactFlow();
+  const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport, setCenter } = useReactFlow();
   const { sidebarOpen } = useLayout();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -71,7 +74,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // SSO Authentication hooks
   const { user, userProfile, isAuthenticated, isAdmin } = useAuth();
-  const { isCloudSynced, migrateLocalToCloud } = useApiKeyStorage();
+  const { isCloudSynced, migrateLocalToCloud, groqApiKey: storedGroqKey, openaiApiKey: storedOpenaiKey } = useApiKeyStorage();
   const { creditsRemaining, tier } = useCredits();
 
   // Node limit for canvas (tier-based) - must be defined early for handleAddCard
@@ -139,15 +142,31 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     // v3 Collaboration functions
     addCollaborator,
     removeCollaborator,
-    updateVisibility
+    updateVisibility,
+    toggleBookmark
   } = useFirebaseCapsule();
   const [shareUrl, setShareUrl] = useState('');
   const [currentCapsuleId, setCurrentCapsuleId] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showAICanvasModal, setShowAICanvasModal] = useState(false);
+  const [isGeneratingCanvas, setIsGeneratingCanvas] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(true); // Canvas minimap toggle
+  const [showOverviewTray, setShowOverviewTray] = useState(false); // Right-side overview panel
 
   // Collaboration state (v3)
   const [collaborators, setCollaborators] = useState([]);
   const [isPublic, setIsPublic] = useState(false);
+  // Bookmark state
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  // Starred nodes state - persisted in localStorage
+  const [starredNodeIds, setStarredNodeIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('unity-notes-starred-nodes');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   // Canvas title - shown in ShareModal header
   const canvasTitle = 'Unity Notes Canvas';
 
@@ -220,11 +239,18 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               setEdges(capsuleData.edges);
             }
 
+            // Restore collaboration state (v3)
+            if (capsuleData.metadata) {
+              setCollaborators(capsuleData.metadata.collaborators || []);
+              setIsPublic(capsuleData.metadata.isPublic || false);
+              setIsBookmarked(capsuleData.metadata.isBookmarked || false);
+            }
+
             // Generate share URL for the loaded capsule
             const url = `${window.location.origin}/unity-notes/view/${capsuleParam}`;
             setShareUrl(url);
 
-            console.log('✅ Loaded capsule:', capsuleParam, '- Nodes:', capsuleData.nodes?.length || 0);
+            console.log('✅ Loaded capsule:', capsuleParam, '- Nodes:', capsuleData.nodes?.length || 0, '- Collaborators:', capsuleData.metadata?.collaborators?.length || 0);
           }
         } catch (err) {
           console.error('❌ Failed to load capsule:', err);
@@ -629,13 +655,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Handle AI image analysis
   const handleImageAnalyze = useCallback(async (nodeId, imageUrl, analysisType) => {
-    if (!aiConfigured) {
-      alert('AI analysis requires an OpenAI API key. Add VITE_OPENAI_API_KEY to your .env file.');
+    // Check for stored key OR env key
+    const openaiKey = storedOpenaiKey || import.meta.env.VITE_OPENAI_API_KEY;
+    if (!aiConfigured && !openaiKey) {
+      if (!isAuthenticated) {
+        alert('🖼️ AI image analysis requires sign-in.\n\nSign in to use your stored OpenAI API key.');
+      } else {
+        alert('🖼️ No OpenAI API key found.\n\nGo to Hub → Settings to add your OpenAI API key.');
+      }
       return;
     }
 
     try {
-      const result = await analyzeImage(imageUrl, analysisType);
+      const result = await analyzeImage(imageUrl, analysisType, { apiKey: openaiKey });
 
       if (!result) {
         throw new Error(aiError || 'Analysis failed');
@@ -704,7 +736,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       console.error('AI Analysis error:', error);
       alert(`AI analysis failed: ${error.message}`);
     }
-  }, [analyzeImage, aiConfigured, aiError, setNodes]);
+  }, [analyzeImage, aiConfigured, aiError, setNodes, storedOpenaiKey, isAuthenticated]);
 
   // Handle email preview for outreach nodes
   const handleEmailPreview = useCallback((nodeId, nodeData) => {
@@ -1027,6 +1059,163 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     );
   }, [setNodes]);
 
+  // Helper function to check if a node is inside a group's bounds
+  const isNodeInsideGroup = useCallback((node, groupNode) => {
+    if (!groupNode || groupNode.type !== 'groupNode') return false;
+
+    const groupX = groupNode.position.x;
+    const groupY = groupNode.position.y;
+    const groupWidth = groupNode.data?.width || 300;
+    const groupHeight = groupNode.data?.height || 200;
+
+    const nodeX = node.position.x;
+    const nodeY = node.position.y;
+
+    // Check if node center is inside group bounds (with some padding)
+    const padding = 20;
+    return (
+      nodeX >= groupX + padding &&
+      nodeX <= groupX + groupWidth - padding &&
+      nodeY >= groupY + padding &&
+      nodeY <= groupY + groupHeight - padding
+    );
+  }, []);
+
+  // Handle node drag - show drop target indicator on groups
+  const handleNodeDrag = useCallback((event, node) => {
+    // Don't handle groups dragging
+    if (node.type === 'groupNode') return;
+
+    setNodes((nds) => {
+      return nds.map((n) => {
+        if (n.type === 'groupNode') {
+          const isOver = isNodeInsideGroup(node, n) && n.id !== node.parentId;
+          return {
+            ...n,
+            data: { ...n.data, isDropTarget: isOver }
+          };
+        }
+        return n;
+      });
+    });
+  }, [setNodes, isNodeInsideGroup]);
+
+  // Handle node drag stop - parent/unparent nodes to groups
+  const handleNodeDragStop = useCallback((event, node) => {
+    // Don't handle groups dragging
+    if (node.type === 'groupNode') return;
+
+    // Find group this node is over
+    const groupNodes = nodes.filter(n => n.type === 'groupNode');
+    let targetGroup = null;
+
+    for (const group of groupNodes) {
+      if (isNodeInsideGroup(node, group)) {
+        targetGroup = group;
+        break;
+      }
+    }
+
+    setNodes((nds) => {
+      // First, clear all drop target indicators
+      let updatedNodes = nds.map((n) => {
+        if (n.type === 'groupNode') {
+          return { ...n, data: { ...n.data, isDropTarget: false } };
+        }
+        return n;
+      });
+
+      // Update parent relationship
+      updatedNodes = updatedNodes.map((n) => {
+        if (n.id === node.id) {
+          if (targetGroup && n.parentId !== targetGroup.id) {
+            // Add to group - adjust position to be relative to group
+            const relativeX = node.position.x - targetGroup.position.x;
+            const relativeY = node.position.y - targetGroup.position.y;
+            return {
+              ...n,
+              parentId: targetGroup.id,
+              position: { x: relativeX, y: relativeY },
+              extent: 'parent',
+            };
+          } else if (!targetGroup && n.parentId) {
+            // Remove from group - adjust position to be absolute
+            const parentNode = nds.find(p => p.id === n.parentId);
+            if (parentNode) {
+              const absoluteX = n.position.x + parentNode.position.x;
+              const absoluteY = n.position.y + parentNode.position.y;
+              const { parentId: _parentId, extent: _extent, ...rest } = n;
+              return {
+                ...rest,
+                position: { x: absoluteX, y: absoluteY },
+              };
+            }
+          }
+        }
+        return n;
+      });
+
+      // Update child counts on groups
+      updatedNodes = updatedNodes.map((n) => {
+        if (n.type === 'groupNode') {
+          const childCount = updatedNodes.filter(c => c.parentId === n.id).length;
+          return { ...n, data: { ...n.data, childCount } };
+        }
+        return n;
+      });
+
+      // Auto-scale groups to fit children (only expand, never shrink)
+      updatedNodes = updatedNodes.map((n) => {
+        if (n.type !== 'groupNode') return n;
+
+        const children = updatedNodes.filter(c => c.parentId === n.id);
+        if (children.length === 0) return n;
+
+        // Estimate node sizes based on type
+        const getNodeSize = (nodeType) => {
+          const sizes = {
+            textNote: { width: 280, height: 180 },
+            stickyNode: { width: 200, height: 200 },
+            commentNode: { width: 260, height: 140 },
+            todoNode: { width: 220, height: 250 },
+            photoNode: { width: 280, height: 200 },
+            prospectNode: { width: 320, height: 200 },
+            colorSwatchNode: { width: 200, height: 140 },
+            waitNode: { width: 260, height: 180 },
+          };
+          return sizes[nodeType] || { width: 200, height: 150 };
+        };
+
+        // Calculate bounding box of all children
+        let maxRight = 0;
+        let maxBottom = 0;
+        const padding = 40; // Padding around children
+
+        children.forEach(child => {
+          const size = getNodeSize(child.type);
+          const right = child.position.x + size.width + padding;
+          const bottom = child.position.y + size.height + padding;
+          maxRight = Math.max(maxRight, right);
+          maxBottom = Math.max(maxBottom, bottom);
+        });
+
+        // Only expand, never shrink (minimum dimensions)
+        const currentWidth = n.data?.width || 300;
+        const currentHeight = n.data?.height || 200;
+        const newWidth = Math.max(currentWidth, maxRight, 300);
+        const newHeight = Math.max(currentHeight, maxBottom, 200);
+
+        // Only update if dimensions changed
+        if (newWidth !== currentWidth || newHeight !== currentHeight) {
+          return { ...n, data: { ...n.data, width: newWidth, height: newHeight } };
+        }
+        return n;
+      });
+
+      return updatedNodes;
+    });
+  }, [nodes, setNodes, isNodeInsideGroup]);
+
   // Add new card (non-photo types)
   const handleAddCard = useCallback((type) => {
     // Check node limit (computed later, use closure to access)
@@ -1145,6 +1334,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           onContentChange: (id, content) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, content } } : n));
           },
+          onColorChange: (id, color) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, color } } : n));
+          },
           onDelete: handleDeleteNode,
         }
       };
@@ -1164,7 +1356,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           onTitleChange: (id, title) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, title } } : n));
           },
-          onItemsChange: (id, items) => {
+          onUpdateItems: (id, items) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, items } } : n));
           },
           onDelete: handleDeleteNode,
@@ -1226,6 +1418,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           onCodeChange: (id, code) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, code } } : n));
           },
+          onLanguageChange: (id, language) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, language } } : n));
+          },
           onDelete: handleDeleteNode,
         }
       };
@@ -1243,12 +1438,16 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           color: 'gray',
           width: 300,
           height: 200,
+          childCount: 0,
           createdAt: timestamp,
           onLabelChange: (id, label) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, label } } : n));
           },
           onResize: (id, width, height) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, width, height } } : n));
+          },
+          onColorChange: (id, color) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, color } } : n));
           },
           onDelete: handleDeleteNode,
         },
@@ -1318,12 +1517,87 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     return journeyProspects.filter(p => p.currentNodeId === nodeId && p.status === 'active').length;
   }, [journeyProspects]);
 
-  // Ensure all nodes have callbacks
+  // Toggle star on a node
+  const handleToggleNodeStar = useCallback((nodeId) => {
+    setStarredNodeIds(prev => {
+      const newSet = new Set(prev);
+      const wasStarred = newSet.has(nodeId);
+      if (wasStarred) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      // Persist to localStorage
+      try {
+        localStorage.setItem('unity-notes-starred-nodes', JSON.stringify([...newSet]));
+      } catch (e) {
+        console.error('Failed to save starred nodes:', e);
+      }
+
+      // Immediately update the specific node's isStarred state for instant UI feedback
+      setNodes(nds => nds.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isStarred: !wasStarred
+            }
+          };
+        }
+        return node;
+      }));
+
+      return newSet;
+    });
+  }, [setNodes]);
+
+  // Unstar a specific node (from tray)
+  const handleUnstarNode = useCallback((nodeId) => {
+    setStarredNodeIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(nodeId);
+      // Persist to localStorage
+      try {
+        localStorage.setItem('unity-notes-starred-nodes', JSON.stringify([...newSet]));
+      } catch (e) {
+        console.error('Failed to save starred nodes:', e);
+      }
+
+      // Immediately update the specific node's isStarred state for instant UI feedback
+      setNodes(nds => nds.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isStarred: false
+            }
+          };
+        }
+        return node;
+      }));
+
+      return newSet;
+    });
+  }, [setNodes]);
+
+  // Compute starred nodes from current nodes
+  const starredNodes = useMemo(() => {
+    return nodes.filter(node => starredNodeIds.has(node.id));
+  }, [nodes, starredNodeIds]);
+
+  // Ensure all nodes have callbacks - runs on init AND when new nodes are added
   useEffect(() => {
     if (!isInitialized) return;
 
-    setNodes((nds) =>
-      nds.map((node) => {
+    setNodes((nds) => {
+      // Check if any node needs callback injection (prevents infinite loop)
+      // A node needs injection if it's missing the onToggleStar callback
+      const needsInjection = nds.some(n => n.data && !n.data.onToggleStar);
+      if (!needsInjection) return nds; // Return same reference to avoid re-render
+
+      return nds.map((node) => {
         // Determine the correct inline edit handler based on node type
         let inlineEditHandler = null;
         if (node.type === 'emailNode') {
@@ -1359,11 +1633,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onOpenStudio: node.data?.cardType === 'ai' ? handleOpenStudio : undefined,
             // Prospect count at this node (for visual tracking)
             prospectsAtNode: prospectsAtNode,
+            // Starring functionality
+            onToggleStar: handleToggleNodeStar,
+            isStarred: starredNodeIds.has(node.id),
           }
         };
-      })
-    );
-  }, [isInitialized, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, getProspectsAtNode, setNodes]);
+      });
+    });
+  }, [isInitialized, nodes.length, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, getProspectsAtNode, handleToggleNodeStar, starredNodeIds, setNodes]);
 
   // Save to localStorage with status indicator
   useEffect(() => {
@@ -1489,20 +1766,36 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     const HORIZONTAL_GAP = 80;
     const START_X = 100;
     const START_Y = 100;
+    const GROUP_GAP = 100;
+    const CHILD_PADDING = 50;  // Increased padding inside groups
+    const CHILD_GAP = 40;      // Increased gap between children
 
-    // Separate MAP nodes from regular nodes
+    // Separate nodes into categories
     const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
     const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
-    const regularNodes = nodes.filter(n => !mapNodeTypes.includes(n.type));
+    const groupNodes = nodes.filter(n => n.type === 'groupNode');
+    const childNodes = nodes.filter(n => n.parentId);
+    const orphanNodes = nodes.filter(n =>
+      !n.parentId &&
+      n.type !== 'groupNode' &&
+      !mapNodeTypes.includes(n.type)
+    );
+
+    // Build parent-child map
+    const childrenByGroup = {};
+    childNodes.forEach(child => {
+      if (!childrenByGroup[child.parentId]) {
+        childrenByGroup[child.parentId] = [];
+      }
+      childrenByGroup[child.parentId].push(child);
+    });
 
     let updatedNodes = [];
+    let currentY = START_Y;
 
-    // Layout MAP nodes in vertical flow
+    // 1. Layout MAP nodes in vertical flow (left side)
     if (mapNodes.length > 0) {
-      // Sort by original position to maintain order
       const sortedMapNodes = [...mapNodes].sort((a, b) => a.position.y - b.position.y);
-
-      // Center X position for vertical flow
       const centerX = 400;
 
       sortedMapNodes.forEach((node, index) => {
@@ -1516,19 +1809,94 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       });
     }
 
-    // Layout regular notes in grid
-    if (regularNodes.length > 0) {
-      const COLS = Math.ceil(Math.sqrt(regularNodes.length));
-      const offsetX = mapNodes.length > 0 ? 800 : START_X; // Offset right if MAP nodes exist
+    // Calculate offset for groups/orphans based on MAP nodes
+    const contentStartX = mapNodes.length > 0 ? 800 : START_X;
+    let contentX = contentStartX;
+    let rowMaxHeight = 0;
+    let groupsPerRow = 2;
+    let groupIndex = 0;
 
-      regularNodes.forEach((node, index) => {
+    // 2. Layout group nodes with their children internally arranged
+    groupNodes.forEach((group) => {
+      const children = childrenByGroup[group.id] || [];
+      const groupWidth = group.data?.width || 300;
+      const groupHeight = group.data?.height || 200;
+
+      // Position group
+      if (groupIndex > 0 && groupIndex % groupsPerRow === 0) {
+        // New row
+        currentY += rowMaxHeight + GROUP_GAP;
+        contentX = contentStartX;
+        rowMaxHeight = 0;
+      }
+
+      const groupPosition = { x: contentX, y: currentY };
+
+      // Layout children inside group (relative positions)
+      // Use 2 columns for better readability, but allow 3 for many children
+      const childCols = children.length > 6 ? 3 : 2;
+      // Node sizes - match actual rendered dimensions
+      const childWidth = 280;   // Actual nodes are ~250px wide + margin
+      const childHeight = 220;  // Taller to fit todo lists, text nodes, photos
+      const updatedChildren = children.map((child, i) => {
+        const col = i % childCols;
+        const row = Math.floor(i / childCols);
+        return {
+          ...child,
+          position: {
+            x: CHILD_PADDING + col * (childWidth + CHILD_GAP),
+            y: CHILD_PADDING + 40 + row * (childHeight + CHILD_GAP) // Extra 40 for group label
+          }
+        };
+      });
+
+      // Auto-expand group if children overflow
+      const neededWidth = children.length > 0
+        ? CHILD_PADDING * 2 + Math.min(children.length, childCols) * (childWidth + CHILD_GAP) - CHILD_GAP
+        : groupWidth;
+      const neededHeight = children.length > 0
+        ? CHILD_PADDING * 2 + 20 + Math.ceil(children.length / childCols) * (childHeight + CHILD_GAP) - CHILD_GAP
+        : groupHeight;
+
+      const finalWidth = Math.max(groupWidth, neededWidth);
+      const finalHeight = Math.max(groupHeight, neededHeight);
+
+      updatedNodes.push({
+        ...group,
+        position: groupPosition,
+        data: {
+          ...group.data,
+          width: finalWidth,
+          height: finalHeight,
+          childCount: children.length
+        }
+      });
+
+      updatedNodes.push(...updatedChildren);
+
+      // Track position for next group
+      contentX += finalWidth + GROUP_GAP;
+      rowMaxHeight = Math.max(rowMaxHeight, finalHeight);
+      groupIndex++;
+    });
+
+    // Move Y past groups for orphan layout
+    if (groupNodes.length > 0) {
+      currentY += rowMaxHeight + GROUP_GAP;
+    }
+
+    // 3. Layout orphan nodes in grid below groups
+    if (orphanNodes.length > 0) {
+      const COLS = Math.ceil(Math.sqrt(orphanNodes.length));
+
+      orphanNodes.forEach((node, index) => {
         const row = Math.floor(index / COLS);
         const col = index % COLS;
         updatedNodes.push({
           ...node,
           position: {
-            x: offsetX + (col * (NODE_WIDTH + HORIZONTAL_GAP)),
-            y: START_Y + (row * (NODE_HEIGHT + VERTICAL_GAP))
+            x: contentStartX + (col * (NODE_WIDTH + HORIZONTAL_GAP)),
+            y: currentY + (row * (NODE_HEIGHT + VERTICAL_GAP))
           }
         });
       });
@@ -1805,6 +2173,20 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     setIsPublic(newIsPublic);
   };
 
+  // Toggle bookmark for quick access
+  const handleToggleBookmark = async () => {
+    if (!currentCapsuleId) {
+      console.warn('No capsule ID - save first before bookmarking');
+      return;
+    }
+    try {
+      const newBookmarkStatus = await toggleBookmark(currentCapsuleId);
+      setIsBookmarked(newBookmarkStatus);
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
+  };
+
   const handlePhotoUpload = async (filesOrUrls, metadata, uploadType) => {
 
     try {
@@ -1895,6 +2277,115 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   };
 
+  // AI Regeneration Handlers
+  const handleRegenerateNote = useCallback(async (nodeId, customPrompt) => {
+    try {
+      const { getLLMAdapterByName } = await import('../adapters/llm');
+      const llm = await getLLMAdapterByName('groq');
+
+      const generateOptions = { maxTokens: 200 };
+      if (storedGroqKey) {
+        generateOptions.apiKey = storedGroqKey;
+      }
+
+      const response = await llm.generate(customPrompt, generateOptions);
+
+      // Update the existing node with new content
+      setNodes(nds => nds.map(n => {
+        if (n.id === nodeId) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              content: response,
+              aiPrompt: customPrompt,
+              regeneratedAt: Date.now(),
+            }
+          };
+        }
+        return n;
+      }));
+
+    } catch (error) {
+      console.error('AI Regenerate Note failed:', error);
+      alert(`❌ Regeneration failed: ${error.message}`);
+    }
+  }, [storedGroqKey, setNodes]);
+
+  const handleRegenerateImage = useCallback(async (nodeId, customPrompt) => {
+    try {
+      let imageUrl;
+      let modelUsed = 'pollinations';
+
+      const openaiKey = storedOpenaiKey || import.meta.env.VITE_OPENAI_API_KEY;
+
+      if (openaiKey) {
+        // DALL-E 3
+        console.log('🎨 Regenerating with DALL-E 3');
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiKey}`
+          },
+          body: JSON.stringify({
+            model: 'dall-e-3',
+            prompt: customPrompt,
+            n: 1,
+            size: '1024x1024',
+            quality: 'standard'
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`DALL-E API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+
+        const data = await response.json();
+        imageUrl = data.data?.[0]?.url;
+        modelUsed = 'dall-e-3';
+      } else {
+        // Pollinations.ai (Free)
+        console.log('🎨 Regenerating with Pollinations.ai (free)');
+        const encodedPrompt = encodeURIComponent(customPrompt);
+        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
+
+        // Verify image loads
+        const testImage = new Image();
+        await new Promise((resolve, reject) => {
+          testImage.onload = resolve;
+          testImage.onerror = () => reject(new Error('Failed to regenerate image'));
+          testImage.src = imageUrl;
+        });
+
+        modelUsed = 'pollinations-flux';
+      }
+
+      // Update the existing node with new image
+      setNodes(nds => nds.map(n => {
+        if (n.id === nodeId) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              imageUrl,
+              thumbnail: imageUrl,
+              caption: `✨ AI Generated (${modelUsed})`,
+              aiPrompt: customPrompt,
+              regeneratedAt: Date.now(),
+            }
+          };
+        }
+        return n;
+      }));
+
+    } catch (error) {
+      console.error('AI Regenerate Image failed:', error);
+      alert(`❌ Regeneration failed: ${error.message}`);
+    }
+  }, [storedOpenaiKey, setNodes]);
+
   // AI Canvas Actions
   const handleAIGenerateNote = useCallback(async () => {
     try {
@@ -1904,14 +2395,22 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         .map(n => n.data?.content || n.data?.title)
         .join('\n');
 
-      const { getLLMAdapter } = await import('../adapters/llm');
-      const llm = await getLLMAdapter();
+      const { getLLMAdapterByName } = await import('../adapters/llm');
+
+      // Get the LLM adapter
+      const llm = await getLLMAdapterByName('groq');
 
       const prompt = existingContent
         ? `Based on these existing notes:\n\n${existingContent}\n\nGenerate a thoughtful new note that builds on or relates to these ideas. Keep it concise (2-3 sentences).`
         : 'Generate a thoughtful brainstorming prompt or creative idea for a visual planning canvas. Keep it concise (2-3 sentences).';
 
-      const response = await llm.generate(prompt, { maxTokens: 200 });
+      // Use API key from useApiKeyStorage hook (stored in Firestore)
+      const generateOptions = { maxTokens: 200 };
+      if (storedGroqKey) {
+        generateOptions.apiKey = storedGroqKey;
+      }
+
+      const response = await llm.generate(prompt, generateOptions);
 
       // Create new note node with AI content
       const timestamp = Date.now();
@@ -1932,8 +2431,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           cardType: 'note',
           color: 'rgb(147, 51, 234)', // Purple for AI
           createdAt: timestamp,
+          aiGenerated: true,
+          aiPrompt: prompt,
           onUpdate: handleNodeUpdate,
           onDelete: handleDeleteNode,
+          onRegenerate: handleRegenerateNote,
         }
       };
 
@@ -1942,19 +2444,24 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     } catch (error) {
       console.error('AI Generate Note failed:', error);
-      alert(`❌ AI Generation failed: ${error.message}\n\nMake sure you have an LLM API key configured.`);
+      // Provide a more helpful error message
+      const isKeyError = error.message?.includes('API key') || error.message?.includes('not configured');
+      if (isKeyError) {
+        if (!isAuthenticated) {
+          alert('🔑 AI requires sign-in.\n\nSign in to access your stored API key, or add VITE_GROQ_API_KEY to .env');
+        } else if (!storedGroqKey) {
+          alert('🔑 No Groq API key found.\n\nTo configure:\n1. Go to any page with API key settings\n2. Add your Groq API key (it syncs to your account)\n\nOr add VITE_GROQ_API_KEY to .env');
+        } else {
+          alert(`❌ AI Generation failed: ${error.message}`);
+        }
+      } else {
+        alert(`❌ AI Generation failed: ${error.message}`);
+      }
     }
-  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView]);
+  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey, isAuthenticated, handleRegenerateNote]);
 
   const handleAIGenerateImage = useCallback(async () => {
     try {
-      // Check for OpenAI key (needed for DALL-E)
-      const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      if (!openaiKey) {
-        alert('🖼️ Image Generation requires an OpenAI API key.\n\nAdd VITE_OPENAI_API_KEY to your .env file.');
-        return;
-      }
-
       // Get context from canvas
       const existingContent = nodes
         .filter(n => n.data?.content || n.data?.title)
@@ -1966,31 +2473,60 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         ? `Create an abstract, colorful illustration representing: ${existingContent}. Modern, minimalist style.`
         : 'Create an abstract, colorful brainstorming illustration. Modern, minimalist style with geometric shapes.';
 
-      // Call DALL-E API
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`
-        },
-        body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: imagePrompt,
-          n: 1,
-          size: '1024x1024',
-          quality: 'standard'
-        })
-      });
+      let imageUrl;
+      let modelUsed = 'pollinations'; // Track which model was used
 
-      if (!response.ok) {
-        throw new Error(`DALL-E API error: ${response.status}`);
-      }
+      // Check for OpenAI key (from Firestore or .env)
+      const openaiKey = storedOpenaiKey || import.meta.env.VITE_OPENAI_API_KEY;
 
-      const data = await response.json();
-      const imageUrl = data.data?.[0]?.url;
+      // Use DALL-E if OpenAI key is available, otherwise use Pollinations (free)
+      if (openaiKey) {
+        // DALL-E 3 (Premium option)
+        console.log('🎨 Using DALL-E 3 for image generation');
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiKey}`
+          },
+          body: JSON.stringify({
+            model: 'dall-e-3',
+            prompt: imagePrompt,
+            n: 1,
+            size: '1024x1024',
+            quality: 'standard'
+          })
+        });
 
-      if (!imageUrl) {
-        throw new Error('No image URL in response');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`DALL-E API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+
+        const data = await response.json();
+        imageUrl = data.data?.[0]?.url;
+        modelUsed = 'dall-e-3';
+
+        if (!imageUrl) {
+          throw new Error('No image URL in DALL-E response');
+        }
+      } else {
+        // Pollinations.ai (Free, no API key required)
+        console.log('🎨 Using Pollinations.ai for image generation (free)');
+
+        // Pollinations URL format with Flux model for quality
+        const encodedPrompt = encodeURIComponent(imagePrompt);
+        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
+
+        // Verify image loads (Pollinations generates on-demand)
+        const testImage = new Image();
+        await new Promise((resolve, reject) => {
+          testImage.onload = resolve;
+          testImage.onerror = () => reject(new Error('Failed to generate image from Pollinations'));
+          testImage.src = imageUrl;
+        });
+
+        modelUsed = 'pollinations-flux';
       }
 
       // Create photo node with generated image
@@ -2009,9 +2545,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         data: {
           imageUrl,
           thumbnail: imageUrl,
-          caption: '✨ AI Generated Image',
+          caption: `✨ AI Generated (${modelUsed})`,
           createdAt: timestamp,
+          aiGenerated: true,
+          aiPrompt: imagePrompt,
           onDelete: handleDeleteNode,
+          onRegenerate: handleRegenerateImage,
         }
       };
 
@@ -2022,23 +2561,89 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       console.error('AI Generate Image failed:', error);
       alert(`❌ Image Generation failed: ${error.message}`);
     }
-  }, [nodes, handleDeleteNode, setNodes, fitView]);
+  }, [nodes, handleDeleteNode, setNodes, fitView, storedOpenaiKey, handleRegenerateImage]);
 
   const handleAISummarize = useCallback(async () => {
     try {
-      // Collect all content from nodes
+      // Collect all content from nodes - enhanced to capture all node types
       const allContent = nodes
-        .filter(n => n.data?.content || n.data?.title)
         .map(n => {
-          const title = n.data?.title || '';
-          const content = n.data?.content || '';
-          return `${title}${title && content ? ': ' : ''}${content}`;
+          const nodeType = n.type;
+          const d = n.data || {};
+          const parts = [];
+
+          // Common fields
+          if (d.title) parts.push(`Title: ${d.title}`);
+          if (d.content) parts.push(`Content: ${d.content}`);
+
+          // Photo nodes
+          if (nodeType === 'photoNode') {
+            if (d.location) parts.push(`Location: ${d.location}`);
+            if (d.date) parts.push(`Date: ${d.date}`);
+            if (d.description) parts.push(`Description: ${d.description}`);
+            if (d.caption) parts.push(`Caption: ${d.caption}`);
+          }
+
+          // Link cards (textNode with cardType 'link')
+          if (d.cardType === 'link' && d.url) {
+            parts.push(`Link URL: ${d.url}`);
+            if (d.linkPreview?.title) parts.push(`Link Title: ${d.linkPreview.title}`);
+            if (d.linkPreview?.description) parts.push(`Link Description: ${d.linkPreview.description}`);
+          }
+
+          // Todo nodes
+          if (nodeType === 'todoNode' && d.items?.length > 0) {
+            const todoItems = d.items.map(item =>
+              `- [${item.completed ? 'x' : ' '}] ${item.text}`
+            ).join('\n');
+            parts.push(`To-Do Items:\n${todoItems}`);
+          }
+
+          // Sticky notes
+          if (nodeType === 'stickyNode') {
+            if (d.text) parts.push(`Sticky Note: ${d.text}`);
+          }
+
+          // Comment nodes
+          if (nodeType === 'commentNode') {
+            if (d.content) parts.push(`Comment: ${d.content}`);
+            if (d.author) parts.push(`Author: ${d.author}`);
+          }
+
+          // Code blocks
+          if (nodeType === 'codeNode' && d.code) {
+            parts.push(`Code (${d.language || 'unknown'}): ${d.code.substring(0, 200)}${d.code.length > 200 ? '...' : ''}`);
+          }
+
+          // Group nodes
+          if (nodeType === 'groupNode' && d.label) {
+            parts.push(`Group: ${d.label}`);
+          }
+
+          // Reminder nodes
+          if (d.reminder || d.isReminder) {
+            parts.push(`Reminder: ${d.content || d.text || 'No details'}`);
+          }
+
+          return parts.length > 0 ? `[${nodeType || 'note'}]\n${parts.join('\n')}` : null;
         })
         .filter(Boolean)
-        .join('\n\n');
+        .join('\n\n---\n\n');
 
       if (!allContent) {
         alert('📋 Nothing to summarize.\n\nAdd some notes or content first!');
+        return;
+      }
+
+      // Check for API key (from Firestore or .env)
+      const groqKey = storedGroqKey || import.meta.env.VITE_GROQ_API_KEY;
+
+      if (!groqKey) {
+        if (!isAuthenticated) {
+          alert('📋 Summarize requires an LLM API key.\n\nSign in to use your stored Groq API key, or add VITE_GROQ_API_KEY to .env');
+        } else {
+          alert('📋 No Groq API key found.\n\nTo configure:\n1. Go to Hub → Settings\n2. Add your Groq API key (free at console.groq.com)\n\nOr add VITE_GROQ_API_KEY to .env');
+        }
         return;
       }
 
@@ -2047,7 +2652,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
       const prompt = `Summarize the following canvas notes into a concise overview with key points:\n\n${allContent}\n\nProvide a brief summary (3-5 bullet points).`;
 
-      const response = await llm.generate(prompt, { maxTokens: 500 });
+      // Pass stored API key to the LLM adapter
+      const response = await llm.generate(prompt, { maxTokens: 500, apiKey: groqKey });
 
       // Create summary note
       const timestamp = Date.now();
@@ -2078,9 +2684,291 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     } catch (error) {
       console.error('AI Summarize failed:', error);
-      alert(`❌ Summarize failed: ${error.message}\n\nMake sure you have an LLM API key configured.`);
+      alert(`❌ Summarize failed: ${error.message}`);
     }
-  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView]);
+  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey, isAuthenticated]);
+
+  // AI Generate Canvas - Opens the modal
+  const handleAIGenerateCanvas = useCallback(() => {
+    // Check for API key first
+    const groqKey = storedGroqKey || import.meta.env.VITE_GROQ_API_KEY;
+    if (!groqKey) {
+      if (!isAuthenticated) {
+        alert('🎨 Generate Canvas requires sign-in.\n\nSign in to use your stored Groq API key.');
+      } else {
+        alert('🎨 No Groq API key found.\n\nGo to Hub → Settings to add your Groq API key.');
+      }
+      return;
+    }
+    setShowAICanvasModal(true);
+  }, [storedGroqKey, isAuthenticated]);
+
+  // AI Generate Canvas - Actually generates the canvas from modal
+  const handleAICanvasGenerate = useCallback(async (canvasTopic, options = {}) => {
+    const { cardCount = 4, includeImages = false, includeVideoPlaceholder = false } = options;
+
+    try {
+      setIsGeneratingCanvas(true);
+
+      const groqKey = storedGroqKey || import.meta.env.VITE_GROQ_API_KEY;
+      const { getLLMAdapter } = await import('../adapters/llm');
+      const llm = await getLLMAdapter();
+
+      // Fixed card count - no range to prevent generating too many
+      const targetCards = Math.min(cardCount, 6); // Cap at 6 cards max
+
+      const prompt = `Generate a visual planning canvas for: "${canvasTopic}"
+
+Create a JSON array of EXACTLY ${targetCards} cards for this canvas. Each card should have:
+- type: "note" | "sticky" | "todo"${includeImages ? ' | "photo"' : ''}${includeVideoPlaceholder ? ' | "video"' : ''}
+- title: brief title (2-4 words)
+- content: detailed content (1-2 sentences)
+- color: named color (use "yellow", "purple", "green", "blue", "orange", "pink")
+${includeImages ? '- For "photo" type, include imagePrompt field with a description for AI image generation' : ''}
+${includeVideoPlaceholder ? '- Include exactly ONE "video" type card for embedded video content' : ''}
+
+IMPORTANT: Include exactly ONE "sticky" type card (for a key highlight/insight). All other cards should be "note" or "todo" type.
+For "todo" type, content should be a semicolon-separated list of 2-3 tasks.
+
+Return ONLY the JSON array, no markdown or explanation.
+
+Example format:
+[
+  {"type": "note", "title": "Overview", "content": "Main description here", "color": "yellow"},
+  {"type": "sticky", "title": "Key Insight", "content": "Important highlight", "color": "pink"},
+  {"type": "todo", "title": "Next Steps", "content": "Task 1; Task 2", "color": "green"}
+]`;
+
+      const response = await llm.generate(prompt, { maxTokens: 1500, apiKey: groqKey });
+
+      // Parse JSON response
+      let canvasCards;
+      try {
+        const jsonMatch = response.match(/\[[\s\S]*\]/);
+        canvasCards = JSON.parse(jsonMatch ? jsonMatch[0] : response);
+      } catch (parseErr) {
+        console.error('Failed to parse canvas JSON:', parseErr);
+        alert('❌ Failed to generate canvas. Please try again.');
+        setIsGeneratingCanvas(false);
+        return;
+      }
+
+      if (!Array.isArray(canvasCards) || canvasCards.length === 0) {
+        alert('❌ No cards generated. Please try again.');
+        setIsGeneratingCanvas(false);
+        return;
+      }
+
+      // Enforce card count limit to prevent too many nodes
+      let limitedCards = canvasCards.slice(0, Math.min(canvasCards.length, 6));
+
+      // FORCE video card if option selected but LLM didn't generate one
+      if (includeVideoPlaceholder) {
+        const hasVideoCard = limitedCards.some(card => card.type === 'video');
+        if (!hasVideoCard) {
+          // Replace the last non-sticky card with a video card, or add one
+          const stickyIndex = limitedCards.findIndex(c => c.type === 'sticky');
+          const replaceIndex = limitedCards.length > 1
+            ? limitedCards.findIndex((c, i) => i !== stickyIndex && c.type !== 'video')
+            : -1;
+
+          const videoCard = {
+            type: 'video',
+            title: 'Video Resource',
+            content: '🎬 Add a relevant video URL here to embed in your canvas',
+            color: 'blue'
+          };
+
+          if (replaceIndex >= 0 && limitedCards.length >= 3) {
+            // Replace a note/todo card with video if we have enough cards
+            limitedCards[replaceIndex] = videoCard;
+          } else {
+            // Otherwise just add the video card
+            limitedCards.push(videoCard);
+          }
+          console.log('✅ Forced video card creation (LLM did not generate one)');
+        }
+      }
+
+      // Create nodes from parsed cards inside a named Group
+      const timestamp = Date.now();
+      // Layout constants - sized to fit actual node render dimensions
+      // Note: textNode is 250px wide, stickyNode can be 200-250px, todoNode can be 300px tall
+      // Sticky nodes with longer content may expand, so we need generous spacing
+      const cols = 2; // 2 columns
+      const childWidth = 320; // Node width allocation (increased for sticky note expansion)
+      const childHeight = 340; // Node height allocation (increased for taller content)
+      const childGap = 40; // Gap between cards
+      const groupPadding = 50;
+      const labelHeight = 60;
+
+      // Find position for new group (avoid overlapping existing nodes)
+      const existingNodes = nodes.filter(n => !n.parentId); // Only top-level nodes
+      let groupX = 100;
+      let groupY = 100;
+      if (existingNodes.length > 0) {
+        // Find the rightmost edge of existing nodes
+        const maxX = Math.max(...existingNodes.map(n => (n.position?.x || 0) + (n.data?.width || 300)));
+        groupX = maxX + 80; // Place new group to the right with gap
+      }
+
+      // Map hex colors to named colors (fallback for legacy or unexpected responses)
+      const hexToNamedColor = (color) => {
+        if (!color) return 'yellow';
+        const colorLower = color.toLowerCase();
+        // If already a named color, return it
+        if (['yellow', 'pink', 'blue', 'green', 'orange', 'purple'].includes(colorLower)) {
+          return colorLower;
+        }
+        // Map hex codes to named colors
+        const hexMap = {
+          '#fbbf24': 'yellow', '#fef3c7': 'yellow',
+          '#ec4899': 'pink', '#fce7f3': 'pink',
+          '#3b82f6': 'blue', '#dbeafe': 'blue',
+          '#22c55e': 'green', '#10b981': 'green', '#dcfce7': 'green',
+          '#f97316': 'orange', '#ffedd5': 'orange',
+          '#a855f7': 'purple', '#7c3aed': 'purple', '#f3e8ff': 'purple',
+        };
+        return hexMap[color] || 'yellow';
+      };
+
+      // Calculate group size based on children
+      const rows = Math.ceil(limitedCards.length / cols);
+      const actualCols = Math.min(limitedCards.length, cols);
+      const groupWidth = groupPadding * 2 + actualCols * childWidth + (actualCols - 1) * childGap;
+      const groupHeight = groupPadding + labelHeight + rows * childHeight + (rows - 1) * childGap + groupPadding;
+
+      // Create group name from topic (first 30 chars + AI tag)
+      const groupLabel = canvasTopic.length > 30
+        ? canvasTopic.substring(0, 27) + '...'
+        : canvasTopic;
+
+      // Create the Group node
+      const groupId = `ai-group-${timestamp}`;
+      const groupNode = {
+        id: groupId,
+        type: 'groupNode',
+        position: { x: groupX, y: groupY },
+        data: {
+          label: `✨ ${groupLabel}`,
+          color: 'yellow', // AI-generated canvases get yellow group
+          width: groupWidth,
+          height: groupHeight,
+          childCount: limitedCards.length,
+          aiGenerated: true,
+          aiTopic: canvasTopic,
+          createdAt: timestamp,
+          onLabelChange: (id, label) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, label } } : n));
+          },
+          onResize: (id, width, height) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, width, height } } : n));
+          },
+          onColorChange: (id, color) => {
+            setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, color } } : n));
+          },
+          onDelete: handleDeleteNode,
+        },
+        style: { zIndex: -1 }, // Groups should be behind other nodes
+      };
+
+      // Create child nodes with relative positions inside the group
+      const childNodes = limitedCards.map((card, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+
+        // Handle different card types - textNode is DEFAULT, sticky only for "sticky" type
+        let nodeType = 'textNode'; // Default to text node
+        let nodeData = {
+          title: card.title || `Card ${index + 1}`,
+          content: card.content || '',
+          cardType: 'note',
+          color: hexToNamedColor(card.color),
+          createdAt: timestamp,
+          aiGenerated: true,
+          aiTopic: canvasTopic,
+          onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
+        };
+
+        // Only "sticky" type becomes stickyNode (one per canvas)
+        if (card.type === 'sticky') {
+          nodeType = 'stickyNode';
+          nodeData.color = hexToNamedColor(card.color);
+        }
+
+        // For todo type, convert semicolon-separated content to items array
+        if (card.type === 'todo' && card.content) {
+          nodeType = 'todoNode';
+          const todoItems = card.content.split(';').map((text, i) => ({
+            id: `todo-${timestamp}-${index}-${i}`,
+            text: text.trim(),
+            completed: false
+          }));
+          nodeData.items = todoItems;
+          nodeData.content = '';
+        }
+
+        // For video type - use textNode with video cardType (placeholder for embed)
+        if (card.type === 'video') {
+          nodeType = 'textNode';
+          nodeData = {
+            ...nodeData,
+            title: card.title || 'Video Embed',
+            content: card.content || '🎬 Video placeholder - click to add video URL',
+            cardType: 'video',
+            url: '',
+          };
+        }
+
+        // For photo type - generate image using Pollinations (free, on-demand)
+        if (card.type === 'photo') {
+          nodeType = 'photoNode';
+          const imagePrompt = card.imagePrompt || card.title || 'Abstract colorful illustration';
+          const encodedPrompt = encodeURIComponent(imagePrompt);
+          const generatedImageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&model=flux&nologo=true&seed=${Date.now() + index}`;
+
+          nodeData = {
+            ...nodeData,
+            imageUrl: generatedImageUrl,
+            thumbnail: generatedImageUrl,
+            title: card.title || 'Photo',
+            description: card.content || '',
+            caption: '✨ AI Generated',
+            aiPrompt: imagePrompt,
+            aiGenerated: true,
+            onRegenerate: handleRegenerateImage,
+          };
+        }
+
+        return {
+          id: `canvas-${timestamp}-${index}`,
+          type: nodeType,
+          parentId: groupId, // Link to group
+          extent: 'parent', // Constrain to group
+          position: {
+            // Relative position inside group
+            x: groupPadding + col * (childWidth + childGap),
+            y: groupPadding + labelHeight + row * (childHeight + childGap)
+          },
+          data: nodeData
+        };
+      });
+
+      // Add group first, then children
+      setNodes(nds => [...nds, groupNode, ...childNodes]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
+
+      console.log(`✅ Generated canvas with ${limitedCards.length} cards in group "${groupLabel}" for: "${canvasTopic}"`);
+      setShowAICanvasModal(false);
+      setIsGeneratingCanvas(false);
+
+    } catch (error) {
+      console.error('AI Generate Canvas failed:', error);
+      alert(`❌ Canvas generation failed: ${error.message}`);
+      setIsGeneratingCanvas(false);
+    }
+  }, [handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey]);
 
   // Save UnityMAP journey to cloud (Pro feature)
   const handleSaveJourney = async () => {
@@ -2496,12 +3384,48 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     );
   }, [nodes, setNodes, setEdges]);
 
+  // Duplicate selected nodes
+  const handleDuplicateSelected = useCallback(() => {
+    const selectedNodes = nodes.filter((n) => n.selected);
+    if (selectedNodes.length === 0) return;
+
+    const timestamp = Date.now();
+    const offset = 50; // Offset for duplicated nodes
+
+    const newNodes = selectedNodes.map((node, index) => {
+      // Create a deep copy of the node data
+      const newData = { ...node.data };
+
+      // Preserve callbacks from original
+      if (node.data.onUpdate) newData.onUpdate = handleNodeUpdate;
+      if (node.data.onDelete) newData.onDelete = handleDeleteNode;
+      if (node.data.onResize) newData.onResize = handlePhotoResize;
+
+      return {
+        ...node,
+        id: `${node.type}-dup-${timestamp}-${index}`,
+        position: {
+          x: node.position.x + offset,
+          y: node.position.y + offset,
+        },
+        data: {
+          ...newData,
+          createdAt: timestamp,
+        },
+        selected: false,
+      };
+    });
+
+    setNodes((nds) => [...nds, ...newNodes]);
+  }, [nodes, setNodes, handleNodeUpdate, handleDeleteNode, handlePhotoResize]);
+
   // Keyboard shortcuts hook
   const { showHelp: showShortcutsHelp, setShowHelp: setShowShortcutsHelp } = useKeyboardShortcuts({
     onSave: handleSaveJourney,
     onExport: handleExportJSON,
     onAddCard: () => handleAddCard('note'),
     onDelete: handleDeleteSelected,
+    onDuplicate: handleDuplicateSelected,
     onDeselect: handleDeselect,
     onPan: handlePan,
     enabled: currentMode === 'notes', // Only enable in notes mode
@@ -2600,6 +3524,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeDrag={handleNodeDrag}
+            onNodeDragStop={handleNodeDragStop}
+            onMove={(_, viewport) => setZoomLevel(viewport.zoom)}
             nodeTypes={nodeTypes}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             panOnDrag={[1, 2]}
@@ -2622,6 +3549,45 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               color="#aaa"
               style={{ opacity: 0.3 }}
             />
+            {/* Canvas Minimap - toggleable navigation overview (smaller, more transparent) */}
+            {showMinimap && (
+              <MiniMap
+                nodeStrokeColor={(n) => {
+                  if (n.type === 'groupNode') return 'rgba(156, 163, 175, 0.6)';
+                  if (n.type === 'stickyNode') return 'rgba(251, 191, 36, 0.7)';
+                  if (n.type === 'photoNode') return 'rgba(249, 115, 22, 0.7)';
+                  return 'rgba(229, 231, 235, 0.6)';
+                }}
+                nodeColor={(n) => {
+                  if (n.type === 'groupNode') return 'rgba(156, 163, 175, 0.15)';
+                  if (n.type === 'stickyNode') {
+                    const colors = {
+                      yellow: 'rgba(251, 191, 36, 0.5)',
+                      pink: 'rgba(236, 72, 153, 0.5)',
+                      blue: 'rgba(59, 130, 246, 0.5)',
+                      green: 'rgba(34, 197, 94, 0.5)',
+                      orange: 'rgba(249, 115, 22, 0.5)',
+                      purple: 'rgba(168, 85, 247, 0.5)'
+                    };
+                    return colors[n.data?.color] || 'rgba(251, 191, 36, 0.5)';
+                  }
+                  if (n.type === 'photoNode') return 'rgba(249, 115, 22, 0.4)';
+                  return 'rgba(243, 244, 246, 0.5)';
+                }}
+                nodeBorderRadius={3}
+                maskColor="rgba(0, 0, 0, 0.03)"
+                style={{
+                  width: 140,
+                  height: 90,
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  border: '1px solid rgba(229, 231, 235, 0.6)',
+                  borderRadius: '6px',
+                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+                }}
+                pannable
+                zoomable
+              />
+            )}
           </ReactFlow>
         </div>
       </div>
@@ -2718,7 +3684,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
           }}
           onMouseEnter={(e) => {
@@ -2731,7 +3696,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           }}
           title="Zoom In"
         >
-+
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </button>
 
         {/* Zoom Level Indicator */}
@@ -2759,7 +3726,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            color: 'black',
             transition: 'background-color 0.2s, transform 0.2s',
           }}
           onMouseEnter={(e) => {
@@ -2772,7 +3738,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           }}
           title="Zoom Out"
         >
-−
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <path d="M5 12h14" />
+          </svg>
         </button>
 
         {/* Center/Fit View Button */}
@@ -2802,7 +3770,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           }}
           title="Center View"
         >
-⊙
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+          </svg>
         </button>
 
         {/* Auto-Layout Button */}
@@ -2831,10 +3802,143 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           }}
           title="Auto-Organize Nodes"
         >
-⊞
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
         </button>
 
-        {/* MAP-specific controls moved to UnityCircleNav for cleaner zoom module */}
+        {/* Duplicate Selected Button */}
+        <button
+          onClick={handleDuplicateSelected}
+          disabled={!nodes.some(n => n.selected)}
+          style={{
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: nodes.some(n => n.selected) ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+            border: `1px solid ${nodes.some(n => n.selected) ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.06)'}`,
+            borderRadius: '4px',
+            cursor: nodes.some(n => n.selected) ? 'pointer' : 'not-allowed',
+            transition: 'background-color 0.2s, transform 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            if (nodes.some(n => n.selected)) {
+              e.currentTarget.style.backgroundColor = 'rgba(147, 51, 234, 0.15)';
+              e.currentTarget.style.transform = 'scale(1.08)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = nodes.some(n => n.selected) ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.02)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Duplicate Selected (Ctrl+D)"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={nodes.some(n => n.selected) ? '#6b7280' : 'rgba(0, 0, 0, 0.3)'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+          </svg>
+        </button>
+
+        {/* Bookmark/Star Button */}
+        <button
+          onClick={handleToggleBookmark}
+          disabled={!currentCapsuleId}
+          style={{
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isBookmarked ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.04)',
+            border: `1px solid ${isBookmarked ? 'rgba(251, 191, 36, 0.5)' : 'rgba(0, 0, 0, 0.12)'}`,
+            borderRadius: '4px',
+            cursor: currentCapsuleId ? 'pointer' : 'not-allowed',
+            transition: 'background-color 0.2s, transform 0.2s',
+            opacity: currentCapsuleId ? 1 : 0.5,
+          }}
+          onMouseEnter={(e) => {
+            if (currentCapsuleId) {
+              e.currentTarget.style.backgroundColor = isBookmarked ? 'rgba(251, 191, 36, 0.3)' : 'rgba(251, 191, 36, 0.15)';
+              e.currentTarget.style.transform = 'scale(1.08)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = isBookmarked ? 'rgba(251, 191, 36, 0.2)' : 'rgba(0, 0, 0, 0.04)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={currentCapsuleId ? (isBookmarked ? 'Remove from Saved' : 'Save to Bookmarks') : 'Save canvas first to bookmark'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={isBookmarked ? '#fbbf24' : 'none'} stroke={isBookmarked ? '#fbbf24' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </button>
+
+        {/* Minimap Toggle Button */}
+        <button
+          onClick={() => setShowMinimap(!showMinimap)}
+          style={{
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: showMinimap ? 'rgba(59, 130, 246, 0.15)' : 'rgba(0, 0, 0, 0.04)',
+            border: `1px solid ${showMinimap ? 'rgba(59, 130, 246, 0.4)' : 'rgba(0, 0, 0, 0.12)'}`,
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s, transform 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = showMinimap ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.1)';
+            e.currentTarget.style.transform = 'scale(1.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = showMinimap ? 'rgba(59, 130, 246, 0.15)' : 'rgba(0, 0, 0, 0.04)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={showMinimap ? 'Hide Minimap' : 'Show Minimap'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showMinimap ? '#3b82f6' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M9 3v18" />
+          </svg>
+        </button>
+
+        {/* Overview Tray Toggle Button */}
+        <button
+          onClick={() => setShowOverviewTray(!showOverviewTray)}
+          style={{
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: showOverviewTray ? 'rgba(59, 130, 246, 0.15)' : 'rgba(0, 0, 0, 0.04)',
+            border: `1px solid ${showOverviewTray ? 'rgba(59, 130, 246, 0.4)' : 'rgba(0, 0, 0, 0.12)'}`,
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s, transform 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = showOverviewTray ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.1)';
+            e.currentTarget.style.transform = 'scale(1.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = showOverviewTray ? 'rgba(59, 130, 246, 0.15)' : 'rgba(0, 0, 0, 0.04)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={showOverviewTray ? 'Hide Overview' : 'Show Overview'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showOverviewTray ? '#3b82f6' : '#6b7280'} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
 
         {/* Divider */}
         <div style={{ width: '24px', height: '1px', backgroundColor: '#e5e7eb', margin: '4px 0' }} />
@@ -2869,7 +3973,13 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           }}
           title={showModePanel ? 'Hide Modes' : 'Switch Mode'}
         >
-{showModePanel ? '◀' : '▶'}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={showModePanel ? '#b45309' : '#6b7280'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+            {showModePanel ? (
+              <path d="M15 18l-6-6 6-6" />
+            ) : (
+              <path d="M9 18l6-6-6-6" />
+            )}
+          </svg>
         </button>
         </div>
       </div>
@@ -2898,6 +4008,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         onAIGenerateNote={handleAIGenerateNote}
         onAIGenerateImage={handleAIGenerateImage}
         onAISummarize={handleAISummarize}
+        onAIGenerateCanvas={handleAIGenerateCanvas}
         // Status bar props
         nodeCount={nodes.length}
         nodeLimit={nodeLimit}
@@ -2978,11 +4089,57 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         capsuleId={currentCapsuleId}
         title={canvasTitle}
         isPublic={isPublic}
+        isBookmarked={isBookmarked}
         collaborators={collaborators}
         onUpdateVisibility={handleUpdateVisibility}
+        onToggleBookmark={handleToggleBookmark}
         onAddCollaborator={handleAddCollaborator}
         onRemoveCollaborator={handleRemoveCollaborator}
         shareLink={shareUrl}
+      />
+
+      {/* AI Generate Canvas Modal */}
+      <AIGenerateCanvasModal
+        isOpen={showAICanvasModal}
+        onClose={() => {
+          setShowAICanvasModal(false);
+          setIsGeneratingCanvas(false);
+        }}
+        onGenerate={handleAICanvasGenerate}
+        isGenerating={isGeneratingCanvas}
+      />
+
+      {/* Overview Tray - Right-side panel */}
+      <OverviewTray
+        isOpen={showOverviewTray}
+        onClose={() => setShowOverviewTray(false)}
+        nodes={nodes}
+        starredNodes={starredNodes}
+        bookmarkedCapsules={[]} // TODO: Wire up bookmarked capsules
+        notifications={[]} // TODO: Wire up notifications
+        onNodeClick={(node) => {
+          // Focus on the clicked node
+          const { x, y } = node.position;
+          // For child nodes, calculate absolute position
+          const parentNode = node.parentId ? nodes.find(n => n.id === node.parentId) : null;
+          const absX = parentNode ? parentNode.position.x + x : x;
+          const absY = parentNode ? parentNode.position.y + y : y;
+          setCenter(absX + 100, absY + 75, { duration: 400, zoom: 1.2 });
+          setShowOverviewTray(false);
+        }}
+        onCapsuleLoad={(capsule) => {
+          // TODO: Load capsule
+          console.log('Load capsule:', capsule.id);
+        }}
+        onNotificationClick={(notification) => {
+          // TODO: Handle notification click
+          console.log('Notification clicked:', notification);
+        }}
+        onUnstar={(capsuleId) => {
+          // TODO: Unstar capsule
+          console.log('Unstar capsule:', capsuleId);
+        }}
+        onUnstarNode={handleUnstarNode}
       />
 
       {/* Lightbox Modal */}

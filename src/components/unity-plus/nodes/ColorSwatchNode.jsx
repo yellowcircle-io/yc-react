@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { Handle, Position, NodeToolbar } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 
 /**
  * ColorSwatchNode - Color palette display
@@ -14,6 +14,8 @@ import { Handle, Position, NodeToolbar } from '@xyflow/react';
 const ColorSwatchNode = memo(({ id, data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(-1);
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [customHex, setCustomHex] = useState('#');
 
   const title = data.title || 'Color Palette';
   const colors = data.colors || ['#fbbf24', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6'];
@@ -28,12 +30,37 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
     }
   };
 
-  const handleAddColor = () => {
+  const handleAddRandomColor = () => {
     if (data.onUpdateColors) {
-      // Generate a random color
       const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
       data.onUpdateColors(id, [...colors, randomColor]);
+      setShowAddPanel(false);
     }
+  };
+
+  const handleAddCustomColor = (color) => {
+    if (data.onUpdateColors && /^#[0-9A-Fa-f]{6}$/.test(color)) {
+      data.onUpdateColors(id, [...colors, color.toLowerCase()]);
+      setCustomHex('#');
+      setShowAddPanel(false);
+    }
+  };
+
+  const handleHexInputChange = (e) => {
+    let value = e.target.value;
+    // Ensure # prefix
+    if (!value.startsWith('#')) {
+      value = '#' + value.replace('#', '');
+    }
+    // Limit to 7 characters (#RRGGBB)
+    if (value.length <= 7) {
+      setCustomHex(value.toUpperCase());
+    }
+  };
+
+  const handleColorPickerChange = (e) => {
+    const color = e.target.value;
+    handleAddCustomColor(color);
   };
 
   const handleRemoveColor = (index) => {
@@ -83,49 +110,96 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Delete button toolbar */}
-      <NodeToolbar isVisible={isHovered || selected} position={Position.Top}>
-        {data.onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onDelete(id);
-            }}
-            style={{
-              width: '24px',
-              height: '24px',
-              minWidth: '24px',
-              minHeight: '24px',
-              padding: 0,
-              borderRadius: '50%',
-              backgroundColor: '#374151',
-              border: '2px solid white',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '400',
-              lineHeight: 1,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              zIndex: 10,
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1f2937';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#374151';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title="Delete node"
-          >
-            ×
-          </button>
-        )}
-      </NodeToolbar>
+      {/* Delete button - positioned directly on node like WaitNode */}
+      {(isHovered || selected) && data.onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onDelete(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            right: '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: '#374151',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#1f2937';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#374151';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Delete node"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Star button - visible on hover or if starred */}
+      {(isHovered || selected || data.isStarred) && data.onToggleStar && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onToggleStar(id);
+          }}
+          className="nodrag"
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            left: '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: data.isStarred ? '#fbbf24' : '#6b7280',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#f59e0b' : '#4b5563';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#fbbf24' : '#6b7280';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={data.isStarred ? 'Unstar node' : 'Star node'}
+        >
+          ★
+        </button>
+      )}
 
       {/* Header */}
       <div style={{
@@ -235,34 +309,173 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
         })}
       </div>
 
-      {/* Add color button */}
+      {/* Add color section */}
       {data.onUpdateColors && colors.length < 12 && (
-        <button
-          onClick={handleAddColor}
-          className="nodrag"
-          style={{
-            width: '100%',
-            padding: '8px',
-            backgroundColor: '#f9fafb',
-            border: '2px dashed #e5e7eb',
-            borderRadius: '8px',
-            color: '#6b7280',
-            fontSize: '11px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#fbbf24';
-            e.currentTarget.style.color = '#fbbf24';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#e5e7eb';
-            e.currentTarget.style.color = '#6b7280';
-          }}
-        >
-          + Add Color
-        </button>
+        <div className="nodrag" style={{ position: 'relative' }}>
+          {!showAddPanel ? (
+            <button
+              onClick={() => setShowAddPanel(true)}
+              style={{
+                width: '100%',
+                padding: '8px',
+                backgroundColor: '#f9fafb',
+                border: '2px dashed #e5e7eb',
+                borderRadius: '8px',
+                color: '#6b7280',
+                fontSize: '11px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#fbbf24';
+                e.currentTarget.style.color = '#fbbf24';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#e5e7eb';
+                e.currentTarget.style.color = '#6b7280';
+              }}
+            >
+              + Add Color
+            </button>
+          ) : (
+            <div style={{
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              padding: '8px',
+            }}>
+              {/* Hex input row */}
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+                <input
+                  type="text"
+                  value={customHex}
+                  onChange={handleHexInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddCustomColor(customHex);
+                    } else if (e.key === 'Escape') {
+                      setShowAddPanel(false);
+                    }
+                  }}
+                  placeholder="#FFFFFF"
+                  style={{
+                    width: '80px',
+                    padding: '4px 6px',
+                    fontSize: '10px',
+                    fontFamily: 'monospace',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    outline: 'none',
+                    textTransform: 'uppercase',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {/* Color preview swatch */}
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  backgroundColor: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? customHex : '#f3f4f6',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  flexShrink: 0,
+                }} />
+                <button
+                  onClick={() => handleAddCustomColor(customHex)}
+                  disabled={!/^#[0-9A-Fa-f]{6}$/.test(customHex)}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    backgroundColor: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? '#fbbf24' : '#e5e7eb',
+                    color: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? '#000' : '#9ca3af',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? 'pointer' : 'not-allowed',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Action buttons row */}
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <label style={{
+                  flex: 1,
+                  padding: '4px 6px',
+                  fontSize: '9px',
+                  fontWeight: '600',
+                  backgroundColor: '#fff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '2px',
+                }}>
+                  🎨 Pick
+                  <input
+                    type="color"
+                    onChange={handleColorPickerChange}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      opacity: 0,
+                      cursor: 'pointer',
+                    }}
+                  />
+                </label>
+                <button
+                  onClick={handleAddRandomColor}
+                  style={{
+                    flex: 1,
+                    padding: '4px 6px',
+                    fontSize: '9px',
+                    fontWeight: '600',
+                    backgroundColor: '#fff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '2px',
+                  }}
+                >
+                  🎲 Rand
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddPanel(false);
+                    setCustomHex('#');
+                  }}
+                  style={{
+                    padding: '4px 6px',
+                    fontSize: '9px',
+                    fontWeight: '600',
+                    backgroundColor: '#fff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    color: '#6b7280',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <Handle

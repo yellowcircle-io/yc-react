@@ -60,7 +60,7 @@ const LightboxModal = ({ photo, onClose }) => {
         style={{
           position: 'absolute',
           top: '20px',
-          right: '20px',
+          left: '20px',
           width: '48px',
           height: '48px',
           borderRadius: '50%',
@@ -120,7 +120,9 @@ const LightboxModal = ({ photo, onClose }) => {
             style={{
               marginTop: '20px',
               padding: '20px',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: 'rgba(0, 0, 0, 0.60)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               borderRadius: '8px',
               maxWidth: '600px',
               width: '100%',
@@ -134,7 +136,7 @@ const LightboxModal = ({ photo, onClose }) => {
                 <h3 style={{
                   fontSize: '24px',
                   fontWeight: '700',
-                  color: '#000000',
+                  color: '#ffffff',
                   margin: 0
                 }}>
                   {photo.location}
@@ -148,7 +150,7 @@ const LightboxModal = ({ photo, onClose }) => {
                 <p style={{
                   fontSize: '18px',
                   fontWeight: '600',
-                  color: '#333333',
+                  color: 'rgba(255, 255, 255, 0.85)',
                   margin: 0
                 }}>
                   {photo.date}
@@ -160,7 +162,7 @@ const LightboxModal = ({ photo, onClose }) => {
               <p style={{
                 fontSize: '16px',
                 fontWeight: '500',
-                color: '#555555',
+                color: 'rgba(255, 255, 255, 0.75)',
                 marginTop: '8px',
                 marginBottom: 0,
                 lineHeight: '1.6'

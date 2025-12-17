@@ -5,6 +5,7 @@
  * - Cmd/Ctrl + S: Save to cloud (if Pro)
  * - Cmd/Ctrl + E: Export JSON
  * - Cmd/Ctrl + N: Add new card
+ * - Cmd/Ctrl + D: Duplicate selected node(s)
  * - Cmd/Ctrl + /: Show shortcuts help
  * - Escape: Deselect all nodes
  * - Delete/Backspace: Delete selected node(s)
@@ -18,6 +19,7 @@ export function useKeyboardShortcuts({
   onExport,
   onAddCard,
   onDelete,
+  onDuplicate,
   onDeselect,
   onPan,
   enabled = true,
@@ -52,6 +54,13 @@ export function useKeyboardShortcuts({
     if (isMod && e.key === 'n') {
       e.preventDefault();
       onAddCard?.();
+      return;
+    }
+
+    // Cmd/Ctrl + D: Duplicate selected
+    if (isMod && e.key === 'd') {
+      e.preventDefault();
+      onDuplicate?.();
       return;
     }
 
@@ -100,7 +109,7 @@ export function useKeyboardShortcuts({
         onPan?.({ x: -panAmount, y: 0 });
         break;
     }
-  }, [enabled, onSave, onExport, onAddCard, onDelete, onDeselect, onPan]);
+  }, [enabled, onSave, onExport, onAddCard, onDelete, onDuplicate, onDeselect, onPan]);
 
   useEffect(() => {
     if (!enabled) return;

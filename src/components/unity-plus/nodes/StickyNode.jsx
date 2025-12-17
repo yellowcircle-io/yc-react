@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { Handle, Position, NodeToolbar } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 
 /**
  * StickyNode - Colored sticky note for quick notes
@@ -23,10 +23,20 @@ const STICKY_COLORS = {
 const StickyNode = memo(({ id, data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const [content, setContent] = useState(data.content || '');
+  const [currentColor, setCurrentColor] = useState(data.color || 'yellow');
 
-  const colorScheme = STICKY_COLORS[data.color] || STICKY_COLORS.yellow;
+  const colorScheme = STICKY_COLORS[currentColor] || STICKY_COLORS.yellow;
   const size = data.size || 150;
+
+  const handleColorChange = (colorKey) => {
+    setCurrentColor(colorKey);
+    setShowColorPicker(false);
+    if (data.onColorChange) {
+      data.onColorChange(id, colorKey);
+    }
+  };
 
   const handleDoubleClick = (e) => {
     e.stopPropagation();
@@ -81,49 +91,96 @@ const StickyNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Delete button toolbar */}
-      <NodeToolbar isVisible={isHovered || selected} position={Position.Top}>
-        {data.onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onDelete(id);
-            }}
-            style={{
-              width: '24px',
-              height: '24px',
-              minWidth: '24px',
-              minHeight: '24px',
-              padding: 0,
-              borderRadius: '50%',
-              backgroundColor: '#374151',
-              border: '2px solid white',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '400',
-              lineHeight: 1,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              zIndex: 10,
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1f2937';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#374151';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            title="Delete node"
-          >
-            ×
-          </button>
-        )}
-      </NodeToolbar>
+      {/* Delete button - positioned directly on node like WaitNode */}
+      {(isHovered || selected) && data.onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onDelete(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            left: '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: '#374151',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#1f2937';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#374151';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Delete node"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Star button - visible on hover or if starred */}
+      {(isHovered || selected || data.isStarred) && data.onToggleStar && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onToggleStar(id);
+          }}
+          className="nodrag"
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            left: data.onDelete ? '22px' : '-6px',
+            width: '24px',
+            height: '24px',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: 0,
+            borderRadius: '50%',
+            backgroundColor: data.isStarred ? '#fbbf24' : '#6b7280',
+            border: '2px solid white',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: '400',
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            zIndex: 10,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#f59e0b' : '#4b5563';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = data.isStarred ? '#fbbf24' : '#6b7280';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={data.isStarred ? 'Unstar node' : 'Star node'}
+        >
+          ★
+        </button>
+      )}
 
       {/* Content area */}
       {isEditing ? (
@@ -141,18 +198,19 @@ const StickyNode = memo(({ id, data, selected }) => {
             border: 'none',
             outline: 'none',
             resize: 'none',
-            fontFamily: "'Patrick Hand', cursive, sans-serif",
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             fontSize: '14px',
-            lineHeight: '1.4',
+            lineHeight: '1.5',
             color: colorScheme.text,
+            boxSizing: 'border-box',
           }}
         />
       ) : (
         <div
           style={{
-            fontFamily: "'Patrick Hand', cursive, sans-serif",
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             fontSize: '14px',
-            lineHeight: '1.4',
+            lineHeight: '1.5',
             color: colorScheme.text,
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
@@ -167,18 +225,90 @@ const StickyNode = memo(({ id, data, selected }) => {
         </div>
       )}
 
-      {/* Color indicator */}
+      {/* Color picker button with options icon */}
       <div
         style={{
           position: 'absolute',
           top: '4px',
           right: '4px',
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: colorScheme.border,
         }}
-      />
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowColorPicker(!showColorPicker);
+          }}
+          className="nodrag"
+          style={{
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            backgroundColor: colorScheme.border,
+            border: '2px solid white',
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            transition: 'transform 0.15s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Change color"
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="12" cy="5" r="1.5" />
+            <circle cx="12" cy="19" r="1.5" />
+          </svg>
+        </button>
+
+        {/* Color picker dropdown */}
+        {showColorPicker && (
+          <div
+            className="nodrag"
+            style={{
+              position: 'absolute',
+              top: '24px',
+              right: '0',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '6px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              display: 'flex',
+              gap: '4px',
+              flexWrap: 'wrap',
+              width: '80px',
+              zIndex: 20,
+            }}
+          >
+            {Object.entries(STICKY_COLORS).map(([colorKey, colors]) => (
+              <button
+                key={colorKey}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleColorChange(colorKey);
+                }}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '4px',
+                  backgroundColor: colors.bg,
+                  border: currentColor === colorKey ? `2px solid ${colors.border}` : '1px solid #e5e7eb',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                title={colorKey.charAt(0).toUpperCase() + colorKey.slice(1)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <Handle
         type="source"

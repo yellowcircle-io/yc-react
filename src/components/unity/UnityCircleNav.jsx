@@ -310,10 +310,16 @@ const OptionsMenu = ({
 };
 
 // AI Menu Component
-const AIMenu = ({ isOpen, onClose, onGenerateNote, onGenerateImage, onSummarize }) => {
+const AIMenu = ({ isOpen, onClose, onGenerateNote, onGenerateImage, onSummarize, onGenerateCanvas }) => {
   if (!isOpen) return null;
 
   const aiActions = [
+    {
+      label: '🎨 GENERATE CANVAS',
+      description: 'AI creates multiple cards from a topic',
+      onClick: onGenerateCanvas,
+      enabled: !!onGenerateCanvas,
+    },
     {
       label: '✨ GENERATE NOTE',
       description: 'AI writes a note based on context',
@@ -463,6 +469,7 @@ function UnityCircleNav({
   onAIGenerateNote,
   onAIGenerateImage,
   onAISummarize,
+  onAIGenerateCanvas,
   // Status bar info
   nodeCount = 0,
   nodeLimit = 999,
@@ -723,6 +730,7 @@ function UnityCircleNav({
         onGenerateNote={onAIGenerateNote}
         onGenerateImage={onAIGenerateImage}
         onSummarize={onAISummarize}
+        onGenerateCanvas={onAIGenerateCanvas}
       />
     </div>
   );

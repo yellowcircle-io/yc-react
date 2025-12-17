@@ -9,6 +9,9 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysisMenu, setShowAnalysisMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratePrompt, setRegeneratePrompt] = useState(data.aiPrompt || '');
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const resizeStartRef = useRef({ size: 0, x: 0, y: 0 });
 
   // Use size from data, or default to 300px
@@ -119,10 +122,11 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
         type="target"
         position={Position.Top}
         style={{
-          width: '8px',
-          height: '8px',
+          width: '12px',
+          height: '12px',
           backgroundColor: '#fbbf24',
-          border: '2px solid white'
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
         }}
       />
 
@@ -200,68 +204,152 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           }}
         />
 
-        {/* Light background card footer with yellow accent - matching homepage style */}
-        {imageLoaded && (
+        {/* Compact dark overlay - max 30% of photo height */}
+        {imageLoaded && (data.location || data.date) && (
           <div style={{
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
-            padding: '12px',
-            backgroundColor: 'rgba(255, 255, 255, 0.97)',
-            borderTop: '3px solid #fbbf24',
-            color: '#000000',
+            padding: '8px 10px',
+            backgroundColor: 'rgba(0, 0, 0, 0.60)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            color: '#ffffff',
             zIndex: 10,
-            backdropFilter: 'blur(8px)'
+            maxHeight: '30%',
+            overflow: 'hidden',
           }}>
-            {data.location && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <span style={{ fontSize: '18px', minHeight: '18px' }}>📍</span>
-                <p style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: '#000000',
-                  margin: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+            {/* Single row: Location and Date */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+            }}>
+              {data.location && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  flex: 1,
+                  minWidth: 0,
                 }}>
-                  {data.location}
-                </p>
-              </div>
-            )}
+                  <span style={{ fontSize: '12px', opacity: 0.9 }}>📍</span>
+                  <span style={{
+                    fontSize: size > 250 ? '14px' : '12px',
+                    fontWeight: '600',
+                    color: '#ffffff',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {data.location}
+                  </span>
+                </div>
+              )}
 
-            {data.date && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: data.description ? '6px' : '0' }}>
-                <span style={{ fontSize: '16px', minHeight: '16px' }}>📅</span>
-                <p style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: '#333333',
-                  margin: 0
+              {data.date && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  flexShrink: 0,
                 }}>
-                  {data.date}
-                </p>
-              </div>
-            )}
-
-            {data.description && (
-              <p style={{
-                fontSize: '15px',
-                fontWeight: '500',
-                color: '#555555',
-                marginTop: '4px',
-                marginBottom: 0,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                lineHeight: '1.4'
-              }}>
-                {data.description}
-              </p>
-            )}
+                  <span style={{ fontSize: '10px', opacity: 0.8 }}>📅</span>
+                  <span style={{
+                    fontSize: size > 250 ? '12px' : '10px',
+                    fontWeight: '500',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                  }}>
+                    {data.date}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+        )}
+
+        {/* Star button - top left, visible on hover/select/starred */}
+        {(isHovered || selected || data.isStarred) && data.onToggleStar && (
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onToggleStar(id);
+            }}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              width: '28px',
+              height: '28px',
+              padding: 0,
+              borderRadius: '50%',
+              backgroundColor: data.isStarred ? '#fbbf24' : 'rgba(0, 0, 0, 0.6)',
+              border: '2px solid white',
+              color: 'white',
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              zIndex: 25,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title={data.isStarred ? 'Unstar photo' : 'Star photo'}
+          >
+            ★
+          </button>
+        )}
+
+        {/* Delete button - top right corner */}
+        {(isHovered || selected) && data.onDelete && (
+          <button
+            className="nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onDelete(id);
+            }}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              width: '28px',
+              height: '28px',
+              padding: 0,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              border: '2px solid white',
+              color: 'white',
+              fontSize: '16px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              zIndex: 25,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title="Delete photo"
+          >
+            ×
+          </button>
         )}
 
         {/* Action Buttons - Only show when selected */}
@@ -269,7 +357,7 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
           <div style={{
             position: 'absolute',
             top: '8px',
-            right: '8px',
+            right: '44px',
             display: 'flex',
             gap: '6px',
             zIndex: 25
@@ -392,53 +480,220 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
               )}
             </div>
 
-            {/* Edit Button */}
-            <button
-              className="nodrag nopan"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowAnalysisMenu(false);
-                if (data.onEdit) {
-                  data.onEdit(id, data);
-                }
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setShowAnalysisMenu(false);
-                if (data.onEdit) {
-                  data.onEdit(id, data);
-                }
-              }}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                color: 'white',
-                border: '2px solid #EECF00',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '11px',
+            {/* Edit Button - Only for non-AI images */}
+            {!data.aiGenerated && (
+              <button
+                className="nodrag nopan"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAnalysisMenu(false);
+                  if (data.onEdit) {
+                    data.onEdit(id, data);
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setShowAnalysisMenu(false);
+                  if (data.onEdit) {
+                    data.onEdit(id, data);
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  border: '2px solid #EECF00',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  letterSpacing: '0.05em',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                  transition: 'all 0.2s ease',
+                  pointerEvents: 'auto',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.95)';
+                  e.target.style.color = '#000000';
+                  e.target.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                  e.target.style.color = 'white';
+                  e.target.style.transform = 'scale(1)';
+                }}
+              >
+                ✏️ EDIT
+              </button>
+            )}
+
+            {/* Regenerate Button - Only for AI-generated images */}
+            {data.aiGenerated && data.onRegenerate && (
+              <button
+                className="nodrag nopan"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAnalysisMenu(false);
+                  setRegeneratePrompt(data.aiPrompt || '');
+                  setShowRegenerateModal(true);
+                }}
+                disabled={isRegenerating}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: isRegenerating ? 'rgba(147, 51, 234, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  border: '2px solid #9333ea',
+                  borderRadius: '4px',
+                  cursor: isRegenerating ? 'wait' : 'pointer',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  letterSpacing: '0.05em',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                  transition: 'all 0.2s ease',
+                  pointerEvents: 'auto',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isRegenerating) {
+                    e.target.style.backgroundColor = 'rgba(147, 51, 234, 0.95)';
+                    e.target.style.transform = 'scale(1.05)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isRegenerating) {
+                    e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    e.target.style.transform = 'scale(1)';
+                  }
+                }}
+              >
+                {isRegenerating ? '⏳ GENERATING...' : '🔄 REGENERATE'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Regenerate Modal for AI Images */}
+        {showRegenerateModal && data.aiGenerated && (
+          <div
+            className="nodrag nopan"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '16px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              zIndex: 100,
+              width: '280px',
+              maxWidth: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '12px',
+            }}>
+              <h4 style={{
+                margin: 0,
+                fontSize: '14px',
                 fontWeight: '700',
-                letterSpacing: '0.05em',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                transition: 'all 0.2s ease',
-                pointerEvents: 'auto',
-                WebkitTapHighlightColor: 'transparent',
-                userSelect: 'none'
+                color: '#111827',
+              }}>
+                🔄 Regenerate Image
+              </h4>
+              <button
+                onClick={() => setShowRegenerateModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <label style={{
+              display: 'block',
+              fontSize: '11px',
+              fontWeight: '600',
+              color: '#6b7280',
+              marginBottom: '6px',
+            }}>
+              Edit prompt:
+            </label>
+            <textarea
+              value={regeneratePrompt}
+              onChange={(e) => setRegeneratePrompt(e.target.value)}
+              placeholder="Describe the image you want..."
+              style={{
+                width: '100%',
+                minHeight: '80px',
+                padding: '10px',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '12px',
+                resize: 'vertical',
+                marginBottom: '12px',
+                boxSizing: 'border-box',
               }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'rgba(238, 207, 0, 0.95)';
-                e.target.style.color = '#000000';
-                e.target.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                e.target.style.color = 'white';
-                e.target.style.transform = 'scale(1)';
-              }}
-            >
-              ✏️ EDIT
-            </button>
+            />
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setShowRegenerateModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!regeneratePrompt.trim()) return;
+                  setIsRegenerating(true);
+                  setShowRegenerateModal(false);
+                  try {
+                    await data.onRegenerate(id, regeneratePrompt);
+                  } finally {
+                    setIsRegenerating(false);
+                  }
+                }}
+                disabled={!regeneratePrompt.trim() || isRegenerating}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: regeneratePrompt.trim() ? '#9333ea' : '#e5e7eb',
+                  color: regeneratePrompt.trim() ? 'white' : '#9ca3af',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: regeneratePrompt.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                ✨ Generate
+              </button>
+            </div>
           </div>
         )}
 
@@ -541,60 +796,16 @@ const DraggablePhotoNode = memo(({ id, data, selected }) => {
         )}
       </div>
 
-      {/* Delete button - Circle, matches UnityMAP WaitNode styling */}
-      {(isHovered || selected) && data.onDelete && (
-        <button
-          className="nodrag nopan"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (data.onDelete) data.onDelete(id);
-          }}
-          style={{
-            position: 'absolute',
-            top: '-6px',
-            right: '-6px',
-            width: '24px',
-            height: '24px',
-            minWidth: '24px',
-            minHeight: '24px',
-            padding: 0,
-            borderRadius: '50%',
-            backgroundColor: '#374151',
-            border: '2px solid white',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '400',
-            lineHeight: 1,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-            zIndex: 10,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1f2937';
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#374151';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          title="Delete node"
-        >
-          ×
-        </button>
-      )}
 
       <Handle
         type="source"
         position={Position.Bottom}
         style={{
-          width: '8px',
-          height: '8px',
+          width: '12px',
+          height: '12px',
           backgroundColor: '#fbbf24',
-          border: '2px solid white'
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
         }}
       />
     </div>
