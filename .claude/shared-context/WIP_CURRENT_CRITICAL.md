@@ -2,9 +2,9 @@
 
 **⚠️ ALWAYS CHECK THIS FILE** before starting work on any machine and **ALWAYS UPDATE** before switching machines.
 
-**Updated:** December 14, 2025 at 9:30 PM PST
+**Updated:** December 16, 2025 at 4:30 PM PST
 **Machine:** Mac Mini
-**Status:** ✅ Unity Collaboration FULLY INTEGRATED + Deployed
+**Status:** ✅ Unity Notes Star Buttons + AI Canvas Fixes + Callback Injection
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,7 +12,70 @@
 
 ---
 
-## 🔥 Latest Session (Dec 14, 2025 ~9:30 PM)
+## 🔥 Latest Session (Dec 16, 2025 ~4:30 PM)
+
+### ✅ UNITY NOTES ENHANCEMENT - STAR BUTTONS + BUG FIXES
+
+**Commit:** `6b904a2` - feat: Unity Notes star buttons + AI Canvas video fix + callback injection
+**Pushed:** ✅ GitHub (yc-react main)
+**Deploy:** ⏳ Needs `firebase login --reauth` (auth expired)
+
+#### Major Features Completed:
+1. **Star/Bookmark Buttons on ALL Node Types:**
+   - StickyNode, TodoNode, CommentNode, GroupNode, CodeBlockNode, ColorSwatchNode, TextNoteNode, PhotoNode
+   - Starred nodes persist to localStorage (`unity-notes-starred-nodes`)
+   - Star button appears on hover/select, stays visible if starred
+   - Yellow filled star when starred, gray outline when not
+
+2. **PhotoNode Button Fix:**
+   - Star/delete buttons repositioned INSIDE image area
+   - No more cutoff/clipping issues
+   - Proper z-index and hover states
+
+3. **Overview Tray Component:**
+   - New `src/components/unity/OverviewTray.jsx`
+   - Tab structure: Bookmarks, Nodes, Notifications
+   - `BookmarksTab.jsx` shows starred nodes with click-to-navigate
+
+#### Bug Fixes:
+1. **AI Generate Canvas Video Issue:**
+   - Problem: LLM wasn't reliably generating video cards when option selected
+   - Solution: Force-create video card when `includeVideoPlaceholder` is true (lines 2765-2791)
+   - Replaces a non-sticky card or adds to end
+
+2. **Starring Requires Reload Issue:**
+   - Problem: Callback injection only ran once at init, new nodes never got `onToggleStar`
+   - Solution: Added `nodes.length` to useEffect deps + guard to prevent infinite loops
+   - Now runs when nodes are added AND when starredNodeIds changes
+
+#### Files Changed (20 files, +5643/-721 lines):
+- `src/pages/UnityNotesPage.jsx` - Main fixes + Overview Tray integration
+- `src/components/travel/DraggablePhotoNode.jsx` - Star button repositioned
+- `src/components/unity-plus/nodes/*.jsx` - Star buttons added to all node types
+- `src/components/unity/OverviewTray.jsx` - NEW
+- `src/components/unity/tray/*.jsx` - NEW (BookmarksTab, NodesTab, NotificationsTab)
+- `src/components/unity/AIGenerateCanvasModal.jsx` - NEW (extracted component)
+
+---
+
+## 🎯 NEXT STEPS (Priority Order)
+
+### Immediate (Before Deploy):
+1. **Firebase Re-auth:** Run `firebase login --reauth` then `firebase deploy --only hosting`
+
+### Unity Notes Enhancements (From Plan):
+2. **Canvas Minimap Navigation** - Add React Flow MiniMap component
+3. **Fix Auto-Organize** - Respect Group boundaries (don't pull children out)
+4. **CommentNode @Mentions** - Parse @email, autocomplete, notifications
+
+### Platform Priorities:
+5. **Revenue Generation** - Consulting outreach, client follow-ups
+6. **yellowCircle Platform** - Authentication, user onboarding
+7. **Content/SEO** - Article generation, blog posts
+
+---
+
+## 🔥 Previous Session (Dec 14, 2025 ~9:30 PM)
 
 ### ✅ SCOPE 5: SHAREMODAL UI INTEGRATION - COMPLETE + DEPLOYED
 
