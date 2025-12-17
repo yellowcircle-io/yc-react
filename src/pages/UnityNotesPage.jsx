@@ -2015,21 +2015,33 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
 
     try {
-      const serializableNodes = nodes.map(node => ({
-        id: node.id,
-        type: node.type,
-        position: {
-          x: node.position.x,
-          y: node.position.y
-        },
-        data: {
-          imageUrl: node.data?.imageUrl || '',
-          location: node.data?.location || '',
-          date: node.data?.date || '',
-          description: node.data?.description || '',
-          size: node.data?.size || 350
+      // Serialize nodes - preserve all data fields except callback functions
+      const serializableNodes = nodes.map(node => {
+        // Extract data without callback functions (onUpdate, onDelete, etc.)
+        const serializableData = {};
+        if (node.data) {
+          Object.keys(node.data).forEach(key => {
+            const value = node.data[key];
+            // Skip functions and keep all other data types
+            if (typeof value !== 'function') {
+              serializableData[key] = value;
+            }
+          });
         }
-      }));
+
+        return {
+          id: node.id,
+          type: node.type,
+          position: {
+            x: node.position.x,
+            y: node.position.y
+          },
+          // Include parentId and extent for group children
+          ...(node.parentId && { parentId: node.parentId }),
+          ...(node.extent && { extent: node.extent }),
+          data: serializableData
+        };
+      });
 
       const serializableEdges = edges.map(edge => ({
         id: edge.id,
