@@ -4743,3 +4743,389 @@ exports.searchProspects = functions.https.onRequest(async (request, response) =>
     response.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================
+// ENRICHMENT CASCADE SYSTEM
+// Tries multiple providers in priority order until success
+// Similar to ESP cascade for email sending
+// ============================================================
+
+/**
+ * Get configured enrichment providers in priority order
+ * Priority: Apollo (most data) → Hunter (email focus) → PDL (basic)
+ */
+const getEnrichmentProviders = () => {
+  const providers = [];
+
+  // Apollo - most comprehensive but requires paid plan
+  const apolloKey = functions.config().apollo?.api_key;
+  if (apolloKey) {
+    providers.push({
+      name: "apollo",
+      apiKey: apolloKey,
+      priority: 1,
+      fields: ["name", "company", "title", "linkedin", "phone", "email_status"]
+    });
+  }
+
+  // Hunter.io - 25 free searches/month, good for email verification
+  const hunterKey = functions.config().hunter?.api_key;
+  if (hunterKey) {
+    providers.push({
+      name: "hunter",
+      apiKey: hunterKey,
+      priority: 2,
+      fields: ["name", "company", "title", "linkedin", "email_status"]
+    });
+  }
+
+  // People Data Labs - 100 free lookups/month (basic fields only)
+  const pdlKey = functions.config().pdl?.api_key;
+  if (pdlKey) {
+    providers.push({
+      name: "pdl",
+      apiKey: pdlKey,
+      priority: 3,
+      fields: ["name", "company", "title", "linkedin"]
+    });
+  }
+
+  return providers.sort((a, b) => a.priority - b.priority);
+};
+
+/**
+ * Enrich via Hunter.io
+ * Free tier: 25 searches + 50 verifications/month
+ * Docs: https://hunter.io/api-documentation
+ */
+const enrichViaHunter = async (email, apiKey) => {
+  const response = await fetch(
+    `https://api.hunter.io/v2/email-finder?email=${encodeURIComponent(email)}&api_key=${apiKey}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.details || "Hunter API error");
+  }
+
+  const result = await response.json();
+  const data = result.data;
+
+  if (!data) {
+    throw new Error("No data returned from Hunter");
+  }
+
+  return {
+    provider: "hunter",
+    name: `${data.first_name || ""} ${data.last_name || ""}`.trim() || null,
+    firstName: data.first_name || null,
+    lastName: data.last_name || null,
+    email: data.email || email,
+    emailStatus: data.verification?.status || "unknown",
+    company: data.company || null,
+    jobTitle: data.position || null,
+    linkedinUrl: data.linkedin || null,
+    phone: null, // Hunter doesn't provide phone
+    location: null,
+    raw: data
+  };
+};
+
+/**
+ * Enrich via People Data Labs
+ * Free tier: 100 lookups/month (basic fields only)
+ * Docs: https://docs.peopledatalabs.com/
+ */
+const enrichViaPDL = async (email, apiKey) => {
+  const response = await fetch(
+    `https://api.peopledatalabs.com/v5/person/enrich?email=${encodeURIComponent(email)}`,
+    {
+      headers: {
+        "X-Api-Key": apiKey,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || "PDL API error");
+  }
+
+  const result = await response.json();
+  const data = result.data;
+
+  if (!data) {
+    throw new Error("No data returned from PDL");
+  }
+
+  return {
+    provider: "pdl",
+    name: data.full_name || null,
+    firstName: data.first_name || null,
+    lastName: data.last_name || null,
+    email: email,
+    emailStatus: "unknown", // PDL doesn't verify emails
+    company: data.job_company_name || null,
+    jobTitle: data.job_title || null,
+    linkedinUrl: data.linkedin_url || null,
+    phone: data.mobile_phone || data.phone_numbers?.[0] || null,
+    location: data.location_name || null,
+    industry: data.job_company_industry || null,
+    raw: data
+  };
+};
+
+/**
+ * Enrich via Apollo.io (existing implementation, wrapped)
+ * Requires paid plan for enrichment API
+ */
+const enrichViaApollo = async (email, apiKey) => {
+  const response = await fetch("https://api.apollo.io/v1/people/match", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache"
+    },
+    body: JSON.stringify({
+      api_key: apiKey,
+      email: email
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Apollo API error");
+  }
+
+  const result = await response.json();
+  const person = result.person;
+
+  if (!person) {
+    throw new Error("No person data returned from Apollo");
+  }
+
+  return {
+    provider: "apollo",
+    name: person.name || null,
+    firstName: person.first_name || null,
+    lastName: person.last_name || null,
+    email: person.email || email,
+    emailStatus: person.email_status || "unknown",
+    company: person.organization?.name || null,
+    jobTitle: person.title || null,
+    linkedinUrl: person.linkedin_url || null,
+    phone: person.phone_numbers?.[0]?.sanitized_number || null,
+    location: person.city ? `${person.city}, ${person.state}, ${person.country}` : null,
+    industry: person.organization?.industry || null,
+    companySize: person.organization?.estimated_num_employees || null,
+    companyLinkedin: person.organization?.linkedin_url || null,
+    raw: person
+  };
+};
+
+/**
+ * CASCADE ENRICHMENT FUNCTION
+ *
+ * Tries enrichment providers in priority order until one succeeds.
+ * Stores results in contact record with provider attribution.
+ *
+ * Usage:
+ *   curl -X POST ".../cascadeEnrich" \
+ *     -H "x-admin-token: yc-admin-2025" \
+ *     -d '{"email": "user@company.com", "updateContact": true}'
+ *
+ * Options:
+ *   - email: Required. Email to enrich.
+ *   - providers: Optional. Array of provider names to try (default: all configured)
+ *   - updateContact: Optional. Whether to update Firestore contact (default: false)
+ *   - skipProviders: Optional. Array of provider names to skip
+ */
+exports.cascadeEnrich = functions.https.onRequest(async (request, response) => {
+  // CORS
+  response.set("Access-Control-Allow-Origin", "*");
+  if (request.method === "OPTIONS") {
+    response.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-token");
+    return response.status(204).send("");
+  }
+
+  // Admin auth
+  const adminToken = request.headers["x-admin-token"];
+  if (adminToken !== "yc-admin-2025") {
+    return response.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const {
+      email,
+      providers: requestedProviders,
+      updateContact = false,
+      skipProviders = []
+    } = request.body;
+
+    if (!email) {
+      return response.status(400).json({ error: "Email is required" });
+    }
+
+    // Get configured providers
+    let providers = getEnrichmentProviders();
+
+    if (providers.length === 0) {
+      return response.status(400).json({
+        error: "No enrichment providers configured",
+        hint: "Set API keys via: firebase functions:config:set hunter.api_key=xxx pdl.api_key=xxx"
+      });
+    }
+
+    // Filter by requested providers if specified
+    if (requestedProviders && requestedProviders.length > 0) {
+      providers = providers.filter(p => requestedProviders.includes(p.name));
+    }
+
+    // Remove skipped providers
+    if (skipProviders.length > 0) {
+      providers = providers.filter(p => !skipProviders.includes(p.name));
+    }
+
+    console.log(`🔍 Cascade enrichment for ${email} - trying ${providers.length} providers`);
+
+    const attempts = [];
+    let enrichedData = null;
+    let successProvider = null;
+
+    // Try each provider in order until success
+    for (const provider of providers) {
+      try {
+        console.log(`  → Trying ${provider.name}...`);
+
+        let result;
+        switch (provider.name) {
+          case "apollo":
+            result = await enrichViaApollo(email, provider.apiKey);
+            break;
+          case "hunter":
+            result = await enrichViaHunter(email, provider.apiKey);
+            break;
+          case "pdl":
+            result = await enrichViaPDL(email, provider.apiKey);
+            break;
+          default:
+            throw new Error(`Unknown provider: ${provider.name}`);
+        }
+
+        // Success!
+        enrichedData = result;
+        successProvider = provider.name;
+        attempts.push({ provider: provider.name, success: true });
+        console.log(`  ✅ ${provider.name} succeeded`);
+        break;
+
+      } catch (error) {
+        console.log(`  ❌ ${provider.name} failed: ${error.message}`);
+        attempts.push({
+          provider: provider.name,
+          success: false,
+          error: error.message
+        });
+        // Continue to next provider
+      }
+    }
+
+    // Update Firestore contact if requested and we have data
+    if (updateContact && enrichedData) {
+      const contactId = require("crypto")
+        .createHash("sha256")
+        .update(email.toLowerCase().trim())
+        .digest("hex")
+        .substring(0, 16);
+
+      const contactRef = admin.firestore().collection("contacts").doc(contactId);
+      const existingContact = await contactRef.get();
+
+      if (existingContact.exists) {
+        // Update existing contact with enriched data
+        const updateData = {
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: `cascade_enrich_${successProvider}`
+        };
+
+        // Only update fields that have data
+        if (enrichedData.name) updateData.name = enrichedData.name;
+        if (enrichedData.firstName) updateData.firstName = enrichedData.firstName;
+        if (enrichedData.lastName) updateData.lastName = enrichedData.lastName;
+        if (enrichedData.company) updateData.company = enrichedData.company;
+        if (enrichedData.jobTitle) updateData.jobTitle = enrichedData.jobTitle;
+        if (enrichedData.linkedinUrl) updateData.linkedinUrl = enrichedData.linkedinUrl;
+        if (enrichedData.phone) updateData.phone = enrichedData.phone;
+        if (enrichedData.location) updateData["metadata.location"] = enrichedData.location;
+        if (enrichedData.industry) updateData["metadata.industry"] = enrichedData.industry;
+
+        // Store enrichment data with provider attribution
+        updateData[`enrichment.${successProvider}`] = enrichedData.raw;
+        updateData["enrichment.lastProvider"] = successProvider;
+        updateData["enrichment.lastEnrichedAt"] = admin.firestore.FieldValue.serverTimestamp();
+
+        await contactRef.update(updateData);
+        console.log(`📝 Updated contact ${contactId} with enriched data`);
+      } else {
+        console.log(`⚠️ Contact ${contactId} not found, skipping update`);
+      }
+    }
+
+    // Return results
+    response.json({
+      success: !!enrichedData,
+      email,
+      provider: successProvider,
+      data: enrichedData,
+      attempts,
+      providersAvailable: getEnrichmentProviders().map(p => p.name)
+    });
+
+  } catch (error) {
+    console.error("❌ cascadeEnrich error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * LIST ENRICHMENT PROVIDERS
+ *
+ * Returns configured enrichment providers and their status.
+ * Useful for debugging and checking which providers are available.
+ */
+exports.listEnrichmentProviders = functions.https.onRequest(async (request, response) => {
+  response.set("Access-Control-Allow-Origin", "*");
+  if (request.method === "OPTIONS") {
+    response.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-token");
+    return response.status(204).send("");
+  }
+
+  const adminToken = request.headers["x-admin-token"];
+  if (adminToken !== "yc-admin-2025") {
+    return response.status(401).json({ error: "Unauthorized" });
+  }
+
+  const providers = getEnrichmentProviders();
+
+  response.json({
+    configured: providers.length,
+    providers: providers.map(p => ({
+      name: p.name,
+      priority: p.priority,
+      fields: p.fields,
+      hasApiKey: !!p.apiKey
+    })),
+    freeOptions: [
+      { name: "hunter", freeQuota: "25 searches + 50 verifications/month", signup: "https://hunter.io" },
+      { name: "pdl", freeQuota: "100 lookups/month (basic fields)", signup: "https://peopledatalabs.com" }
+    ],
+    configCommands: {
+      hunter: "firebase functions:config:set hunter.api_key=YOUR_KEY",
+      pdl: "firebase functions:config:set pdl.api_key=YOUR_KEY",
+      apollo: "firebase functions:config:set apollo.api_key=YOUR_KEY (requires paid plan)"
+    }
+  });
+});

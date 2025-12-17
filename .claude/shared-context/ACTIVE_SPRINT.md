@@ -145,6 +145,36 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/seedWelcom
   -H "x-admin-token: yc-admin-2025"
 ```
 
+**Cascade Enrichment (Multi-Provider):**
+```bash
+# Check configured providers
+curl -s -X GET "https://us-central1-yellowcircle-app.cloudfunctions.net/listEnrichmentProviders" \
+  -H "x-admin-token: yc-admin-2025"
+
+# Cascade enrich - tries providers in priority order: Apollo → Hunter → PDL
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
+  -H "Content-Type: application/json" \
+  -H "x-admin-token: yc-admin-2025" \
+  -d '{"email": "user@company.com", "updateContact": true}'
+
+# Skip specific providers
+curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
+  -H "x-admin-token: yc-admin-2025" \
+  -d '{"email": "user@company.com", "skipProviders": ["apollo"]}'
+```
+
+**Configure Additional Providers (Free Tiers):**
+```bash
+# Hunter.io - 25 searches + 50 verifications/month (https://hunter.io)
+firebase functions:config:set hunter.api_key=YOUR_HUNTER_KEY
+
+# People Data Labs - 100 lookups/month (https://peopledatalabs.com)
+firebase functions:config:set pdl.api_key=YOUR_PDL_KEY
+
+# Re-deploy functions after adding keys
+firebase deploy --only functions
+```
+
 **Apollo.io Functions (requires paid plan):**
 ```bash
 # Enrich single contact
