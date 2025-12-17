@@ -48,6 +48,10 @@ async function decryptSettings(encryptedObj, password) {
   }
 }
 
+// Encryption key prefix for user-specific settings (not a secret - combined with userId)
+// Default matches OutreachBusinessPage for backward compatibility with existing encrypted data
+const ENCRYPTION_KEY_PREFIX = import.meta.env.VITE_ENCRYPTION_PREFIX || 'yc-outreach';
+
 // Get API keys from Hub's encrypted settings or environment
 // userId is required to decrypt Hub settings (encryption is user-specific)
 async function getHubApiKeys(userId) {
@@ -56,7 +60,7 @@ async function getHubApiKeys(userId) {
     if (savedSettings && userId) {
       const parsed = JSON.parse(savedSettings);
       // Decrypt with user-specific key (matches OutreachBusinessPage)
-      const encryptionPassword = `yc-outreach-${userId}`;
+      const encryptionPassword = `${ENCRYPTION_KEY_PREFIX}-${userId}`;
       const decrypted = await decryptSettings(parsed, encryptionPassword);
       if (decrypted) {
         // Hub stores keys directly as groqApiKey, perplexityApiKey
@@ -195,9 +199,15 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     const fetchLinkPreview = async () => {
       setIsLoadingPreview(true);
       try {
+        // Normalize URL - add https:// if no protocol present
+        let normalizedUrl = localUrl.trim();
+        if (!/^https?:\/\//i.test(normalizedUrl)) {
+          normalizedUrl = 'https://' + normalizedUrl;
+        }
+
         // Detect if this is a video/media URL
-        const mediaInfo = detectMediaType(localUrl);
-        const hostname = new URL(localUrl).hostname;
+        const mediaInfo = detectMediaType(normalizedUrl);
+        const hostname = new URL(normalizedUrl).hostname;
         const favicon = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
 
         let ogData = null;
@@ -205,7 +215,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
         // Try microlink.io first (more reliable for OG data)
         try {
           const microlinkResponse = await fetch(
-            `https://api.microlink.io?url=${encodeURIComponent(localUrl)}`,
+            `https://api.microlink.io?url=${encodeURIComponent(normalizedUrl)}`,
             { signal: AbortSignal.timeout(8000) }
           );
           if (microlinkResponse.ok) {
@@ -227,7 +237,7 @@ const TextNoteNode = memo(({ data, id, selected }) => {
         if (!ogData?.title && !ogData?.image) {
           try {
             const jsonlinkResponse = await fetch(
-              `https://jsonlink.io/api/extract?url=${encodeURIComponent(localUrl)}`,
+              `https://jsonlink.io/api/extract?url=${encodeURIComponent(normalizedUrl)}`,
               { signal: AbortSignal.timeout(5000) }
             );
             if (jsonlinkResponse.ok) {
@@ -265,20 +275,41 @@ const TextNoteNode = memo(({ data, id, selected }) => {
       } catch (err) {
         // Fallback to basic preview on error
         console.warn('Link preview fetch failed:', err);
-        const mediaInfo = detectMediaType(localUrl);
-        const hostname = new URL(localUrl).hostname;
-        const basicPreview = {
-          url: localUrl,
-          title: null,
-          description: null,
-          image: null,
-          siteName: hostname.replace('www.', ''),
-          favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`,
-          mediaType: mediaInfo?.type || null,
-          mediaId: mediaInfo?.id || null,
-          mediaInfo: mediaInfo,
-        };
-        setLinkPreview(basicPreview);
+        // Normalize URL in catch block too
+        let fallbackUrl = localUrl.trim();
+        if (!/^https?:\/\//i.test(fallbackUrl)) {
+          fallbackUrl = 'https://' + fallbackUrl;
+        }
+        try {
+          const mediaInfo = detectMediaType(fallbackUrl);
+          const hostname = new URL(fallbackUrl).hostname;
+          const basicPreview = {
+            url: localUrl, // Store original URL for display
+            title: null,
+            description: null,
+            image: null,
+            siteName: hostname.replace('www.', ''),
+            favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`,
+            mediaType: mediaInfo?.type || null,
+            mediaId: mediaInfo?.id || null,
+            mediaInfo: mediaInfo,
+          };
+          setLinkPreview(basicPreview);
+        } catch (urlErr) {
+          // URL is completely invalid, set minimal preview
+          console.warn('Invalid URL format:', localUrl, urlErr);
+          setLinkPreview({
+            url: localUrl,
+            title: null,
+            description: null,
+            image: null,
+            siteName: localUrl,
+            favicon: null,
+            mediaType: null,
+            mediaId: null,
+            mediaInfo: null,
+          });
+        }
       } finally {
         setIsLoadingPreview(false);
       }

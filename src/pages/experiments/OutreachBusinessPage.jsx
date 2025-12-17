@@ -9,6 +9,8 @@ import UserMenu from '../../components/auth/UserMenu';
 
 // Encryption key for settings (deterministic, per-user encryption)
 // Note: Access control is now handled via SSO (isAdmin check)
+// Prefix is configurable via env var for flexibility; default matches existing encrypted data
+const ENCRYPTION_KEY_PREFIX = import.meta.env.VITE_ENCRYPTION_PREFIX || 'yc-outreach';
 
 // API keys - users must enter their own keys via the settings panel
 // Keys are encrypted and stored in localStorage
@@ -546,7 +548,7 @@ function OutreachBusinessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
-  const { isAdmin, user, userProfile, signOut } = useAuth();
+  const { isAdmin, user, userProfile, signOut: _signOut } = useAuth();
   const previewRef = useRef(null);
   const fileInputRef = useRef(null); // For batch CSV upload
 
@@ -577,7 +579,7 @@ function OutreachBusinessPage() {
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, results: [] });
 
   // Trigger automation state
-  const [triggerRules, setTriggerRules] = useState([]);
+  const [triggerRules, _setTriggerRules] = useState([]);
 
   // Workflow state
   const [sendType, setSendType] = useState(null); // 'manual', 'batch', 'trigger'
@@ -602,7 +604,7 @@ function OutreachBusinessPage() {
   });
 
   // Email state
-  const [generatedEmails, setGeneratedEmails] = useState(null);
+  const [_generatedEmails, setGeneratedEmails] = useState(null);
   const [editedEmails, setEditedEmails] = useState(null);
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
   const [previewMode, setPreviewMode] = useState('text'); // 'text', 'html', or 'components'
@@ -632,7 +634,7 @@ function OutreachBusinessPage() {
   const [showToggles, setShowToggles] = useState(false);
 
   // Encryption key derived from user's UID (deterministic per-user)
-  const encryptionKey = user?.uid ? `yc-outreach-${user.uid}` : null;
+  const encryptionKey = user?.uid ? `${ENCRYPTION_KEY_PREFIX}-${user.uid}` : null;
 
   // Load saved motion from localStorage
   useEffect(() => {
@@ -674,7 +676,7 @@ function OutreachBusinessPage() {
                 perplexityApiKey: decrypted.perplexityApiKey || DEFAULT_KEYS.perplexity || prev.perplexityApiKey
               }));
             }
-          } catch (e) {
+          } catch (_e) {
             console.error('Failed to load encrypted settings');
             // If decryption fails and we have DEFAULT_KEYS, clear and use defaults
             if (hasDefaultKeys) {
@@ -1159,7 +1161,7 @@ Provide an improved version. Return ONLY a JSON object:
       const stage = stages[selectedEmailIndex];
       const currentSubject = editedEmails[stage].subject;
       const currentBody = editedEmails[stage].body;
-      const motion = OUTREACH_MOTIONS[selectedMotion];
+      const _motion = OUTREACH_MOTIONS[selectedMotion];
 
       const prompt = `You are an expert email marketer. Generate 3 alternative subject lines for this ${selectedMotion === 'sales' ? 'cold outreach' : 'marketing'} email.
 
@@ -1218,7 +1220,7 @@ Return ONLY a JSON array with exactly 3 strings:
   // Apply subject variant
   const applySubjectVariant = (variant) => {
     const stages = ['initial', 'followup1', 'followup2'];
-    const stage = stages[selectedEmailIndex];
+    const _stage = stages[selectedEmailIndex];
     handleEmailEdit('subject', variant);
   };
 
@@ -1365,7 +1367,7 @@ Return ONLY a JSON array with exactly 3 strings:
   };
 
   // Copy CLI command to clipboard
-  const handleCopyCLI = async (isTest = false) => {
+  const _handleCopyCLI = async (isTest = false) => {
     const stages = ['initial', 'followup1', 'followup2'];
     const stage = stages[selectedEmailIndex];
     const command = generateCLICommand(editedEmails[stage], isTest);
@@ -1374,7 +1376,7 @@ Return ONLY a JSON array with exactly 3 strings:
       await navigator.clipboard.writeText(command);
       setSuccessMessage(`CLI command copied! Paste in terminal to ${isTest ? 'send test' : 'send live'}`);
       setTimeout(() => setSuccessMessage(null), 5000);
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to copy to clipboard');
     }
   };
@@ -1389,7 +1391,7 @@ Return ONLY a JSON array with exactly 3 strings:
       await navigator.clipboard.writeText(html);
       setSuccessMessage('HTML copied to clipboard!');
       setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to copy to clipboard');
     }
   };
@@ -1562,7 +1564,7 @@ Return ONLY a JSON array with exactly 3 strings:
 
   const primaryButtonStyle = { ...buttonStyle, backgroundColor: COLORS.yellow, color: '#000' };
   const secondaryButtonStyle = { ...buttonStyle, backgroundColor: 'transparent', border: `2px solid ${COLORS.yellow}`, color: '#000' };
-  const dangerButtonStyle = { ...buttonStyle, backgroundColor: '#ef4444', color: '#fff' };
+  const _dangerButtonStyle = { ...buttonStyle, backgroundColor: '#ef4444', color: '#fff' };
   const successButtonStyle = { ...buttonStyle, backgroundColor: COLORS.yellow, color: '#000', fontWeight: '700' };
 
   const disabledStyle = (isDisabled) => ({
