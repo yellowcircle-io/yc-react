@@ -4016,3 +4016,66 @@ exports.cleanupByTitlePattern = functions
     response.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * Admin: Add client email to whitelist
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: yc-admin-2025" \
+ *        -d '{"email": "user@example.com"}'
+ */
+exports.addClientEmail = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Simple admin token check (same pattern as cleanup functions)
+    const adminToken = request.headers["x-admin-token"];
+    if (adminToken !== "yc-admin-2025") {
+      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+      return;
+    }
+
+    const { email } = request.body;
+    if (!email) {
+      response.status(400).json({ error: "Email is required" });
+      return;
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const clientRef = db.doc("config/client_whitelist");
+    const clientDoc = await clientRef.get();
+    const currentEmails = clientDoc.exists ? (clientDoc.data().emails || []) : [];
+
+    if (currentEmails.includes(normalizedEmail)) {
+      response.json({
+        success: true,
+        message: `${normalizedEmail} is already in the whitelist`,
+        totalClients: currentEmails.length
+      });
+      return;
+    }
+
+    await clientRef.set({
+      emails: [...currentEmails, normalizedEmail],
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: "addClientEmail_function"
+    }, { merge: true });
+
+    console.log(`✅ Added ${normalizedEmail} to client whitelist`);
+
+    response.json({
+      success: true,
+      message: `Added ${normalizedEmail} to client whitelist`,
+      totalClients: currentEmails.length + 1
+    });
+
+  } catch (error) {
+    console.error("❌ addClientEmail error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
