@@ -83,12 +83,24 @@
 
 ---
 
+### ✅ Outbound Journeys V2 (Dec 18)
+- Restructured for A/B/C testing (random 1-of-3 initial email)
+- Merge tag failbacks (emails work even if tokens fail)
+- 10/day throttle with deliverability monitoring
+- Email verification before send
+- Follow-up only on engagement (click/reply/book)
+- Proper signature: Christopher, phone, cal.com link
+- Test addresses added: christopher@goldenunknown.com, christopher.ramon.cooper@gmail.com
+
+---
+
 ## ACTUALLY NOT DONE
 
 ### P1 - Revenue Critical
 | Item | Status | Notes |
 |------|--------|-------|
 | Deploy Functions & Hosting | ✅ Done | Deployed Dec 18, 2025 |
+| Outbound Journeys V2 | ✅ Done | A/B/C testing, throttle, verification |
 | Import 50 Contacts | ⏳ Ready | See `OUTBOUND_50_CONTACTS_PLAN.md` |
 | Launch Outbound Campaign | ❌ Waiting | After contacts imported |
 
@@ -96,6 +108,13 @@
 - Pipeline A: 25 traditional (Google Places) - accounting, marketing, consulting
 - Pipeline B: 25 digital-first (YC + Growjo) - non-SaaS tech, agencies
 - Alternative: Apollo.io search (50 of 130 credits)
+
+**Outbound Strategy:**
+- Random 1-of-3 email (A/B/C test), NOT sequential 3-email drip
+- 10/day send limit to protect domain reputation
+- Email verification/ping before send
+- Follow-up ONLY if engaged (clicked, replied, booked call)
+- Scale based on deliverability/response rates
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |

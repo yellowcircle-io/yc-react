@@ -3408,6 +3408,709 @@ https://yellowcircle.io`;
 });
 
 // ============================================================
+// SEED OUTBOUND JOURNEYS
+// Creates Pipeline A & B outbound sequences with conversion to inbound
+// ============================================================
+
+// ============================================================
+// OUTBOUND EMAIL SIGNATURE (Consistent across all outbound)
+// ============================================================
+const OUTBOUND_SIGNATURE = `
+Christopher
+christopher@yellowcircle.io
+yellowcircle.io
+914.241.5524
+Schedule a call: https://cal.com/christopher-at-yellowcircle/15min?overlayCalendar=true
+UnityNOTES: https://yellowcircle.io/unity | Growth Health Check: https://yellowcircle.io/assessment`;
+
+// ============================================================
+// OUTBOUND JOURNEYS V2 - A/B/C Testing with Verification
+// ============================================================
+/**
+ * seedOutboundJourneys - Creates outbound email journeys with:
+ * - Random 1-of-3 email selection (A/B/C test)
+ * - Merge tag failbacks (works even if tokens fail)
+ * - Email verification before send
+ * - 10/day throttle with deliverability monitoring
+ * - Follow-up only on engagement
+ *
+ * @route POST /seedOutboundJourneys
+ */
+exports.seedOutboundJourneys = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  // Auth check (SSO + legacy token fallback)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
+    return;
+  }
+
+  const PIPELINE_A_JOURNEY_ID = "outbound-pipeline-a";
+  const PIPELINE_B_JOURNEY_ID = "outbound-pipeline-b";
+  const WELCOME_JOURNEY_ID = "welcome-new-leads";
+
+  // ========================================
+  // PIPELINE A: Traditional Businesses
+  // Target: Accounting, Marketing Agencies, Consulting Firms
+  // Emails written with failbacks (work even if merge tags fail)
+  // ========================================
+
+  // Email A1: Personal intro - works without any tokens
+  const pipelineAEmail1 = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+I came across {{#if company}}{{company}}{{else}}your firm{{/if}} while researching {{#if industry}}{{industry}}{{else}}professional services{{/if}} firms, and thought I'd reach out directly.
+
+Quick background: I spent 10+ years leading marketing operations at DoorDash, Reddit, and LiveIntent. Now I help professional services firms build client acquisition systems that actually work.
+
+Here's what I keep seeing: most firms are still relying on referrals. That works — until it doesn't. When growth stalls, there's no system to fall back on.
+
+Would a 15-minute call be worth your time to see if any of this applies to your situation?
+
+Either way, here's something that might be useful: "Why Your GTM Sucks" — https://yellowcircle.io/thoughts/why-your-gtm-sucks
+${OUTBOUND_SIGNATURE}
+
+P.S. — Not selling anything. Just exploring if there's a fit.`;
+
+  // Email A2: Pain point - feast-or-famine
+  const pipelineAEmail2 = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+I wanted to share a pattern I see constantly with {{#if industry}}{{industry}}{{else}}professional services{{/if}} firms:
+
+**The Feast-or-Famine Cycle**
+1. Slammed with client work → no time for business development
+2. Projects wrap up → suddenly scrambling for new clients
+3. Take whatever comes through the door → back to being slammed
+4. Repeat
+
+The firms that break this cycle don't work harder on BD — they build systems that run in the background.
+
+One thing that's worked well: a simple "warm reactivation" sequence for past clients and prospects. Takes 2 hours to set up, runs automatically, generates 3-5 conversations per month.
+
+Happy to share the template if useful. Just reply "interested" and I'll send it over.
+${OUTBOUND_SIGNATURE}`;
+
+  // Email A3: Direct value offer
+  const pipelineAEmail3 = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+I'll be direct: if your client acquisition is working great, ignore this completely.
+
+But if you're dealing with any of these:
+→ Revenue that's unpredictable month-to-month
+→ Too dependent on referrals (what happens when they dry up?)
+→ No system for staying top-of-mind with past clients
+
+Then 15 minutes with me will either give you a clear next step — or confirm you're already on the right track.
+
+Book here if interested: https://cal.com/christopher-at-yellowcircle/15min?overlayCalendar=true
+
+If not, no worries. I'll get out of your inbox.
+${OUTBOUND_SIGNATURE}
+
+P.S. — We can also do async. Reply with your biggest growth challenge and I'll send you a quick take. Free consulting, no strings.`;
+
+  // ========================================
+  // PIPELINE B: Digital-First Businesses
+  // Target: Tech companies, Digital Agencies, Non-SaaS startups
+  // Emails written with failbacks (work even if merge tags fail)
+  // ========================================
+
+  // Email B1: GTM infrastructure hook
+  const pipelineBEmail1 = `Hey{{#if name}} {{name}}{{else}} there{{/if}},
+
+{{#if company}}Found {{company}} while digging through some growth data — looks like you're building something interesting.{{else}}Found your company while researching growth-stage businesses — looks like you're building something interesting.{{/if}}
+
+Quick background: I spent a decade in marketing ops at DoorDash, Reddit, and LiveIntent. Now I help growth-stage companies fix their go-to-market infrastructure.
+
+Here's why I'm reaching out: I keep seeing the same pattern with companies at your stage.
+
+You've got product-market fit. You've got customers. But scaling acquisition feels harder than it should be because:
+• The marketing stack is duct-taped together
+• Attribution is a mess (nobody trusts the numbers)
+• The ops person is drowning in manual work instead of building systems
+
+Sound familiar? If so, I built a free diagnostic that takes 15 minutes: https://yellowcircle.io/assessment
+
+It'll tell you exactly where your GTM infrastructure is breaking down — and what to fix first.
+
+No pitch. Just data.
+${OUTBOUND_SIGNATURE}`;
+
+  // Email B2: Data/time hook - 12 hours/week
+  const pipelineBEmail2 = `Hey{{#if name}} {{name}}{{else}} there{{/if}},
+
+Wanted to share something specific: I just analyzed 40+ growth-stage companies and found that teams spend an average of 12 hours/week on manual data work that should be automated.
+
+That's 600+ hours a year. Gone.
+
+The companies that fix this don't hire more ops people. They fix three things:
+1. Data flow architecture (stop the leaks)
+2. Attribution model (single source of truth)
+3. Automation layer (remove the human bottlenecks)
+
+I put together a teardown of how one company went from "chaos" to "system" in 6 weeks. Want me to send it?
+
+Just reply "send it" and it's yours.
+${OUTBOUND_SIGNATURE}`;
+
+  // Email B3: Direct/breakup
+  const pipelineBEmail3 = `Hey{{#if name}} {{name}}{{else}} there{{/if}},
+
+I'll be direct: if your GTM ops are working great, ignore this completely.
+
+But if you're dealing with any of these:
+→ Marketing and sales pointing fingers at each other's data
+→ Spending money on tools you barely use
+→ Scaling feels like pushing a boulder uphill
+
+Then 15 minutes with me will either give you a clear next step — or confirm you're already on the right track.
+
+Book here if interested: https://cal.com/christopher-at-yellowcircle/15min?overlayCalendar=true
+
+If not, no worries. I'll get out of your inbox.
+${OUTBOUND_SIGNATURE}
+
+P.S. — We can also do async. Reply with your biggest GTM challenge and I'll send you a quick take. Free consulting, no strings.`;
+
+  try {
+    const results = {
+      pipelineA: null,
+      pipelineB: null,
+      timestamp: new Date().toISOString()
+    };
+
+    // ========================================
+    // CREATE PIPELINE A JOURNEY
+    // A/B/C Test: Random initial email, follow-up only on engagement
+    // ========================================
+    const journeyARef = db.collection("journeys").doc(PIPELINE_A_JOURNEY_ID);
+    const existingJourneyA = await journeyARef.get();
+    const existingDataA = existingJourneyA.exists ? existingJourneyA.data() : {};
+
+    const journeyAData = {
+      id: PIPELINE_A_JOURNEY_ID,
+      title: "Outbound - Pipeline A (Traditional)",
+      description: "Cold outreach for professional services: accounting, marketing agencies, consulting firms. A/B/C test with random initial email, follow-up only on engagement.",
+      status: "active",
+      pipeline: "A",
+
+      // V2 Config: A/B/C Testing with throttle
+      config: {
+        version: "2.0",
+        testMode: "abc_split",  // Random 1-of-3 initial email
+        throttle: {
+          maxPerDay: 10,
+          requireVerification: true  // Ping email before send
+        },
+        followUpMode: "engagement_only",  // Only follow up if clicked/replied/booked
+        conversionAction: "enroll_inbound"
+      },
+
+      _sync: {
+        source: "script",
+        scriptVersion: "2.0.0",
+        lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+        syncEndpoint: "seedOutboundJourneys"
+      },
+
+      // Email variants for A/B/C testing
+      emailVariants: {
+        A: {
+          id: "variant-a",
+          subject: "Quick question",  // Failback: no merge tags in subject
+          subjectWithMerge: "Quick question about {{company}}",
+          body: pipelineAEmail1,
+          label: "Personal Intro"
+        },
+        B: {
+          id: "variant-b",
+          subject: "The feast-or-famine cycle",
+          subjectWithMerge: "The feast-or-famine cycle",
+          body: pipelineAEmail2,
+          label: "Pain Point"
+        },
+        C: {
+          id: "variant-c",
+          subject: "Quick thought",  // Failback
+          subjectWithMerge: "Quick thought for {{company}}",
+          body: pipelineAEmail3,
+          label: "Direct Value"
+        }
+      },
+
+      nodes: [
+        {
+          id: "prospect-entry-a",
+          type: "prospectNode",
+          position: { x: 400, y: 50 },
+          data: {
+            label: "Pipeline A Prospects",
+            count: existingDataA.nodes?.[0]?.data?.count || 0,
+            segment: "pipeline_a",
+            source: "discovery",
+            tags: ["outbound", "pipeline-a", "traditional"],
+            prospects: existingDataA.nodes?.[0]?.data?.prospects || []
+          }
+        },
+        {
+          id: "verify-email-a",
+          type: "actionNode",
+          position: { x: 400, y: 150 },
+          data: {
+            label: "Verify Email",
+            actionType: "verify_email",
+            config: { skipInvalid: true, logBounces: true }
+          }
+        },
+        {
+          id: "throttle-check-a",
+          type: "conditionNode",
+          position: { x: 400, y: 250 },
+          data: {
+            label: "Under Daily Limit?",
+            conditionType: "throttle",
+            conditions: [{ field: "dailySendCount", operator: "lt", value: 10 }]
+          }
+        },
+        {
+          id: "queue-for-tomorrow-a",
+          type: "waitNode",
+          position: { x: 600, y: 250 },
+          data: { label: "Queue for Tomorrow", delay: 1, unit: "days" }
+        },
+        {
+          id: "random-split-a",
+          type: "splitNode",
+          position: { x: 400, y: 350 },
+          data: {
+            label: "A/B/C Split",
+            splitType: "random",
+            branches: ["A", "B", "C"],
+            weights: [33, 33, 34]
+          }
+        },
+        {
+          id: "email-variant-a",
+          type: "emailNode",
+          position: { x: 200, y: 450 },
+          data: {
+            label: "Variant A: Personal Intro",
+            variantId: "A",
+            subject: "Quick question",
+            preview: pipelineAEmail1.substring(0, 100) + "...",
+            fullBody: pipelineAEmail1,
+            status: "active"
+          }
+        },
+        {
+          id: "email-variant-b",
+          type: "emailNode",
+          position: { x: 400, y: 450 },
+          data: {
+            label: "Variant B: Pain Point",
+            variantId: "B",
+            subject: "The feast-or-famine cycle",
+            preview: pipelineAEmail2.substring(0, 100) + "...",
+            fullBody: pipelineAEmail2,
+            status: "active"
+          }
+        },
+        {
+          id: "email-variant-c",
+          type: "emailNode",
+          position: { x: 600, y: 450 },
+          data: {
+            label: "Variant C: Direct Value",
+            variantId: "C",
+            subject: "Quick thought",
+            preview: pipelineAEmail3.substring(0, 100) + "...",
+            fullBody: pipelineAEmail3,
+            status: "active"
+          }
+        },
+        {
+          id: "wait-5-days-a",
+          type: "waitNode",
+          position: { x: 400, y: 550 },
+          data: { label: "Wait 5 Days", delay: 5, unit: "days" }
+        },
+        {
+          id: "engagement-check-a",
+          type: "conditionNode",
+          position: { x: 400, y: 650 },
+          data: {
+            label: "Engaged?",
+            conditionType: "engagement",
+            conditions: [
+              { field: "replied", operator: "eq", value: true },
+              { field: "clicked", operator: "eq", value: true },
+              { field: "booked_call", operator: "eq", value: true }
+            ],
+            matchMode: "any"
+          }
+        },
+        {
+          id: "move-to-inbound-a",
+          type: "actionNode",
+          position: { x: 200, y: 750 },
+          data: {
+            label: "→ Inbound Journey",
+            actionType: "enroll_journey",
+            config: { journeyId: WELCOME_JOURNEY_ID, addTags: ["converted-outbound", "pipeline-a"] }
+          }
+        },
+        {
+          id: "exit-cold-a",
+          type: "exitNode",
+          position: { x: 600, y: 750 },
+          data: { label: "Exit (No Engagement)", exitReason: "no_engagement", storeForReactivation: true }
+        }
+      ],
+
+      edges: [
+        { id: "e1a", source: "prospect-entry-a", target: "verify-email-a" },
+        { id: "e2a", source: "verify-email-a", target: "throttle-check-a" },
+        { id: "e3a", source: "throttle-check-a", target: "random-split-a", sourceHandle: "yes" },
+        { id: "e3a-queue", source: "throttle-check-a", target: "queue-for-tomorrow-a", sourceHandle: "no" },
+        { id: "e3a-requeue", source: "queue-for-tomorrow-a", target: "throttle-check-a" },
+        { id: "e4a-A", source: "random-split-a", target: "email-variant-a", sourceHandle: "A" },
+        { id: "e4a-B", source: "random-split-a", target: "email-variant-b", sourceHandle: "B" },
+        { id: "e4a-C", source: "random-split-a", target: "email-variant-c", sourceHandle: "C" },
+        { id: "e5a-A", source: "email-variant-a", target: "wait-5-days-a" },
+        { id: "e5a-B", source: "email-variant-b", target: "wait-5-days-a" },
+        { id: "e5a-C", source: "email-variant-c", target: "wait-5-days-a" },
+        { id: "e6a", source: "wait-5-days-a", target: "engagement-check-a" },
+        { id: "e7a", source: "engagement-check-a", target: "move-to-inbound-a", sourceHandle: "yes" },
+        { id: "e8a", source: "engagement-check-a", target: "exit-cold-a", sourceHandle: "no" }
+      ],
+
+      prospects: existingDataA.prospects || [],
+
+      stats: {
+        totalProspects: existingDataA.stats?.totalProspects || 0,
+        activeProspects: existingDataA.stats?.activeProspects || 0,
+        completedProspects: existingDataA.stats?.completedProspects || 0,
+        emailsSent: existingDataA.stats?.emailsSent || 0,
+        conversions: existingDataA.stats?.conversions || 0,
+        variantStats: {
+          A: { sent: 0, opened: 0, clicked: 0, replied: 0 },
+          B: { sent: 0, opened: 0, clicked: 0, replied: 0 },
+          C: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+        },
+        deliverability: {
+          verified: 0,
+          bounced: 0,
+          invalid: 0
+        },
+        nodeCount: 13,
+        emailCount: 3
+      },
+
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!existingJourneyA.exists) {
+      journeyAData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    await journeyARef.set(journeyAData, { merge: true });
+    results.pipelineA = { id: PIPELINE_A_JOURNEY_ID, created: !existingJourneyA.exists, updated: existingJourneyA.exists };
+    console.log(`✅ Pipeline A journey created/updated: ${PIPELINE_A_JOURNEY_ID}`);
+
+    // ========================================
+    // CREATE PIPELINE B JOURNEY
+    // A/B/C Test: Random initial email, follow-up only on engagement
+    // ========================================
+    const journeyBRef = db.collection("journeys").doc(PIPELINE_B_JOURNEY_ID);
+    const existingJourneyB = await journeyBRef.get();
+    const existingDataB = existingJourneyB.exists ? existingJourneyB.data() : {};
+
+    const journeyBData = {
+      id: PIPELINE_B_JOURNEY_ID,
+      title: "Outbound - Pipeline B (Digital-First)",
+      description: "Cold outreach for tech companies, digital agencies, non-SaaS startups. A/B/C test with random initial email, follow-up only on engagement.",
+      status: "active",
+      pipeline: "B",
+
+      // V2 Config: A/B/C Testing with throttle
+      config: {
+        version: "2.0",
+        testMode: "abc_split",
+        throttle: {
+          maxPerDay: 10,
+          requireVerification: true
+        },
+        followUpMode: "engagement_only",
+        conversionAction: "enroll_inbound"
+      },
+
+      _sync: {
+        source: "script",
+        scriptVersion: "2.0.0",
+        lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+        syncEndpoint: "seedOutboundJourneys"
+      },
+
+      // Email variants for A/B/C testing
+      emailVariants: {
+        A: {
+          id: "variant-a",
+          subject: "Quick question about your GTM",  // Failback
+          subjectWithMerge: "{{company}}'s GTM infrastructure",
+          body: pipelineBEmail1,
+          label: "GTM Infrastructure"
+        },
+        B: {
+          id: "variant-b",
+          subject: "12 hours/week (the hidden cost)",
+          subjectWithMerge: "12 hours/week (the hidden cost)",
+          body: pipelineBEmail2,
+          label: "Time/Data Hook"
+        },
+        C: {
+          id: "variant-c",
+          subject: "Quick question",  // Failback
+          subjectWithMerge: "Quick question for {{company}}",
+          body: pipelineBEmail3,
+          label: "Direct/Breakup"
+        }
+      },
+
+      nodes: [
+        {
+          id: "prospect-entry-b",
+          type: "prospectNode",
+          position: { x: 400, y: 50 },
+          data: {
+            label: "Pipeline B Prospects",
+            count: existingDataB.nodes?.[0]?.data?.count || 0,
+            segment: "pipeline_b",
+            source: "discovery",
+            tags: ["outbound", "pipeline-b", "digital-first"],
+            prospects: existingDataB.nodes?.[0]?.data?.prospects || []
+          }
+        },
+        {
+          id: "verify-email-b",
+          type: "actionNode",
+          position: { x: 400, y: 150 },
+          data: {
+            label: "Verify Email",
+            actionType: "verify_email",
+            config: { skipInvalid: true, logBounces: true }
+          }
+        },
+        {
+          id: "throttle-check-b",
+          type: "conditionNode",
+          position: { x: 400, y: 250 },
+          data: {
+            label: "Under Daily Limit?",
+            conditionType: "throttle",
+            conditions: [{ field: "dailySendCount", operator: "lt", value: 10 }]
+          }
+        },
+        {
+          id: "queue-for-tomorrow-b",
+          type: "waitNode",
+          position: { x: 600, y: 250 },
+          data: { label: "Queue for Tomorrow", delay: 1, unit: "days" }
+        },
+        {
+          id: "random-split-b",
+          type: "splitNode",
+          position: { x: 400, y: 350 },
+          data: {
+            label: "A/B/C Split",
+            splitType: "random",
+            branches: ["A", "B", "C"],
+            weights: [33, 33, 34]
+          }
+        },
+        {
+          id: "email-variant-a-b",
+          type: "emailNode",
+          position: { x: 200, y: 450 },
+          data: {
+            label: "Variant A: GTM Infrastructure",
+            variantId: "A",
+            subject: "Quick question about your GTM",
+            preview: pipelineBEmail1.substring(0, 100) + "...",
+            fullBody: pipelineBEmail1,
+            status: "active"
+          }
+        },
+        {
+          id: "email-variant-b-b",
+          type: "emailNode",
+          position: { x: 400, y: 450 },
+          data: {
+            label: "Variant B: Time/Data Hook",
+            variantId: "B",
+            subject: "12 hours/week (the hidden cost)",
+            preview: pipelineBEmail2.substring(0, 100) + "...",
+            fullBody: pipelineBEmail2,
+            status: "active"
+          }
+        },
+        {
+          id: "email-variant-c-b",
+          type: "emailNode",
+          position: { x: 600, y: 450 },
+          data: {
+            label: "Variant C: Direct/Breakup",
+            variantId: "C",
+            subject: "Quick question",
+            preview: pipelineBEmail3.substring(0, 100) + "...",
+            fullBody: pipelineBEmail3,
+            status: "active"
+          }
+        },
+        {
+          id: "wait-4-days-b",
+          type: "waitNode",
+          position: { x: 400, y: 550 },
+          data: { label: "Wait 4 Days", delay: 4, unit: "days" }
+        },
+        {
+          id: "engagement-check-b",
+          type: "conditionNode",
+          position: { x: 400, y: 650 },
+          data: {
+            label: "Engaged?",
+            conditionType: "engagement",
+            conditions: [
+              { field: "replied", operator: "eq", value: true },
+              { field: "clicked", operator: "eq", value: true },
+              { field: "booked_call", operator: "eq", value: true }
+            ],
+            matchMode: "any"
+          }
+        },
+        {
+          id: "move-to-inbound-b",
+          type: "actionNode",
+          position: { x: 200, y: 750 },
+          data: {
+            label: "→ Inbound Journey",
+            actionType: "enroll_journey",
+            config: { journeyId: WELCOME_JOURNEY_ID, addTags: ["converted-outbound", "pipeline-b"] }
+          }
+        },
+        {
+          id: "exit-cold-b",
+          type: "exitNode",
+          position: { x: 600, y: 750 },
+          data: { label: "Exit (No Engagement)", exitReason: "no_engagement", storeForReactivation: true }
+        }
+      ],
+
+      edges: [
+        { id: "e1b", source: "prospect-entry-b", target: "verify-email-b" },
+        { id: "e2b", source: "verify-email-b", target: "throttle-check-b" },
+        { id: "e3b", source: "throttle-check-b", target: "random-split-b", sourceHandle: "yes" },
+        { id: "e3b-queue", source: "throttle-check-b", target: "queue-for-tomorrow-b", sourceHandle: "no" },
+        { id: "e3b-requeue", source: "queue-for-tomorrow-b", target: "throttle-check-b" },
+        { id: "e4b-A", source: "random-split-b", target: "email-variant-a-b", sourceHandle: "A" },
+        { id: "e4b-B", source: "random-split-b", target: "email-variant-b-b", sourceHandle: "B" },
+        { id: "e4b-C", source: "random-split-b", target: "email-variant-c-b", sourceHandle: "C" },
+        { id: "e5b-A", source: "email-variant-a-b", target: "wait-4-days-b" },
+        { id: "e5b-B", source: "email-variant-b-b", target: "wait-4-days-b" },
+        { id: "e5b-C", source: "email-variant-c-b", target: "wait-4-days-b" },
+        { id: "e6b", source: "wait-4-days-b", target: "engagement-check-b" },
+        { id: "e7b", source: "engagement-check-b", target: "move-to-inbound-b", sourceHandle: "yes" },
+        { id: "e8b", source: "engagement-check-b", target: "exit-cold-b", sourceHandle: "no" }
+      ],
+
+      prospects: existingDataB.prospects || [],
+
+      stats: {
+        totalProspects: existingDataB.stats?.totalProspects || 0,
+        activeProspects: existingDataB.stats?.activeProspects || 0,
+        completedProspects: existingDataB.stats?.completedProspects || 0,
+        emailsSent: existingDataB.stats?.emailsSent || 0,
+        conversions: existingDataB.stats?.conversions || 0,
+        variantStats: {
+          A: { sent: 0, opened: 0, clicked: 0, replied: 0 },
+          B: { sent: 0, opened: 0, clicked: 0, replied: 0 },
+          C: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+        },
+        deliverability: {
+          verified: 0,
+          bounced: 0,
+          invalid: 0
+        },
+        nodeCount: 13,
+        emailCount: 3
+      },
+
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (!existingJourneyB.exists) {
+      journeyBData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    await journeyBRef.set(journeyBData, { merge: true });
+    results.pipelineB = { id: PIPELINE_B_JOURNEY_ID, created: !existingJourneyB.exists, updated: existingJourneyB.exists };
+    console.log(`✅ Pipeline B journey created/updated: ${PIPELINE_B_JOURNEY_ID}`);
+
+    response.json({
+      success: true,
+      message: "Outbound journeys V2 created/updated successfully",
+      version: "2.0",
+      features: [
+        "A/B/C random initial email selection",
+        "Merge tag failbacks (works even if tokens fail)",
+        "Email verification before send",
+        "10/day throttle with deliverability monitoring",
+        "Follow-up only on engagement (click/reply/book)"
+      ],
+      results,
+      journeys: {
+        pipelineA: {
+          id: PIPELINE_A_JOURNEY_ID,
+          title: journeyAData.title,
+          emailVariants: 3,
+          testMode: "abc_split",
+          throttle: "10/day",
+          conversionAction: `Enroll in ${WELCOME_JOURNEY_ID}`
+        },
+        pipelineB: {
+          id: PIPELINE_B_JOURNEY_ID,
+          title: journeyBData.title,
+          emailVariants: 3,
+          testMode: "abc_split",
+          throttle: "10/day",
+          conversionAction: `Enroll in ${WELCOME_JOURNEY_ID}`
+        }
+      },
+      emailSubjects: {
+        pipelineA: {
+          A: "Quick question (failback) / Quick question about {{company}}",
+          B: "The feast-or-famine cycle",
+          C: "Quick thought (failback) / Quick thought for {{company}}"
+        },
+        pipelineB: {
+          A: "Quick question about your GTM (failback) / {{company}}'s GTM infrastructure",
+          B: "12 hours/week (the hidden cost)",
+          C: "Quick question (failback) / Quick question for {{company}}"
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ seedOutboundJourneys error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
 // TEST LEAD CAPTURE - Full Flow Testing
 // Creates a test lead and returns complete flow results
 // ============================================================
