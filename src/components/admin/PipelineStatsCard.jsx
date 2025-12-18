@@ -16,7 +16,8 @@ import {
   XCircle,
   Clock,
   RefreshCw,
-  GitBranch
+  GitBranch,
+  LogIn
 } from 'lucide-react';
 import { getAdminHeaders, FUNCTIONS_BASE_URL } from '../../utils/adminConfig';
 
@@ -77,7 +78,8 @@ const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch pipeline stats');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch pipeline stats (${response.status})`);
       }
 
       const data = await response.json();
@@ -178,8 +180,8 @@ const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
 
       {error && (
         <div style={{
-          backgroundColor: '#fef2f2',
-          color: COLORS.error,
+          backgroundColor: error.includes('Unauthorized') || error.includes('401') ? '#fef9c3' : '#fef2f2',
+          color: error.includes('Unauthorized') || error.includes('401') ? COLORS.warning : COLORS.error,
           padding: '8px 12px',
           borderRadius: '6px',
           fontSize: '13px',
@@ -188,8 +190,17 @@ const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
           alignItems: 'center',
           gap: '6px'
         }}>
-          <AlertTriangle size={14} />
-          {error}
+          {error.includes('Unauthorized') || error.includes('401') ? (
+            <>
+              <LogIn size={14} />
+              Please log in via Firebase Auth to view pipeline stats
+            </>
+          ) : (
+            <>
+              <AlertTriangle size={14} />
+              {error}
+            </>
+          )}
         </div>
       )}
 
