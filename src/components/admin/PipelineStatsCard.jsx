@@ -18,7 +18,7 @@ import {
   RefreshCw,
   GitBranch
 } from 'lucide-react';
-import { ADMIN_TOKEN } from '../../utils/adminConfig';
+import { getAdminHeaders, FUNCTIONS_BASE_URL } from '../../utils/adminConfig';
 
 // Colors
 const COLORS = {
@@ -67,13 +67,12 @@ const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
       setLoading(true);
       setError(null);
 
+      const headers = await getAdminHeaders();
       const response = await fetch(
-        'https://us-central1-yellowcircle-app.cloudfunctions.net/getPipelineStats',
+        `${FUNCTIONS_BASE_URL}/getPipelineStats`,
         {
           method: 'GET',
-          headers: {
-            'x-admin-token': ADMIN_TOKEN
-          }
+          headers
         }
       );
 

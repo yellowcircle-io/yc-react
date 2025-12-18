@@ -22,7 +22,7 @@ import {
   createFooterSignupRule,
   createTriggerRuleObject
 } from '../../utils/firestoreTriggers';
-import { ADMIN_TOKEN } from '../../utils/adminConfig';
+import { getAdminHeaders, FUNCTIONS_BASE_URL } from '../../utils/adminConfig';
 import {
   Play,
   Pause,
@@ -272,12 +272,10 @@ const TriggerRulesPage = () => {
     setTestResult(null);
 
     try {
-      const response = await fetch('https://us-central1-yellowcircle-app.cloudfunctions.net/testLeadCapture', {
+      const headers = await getAdminHeaders();
+      const response = await fetch(`${FUNCTIONS_BASE_URL}/testLeadCapture`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': ADMIN_TOKEN
-        },
+        headers,
         body: JSON.stringify({
           email: testConfig.email || `test-${Date.now()}@yellowcircle.io`,
           name: testConfig.name || 'Test User',

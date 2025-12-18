@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Database, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { CLEANUP_TOKEN, FUNCTIONS_BASE_URL as API_BASE } from '../../utils/adminConfig';
+import { getAdminHeaders, FUNCTIONS_BASE_URL as API_BASE } from '../../utils/adminConfig';
 
 /**
  * Storage Cleanup Admin Page
@@ -28,9 +28,8 @@ export default function StorageCleanupPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/getCollectionStats`, {
-        headers: { 'x-admin-token': CLEANUP_TOKEN }
-      });
+      const headers = await getAdminHeaders({ tokenType: 'cleanup' });
+      const response = await fetch(`${API_BASE}/getCollectionStats`, { headers });
       const data = await response.json();
       if (data.success) {
         setStats(data.stats);
@@ -49,13 +48,14 @@ export default function StorageCleanupPage() {
     setError(null);
     setCleanupResult(null);
     try {
+      const headers = await getAdminHeaders({ tokenType: 'cleanup' });
       const params = new URLSearchParams({
         dryRun: dryRun.toString(),
         includeContacts: includeContacts.toString()
       });
       const response = await fetch(`${API_BASE}/cleanupWithPreview?${params}`, {
         method: 'POST',
-        headers: { 'x-admin-token': CLEANUP_TOKEN }
+        headers
       });
       const data = await response.json();
       if (data.success) {

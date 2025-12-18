@@ -63,7 +63,92 @@ const checkRateLimit = async (ip, limit = 3) => {
 const setCors = (response) => {
   response.set("Access-Control-Allow-Origin", "*");
   response.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-token");
+  response.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-token, x-n8n-token");
+};
+
+// ============================================
+// Admin Authentication (SSO + Legacy Token Fallback)
+// ============================================
+
+/**
+ * Verify admin authentication using either:
+ * 1. Firebase Auth Bearer token (preferred - checks admin whitelist)
+ * 2. Legacy x-admin-token header (backwards compatibility for n8n/scripts)
+ *
+ * @param {Object} request - HTTP request object
+ * @param {Object} options - Options { allowCleanupToken: boolean, allowN8nToken: boolean }
+ * @returns {Object} { success: boolean, error?: string, user?: { email, uid, method } }
+ */
+const verifyAdminAuth = async (request, options = {}) => {
+  const { allowCleanupToken = false, allowN8nToken = false } = options;
+
+  // 1. Try Firebase Auth Bearer token first (preferred)
+  const authHeader = request.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    const idToken = authHeader.split('Bearer ')[1];
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const userEmail = decodedToken.email?.toLowerCase();
+
+      if (!userEmail) {
+        return { success: false, error: 'No email in token' };
+      }
+
+      // Check admin whitelist from Firestore
+      const adminWhitelistDoc = await db.collection('config').doc('admin_whitelist').get();
+      const adminEmails = adminWhitelistDoc.exists
+        ? (adminWhitelistDoc.data()?.emails || []).map(e => e.toLowerCase())
+        : [];
+
+      if (!adminEmails.includes(userEmail)) {
+        console.warn(`Admin auth rejected for ${userEmail} - not in whitelist`);
+        return { success: false, error: 'Not an admin' };
+      }
+
+      console.log(`Admin auth via Firebase SSO: ${userEmail}`);
+      return {
+        success: true,
+        user: {
+          email: userEmail,
+          uid: decodedToken.uid,
+          method: 'firebase_sso'
+        }
+      };
+    } catch (error) {
+      console.warn('Firebase token verification failed:', error.message);
+      // Fall through to legacy token check
+    }
+  }
+
+  // 2. Legacy x-admin-token fallback (for n8n, scripts, backwards compatibility)
+  const adminToken = request.headers["x-admin-token"];
+  const expectedAdminToken = functions.config().admin?.token;
+
+  if (adminToken && expectedAdminToken && adminToken === expectedAdminToken) {
+    console.log('Admin auth via legacy token');
+    return { success: true, user: { method: 'legacy_token' } };
+  }
+
+  // 3. Cleanup token (for storage cleanup functions)
+  if (allowCleanupToken) {
+    const expectedCleanupToken = functions.config().admin?.cleanup_token;
+    if (adminToken && expectedCleanupToken && adminToken === expectedCleanupToken) {
+      console.log('Admin auth via cleanup token');
+      return { success: true, user: { method: 'cleanup_token' } };
+    }
+  }
+
+  // 4. n8n token (for workflow automation)
+  if (allowN8nToken) {
+    const n8nToken = request.headers["x-n8n-token"];
+    const expectedN8nToken = functions.config().n8n?.token;
+    if (n8nToken && expectedN8nToken && n8nToken === expectedN8nToken) {
+      console.log('Admin auth via n8n token');
+      return { success: true, user: { method: 'n8n_token' } };
+    }
+  }
+
+  return { success: false, error: 'Unauthorized' };
 };
 
 // ============================================
@@ -1434,11 +1519,10 @@ exports.manualCleanup = functions.https.onRequest(async (request, response) => {
   }
 
   // Simple auth check - require bypass token
-  const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token;
-
-  if (authToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy cleanup token fallback)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -1525,11 +1609,10 @@ exports.stopAllJourneys = functions.https.onRequest(async (request, response) =>
   }
 
   // Auth check
-  const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token;
-
-  if (authToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy cleanup token fallback)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -1610,11 +1693,10 @@ exports.deleteAccessRequest = functions.https.onRequest(async (request, response
   }
 
   // Auth check
-  const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token;
-
-  if (authToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy cleanup token fallback)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -2788,17 +2870,10 @@ exports.createProspect = functions.https.onRequest(async (request, response) => 
     return;
   }
 
-  // Auth check (admin token or n8n token)
-  const adminToken = request.headers["x-admin-token"];
-  const n8nToken = request.headers["x-n8n-token"];
-  const expectedAdminToken = functions.config().admin?.token;
-  const expectedN8nToken = functions.config().n8n?.token;
-
-  const isAuthorized = (adminToken === expectedAdminToken) ||
-                       (expectedN8nToken && n8nToken === expectedN8nToken);
-
-  if (!isAuthorized) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy token + n8n token fallback)
+  const authResult = await verifyAdminAuth(request, { allowN8nToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -2944,12 +3019,10 @@ exports.seedWelcomeJourney = functions.https.onRequest(async (request, response)
     return;
   }
 
-  // Auth check
-  const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token;
-
-  if (adminToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy token fallback)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -3347,12 +3420,10 @@ exports.testLeadCapture = functions.https.onRequest(async (request, response) =>
     return;
   }
 
-  // Auth check
-  const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token;
-
-  if (adminToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy token fallback)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -3730,11 +3801,10 @@ exports.getCollectionStats = functions
   }
 
   // Auth check
-  const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token;
-
-  if (authToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy cleanup token fallback)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -3791,11 +3861,10 @@ exports.cleanupWithPreview = functions
   }
 
   // Auth check
-  const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token;
-
-  if (authToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy cleanup token fallback)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -3972,11 +4041,10 @@ exports.cleanupByTitlePattern = functions
   }
 
   // Auth check
-  const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token;
-
-  if (authToken !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy cleanup token fallback)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -4087,11 +4155,10 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
   }
 
   try {
-    // Simple admin token check (same pattern as cleanup functions)
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
       return;
     }
 
@@ -4151,11 +4218,10 @@ exports.bulkImportContacts = functions.https.onRequest(async (request, response)
   }
 
   try {
-    // Admin token check
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
       return;
     }
 
@@ -4313,11 +4379,10 @@ exports.enrichContact = functions.https.onRequest(async (request, response) => {
   }
 
   try {
-    // Admin token check
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
       return;
     }
 
@@ -4482,11 +4547,10 @@ exports.bulkEnrichContacts = functions.https.onRequest(async (request, response)
   }
 
   try {
-    // Admin token check
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
       return;
     }
 
@@ -4633,11 +4697,10 @@ exports.searchProspects = functions.https.onRequest(async (request, response) =>
   }
 
   try {
-    // Admin token check
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      response.status(401).json({ error: "Unauthorized - invalid admin token" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
       return;
     }
 
@@ -5011,15 +5074,14 @@ exports.cascadeEnrich = functions.https.onRequest(async (request, response) => {
   response.set("Access-Control-Allow-Origin", "*");
   if (request.method === "OPTIONS") {
     response.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-token");
+    response.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-token");
     return response.status(204).send("");
   }
 
-  // Admin auth
-  const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token;
-  if (!expectedToken || adminToken !== expectedToken) {
-    return response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy token fallback)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
   }
 
   try {
@@ -5165,14 +5227,14 @@ exports.listEnrichmentProviders = functions.https.onRequest(async (request, resp
   response.set("Access-Control-Allow-Origin", "*");
   if (request.method === "OPTIONS") {
     response.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-    response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-token");
+    response.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-token");
     return response.status(204).send("");
   }
 
-  const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token;
-  if (!expectedToken || adminToken !== expectedToken) {
-    return response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy token fallback)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
   }
 
   const providers = getEnrichmentProviders();
@@ -5274,11 +5336,10 @@ exports.discoverPipelineA = functions
       return response.status(204).send("");
     }
 
-    // Admin auth
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      return response.status(401).json({ error: "Unauthorized" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
     }
 
     try {
@@ -5401,11 +5462,10 @@ exports.discoverPipelineB = functions
       return response.status(204).send("");
     }
 
-    // Admin auth
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      return response.status(401).json({ error: "Unauthorized" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
     }
 
     try {
@@ -5538,10 +5598,10 @@ exports.collectSignals = functions
       return response.status(204).send("");
     }
 
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      return response.status(401).json({ error: "Unauthorized" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
     }
 
     try {
@@ -5705,10 +5765,10 @@ exports.filterPEBacked = functions
       return response.status(204).send("");
     }
 
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      return response.status(401).json({ error: "Unauthorized" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
     }
 
     try {
@@ -5886,10 +5946,10 @@ exports.scorePipelines = functions
       return response.status(204).send("");
     }
 
-    const adminToken = request.headers["x-admin-token"];
-    const expectedToken = functions.config().admin?.token;
-    if (!expectedToken || adminToken !== expectedToken) {
-      return response.status(401).json({ error: "Unauthorized" });
+    // Auth check (SSO + legacy token fallback)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
     }
 
     try {
@@ -6032,10 +6092,10 @@ exports.getPipelineStats = functions.https.onRequest(async (request, response) =
     return response.status(204).send("");
   }
 
-  const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token;
-  if (!expectedToken || adminToken !== expectedToken) {
-    return response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO + legacy token fallback)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
   }
 
   try {
