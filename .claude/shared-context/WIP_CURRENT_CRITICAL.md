@@ -2,9 +2,9 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 17, 2025 at 4:30 AM PST
-**Machine:** Mac Mini → **HANDOFF TO MacBook Air**
-**Status:** 🚨 SECURITY AUDIT IN PROGRESS - Critical Issues Found
+**Updated:** December 18, 2025 at 12:00 AM PST
+**Machine:** Mac Mini
+**Status:** ✅ Security Audit Complete - User Actions Required
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,46 +12,63 @@
 
 ---
 
-## 🚨 SECURITY AUDIT FINDINGS (Dec 17, 2025 ~4:30 AM) - FOR MacBook Air
+## ✅ SECURITY AUDIT COMPLETED (Dec 18, 2025)
 
-### CRITICAL ISSUES TO FIX:
+### Fixes Applied (commit `53a2424`):
 
-**1. Admin Token Exposed in Frontend (SEVERE)**
-Files with hardcoded `YOUR_ADMIN_TOKEN`:
-- `src/pages/admin/TriggerRulesPage.jsx:278`
-- `src/pages/admin/StorageCleanupPage.jsx:34`
-- `src/components/admin/PipelineStatsCard.jsx:74`
+**1. Frontend Token Management**
+- Created `src/utils/adminConfig.js` for centralized token config
+- Updated `StorageCleanupPage.jsx`, `TriggerRulesPage.jsx`, `PipelineStatsCard.jsx`
+- Now uses environment variables: `VITE_ADMIN_TOKEN`, `VITE_CLEANUP_TOKEN`
 
-**Risk:** Anyone can view browser source and call admin functions.
+**2. Backend Token Management**
+- Updated `functions/index.js` (~13 token checks)
+- Now uses Firebase config: `functions.config().admin.token`
+- Removed all hardcoded fallback values
 
-**2. Hardcoded Token in Firebase Functions (SEVERE)**
-~20 occurrences in `functions/index.js`:
-```javascript
-if (adminToken !== "YOUR_ADMIN_TOKEN") {  // BAD - should use config
-```
-Should use: `functions.config().admin.token`
+**3. Documentation Cleanup**
+- Replaced all hardcoded tokens with `YOUR_ADMIN_TOKEN` placeholder
+- Replaced Firebase config values with placeholder examples
+- Files updated: `ACTIVE_SPRINT.md`, `REMAINING_USER_ACTIONS.md`, `YELLOWCIRCLE_APP_UPDATES.md`
 
-**3. Admin Token in Git-Tracked Docs (HIGH)**
-Token appears in:
-- `dev-context/REMAINING_USER_ACTIONS.md`
-- `.claude/shared-context/ACTIVE_SPRINT.md`
-- `dev-context/DUAL_PROJECT_IMPLEMENTATION_CHANGELOG.md`
+### 🔴 USER ACTIONS REQUIRED:
 
-**4. Firebase API Key in Docs (MEDIUM)**
-- `docs/YELLOWCIRCLE_APP_UPDATES.md` contains `.env` key
+1. **Re-authenticate Firebase:**
+   ```bash
+   firebase login --reauth
+   ```
 
-### RECOMMENDED FIXES:
-1. Frontend: Use Firebase Auth for admin routes (not static tokens)
-2. Functions: Replace all hardcoded tokens with `functions.config().admin.token`
-3. Docs: Remove all hardcoded tokens from markdown files
-4. Rotate the admin token (it's been exposed in git history)
+2. **Set new secure admin tokens in Firebase:**
+   ```bash
+   firebase functions:config:set admin.token="YOUR_NEW_SECURE_TOKEN" admin.cleanup_token="YOUR_NEW_CLEANUP_TOKEN"
+   ```
 
-### TODO (for MacBook Air):
-- [ ] Fix hardcoded admin token in frontend code
-- [ ] Move admin token to Firebase config (not hardcoded)
-- [ ] Remove admin tokens from documentation files
-- [ ] Review Firebase Security Rules
-- [ ] Check .env exposure in docs
+3. **Create `.env.local` file in project root:**
+   ```env
+   VITE_ADMIN_TOKEN=YOUR_NEW_SECURE_TOKEN
+   VITE_CLEANUP_TOKEN=YOUR_NEW_CLEANUP_TOKEN
+   ```
+
+4. **Deploy Firebase Functions:**
+   ```bash
+   firebase deploy --only functions
+   ```
+
+5. **Rebuild and deploy frontend:**
+   ```bash
+   npm run build && firebase deploy --only hosting
+   ```
+
+### Firebase Security Rules Review:
+
+Reviewed `firestore.rules` - Found permissive patterns:
+| Rule | Issue | Severity |
+|------|-------|----------|
+| `access_requests` | Public read/update/delete | 🔴 HIGH |
+| `users` | Any auth user can read/write any profile | 🔴 HIGH |
+| `shortlinks/journeys/capsules` | Public delete | 🟡 MEDIUM |
+
+These are documented for future hardening but not changed (could break existing features).
 
 ---
 
