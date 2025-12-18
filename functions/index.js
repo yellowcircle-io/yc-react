@@ -269,6 +269,39 @@ const sendEmailViaESP = async (options, provider = null) => {
 };
 
 /**
+ * Convert plain text email to HTML with clickable links
+ * This enables Resend to track opens (via pixel) and clicks (via link wrapping)
+ */
+const textToHtmlEmail = (text) => {
+  // Convert URLs to clickable links (Resend will auto-track these)
+  const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+)/g;
+  const withLinks = text.replace(urlRegex, '<a href="$1" style="color: #fbbf24;">$1</a>');
+
+  // Convert markdown-style bold **text** to <strong>
+  const withBold = withLinks.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Convert → arrows to styled arrows
+  const withArrows = withBold.replace(/→/g, '<span style="color: #fbbf24;">→</span>');
+
+  // Convert paragraphs (double newlines) and line breaks
+  const paragraphs = withArrows.split('\n\n').map(p =>
+    `<p style="margin: 0 0 16px 0; line-height: 1.6;">${p.replace(/\n/g, '<br>')}</p>`
+  ).join('');
+
+  // Wrap in proper HTML email template
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+${paragraphs}
+</body>
+</html>`;
+};
+
+/**
  * Get current ESP configuration status
  */
 exports.getESPStatus = functions.https.onRequest(async (request, response) => {
@@ -486,11 +519,14 @@ exports.sendEmail = functions.https.onRequest(async (request, response) => {
       return;
     }
 
+    // Auto-convert text to HTML for tracking if html not provided
+    const htmlContent = html || (text ? textToHtmlEmail(text) : null);
+
     const result = await sendEmailViaESP({
       to,
       from,
       subject,
-      html,
+      html: htmlContent,
       text,
       replyTo,
       tags,
@@ -645,8 +681,8 @@ const processProspect = async (prospect, journey, resendApiKey) => {
           .replace(/\{\{email\}\}/gi, prospect.email || "")
           .replace(/\{\{company\}\}/gi, prospect.company || prospect.submittedData?.company || "");
 
-        // Convert to HTML paragraphs
-        const html = processedBody.split("\n\n").map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+        // Convert to HTML with proper links for click tracking
+        const html = textToHtmlEmail(processedBody);
 
         const messageId = await sendEmailInternal(
           prospect.email,
@@ -2035,10 +2071,8 @@ Founder, yellowCircle`;
               .replace(/\{\{source\}\}/gi, leadSource)
               .replace(/\{\{score\}\}/gi, assessmentScore || 'N/A');
 
-            const html = processedBody
-              .split('\n\n')
-              .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-              .join('');
+            // Convert to HTML with proper links for click tracking
+            const html = textToHtmlEmail(processedBody);
 
             try {
               emailResult = await sendViaResend({
@@ -4901,6 +4935,71 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
 
   } catch (error) {
     console.error("❌ addClientEmail error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Admin: Add admin email to whitelist (for Firebase Auth SSO)
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addAdminEmail" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -d '{"email": "admin@example.com"}'
+ */
+exports.addAdminEmail = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Auth check (legacy token only - can't use SSO to add yourself)
+    const adminToken = request.headers["x-admin-token"];
+    const expectedAdminToken = functions.config().admin?.token;
+
+    if (!adminToken || !expectedAdminToken || adminToken !== expectedAdminToken) {
+      response.status(401).json({ error: "Unauthorized - admin token required" });
+      return;
+    }
+
+    const { email } = request.body;
+    if (!email) {
+      response.status(400).json({ error: "Email is required" });
+      return;
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const adminRef = db.doc("config/admin_whitelist");
+    const adminDoc = await adminRef.get();
+    const currentEmails = adminDoc.exists ? (adminDoc.data().emails || []) : [];
+
+    if (currentEmails.map(e => e.toLowerCase()).includes(normalizedEmail)) {
+      response.json({
+        success: true,
+        message: `${normalizedEmail} is already in the admin whitelist`,
+        totalAdmins: currentEmails.length
+      });
+      return;
+    }
+
+    await adminRef.set({
+      emails: [...currentEmails, normalizedEmail],
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: "addAdminEmail_function"
+    }, { merge: true });
+
+    console.log(`✅ Added ${normalizedEmail} to admin whitelist`);
+
+    response.json({
+      success: true,
+      message: `Added ${normalizedEmail} to admin whitelist`,
+      totalAdmins: currentEmails.length + 1
+    });
+
+  } catch (error) {
+    console.error("❌ addAdminEmail error:", error);
     response.status(500).json({ error: error.message });
   }
 });
