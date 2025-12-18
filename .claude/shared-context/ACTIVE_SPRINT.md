@@ -86,12 +86,11 @@
 ## ACTUALLY NOT DONE
 
 ### P1 - Revenue Critical
-| Item | Status | Blocker |
-|------|--------|---------|
-| Apollo.io Integration | ⚠️ Functions deployed | API key on free plan - needs upgrade |
-| Prospect Enrichment | ⚠️ Ready | Waiting for Apollo paid plan |
-| Import 50+ Contacts | ❌ Waiting | Need prospect list from Apollo search |
+| Item | Status | Notes |
+|------|--------|-------|
 | Deploy Latest Functions | ⚠️ Pending | Run `firebase deploy --only functions` |
+| Import 50+ Contacts | ❌ Waiting | Use Apollo search or manual list |
+| Launch Outbound Campaign | ❌ Waiting | Depends on contacts |
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
@@ -100,12 +99,15 @@
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
 | Firestore Security Rules | ⚠️ Documented | Needs hardening (permissive patterns found) |
 
-### API Keys Still Needed
-| Key | Purpose | Status |
-|-----|---------|--------|
-| Google Places | discoverPipelineA | ❌ Not configured |
+### API Keys - ALL CONFIGURED ✅
+| Key | Status | Notes |
+|-----|--------|-------|
+| Google Places | ✅ Configured | For discoverPipelineA |
+| Apollo.io | ✅ Configured | 130 credits/mo (0 used) |
+| Hunter.io | ✅ Configured | Cascade enrichment |
+| PDL | ✅ Configured | Cascade enrichment |
 
-**Deprecated (not needed):** Crunchbase, OpenCorporates - Pipeline B uses YC GitHub + Growjo instead
+**Deprecated:** Crunchbase, OpenCorporates - Pipeline B uses YC GitHub + Growjo instead
 
 ---
 
@@ -113,9 +115,8 @@
 
 1. [ ] **Deploy Functions** - `firebase deploy --only functions`
 2. [ ] **Deploy Hosting** - `npm run build && firebase deploy --only hosting`
-3. [ ] **Configure Google Places API** - Only key needed for discovery
-4. [ ] **Upgrade Apollo.io** - Free plan expired, need paid for enrichment
-5. [ ] **Import Contacts** - 50+ prospects for outbound campaign
+3. [ ] **Import Contacts** - Use Apollo search (130 credits available) or manual list
+4. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
 
 ---
 
