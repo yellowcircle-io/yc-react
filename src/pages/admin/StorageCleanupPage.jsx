@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Database, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-
-const ADMIN_TOKEN = 'yc-cleanup-2025';
-const API_BASE = 'https://us-central1-yellowcircle-app.cloudfunctions.net';
+import { CLEANUP_TOKEN, FUNCTIONS_BASE_URL as API_BASE } from '../../utils/adminConfig';
 
 /**
  * Storage Cleanup Admin Page
@@ -31,7 +29,7 @@ export default function StorageCleanupPage() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/getCollectionStats`, {
-        headers: { 'x-admin-token': ADMIN_TOKEN }
+        headers: { 'x-admin-token': CLEANUP_TOKEN }
       });
       const data = await response.json();
       if (data.success) {
@@ -57,7 +55,7 @@ export default function StorageCleanupPage() {
       });
       const response = await fetch(`${API_BASE}/cleanupWithPreview?${params}`, {
         method: 'POST',
-        headers: { 'x-admin-token': ADMIN_TOKEN }
+        headers: { 'x-admin-token': CLEANUP_TOKEN }
       });
       const data = await response.json();
       if (data.success) {

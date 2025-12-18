@@ -126,7 +126,7 @@ Test the deployed functions manually:
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/discoverPipelineA" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "location": "San Francisco, CA",
     "industry": "technology",
@@ -139,7 +139,7 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/discoverPi
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/discoverPipelineB" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "sources": ["crunchbase", "producthunt"],
     "limit": 5,
@@ -151,7 +151,7 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/discoverPi
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/collectSignals" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "companyDomain": "stripe.com",
     "dryRun": true
@@ -162,7 +162,7 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/collectSig
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/filterPEBacked" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "signals": {
       "fundingHistory": {
@@ -181,7 +181,7 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/filterPEBa
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/scorePipelines" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "signals": {
       "fundingHistory": {

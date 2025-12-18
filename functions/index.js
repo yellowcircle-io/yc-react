@@ -1435,7 +1435,7 @@ exports.manualCleanup = functions.https.onRequest(async (request, response) => {
 
   // Simple auth check - require bypass token
   const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+  const expectedToken = functions.config().admin?.cleanup_token;
 
   if (authToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -1526,7 +1526,7 @@ exports.stopAllJourneys = functions.https.onRequest(async (request, response) =>
 
   // Auth check
   const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+  const expectedToken = functions.config().admin?.cleanup_token;
 
   if (authToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -1611,7 +1611,7 @@ exports.deleteAccessRequest = functions.https.onRequest(async (request, response
 
   // Auth check
   const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+  const expectedToken = functions.config().admin?.cleanup_token;
 
   if (authToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -2791,7 +2791,7 @@ exports.createProspect = functions.https.onRequest(async (request, response) => 
   // Auth check (admin token or n8n token)
   const adminToken = request.headers["x-admin-token"];
   const n8nToken = request.headers["x-n8n-token"];
-  const expectedAdminToken = functions.config().admin?.token || "yc-admin-2025";
+  const expectedAdminToken = functions.config().admin?.token;
   const expectedN8nToken = functions.config().n8n?.token;
 
   const isAuthorized = (adminToken === expectedAdminToken) ||
@@ -2946,7 +2946,7 @@ exports.seedWelcomeJourney = functions.https.onRequest(async (request, response)
 
   // Auth check
   const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token || "yc-admin-2025";
+  const expectedToken = functions.config().admin?.token;
 
   if (adminToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -3349,7 +3349,7 @@ exports.testLeadCapture = functions.https.onRequest(async (request, response) =>
 
   // Auth check
   const adminToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.token || "yc-admin-2025";
+  const expectedToken = functions.config().admin?.token;
 
   if (adminToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -3731,7 +3731,7 @@ exports.getCollectionStats = functions
 
   // Auth check
   const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+  const expectedToken = functions.config().admin?.cleanup_token;
 
   if (authToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -3792,7 +3792,7 @@ exports.cleanupWithPreview = functions
 
   // Auth check
   const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+  const expectedToken = functions.config().admin?.cleanup_token;
 
   if (authToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -3973,7 +3973,7 @@ exports.cleanupByTitlePattern = functions
 
   // Auth check
   const authToken = request.headers["x-admin-token"];
-  const expectedToken = functions.config().admin?.cleanup_token || "yc-cleanup-2025";
+  const expectedToken = functions.config().admin?.cleanup_token;
 
   if (authToken !== expectedToken) {
     response.status(401).json({ error: "Unauthorized" });
@@ -4075,7 +4075,7 @@ exports.cleanupByTitlePattern = functions
  * Admin: Add client email to whitelist
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: yc-admin-2025" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
  *        -d '{"email": "user@example.com"}'
  */
 exports.addClientEmail = functions.https.onRequest(async (request, response) => {
@@ -4089,7 +4089,8 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
   try {
     // Simple admin token check (same pattern as cleanup functions)
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       response.status(401).json({ error: "Unauthorized - invalid admin token" });
       return;
     }
@@ -4138,7 +4139,7 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
  * Admin: Bulk import contacts for outbound campaigns
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: yc-admin-2025" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
  *        -d '{"contacts": [{"email": "a@b.com", "name": "Test", "company": "Acme"}], "source": "outbound", "tags": ["outbound-campaign"]}'
  */
 exports.bulkImportContacts = functions.https.onRequest(async (request, response) => {
@@ -4152,7 +4153,8 @@ exports.bulkImportContacts = functions.https.onRequest(async (request, response)
   try {
     // Admin token check
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       response.status(401).json({ error: "Unauthorized - invalid admin token" });
       return;
     }
@@ -4299,7 +4301,7 @@ exports.bulkImportContacts = functions.https.onRequest(async (request, response)
  * Enrich a single contact using Apollo.io People Enrichment API
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: yc-admin-2025" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
  *        -d '{"email": "user@company.com"}'
  */
 exports.enrichContact = functions.https.onRequest(async (request, response) => {
@@ -4313,7 +4315,8 @@ exports.enrichContact = functions.https.onRequest(async (request, response) => {
   try {
     // Admin token check
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       response.status(401).json({ error: "Unauthorized - invalid admin token" });
       return;
     }
@@ -4467,7 +4470,7 @@ exports.enrichContact = functions.https.onRequest(async (request, response) => {
  * Bulk enrich contacts using Apollo.io (up to 10 per request)
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkEnrichContacts" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: yc-admin-2025" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
  *        -d '{"emails": ["a@b.com", "c@d.com"], "updateContacts": true}'
  */
 exports.bulkEnrichContacts = functions.https.onRequest(async (request, response) => {
@@ -4481,7 +4484,8 @@ exports.bulkEnrichContacts = functions.https.onRequest(async (request, response)
   try {
     // Admin token check
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       response.status(401).json({ error: "Unauthorized - invalid admin token" });
       return;
     }
@@ -4617,7 +4621,7 @@ exports.bulkEnrichContacts = functions.https.onRequest(async (request, response)
  * Search Apollo.io for prospects matching criteria
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchProspects" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: yc-admin-2025" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
  *        -d '{"titles": ["VP Marketing", "CMO"], "industries": ["Software"], "employeeCount": "11,50", "limit": 25}'
  */
 exports.searchProspects = functions.https.onRequest(async (request, response) => {
@@ -4631,7 +4635,8 @@ exports.searchProspects = functions.https.onRequest(async (request, response) =>
   try {
     // Admin token check
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       response.status(401).json({ error: "Unauthorized - invalid admin token" });
       return;
     }
@@ -4992,7 +4997,7 @@ const enrichViaApollo = async (email, apiKey) => {
  *
  * Usage:
  *   curl -X POST ".../cascadeEnrich" \
- *     -H "x-admin-token: yc-admin-2025" \
+ *     -H "x-admin-token: YOUR_ADMIN_TOKEN" \
  *     -d '{"email": "user@company.com", "updateContact": true}'
  *
  * Options:
@@ -5012,7 +5017,8 @@ exports.cascadeEnrich = functions.https.onRequest(async (request, response) => {
 
   // Admin auth
   const adminToken = request.headers["x-admin-token"];
-  if (adminToken !== "yc-admin-2025") {
+  const expectedToken = functions.config().admin?.token;
+  if (!expectedToken || adminToken !== expectedToken) {
     return response.status(401).json({ error: "Unauthorized" });
   }
 
@@ -5164,7 +5170,8 @@ exports.listEnrichmentProviders = functions.https.onRequest(async (request, resp
   }
 
   const adminToken = request.headers["x-admin-token"];
-  if (adminToken !== "yc-admin-2025") {
+  const expectedToken = functions.config().admin?.token;
+  if (!expectedToken || adminToken !== expectedToken) {
     return response.status(401).json({ error: "Unauthorized" });
   }
 
@@ -5269,7 +5276,8 @@ exports.discoverPipelineA = functions
 
     // Admin auth
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       return response.status(401).json({ error: "Unauthorized" });
     }
 
@@ -5395,7 +5403,8 @@ exports.discoverPipelineB = functions
 
     // Admin auth
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       return response.status(401).json({ error: "Unauthorized" });
     }
 
@@ -5530,7 +5539,8 @@ exports.collectSignals = functions
     }
 
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       return response.status(401).json({ error: "Unauthorized" });
     }
 
@@ -5696,7 +5706,8 @@ exports.filterPEBacked = functions
     }
 
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       return response.status(401).json({ error: "Unauthorized" });
     }
 
@@ -5876,7 +5887,8 @@ exports.scorePipelines = functions
     }
 
     const adminToken = request.headers["x-admin-token"];
-    if (adminToken !== "yc-admin-2025") {
+    const expectedToken = functions.config().admin?.token;
+    if (!expectedToken || adminToken !== expectedToken) {
       return response.status(401).json({ error: "Unauthorized" });
     }
 
@@ -6021,7 +6033,8 @@ exports.getPipelineStats = functions.https.onRequest(async (request, response) =
   }
 
   const adminToken = request.headers["x-admin-token"];
-  if (adminToken !== "yc-admin-2025") {
+  const expectedToken = functions.config().admin?.token;
+  if (!expectedToken || adminToken !== expectedToken) {
     return response.status(401).json({ error: "Unauthorized" });
   }
 

@@ -18,6 +18,7 @@ import {
   RefreshCw,
   GitBranch
 } from 'lucide-react';
+import { ADMIN_TOKEN } from '../../utils/adminConfig';
 
 // Colors
 const COLORS = {
@@ -71,7 +72,7 @@ const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
         {
           method: 'GET',
           headers: {
-            'x-admin-token': 'yc-admin-2025'
+            'x-admin-token': ADMIN_TOKEN
           }
         }
       );

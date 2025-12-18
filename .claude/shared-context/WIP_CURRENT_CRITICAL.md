@@ -17,7 +17,7 @@
 ### CRITICAL ISSUES TO FIX:
 
 **1. Admin Token Exposed in Frontend (SEVERE)**
-Files with hardcoded `yc-admin-2025`:
+Files with hardcoded `YOUR_ADMIN_TOKEN`:
 - `src/pages/admin/TriggerRulesPage.jsx:278`
 - `src/pages/admin/StorageCleanupPage.jsx:34`
 - `src/components/admin/PipelineStatsCard.jsx:74`
@@ -27,7 +27,7 @@ Files with hardcoded `yc-admin-2025`:
 **2. Hardcoded Token in Firebase Functions (SEVERE)**
 ~20 occurrences in `functions/index.js`:
 ```javascript
-if (adminToken !== "yc-admin-2025") {  // BAD - should use config
+if (adminToken !== "YOUR_ADMIN_TOKEN") {  // BAD - should use config
 ```
 Should use: `functions.config().admin.token`
 

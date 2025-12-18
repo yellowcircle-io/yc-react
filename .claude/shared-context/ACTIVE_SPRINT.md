@@ -158,7 +158,7 @@
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"email": "user@example.com"}'
 ```
 
@@ -166,7 +166,7 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientE
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "contacts": [
       {"email": "a@b.com", "name": "Test User", "company": "Acme Corp", "jobTitle": "CEO"}
@@ -181,24 +181,24 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImport
 ```bash
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/seedWelcomeJourney" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025"
+  -H "x-admin-token: YOUR_ADMIN_TOKEN"
 ```
 
 **Cascade Enrichment (Multi-Provider):**
 ```bash
 # Check configured providers
 curl -s -X GET "https://us-central1-yellowcircle-app.cloudfunctions.net/listEnrichmentProviders" \
-  -H "x-admin-token: yc-admin-2025"
+  -H "x-admin-token: YOUR_ADMIN_TOKEN"
 
 # Cascade enrich - tries providers in priority order: Apollo → Hunter → PDL
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"email": "user@company.com", "updateContact": true}'
 
 # Skip specific providers
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"email": "user@company.com", "skipProviders": ["apollo"]}'
 ```
 
@@ -218,17 +218,17 @@ firebase deploy --only functions
 ```bash
 # Enrich single contact
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"email": "user@company.com"}'
 
 # Bulk enrich (up to 10)
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkEnrichContacts" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"emails": ["a@b.com", "c@d.com"]}'
 
 # Search prospects + import
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchProspects" \
-  -H "x-admin-token: yc-admin-2025" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"titles": ["VP Marketing"], "seniorities": ["vp", "director"], "limit": 50, "importToFirestore": true}'
 ```
 

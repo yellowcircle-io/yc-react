@@ -22,6 +22,7 @@ import {
   createFooterSignupRule,
   createTriggerRuleObject
 } from '../../utils/firestoreTriggers';
+import { ADMIN_TOKEN } from '../../utils/adminConfig';
 import {
   Play,
   Pause,
@@ -132,7 +133,7 @@ const buttonSecondary = {
 
 const TriggerRulesPage = () => {
   const navigate = useNavigate();
-  const { sidebarOpen } = useLayout();
+  useLayout(); // Context subscription
   const { user, isAdmin, loading: authLoading } = useAuth();
 
   const [rules, setRules] = useState([]);
@@ -275,7 +276,7 @@ const TriggerRulesPage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-token': 'yc-admin-2025'
+          'x-admin-token': ADMIN_TOKEN
         },
         body: JSON.stringify({
           email: testConfig.email || `test-${Date.now()}@yellowcircle.io`,

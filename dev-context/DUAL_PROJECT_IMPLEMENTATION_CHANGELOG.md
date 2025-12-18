@@ -75,7 +75,7 @@ Five new Firebase Cloud Functions deployed:
 https://us-central1-yellowcircle-app.cloudfunctions.net/{functionName}
 ```
 
-**Authentication:** All functions require `x-admin-token: yc-admin-2025` header.
+**Authentication:** All functions require `x-admin-token: YOUR_ADMIN_TOKEN` header.
 
 ### 1.3 PE Exclusion Logic
 
