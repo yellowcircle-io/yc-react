@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** December 17, 2025
+**Updated:** December 18, 2025
 **Purpose:** Concise, accurate status tracking (replaces verbose WIP)
 
 ---
@@ -12,8 +12,9 @@
 | Firebase Hosting | ✅ Live | yellowcircle.io |
 | n8n (Railway) | ✅ Live | `n8n-production-9ef7.up.railway.app` |
 | Firestore | ✅ Live | capsules, journeys, rate_limits, config |
-| Cloud Functions | ✅ 23 deployed | processJourneys, sendEmail, onLeadCreated, etc. |
+| Cloud Functions | ✅ 25+ deployed | processJourneys, sendEmail, onLeadCreated, etc. |
 | Resend ESP | ✅ Configured | via Firebase Functions config |
+| Admin Auth | ✅ Firebase SSO | Hybrid auth (SSO + legacy tokens) |
 
 ### Admin Pages - ALL IMPLEMENTED
 | Page | Lines | Route | Status |
@@ -41,7 +42,41 @@
 
 ---
 
-## ACTUALLY NOT DONE (Verified Dec 17 2AM)
+## COMPLETED THIS WEEK (Dec 16-18, 2025)
+
+### ✅ Firebase Auth SSO Migration (Dec 18)
+- Created `verifyAdminAuth()` helper with hybrid authentication
+- Updated 25+ admin functions to use Firebase Auth ID tokens
+- Frontend now uses async `getAdminHeaders()` with Firebase ID token
+- Legacy tokens preserved for n8n workflows + backwards compatibility
+- **Commits:** `53a2424`, `5a71ea4`, `9fa59bc`
+
+### ✅ Security Audit (Dec 18)
+- Removed hardcoded admin tokens from codebase
+- Documented Firestore rules needing hardening (future work)
+- **Commit:** `53a2424`
+
+### ✅ Dual-Project Implementation (Dec 17)
+**Project 1: Outbound Motion Enhancement**
+- Schema extensions: Pipeline fields, 27 PE signals, discovery source
+- Firebase Functions: discoverPipelineA, discoverPipelineB, collectSignals, filterPEBacked, scorePipelines
+- UI: PipelineStatsCard, PESignalsPanel, ContactDashboard pipeline filters
+
+**Project 2: UnitySTUDIO Rearchitecture**
+- platform-specs.js (all platforms)
+- CreativeCanvas.jsx (visual editor)
+- ExportManager.jsx (batch export)
+- useAIGeneration.js (AI copy)
+- **Commit:** `2762d9e`
+
+### ✅ Production Deployment + Security Fix (Dec 17)
+- Built and deployed to Firebase Hosting
+- Rotated exposed Google API key
+- **Commits:** `f3bf7e9`, `186544a`
+
+---
+
+## ACTUALLY NOT DONE
 
 ### P1 - Revenue Critical
 | Item | Status | Blocker |
@@ -49,187 +84,65 @@
 | Apollo.io Integration | ⚠️ Functions deployed | API key on free plan - needs upgrade |
 | Prospect Enrichment | ⚠️ Ready | Waiting for Apollo paid plan |
 | Import 50+ Contacts | ❌ Waiting | Need prospect list from Apollo search |
+| Deploy Latest Functions | ⚠️ Pending | Run `firebase deploy --only functions` |
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
 |------|--------|-------|
-| UnitySTUDIO Expansion | ✅ DONE | CreativeCanvas, ExportManager, AI Generation |
 | Blog Public Display | ❌ Placeholder only | Admin CMS done, BlogPage says "coming soon" |
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
+| Firestore Security Rules | ⚠️ Documented | Needs hardening (permissive patterns found) |
 
-## ACTUALLY DONE (Was marked not done)
-
-| Item | Status | Evidence |
-|------|--------|----------|
-| Unity MiniMap | ✅ DONE | Line 6, 153, 3566 in UnityNotesPage.jsx |
-| Email → Journey Bridge | ✅ DONE | `onLeadCreated` Firestore trigger (line 2333 functions/index.js) |
-| n8n Deployment | ✅ DONE | Live on Railway, `{"status":"ok"}` |
-| Contact Dashboard | ✅ DONE | 1,395 lines, full implementation |
-| Trigger Rules | ✅ DONE | 1,281 lines, full implementation |
-| Article CMS Admin | ✅ DONE | ArticleEditorPage, ArticleListPage |
+### API Keys Still Needed
+| Key | Purpose | Status |
+|-----|---------|--------|
+| Google Places | discoverPipelineA | ❌ Not configured |
+| Crunchbase | discoverPipelineB | ❌ Not configured |
+| OpenCorporates | discoverPipelineA | ❌ Not configured |
 
 ---
 
-## DUAL-PROJECT IMPLEMENTATION (Dec 17, 2025) - COMPLETE
+## IMMEDIATE NEXT STEPS
 
-### Project 1: Outbound Motion Enhancement
-| Component | Status | Details |
-|-----------|--------|---------|
-| Schema Extensions | ✅ Done | Pipeline fields, 27 PE signals, discovery source |
-| Firebase Functions | ✅ Done | discoverPipelineA, discoverPipelineB, collectSignals, filterPEBacked, scorePipelines |
-| PE Exclusion Logic | ✅ Done | Hard blocks (2), Red flags (7), weighted scoring |
-| PipelineStatsCard | ✅ Done | Pipeline A/B counts, exclusion stats |
-| PESignalsPanel | ✅ Done | 27-signal display with visual indicators |
-| ContactDashboard | ✅ Done | Pipeline filter dropdown, PE signals integration |
-
-### Project 2: UnitySTUDIO Rearchitecture
-| Component | Status | Details |
-|-----------|--------|---------|
-| platform-specs.js | ✅ Done | All platforms: IG, FB, LI, Reddit, Google Display |
-| CreativeCanvas.jsx | ✅ Done | Visual editor, drag-drop, safe zones, PNG export |
-| ExportManager.jsx | ✅ Done | Batch export, campaign presets, progress tracking |
-| useAIGeneration.js | ✅ Done | AI copy generation via Groq API |
-
-### Files Created (6 new)
-- `src/components/unity-studio/platform-specs.js`
-- `src/components/unity-studio/CreativeCanvas.jsx`
-- `src/components/unity-studio/ExportManager.jsx`
-- `src/components/unity-studio/useAIGeneration.js`
-- `src/components/admin/PipelineStatsCard.jsx`
-- `src/components/admin/PESignalsPanel.jsx`
-
-### Remaining User Actions Required
-- [ ] Google Places API key (for discoverPipelineA)
-- [ ] Crunchbase API key (for discoverPipelineB)
-- [ ] OpenCorporates API key (for discoverPipelineA)
-- [ ] Deploy functions: `firebase deploy --only functions`
-- [ ] Test endpoints with Playwright/curl
-
----
-
-## RECENT SESSION FIXES (Dec 16-17, 2025)
-
-### Committed & Pushed
-1. `67387ef` - GitGuardian + Sentry URL fixes
-2. `0b398fb` - **CRITICAL:** Unity sharing now preserves ALL node data
-3. `449db4e` - addClientEmail admin function
-4. `69fb4bd` - Blog public display (wire articles to BlogPage)
-5. (pending) - bulkImportContacts function + welcome journey seed
-6. (pending) - Dual-project implementation (outbound + UnitySTUDIO)
-
-### Bug Fixed
-- Unity sharing was only saving photoNode fields
-- ALL other node types lost content when shared
-- Now properly serializes all node data
-
-### New Features
-- **Blog Public Display**: BlogPage now fetches and displays published articles from Firestore
-- **Outbound Infrastructure**: Welcome journey seeded, bulk import function deployed
-
-### Deployed ✅
-- Firebase Hosting: yellowcircle.io (blog page live)
-- Firebase Functions: bulkImportContacts deployed
-
----
-
-## IMMEDIATE ACTIONS
-
-### This Session ✅
-1. [x] Firebase re-auth and deploy - DONE
-2. [x] Verify Unity sharing fix works in production - DONE (screenshot shows working)
-3. [x] Infrastructure audit - MiniMap, Journey Bridge, CMS all verified
-
-### Next Steps (Priority Order)
-1. [ ] Deploy Firebase Functions - `firebase deploy --only functions`
-2. [ ] Configure API Keys - Google Places, Crunchbase, OpenCorporates
-3. [ ] Run Playwright Tests - Verify front-end rendering
-4. [ ] Run Firestore Tests - Verify pipeline functions
-5. [ ] Blog Public Display - Connect ArticleListPage to BlogPage
-6. [ ] Outbound Campaign Seed - 50+ contacts + welcome journey
+1. [ ] **Deploy Functions** - `firebase deploy --only functions`
+2. [ ] **Deploy Hosting** - `npm run build && firebase deploy --only hosting`
+3. [ ] **Configure Discovery API Keys** - Google Places, Crunchbase, OpenCorporates
+4. [ ] **Upgrade Apollo.io** - Free plan expired, need paid for enrichment
+5. [ ] **Import Contacts** - 50+ prospects for outbound campaign
+6. [ ] **Wire BlogPage** - Connect to published articles from Firestore
 
 ---
 
 ## QUICK REFERENCE
 
-### Admin Functions (Dec 16-17)
+### Authentication (Updated Dec 18)
+Admin functions now support **hybrid authentication**:
+1. **Firebase Auth Bearer token** (preferred) - logged-in admin users
+2. **Legacy x-admin-token** (fallback) - scripts, n8n workflows
+3. **Cleanup/n8n tokens** (specific functions)
 
-**Add Client to Whitelist:**
+**Frontend automatically uses Firebase Auth** when user is logged in.
+
+### Admin Functions
 ```bash
+# Add Client to Whitelist
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"email": "user@example.com"}'
-```
 
-**Bulk Import Contacts:**
-```bash
+# Bulk Import Contacts
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{
-    "contacts": [
-      {"email": "a@b.com", "name": "Test User", "company": "Acme Corp", "jobTitle": "CEO"}
-    ],
-    "source": "outbound",
-    "tags": ["outbound-campaign"],
-    "dryRun": false
-  }'
-```
+  -d '{"contacts": [{"email": "a@b.com", "name": "Test", "company": "Acme"}], "source": "outbound"}'
 
-**Seed Welcome Journey:**
-```bash
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/seedWelcomeJourney" \
-  -H "Content-Type: application/json" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN"
-```
-
-**Cascade Enrichment (Multi-Provider):**
-```bash
-# Check configured providers
-curl -s -X GET "https://us-central1-yellowcircle-app.cloudfunctions.net/listEnrichmentProviders" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN"
-
-# Cascade enrich - tries providers in priority order: Apollo → Hunter → PDL
+# Cascade Enrichment (PDL > Hunter > Apollo)
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"email": "user@company.com", "updateContact": true}'
-
-# Skip specific providers
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"email": "user@company.com", "skipProviders": ["apollo"]}'
-```
-
-**Configure Additional Providers (Free Tiers):**
-```bash
-# Hunter.io - 25 searches + 50 verifications/month (https://hunter.io)
-firebase functions:config:set hunter.api_key=YOUR_HUNTER_KEY
-
-# People Data Labs - 100 lookups/month (https://peopledatalabs.com)
-firebase functions:config:set pdl.api_key=YOUR_PDL_KEY
-
-# Re-deploy functions after adding keys
-firebase deploy --only functions
-```
-
-**Apollo.io Functions (requires paid plan):**
-```bash
-# Enrich single contact
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"email": "user@company.com"}'
-
-# Bulk enrich (up to 10)
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkEnrichContacts" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"emails": ["a@b.com", "c@d.com"]}'
-
-# Search prospects + import
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchProspects" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"titles": ["VP Marketing"], "seniorities": ["vp", "director"], "limit": 50, "importToFirestore": true}'
 ```
 
 ### Key URLs
@@ -239,5 +152,24 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchPros
 
 ### Git Status
 - Branch: main
-- Last commit: `449db4e` (Dec 16, 2025)
+- Last commit: `9fa59bc` (Dec 18, 2025) - "Update: WIP - Firebase Auth SSO implemented"
 - All changes pushed to GitHub
+
+---
+
+## RECENT COMMITS (Dec 16-18)
+
+| Hash | Date | Description |
+|------|------|-------------|
+| `9fa59bc` | Dec 18 | Update: WIP - Firebase Auth SSO implemented |
+| `5a71ea4` | Dec 18 | Security: Implement Firebase Auth SSO for admin functions |
+| `0284319` | Dec 18 | Update: WIP - Security audit complete |
+| `53a2424` | Dec 18 | Security: Remove hardcoded admin tokens |
+| `186544a` | Dec 17 | Update: Security audit handoff |
+| `f3bf7e9` | Dec 17 | Update: WIP for MacBook Air transition |
+| `2762d9e` | Dec 17 | Feature: UnitySTUDIO Rearchitecture + Dual-Pipeline |
+| `aabe78d` | Dec 16 | Update: Cascade enrichment order |
+| `c79cbd4` | Dec 16 | Add: Cascade enrichment system |
+| `80e4a39` | Dec 16 | Feature: Apollo.io integration |
+| `8d2a962` | Dec 16 | Feature: Outbound campaign infrastructure |
+| `69fb4bd` | Dec 16 | Feature: Blog public display |
