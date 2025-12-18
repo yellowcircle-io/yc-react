@@ -62,12 +62,19 @@
 - Firebase Functions: discoverPipelineA, discoverPipelineB, collectSignals, filterPEBacked, scorePipelines
 - UI: PipelineStatsCard, PESignalsPanel, ContactDashboard pipeline filters
 
-**Project 2: UnitySTUDIO Rearchitecture**
-- platform-specs.js (all platforms)
-- CreativeCanvas.jsx (visual editor)
-- ExportManager.jsx (batch export)
-- useAIGeneration.js (AI copy)
+**Project 2: UnitySTUDIO Rearchitecture** - ✅ COMPLETE (12,030 lines)
+- CreativeCanvas.jsx (4,546 lines) - Visual editor, drag-drop, safe zones
+- CampaignQuickstart.jsx (1,637 lines) - Campaign setup wizard
+- AdCreativeBuilder.jsx (1,273 lines) - Ad creative generation
+- ExportManager.jsx (872 lines) - Batch export, campaign presets
+- useAIGeneration.js (812 lines) - AI copy via Groq
+- platform-specs.js (636 lines) - All platform dimensions
 - **Commit:** `2762d9e`
+
+### ✅ Blog Public Display (Dec 16)
+- BlogPage.jsx fetches published articles from Firestore
+- Static fallback + category filtering
+- **Commit:** `69fb4bd`
 
 ### ✅ Production Deployment + Security Fix (Dec 17)
 - Built and deployed to Firebase Hosting
@@ -89,7 +96,6 @@
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
 |------|--------|-------|
-| Blog Public Display | ❌ Placeholder only | Admin CMS done, BlogPage says "coming soon" |
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
 | Firestore Security Rules | ⚠️ Documented | Needs hardening (permissive patterns found) |
@@ -98,8 +104,8 @@
 | Key | Purpose | Status |
 |-----|---------|--------|
 | Google Places | discoverPipelineA | ❌ Not configured |
-| Crunchbase | discoverPipelineB | ❌ Not configured |
-| OpenCorporates | discoverPipelineA | ❌ Not configured |
+
+**Deprecated (not needed):** Crunchbase, OpenCorporates - Pipeline B uses YC GitHub + Growjo instead
 
 ---
 
@@ -107,10 +113,9 @@
 
 1. [ ] **Deploy Functions** - `firebase deploy --only functions`
 2. [ ] **Deploy Hosting** - `npm run build && firebase deploy --only hosting`
-3. [ ] **Configure Discovery API Keys** - Google Places, Crunchbase, OpenCorporates
+3. [ ] **Configure Google Places API** - Only key needed for discovery
 4. [ ] **Upgrade Apollo.io** - Free plan expired, need paid for enrichment
 5. [ ] **Import Contacts** - 50+ prospects for outbound campaign
-6. [ ] **Wire BlogPage** - Connect to published articles from Firestore
 
 ---
 
