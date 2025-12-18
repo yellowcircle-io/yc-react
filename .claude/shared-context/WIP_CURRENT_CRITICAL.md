@@ -2,9 +2,9 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 18, 2025 at 12:00 AM PST
+**Updated:** December 18, 2025 at 12:30 AM PST
 **Machine:** Mac Mini
-**Status:** ✅ Security Audit Complete - User Actions Required
+**Status:** ✅ Firebase Auth SSO Implemented - Ready to Deploy
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
@@ -12,24 +12,33 @@
 
 ---
 
-## ✅ SECURITY AUDIT COMPLETED (Dec 18, 2025)
+## ✅ FIREBASE AUTH SSO IMPLEMENTED (Dec 18, 2025)
 
-### Fixes Applied (commit `53a2424`):
+### Commits:
+- `53a2424` - Security: Remove hardcoded admin tokens from codebase
+- `5a71ea4` - Security: Implement Firebase Auth SSO for admin functions
 
-**1. Frontend Token Management**
-- Created `src/utils/adminConfig.js` for centralized token config
-- Updated `StorageCleanupPage.jsx`, `TriggerRulesPage.jsx`, `PipelineStatsCard.jsx`
-- Now uses environment variables: `VITE_ADMIN_TOKEN`, `VITE_CLEANUP_TOKEN`
+### What Changed:
 
-**2. Backend Token Management**
-- Updated `functions/index.js` (~13 token checks)
-- Now uses Firebase config: `functions.config().admin.token`
-- Removed all hardcoded fallback values
+**Backend (functions/index.js):**
+- Created `verifyAdminAuth()` helper with hybrid authentication:
+  1. **Firebase Auth Bearer token** (preferred) - verifies ID token + checks admin whitelist
+  2. **Legacy x-admin-token** fallback - backwards compatible for n8n/scripts
+  3. **Cleanup token** support for storage functions
+  4. **n8n token** support for workflow automation
+- Updated all ~25 admin functions to use `verifyAdminAuth()`
+- Added `Authorization` to CORS headers
 
-**3. Documentation Cleanup**
-- Replaced all hardcoded tokens with `YOUR_ADMIN_TOKEN` placeholder
-- Replaced Firebase config values with placeholder examples
-- Files updated: `ACTIVE_SPRINT.md`, `REMAINING_USER_ACTIONS.md`, `YELLOWCIRCLE_APP_UPDATES.md`
+**Frontend:**
+- `src/utils/adminConfig.js` - Now async, gets Firebase ID token from logged-in user
+- Admin pages updated to use `await getAdminHeaders()`
+- Falls back to legacy token if user not authenticated
+
+### Migration:
+- ✅ **No breaking changes** - existing `x-admin-token` still works
+- ✅ **Backwards compatible** - n8n workflows, curl scripts continue to work
+- ✅ **Progressive enhancement** - logged-in admin users automatically use SSO
+- ✅ **Same admin whitelist** - Uses existing `config/admin_whitelist` in Firestore
 
 ### 🔴 USER ACTIONS REQUIRED:
 
@@ -38,37 +47,26 @@
    firebase login --reauth
    ```
 
-2. **Set new secure admin tokens in Firebase:**
-   ```bash
-   firebase functions:config:set admin.token="YOUR_NEW_SECURE_TOKEN" admin.cleanup_token="YOUR_NEW_CLEANUP_TOKEN"
-   ```
-
-3. **Create `.env.local` file in project root:**
-   ```env
-   VITE_ADMIN_TOKEN=YOUR_NEW_SECURE_TOKEN
-   VITE_CLEANUP_TOKEN=YOUR_NEW_CLEANUP_TOKEN
-   ```
-
-4. **Deploy Firebase Functions:**
+2. **Deploy Firebase Functions:**
    ```bash
    firebase deploy --only functions
    ```
 
-5. **Rebuild and deploy frontend:**
+3. **Deploy frontend:**
    ```bash
    npm run build && firebase deploy --only hosting
    ```
 
+**Legacy tokens are optional now** - Admin users who are logged in will automatically use Firebase Auth.
+
 ### Firebase Security Rules Review:
 
-Reviewed `firestore.rules` - Found permissive patterns:
+Reviewed `firestore.rules` - Found permissive patterns (for future hardening):
 | Rule | Issue | Severity |
 |------|-------|----------|
 | `access_requests` | Public read/update/delete | 🔴 HIGH |
 | `users` | Any auth user can read/write any profile | 🔴 HIGH |
 | `shortlinks/journeys/capsules` | Public delete | 🟡 MEDIUM |
-
-These are documented for future hardening but not changed (could break existing features).
 
 ---
 
