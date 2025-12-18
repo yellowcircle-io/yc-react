@@ -88,7 +88,7 @@
 ### P1 - Revenue Critical
 | Item | Status | Notes |
 |------|--------|-------|
-| Deploy Latest Functions | ⚠️ Pending | Run `firebase deploy --only functions` |
+| Deploy Functions & Hosting | ✅ Done | Deployed Dec 18, 2025 |
 | Import 50+ Contacts | ❌ Waiting | Use Apollo search or manual list |
 | Launch Outbound Campaign | ❌ Waiting | Depends on contacts |
 
@@ -113,8 +113,8 @@
 
 ## IMMEDIATE NEXT STEPS
 
-1. [ ] **Deploy Functions** - `firebase deploy --only functions`
-2. [ ] **Deploy Hosting** - `npm run build && firebase deploy --only hosting`
+1. [x] **Deploy Functions** - ✅ Deployed Dec 18, 2025 (36 functions)
+2. [x] **Deploy Hosting** - ✅ Deployed Dec 18, 2025 (85 files)
 3. [ ] **Import Contacts** - Use Apollo search (130 credits available) or manual list
 4. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
 
