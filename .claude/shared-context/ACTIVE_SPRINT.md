@@ -89,8 +89,13 @@
 | Item | Status | Notes |
 |------|--------|-------|
 | Deploy Functions & Hosting | ✅ Done | Deployed Dec 18, 2025 |
-| Import 50+ Contacts | ❌ Waiting | Use Apollo search or manual list |
-| Launch Outbound Campaign | ❌ Waiting | Depends on contacts |
+| Import 50 Contacts | ⏳ Ready | See `OUTBOUND_50_CONTACTS_PLAN.md` |
+| Launch Outbound Campaign | ❌ Waiting | After contacts imported |
+
+**50 Contact Plan:**
+- Pipeline A: 25 traditional (Google Places) - accounting, marketing, consulting
+- Pipeline B: 25 digital-first (YC + Growjo) - non-SaaS tech, agencies
+- Alternative: Apollo.io search (50 of 130 credits)
 
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
