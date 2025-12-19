@@ -1379,7 +1379,7 @@ const ContactDashboardPage = () => {
                 </div>
 
                 {/* Journey Status */}
-                {detailModal.data.journey && (
+                {(detailModal.data.journey || detailModal.data.currentJourney || detailModal.data.journeys?.active?.length > 0) && (
                   <div>
                     <label style={styles.label}>Journey Status</label>
                     <div style={{
@@ -1392,25 +1392,46 @@ const ContactDashboardPage = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                         <Activity size={16} style={{ color: COLORS.primary }} />
                         <span style={{ fontWeight: '600', color: COLORS.text }}>
-                          {detailModal.data.journey.name || 'Welcome Journey'}
+                          {detailModal.data.currentJourney?.journeyId || detailModal.data.journey?.name || detailModal.data.journeys?.active?.[0] || 'Welcome Journey'}
                         </span>
                         <span style={{
                           padding: '2px 8px',
                           borderRadius: '9999px',
                           fontSize: '11px',
                           fontWeight: '500',
-                          backgroundColor: detailModal.data.journey.status === 'completed' ? '#dcfce7' : '#dbeafe',
-                          color: detailModal.data.journey.status === 'completed' ? '#15803d' : '#1d4ed8'
+                          backgroundColor: (detailModal.data.currentJourney?.status || detailModal.data.journey?.status) === 'completed' ? '#dcfce7' :
+                                          (detailModal.data.currentJourney?.status || detailModal.data.journey?.status) === 'email_sent' ? '#fef3c7' : '#dbeafe',
+                          color: (detailModal.data.currentJourney?.status || detailModal.data.journey?.status) === 'completed' ? '#15803d' :
+                                 (detailModal.data.currentJourney?.status || detailModal.data.journey?.status) === 'email_sent' ? '#d97706' : '#1d4ed8'
                         }}>
-                          {detailModal.data.journey.status || 'active'}
+                          {detailModal.data.currentJourney?.status || detailModal.data.journey?.status || 'active'}
                         </span>
+                        {/* A/B/C Variant Badge */}
+                        {detailModal.data.currentJourney?.variant && (
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            backgroundColor: '#f3e8ff',
+                            color: '#7c3aed'
+                          }}>
+                            Variant {detailModal.data.currentJourney.variant}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
-                        Current Node: {detailModal.data.journey.currentNode || 'N/A'}
+                        Current Node: {detailModal.data.currentJourney?.currentNodeId || detailModal.data.journey?.currentNode || 'N/A'}
                       </div>
-                      {detailModal.data.journey.enrolledAt && (
+                      {/* Email Sent Info for Outbound */}
+                      {detailModal.data.currentJourney?.emailSentAt && (
+                        <div style={{ fontSize: '12px', color: '#d97706', marginTop: '4px' }}>
+                          📧 Email sent: {formatDate(detailModal.data.currentJourney.emailSentAt)}
+                        </div>
+                      )}
+                      {(detailModal.data.currentJourney?.enteredAt || detailModal.data.journey?.enrolledAt) && (
                         <div style={{ fontSize: '12px', color: COLORS.textLight, marginTop: '4px' }}>
-                          Enrolled: {formatDate(detailModal.data.journey.enrolledAt)}
+                          Enrolled: {formatDate(detailModal.data.currentJourney?.enteredAt || detailModal.data.journey?.enrolledAt)}
                         </div>
                       )}
                     </div>
