@@ -8530,3 +8530,485 @@ function generateMockProductHuntResults(count) {
   }
   return results;
 }
+
+// ============================================
+// Headshot Sourcing (Client A Use Case)
+// ============================================
+
+/**
+ * Headshot Prospect Industries
+ * Businesses most likely to need professional headshots
+ */
+const HEADSHOT_INDUSTRIES = {
+  high_priority: [
+    'law_firm',
+    'lawyer',
+    'real_estate_agency',
+    'insurance_agency',
+    'financial_advisor',
+    'accounting',
+    'finance'
+  ],
+  medium_priority: [
+    'executive_coaching',
+    'business_consultant',
+    'consulting',
+    'marketing_agency',
+    'recruitment_agency',
+    'employment_agency'
+  ],
+  lower_priority: [
+    'corporate_office',
+    'insurance_company',
+    'bank'
+  ]
+};
+
+/**
+ * Discover Headshot Prospects
+ *
+ * Uses Google Places to find businesses likely to need professional headshots.
+ * Targets: Law firms, real estate, financial advisors, consultants, etc.
+ */
+exports.discoverHeadshotProspects = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
+    }
+
+    try {
+      const {
+        location = "San Francisco, CA",
+        lat,
+        lng,
+        radius = 25000,  // 25km default (closer targeting for local photography)
+        industries = 'all',  // 'high', 'medium', 'lower', 'all', or array of types
+        maxResults = 30,
+        dryRun = false
+      } = request.body;
+
+      const googlePlacesKey = functions.config().googleplaces?.api_key;
+
+      if (!googlePlacesKey || googlePlacesKey === "PLACEHOLDER_GOOGLE_PLACES") {
+        return response.json({
+          warning: "Google Places API not configured",
+          configured: false,
+          hint: "Set API key via: firebase functions:config:set googleplaces.api_key=YOUR_KEY",
+          mockResults: generateMockHeadshotProspects(maxResults)
+        });
+      }
+
+      // Get coordinates
+      let searchLat = lat;
+      let searchLng = lng;
+
+      if (!searchLat || !searchLng) {
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${googlePlacesKey}`;
+        const geocodeRes = await fetch(geocodeUrl);
+        const geocodeData = await geocodeRes.json();
+
+        if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
+          searchLat = geocodeData.results[0].geometry.location.lat;
+          searchLng = geocodeData.results[0].geometry.location.lng;
+        } else {
+          return response.status(400).json({
+            error: `Failed to geocode location: ${location}`,
+            hint: "Provide lat/lng coordinates directly or use a valid city name"
+          });
+        }
+      }
+
+      // Determine which industry types to search
+      let typesToSearch = [];
+      if (industries === 'all') {
+        typesToSearch = [
+          ...HEADSHOT_INDUSTRIES.high_priority,
+          ...HEADSHOT_INDUSTRIES.medium_priority
+        ];
+      } else if (industries === 'high') {
+        typesToSearch = HEADSHOT_INDUSTRIES.high_priority;
+      } else if (industries === 'medium') {
+        typesToSearch = HEADSHOT_INDUSTRIES.medium_priority;
+      } else if (industries === 'lower') {
+        typesToSearch = HEADSHOT_INDUSTRIES.lower_priority;
+      } else if (Array.isArray(industries)) {
+        typesToSearch = industries;
+      }
+
+      const results = [];
+      const errors = [];
+
+      // Search each business type
+      for (const businessType of typesToSearch) {
+        try {
+          const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?` +
+            `location=${searchLat},${searchLng}&` +
+            `radius=${radius}&` +
+            `type=${businessType}&` +
+            `key=${googlePlacesKey}`;
+
+          const placesResponse = await fetch(searchUrl);
+          const placesData = await placesResponse.json();
+
+          if (placesData.status === "OK" && placesData.results) {
+            for (const place of placesData.results.slice(0, Math.ceil(maxResults / typesToSearch.length))) {
+              // Score the prospect based on rating and reviews
+              const qualityScore = calculateHeadshotQualityScore(place);
+
+              results.push({
+                source: 'google_places',
+                sourceId: place.place_id,
+                companyName: place.name,
+                industry: businessType,
+                qualityScore,
+                rawData: {
+                  name: place.name,
+                  address: place.vicinity,
+                  types: place.types,
+                  rating: place.rating,
+                  userRatingsTotal: place.user_ratings_total,
+                  businessStatus: place.business_status,
+                  location: place.geometry?.location
+                },
+                prospectType: 'headshot',
+                priority: HEADSHOT_INDUSTRIES.high_priority.includes(businessType) ? 'high' :
+                  HEADSHOT_INDUSTRIES.medium_priority.includes(businessType) ? 'medium' : 'lower'
+              });
+            }
+          }
+        } catch (error) {
+          errors.push({ type: businessType, error: error.message });
+        }
+      }
+
+      // Sort by quality score
+      results.sort((a, b) => b.qualityScore - a.qualityScore);
+
+      // Store prospects if not dry run
+      let stored = 0;
+      if (!dryRun) {
+        for (const prospect of results) {
+          try {
+            const docId = `headshot_${prospect.source}_${prospect.sourceId}`;
+            await db.collection('headshot_prospects').doc(docId).set({
+              ...prospect,
+              discoveredAt: admin.firestore.FieldValue.serverTimestamp(),
+              status: 'new',
+              enriched: false,
+              contacted: false
+            });
+            stored++;
+          } catch (err) {
+            console.error(`Failed to store ${prospect.companyName}:`, err.message);
+          }
+        }
+      }
+
+      // Track API usage
+      const geocodeUsed = (!lat || !lng) ? 1 : 0;
+      const today = new Date().toISOString().split('T')[0];
+      await db.collection('api_usage').doc(today).set({
+        googlePlacesCallsUsed: admin.firestore.FieldValue.increment(typesToSearch.length + geocodeUsed),
+        headshotDiscoveries: admin.firestore.FieldValue.increment(stored),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        useCase: 'headshot_sourcing',
+        discovered: results.length,
+        stored,
+        dryRun,
+        location,
+        industries: typesToSearch,
+        byPriority: {
+          high: results.filter(r => r.priority === 'high').length,
+          medium: results.filter(r => r.priority === 'medium').length,
+          lower: results.filter(r => r.priority === 'lower').length
+        },
+        topProspects: results.slice(0, 5).map(p => ({
+          name: p.companyName,
+          industry: p.industry,
+          score: p.qualityScore,
+          address: p.rawData.address
+        })),
+        errors: errors.length > 0 ? errors : undefined
+      });
+
+    } catch (error) {
+      console.error("❌ discoverHeadshotProspects error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Import Headshot Prospects from CSV
+ *
+ * Accepts array of prospects with: name, company, email, phone, industry, notes
+ */
+exports.importHeadshotProspectsCSV = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
+    }
+
+    try {
+      const { prospects, dryRun = false, source = 'csv_import' } = request.body;
+
+      if (!prospects || !Array.isArray(prospects)) {
+        return response.status(400).json({
+          error: "Missing 'prospects' array in request body",
+          expectedFormat: {
+            prospects: [
+              {
+                name: "John Smith (optional, contact name)",
+                company: "Acme Law Firm (required)",
+                email: "john@acmelaw.com (optional)",
+                phone: "415-555-1234 (optional)",
+                industry: "law_firm (optional)",
+                notes: "Met at networking event (optional)",
+                address: "123 Main St, SF (optional)"
+              }
+            ]
+          }
+        });
+      }
+
+      if (prospects.length > 100) {
+        return response.status(400).json({
+          error: "Maximum 100 prospects per import",
+          received: prospects.length
+        });
+      }
+
+      const results = {
+        success: [],
+        errors: [],
+        duplicates: []
+      };
+
+      for (const prospect of prospects) {
+        if (!prospect.company) {
+          results.errors.push({
+            prospect,
+            error: "Missing required 'company' field"
+          });
+          continue;
+        }
+
+        // Generate unique ID from company name
+        const docId = `headshot_csv_${prospect.company.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+        // Check for duplicates
+        const existing = await db.collection('headshot_prospects').doc(docId).get();
+        if (existing.exists) {
+          results.duplicates.push({
+            company: prospect.company,
+            existingId: docId
+          });
+          continue;
+        }
+
+        if (!dryRun) {
+          try {
+            await db.collection('headshot_prospects').doc(docId).set({
+              source,
+              sourceId: docId,
+              companyName: prospect.company,
+              contactName: prospect.name || null,
+              email: prospect.email || null,
+              phone: prospect.phone || null,
+              industry: prospect.industry || 'unknown',
+              notes: prospect.notes || null,
+              address: prospect.address || null,
+              qualityScore: prospect.email ? 70 : 50,  // Higher score if email provided
+              prospectType: 'headshot',
+              priority: HEADSHOT_INDUSTRIES.high_priority.includes(prospect.industry) ? 'high' :
+                HEADSHOT_INDUSTRIES.medium_priority.includes(prospect.industry) ? 'medium' : 'standard',
+              discoveredAt: admin.firestore.FieldValue.serverTimestamp(),
+              status: 'new',
+              enriched: false,
+              contacted: false
+            });
+            results.success.push(prospect.company);
+          } catch (err) {
+            results.errors.push({
+              company: prospect.company,
+              error: err.message
+            });
+          }
+        } else {
+          results.success.push(prospect.company);
+        }
+      }
+
+      response.json({
+        success: true,
+        useCase: 'headshot_sourcing',
+        dryRun,
+        imported: results.success.length,
+        duplicates: results.duplicates.length,
+        errors: results.errors.length,
+        details: {
+          imported: results.success,
+          duplicates: results.duplicates,
+          errors: results.errors
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ importHeadshotProspectsCSV error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Get Headshot Prospects
+ *
+ * Retrieve and filter headshot prospects for outreach
+ */
+exports.getHeadshotProspects = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
+  }
+
+  try {
+    const {
+      status = 'new',
+      priority,
+      industry,
+      limit = 50,
+      orderBy = 'qualityScore'
+    } = request.query;
+
+    let query = db.collection('headshot_prospects');
+
+    // Filter by status
+    if (status !== 'all') {
+      query = query.where('status', '==', status);
+    }
+
+    // Filter by priority
+    if (priority) {
+      query = query.where('priority', '==', priority);
+    }
+
+    // Filter by industry
+    if (industry) {
+      query = query.where('industry', '==', industry);
+    }
+
+    // Order and limit
+    query = query.orderBy(orderBy, 'desc').limit(parseInt(limit, 10));
+
+    const snapshot = await query.get();
+    const prospects = [];
+
+    snapshot.forEach(doc => {
+      prospects.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    // Get stats
+    const statsSnapshot = await db.collection('headshot_prospects').get();
+    const stats = {
+      total: statsSnapshot.size,
+      byStatus: {},
+      byPriority: {},
+      byIndustry: {}
+    };
+
+    statsSnapshot.forEach(doc => {
+      const data = doc.data();
+      stats.byStatus[data.status] = (stats.byStatus[data.status] || 0) + 1;
+      stats.byPriority[data.priority] = (stats.byPriority[data.priority] || 0) + 1;
+      stats.byIndustry[data.industry] = (stats.byIndustry[data.industry] || 0) + 1;
+    });
+
+    response.json({
+      success: true,
+      prospects,
+      count: prospects.length,
+      stats
+    });
+
+  } catch (error) {
+    console.error("❌ getHeadshotProspects error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Calculate quality score for headshot prospect
+ */
+function calculateHeadshotQualityScore(place) {
+  let score = 50;  // Base score
+
+  // Rating bonus (0-20 points)
+  if (place.rating) {
+    score += Math.min(20, place.rating * 4);
+  }
+
+  // Reviews bonus (0-15 points based on review count)
+  if (place.user_ratings_total) {
+    score += Math.min(15, Math.floor(place.user_ratings_total / 10));
+  }
+
+  // Business status bonus
+  if (place.business_status === 'OPERATIONAL') {
+    score += 10;
+  }
+
+  // Cap at 100
+  return Math.min(100, score);
+}
+
+/**
+ * Generate mock headshot prospects for testing
+ */
+function generateMockHeadshotProspects(count) {
+  const industries = ['law_firm', 'real_estate_agency', 'financial_advisor', 'consulting'];
+  const results = [];
+
+  for (let i = 0; i < count; i++) {
+    const industry = industries[i % industries.length];
+    results.push({
+      source: 'mock',
+      sourceId: `mock_headshot_${Date.now()}_${i}`,
+      companyName: `${industry.replace('_', ' ')} Company ${i + 1}`,
+      industry,
+      qualityScore: Math.floor(Math.random() * 50) + 50,
+      rawData: {
+        address: `${100 + i} Main Street`,
+        rating: 4.0 + Math.random(),
+        userRatingsTotal: Math.floor(Math.random() * 100)
+      },
+      prospectType: 'headshot',
+      priority: i < 10 ? 'high' : i < 20 ? 'medium' : 'lower',
+      mock: true
+    });
+  }
+  return results;
+}
