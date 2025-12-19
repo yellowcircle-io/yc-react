@@ -6668,7 +6668,7 @@ exports.searchProspects = functions.https.onRequest(async (request, response) =>
 
 /**
  * Get configured enrichment providers in priority order
- * Priority: PDL (most free) → Hunter (email focus) → Apollo (paid only)
+ * Priority: PDL (free) → FullEnrich (waterfall, 65% rate) → Hunter → Apollo
  *
  * Note: Clay does NOT have a public enrichment API - it only supports
  * webhook-based async processing or enterprise-only limited API.
@@ -6688,26 +6688,39 @@ const getEnrichmentProviders = () => {
     });
   }
 
+  // FullEnrich - Waterfall enrichment (65% success rate)
+  // Priority 2: First paid provider - uses 12+ sources including Hunter, Apollo, etc.
+  // Docs: https://docs.fullenrich.com/
+  const fullenrichKey = functions.config().fullenrich?.api_key;
+  if (fullenrichKey) {
+    providers.push({
+      name: "fullenrich",
+      apiKey: fullenrichKey,
+      priority: 2,
+      fields: ["name", "company", "title", "linkedin", "phone", "email", "location"]
+    });
+  }
+
   // Hunter.io - 25 free searches/month, excellent for email verification
-  // Priority 2: Good for email-focused enrichment
+  // Priority 3: Fallback if FullEnrich unavailable
   const hunterKey = functions.config().hunter?.api_key;
   if (hunterKey) {
     providers.push({
       name: "hunter",
       apiKey: hunterKey,
-      priority: 2,
+      priority: 3,
       fields: ["name", "company", "title", "linkedin", "email_status"]
     });
   }
 
   // Apollo.io - Requires paid plan for enrichment API
-  // Priority 3: Only used if paid plan is active
+  // Priority 4: Only used if paid plan is active
   const apolloKey = functions.config().apollo?.api_key;
   if (apolloKey) {
     providers.push({
       name: "apollo",
       apiKey: apolloKey,
-      priority: 3,
+      priority: 4,
       fields: ["name", "company", "title", "linkedin", "phone", "email_status"]
     });
   }
@@ -6750,6 +6763,63 @@ const enrichViaHunter = async (email, apiKey) => {
     phone: null, // Hunter doesn't provide phone
     location: null,
     raw: data
+  };
+};
+
+/**
+ * Enrich via FullEnrich (Waterfall Enrichment)
+ * Uses 12+ data providers for 65% success rate
+ * Docs: https://docs.fullenrich.com/reverselookup
+ */
+const enrichViaFullEnrich = async (email, apiKey) => {
+  // FullEnrich reverse email lookup - get person/company from email
+  const response = await fetch(
+    "https://app.fullenrich.com/api/v1/contact/reverse/email/bulk",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        emails: [email],
+        webhook_url: null // Synchronous response
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || error.error || `FullEnrich API error: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  // FullEnrich returns bulk results - get first item
+  const enrichment = result.data?.[0] || result.results?.[0] || result[0];
+
+  if (!enrichment || (!enrichment.person && !enrichment.company)) {
+    throw new Error("No data returned from FullEnrich");
+  }
+
+  const person = enrichment.person || {};
+  const company = enrichment.company || {};
+
+  return {
+    provider: "fullenrich",
+    name: person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim() || null,
+    firstName: person.first_name || null,
+    lastName: person.last_name || null,
+    email: person.email || email,
+    emailStatus: person.email_status || "unknown",
+    company: company.name || person.company_name || null,
+    jobTitle: person.job_title || person.title || null,
+    linkedinUrl: person.linkedin_url || person.linkedin || null,
+    phone: person.phone || person.mobile_phone || null,
+    location: person.location || company.location || null,
+    industry: company.industry || null,
+    companySize: company.employee_count || company.size || null,
+    raw: enrichment
   };
 };
 
@@ -6923,6 +6993,9 @@ exports.cascadeEnrich = functions.https.onRequest(async (request, response) => {
 
         let result;
         switch (provider.name) {
+          case "fullenrich":
+            result = await enrichViaFullEnrich(email, provider.apiKey);
+            break;
           case "apollo":
             result = await enrichViaApollo(email, provider.apiKey);
             break;
@@ -7042,17 +7115,21 @@ exports.listEnrichmentProviders = functions.https.onRequest(async (request, resp
       hasApiKey: !!p.apiKey
     })),
     freeOptions: [
-      { name: "pdl", freeQuota: "100 lookups/month", signup: "https://peopledatalabs.com", priority: 1 },
-      { name: "hunter", freeQuota: "25 searches + 50 verifications/month", signup: "https://hunter.io", priority: 2 }
+      { name: "pdl", freeQuota: "100 lookups/month", signup: "https://peopledatalabs.com", priority: 1 }
     ],
-    paidOnly: [
-      { name: "apollo", note: "Enrichment API requires paid plan", signup: "https://apollo.io" }
+    paidRecommended: [
+      { name: "fullenrich", note: "Waterfall enrichment (65% success rate), uses 12+ providers", signup: "https://fullenrich.com", priority: 2, cost: "$39/mo for 1000 credits" }
+    ],
+    paidFallback: [
+      { name: "hunter", freeQuota: "25 searches + 50 verifications/month", signup: "https://hunter.io", priority: 3 },
+      { name: "apollo", note: "Enrichment API requires paid plan", signup: "https://apollo.io", priority: 4 }
     ],
     notSupported: [
       { name: "clay", reason: "No public enrichment API - only webhook-based async or enterprise API", info: "https://www.clay.com/university/guide/using-clay-as-an-api" }
     ],
     configCommands: {
       pdl: "firebase functions:config:set pdl.api_key=YOUR_KEY",
+      fullenrich: "firebase functions:config:set fullenrich.api_key=YOUR_KEY (recommended)",
       hunter: "firebase functions:config:set hunter.api_key=YOUR_KEY",
       apollo: "firebase functions:config:set apollo.api_key=YOUR_KEY (requires paid plan)"
     }
