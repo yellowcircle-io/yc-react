@@ -21,6 +21,8 @@ import {
   listLeads
 } from '../../utils/firestoreLeads';
 import PipelineStatsCard from '../../components/admin/PipelineStatsCard';
+import EmailStatsCard from '../../components/admin/EmailStatsCard';
+import AnalyticsSummary from '../../components/admin/AnalyticsSummary';
 import PESignalsPanel from '../../components/admin/PESignalsPanel';
 import {
   Users,
@@ -433,8 +435,14 @@ const ContactDashboardPage = () => {
             </div>
           </div>
 
-          {/* Pipeline Stats Card */}
-          <PipelineStatsCard />
+          {/* Collapsible Analytics Summary */}
+          <AnalyticsSummary>
+            {/* Pipeline Stats Card */}
+            <PipelineStatsCard />
+
+            {/* Email Performance Stats */}
+            <EmailStatsCard />
+          </AnalyticsSummary>
 
           {/* Tabs */}
           <div style={{

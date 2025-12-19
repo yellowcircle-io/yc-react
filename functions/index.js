@@ -5166,6 +5166,201 @@ exports.bulkImportContacts = functions.https.onRequest(async (request, response)
 // ============================================================
 
 /**
+ * Search Apollo.io for prospects matching criteria
+ * Uses Apollo's People Search API (uses credits)
+ *
+ * Usage: curl -X POST ".../apolloSearch" -d '{"titles": ["CEO", "Founder"], "industries": ["marketing"], "limit": 50}'
+ */
+exports.apolloSearch = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    // Auth check
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
+    }
+
+    try {
+      const {
+        titles = ["CEO", "Founder", "Owner", "President"],
+        industries = ["marketing and advertising", "professional training & coaching", "design"],
+        employeeRanges = ["1-10", "11-50", "51-100"],
+        locations = ["United States"],
+        excludePatterns = ["private equity", "venture capital", "VC", "PE"],
+        limit = 25,
+        dryRun = false
+      } = request.body;
+
+      const apolloApiKey = functions.config().apollo?.api_key;
+      if (!apolloApiKey) {
+        return response.status(400).json({
+          error: "Apollo API key not configured",
+          hint: "Set via: firebase functions:config:set apollo.api_key=YOUR_KEY"
+        });
+      }
+
+      // Apollo People Search API
+      const searchBody = {
+        person_titles: titles,
+        person_locations: locations,
+        organization_industry_tag_ids: industries,
+        organization_num_employees_ranges: employeeRanges,
+        per_page: Math.min(limit, 100),
+        page: 1
+      };
+
+      console.log(`🔍 Apollo search: ${JSON.stringify(searchBody)}`);
+
+      const apolloRes = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+          "x-api-key": apolloApiKey
+        },
+        body: JSON.stringify(searchBody)
+      });
+
+      const apolloData = await apolloRes.json();
+
+      if (!apolloRes.ok) {
+        console.error("❌ Apollo search error:", apolloData);
+        return response.status(apolloRes.status).json({
+          error: "Apollo API error",
+          details: apolloData
+        });
+      }
+
+      const people = apolloData.people || [];
+      console.log(`📋 Apollo returned ${people.length} prospects`);
+
+      // Filter out PE/VC backed companies
+      const filteredPeople = people.filter(person => {
+        const org = person.organization || {};
+        const keywords = [
+          org.name,
+          org.industry,
+          org.keywords?.join(' '),
+          person.headline
+        ].join(' ').toLowerCase();
+
+        return !excludePatterns.some(pattern =>
+          keywords.includes(pattern.toLowerCase())
+        );
+      });
+
+      console.log(`✅ ${filteredPeople.length} prospects after PE/VC filtering`);
+
+      const results = {
+        found: people.length,
+        filtered: filteredPeople.length,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        errors: []
+      };
+
+      // Store as contacts if not dry run
+      if (!dryRun) {
+        for (const person of filteredPeople) {
+          try {
+            if (!person.email) {
+              results.skipped++;
+              continue;
+            }
+
+            // Check for existing contact
+            const existing = await db.collection('contacts')
+              .where('email', '==', person.email)
+              .limit(1)
+              .get();
+
+            const org = person.organization || {};
+            const contactData = {
+              email: person.email,
+              firstName: person.first_name || '',
+              lastName: person.last_name || '',
+              name: person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim(),
+              company: org.name || '',
+              website: org.website_url || org.primary_domain ? `https://${org.primary_domain}` : null,
+              position: person.title || '',
+              phone: person.phone_number || null,
+              linkedinUrl: person.linkedin_url || null,
+              source: 'apollo_search',
+              tags: ['apollo-search', 'pipeline-B', 'digital-first'],
+              pipelineAssignment: {
+                primaryPipeline: 'B',
+                pipelineBStatus: 'PENDING'
+              },
+              enrichment: {
+                apollo: {
+                  id: person.id,
+                  enrichedAt: new Date().toISOString(),
+                  headline: person.headline,
+                  organization: {
+                    id: org.id,
+                    name: org.name,
+                    industry: org.industry,
+                    employeeCount: org.estimated_num_employees,
+                    domain: org.primary_domain,
+                    linkedinUrl: org.linkedin_url
+                  }
+                }
+              },
+              metadata: {
+                apolloSearchCriteria: { titles, industries, locations }
+              },
+              status: 'active',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedBy: 'apolloSearch'
+            };
+
+            if (existing.empty) {
+              contactData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+              contactData.createdBy = 'apolloSearch';
+              await db.collection('contacts').add(contactData);
+              results.created++;
+            } else {
+              await existing.docs[0].ref.update(contactData);
+              results.updated++;
+            }
+          } catch (err) {
+            results.errors.push({
+              email: person.email,
+              error: err.message
+            });
+          }
+        }
+      } else {
+        results.created = filteredPeople.filter(p => p.email).length;
+      }
+
+      // Track API usage
+      const today = new Date().toISOString().split('T')[0];
+      await db.collection('api_usage').doc(today).set({
+        apolloSearchCredits: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        dryRun,
+        pagination: apolloData.pagination,
+        ...results
+      });
+
+    } catch (error) {
+      console.error("❌ apolloSearch error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
  * Enrich a single contact using Apollo.io People Enrichment API
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
  *        -H "Content-Type: application/json" \
@@ -6146,7 +6341,9 @@ exports.discoverPipelineA = functions
 
     try {
       const {
-        location = "San Francisco, CA",  // Default search location
+        location = "San Francisco, CA",  // Default search location (city name or lat,lng)
+        lat,                              // Optional: latitude (overrides location string)
+        lng,                              // Optional: longitude (overrides location string)
         radius = 50000,                   // 50km radius
         types = ["accounting", "consulting", "marketing_agency", "legal"],
         maxResults = 50,
@@ -6164,6 +6361,29 @@ exports.discoverPipelineA = functions
         });
       }
 
+      // Get coordinates - either provided directly or via geocoding
+      let searchLat = lat;
+      let searchLng = lng;
+
+      if (!searchLat || !searchLng) {
+        // Use Geocoding API to convert location string to coordinates
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${googlePlacesKey}`;
+        const geocodeRes = await fetch(geocodeUrl);
+        const geocodeData = await geocodeRes.json();
+
+        if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
+          searchLat = geocodeData.results[0].geometry.location.lat;
+          searchLng = geocodeData.results[0].geometry.location.lng;
+          console.log(`📍 Geocoded "${location}" to ${searchLat},${searchLng}`);
+        } else {
+          return response.status(400).json({
+            error: `Failed to geocode location: ${location}`,
+            geocodeStatus: geocodeData.status,
+            hint: "Provide lat/lng coordinates directly or use a valid city name"
+          });
+        }
+      }
+
       const results = [];
       const errors = [];
 
@@ -6171,7 +6391,7 @@ exports.discoverPipelineA = functions
       for (const businessType of types) {
         try {
           const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?` +
-            `location=${encodeURIComponent(location)}&` +
+            `location=${searchLat},${searchLng}&` +
             `radius=${radius}&` +
             `type=${businessType}&` +
             `key=${googlePlacesKey}`;
@@ -6223,10 +6443,11 @@ exports.discoverPipelineA = functions
         }
       }
 
-      // Track API usage
+      // Track API usage (types.length for nearby search + 1 for geocode if used)
+      const geocodeUsed = (!lat || !lng) ? 1 : 0;
       const today = new Date().toISOString().split('T')[0];
       await db.collection('api_usage').doc(today).set({
-        googlePlacesCallsUsed: admin.firestore.FieldValue.increment(types.length),
+        googlePlacesCallsUsed: admin.firestore.FieldValue.increment(types.length + geocodeUsed),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
@@ -6382,6 +6603,214 @@ exports.discoverPipelineB = functions
 
     } catch (error) {
       console.error("❌ discoverPipelineB error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * PROCESS RAW COMPANIES
+ *
+ * Converts companies_raw entries into contacts by:
+ * 1. Finding company domains via Google search heuristics
+ * 2. Using Hunter.io to find emails for decision makers
+ * 3. Creating contacts with discovered info
+ */
+exports.processRawCompanies = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    // Auth check
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      return response.status(401).json({ error: authResult.error || "Unauthorized" });
+    }
+
+    try {
+      const {
+        limit = 10,
+        dryRun = false,
+        pipeline = null  // 'A', 'B', or null for both
+      } = request.body;
+
+      const hunterKey = functions.config().hunter?.api_key;
+      if (!hunterKey) {
+        return response.status(400).json({
+          error: "Hunter.io API key not configured",
+          hint: "Set via: firebase functions:config:set hunter.api_key=YOUR_KEY"
+        });
+      }
+
+      // Fetch pending companies
+      let query = db.collection('companies_raw')
+        .where('status', '==', 'pending')
+        .limit(limit);
+
+      if (pipeline) {
+        query = query.where('pipeline', '==', pipeline);
+      }
+
+      const snapshot = await query.get();
+
+      if (snapshot.empty) {
+        return response.json({
+          success: true,
+          message: "No pending companies to process",
+          processed: 0
+        });
+      }
+
+      const results = {
+        processed: 0,
+        contactsCreated: 0,
+        contactsUpdated: 0,
+        noEmailFound: 0,
+        errors: []
+      };
+
+      for (const doc of snapshot.docs) {
+        const company = doc.data();
+        const companyName = company.companyName || company.rawData?.name;
+
+        try {
+          // Try to find domain from company name
+          // For Google Places, we might have a website from detailed lookup
+          let domain = null;
+          let emails = [];
+
+          // If we have address info, try Hunter domain search
+          if (companyName) {
+            // Attempt Hunter company search
+            const hunterUrl = `https://api.hunter.io/v2/domain-search?company=${encodeURIComponent(companyName)}&api_key=${hunterKey}`;
+            const hunterRes = await fetch(hunterUrl);
+            const hunterData = await hunterRes.json();
+
+            if (hunterData.data?.domain) {
+              domain = hunterData.data.domain;
+              // Get decision maker emails
+              const decisionMakers = (hunterData.data.emails || [])
+                .filter(e => ['ceo', 'founder', 'owner', 'president', 'director', 'manager', 'marketing', 'sales'].some(role =>
+                  (e.position || '').toLowerCase().includes(role) ||
+                  (e.department || '').toLowerCase().includes(role)
+                ))
+                .slice(0, 3);
+
+              emails = decisionMakers.map(e => ({
+                email: e.value,
+                firstName: e.first_name,
+                lastName: e.last_name,
+                position: e.position,
+                confidence: e.confidence
+              }));
+            }
+          }
+
+          // If no emails found via Hunter
+          if (emails.length === 0) {
+            results.noEmailFound++;
+
+            // Mark as processed with no-email status
+            if (!dryRun) {
+              await doc.ref.update({
+                status: 'no_email',
+                processedAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+            }
+            results.processed++;
+            continue;
+          }
+
+          // Create contact for the primary decision maker
+          const primaryEmail = emails[0];
+          const contactData = {
+            email: primaryEmail.email,
+            firstName: primaryEmail.firstName || '',
+            lastName: primaryEmail.lastName || '',
+            name: `${primaryEmail.firstName || ''} ${primaryEmail.lastName || ''}`.trim() || companyName,
+            company: companyName,
+            website: domain ? `https://${domain}` : null,
+            position: primaryEmail.position || null,
+            source: company.source || 'discovery',
+            tags: [`pipeline-${company.pipeline}`, 'discovery'],
+            pipelineAssignment: {
+              primaryPipeline: company.pipeline,
+              pipelineAStatus: company.pipeline === 'A' ? 'PENDING' : null,
+              pipelineBStatus: company.pipeline === 'B' ? 'PENDING' : null
+            },
+            discoverySource: {
+              primary: company.source,
+              sources: [company.source],
+              discoveredAt: company.ingestedAt,
+              rawDataRef: doc.ref.path
+            },
+            metadata: {
+              hunterConfidence: primaryEmail.confidence,
+              alternativeEmails: emails.slice(1).map(e => e.email)
+            },
+            status: 'active',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: 'processRawCompanies'
+          };
+
+          if (!dryRun) {
+            // Check if contact exists
+            const existingContact = await db.collection('contacts')
+              .where('email', '==', primaryEmail.email)
+              .limit(1)
+              .get();
+
+            if (existingContact.empty) {
+              contactData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+              contactData.createdBy = 'processRawCompanies';
+              await db.collection('contacts').add(contactData);
+              results.contactsCreated++;
+            } else {
+              // Update existing contact
+              await existingContact.docs[0].ref.update({
+                ...contactData,
+                tags: admin.firestore.FieldValue.arrayUnion(...contactData.tags)
+              });
+              results.contactsUpdated++;
+            }
+
+            // Mark raw company as processed
+            await doc.ref.update({
+              status: 'processed',
+              processedAt: admin.firestore.FieldValue.serverTimestamp(),
+              contactEmail: primaryEmail.email
+            });
+          } else {
+            results.contactsCreated++;  // Count as would-be-created for dry run
+          }
+
+          results.processed++;
+
+        } catch (err) {
+          results.errors.push({
+            company: companyName,
+            error: err.message
+          });
+        }
+      }
+
+      // Track API usage
+      const today = new Date().toISOString().split('T')[0];
+      await db.collection('api_usage').doc(today).set({
+        hunterDomainSearches: admin.firestore.FieldValue.increment(results.processed),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        dryRun,
+        ...results
+      });
+
+    } catch (error) {
+      console.error("❌ processRawCompanies error:", error);
       response.status(500).json({ error: error.message });
     }
   });
@@ -6956,6 +7385,267 @@ exports.getPipelineStats = functions.https.onRequest(async (request, response) =
 
   } catch (error) {
     console.error("❌ getPipelineStats error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET EMAIL TRACKING STATS
+ *
+ * Returns email delivery, open, and click statistics from Resend.
+ */
+exports.getEmailStats = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  // Auth check (SSO + legacy token fallback + cleanup token)
+  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
+  }
+
+  try {
+    const resendApiKey = functions.config().resend?.api_key;
+    if (!resendApiKey) {
+      return response.status(500).json({ error: "Resend API key not configured" });
+    }
+
+    // Fetch recent emails from Resend (last 100)
+    const resendResponse = await fetch("https://api.resend.com/emails", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!resendResponse.ok) {
+      throw new Error(`Resend API error: ${resendResponse.status}`);
+    }
+
+    const { data: emails } = await resendResponse.json();
+
+    // Get event counts from Firestore (webhook data) - simple query, no composite index needed
+    const eventsSnapshot = await db.collection("email_events")
+      .orderBy("createdAt", "desc")
+      .limit(500)
+      .get();
+
+    // Count events by type from Firestore
+    const eventCounts = {
+      sent: 0,
+      delivered: 0,
+      opened: 0,
+      clicked: 0,
+      bounced: 0,
+      complained: 0
+    };
+
+    const uniqueOpens = new Set();
+    const uniqueClicks = new Set();
+
+    eventsSnapshot.forEach(doc => {
+      const event = doc.data();
+      const type = event.type;
+
+      if (type === 'opened') {
+        uniqueOpens.add(event.emailId);
+      } else if (type === 'clicked') {
+        uniqueClicks.add(event.emailId);
+      } else if (eventCounts[type] !== undefined) {
+        eventCounts[type]++;
+      }
+    });
+
+    // Calculate stats (prefer Firestore events, fall back to Resend list)
+    const stats = {
+      total: emails.length,
+      delivered: 0,
+      opened: uniqueOpens.size, // Unique emails opened
+      clicked: uniqueClicks.size, // Unique emails clicked
+      bounced: 0,
+      complained: 0,
+      pending: 0,
+      recentEmails: [],
+      recentEvents: [],
+      byDay: {}
+    };
+
+    // Process emails from Resend for delivery/bounce status
+    emails.forEach(email => {
+      const event = email.last_event;
+      const date = email.created_at?.split('T')[0] || 'unknown';
+
+      // Count by status
+      if (event === 'delivered') stats.delivered++;
+      else if (event === 'bounced') stats.bounced++;
+      else if (event === 'complained') stats.complained++;
+      else if (event === 'sent') stats.pending++;
+
+      // Group by day
+      if (!stats.byDay[date]) {
+        stats.byDay[date] = { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 };
+      }
+      stats.byDay[date].sent++;
+      if (['delivered', 'opened', 'clicked'].includes(event)) stats.byDay[date].delivered++;
+      if (event === 'bounced') stats.byDay[date].bounced++;
+    });
+
+    // Get 10 most recent emails for display
+    stats.recentEmails = emails.slice(0, 10).map(email => ({
+      id: email.id,
+      to: email.to?.[0] || 'unknown',
+      subject: email.subject || 'No subject',
+      status: email.last_event,
+      opened: uniqueOpens.has(email.id),
+      clicked: uniqueClicks.has(email.id),
+      createdAt: email.created_at
+    }));
+
+    // Get recent open/click events for activity feed (simple query, filter in memory)
+    const recentEventsSnapshot = await db.collection("email_events")
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
+
+    stats.recentEvents = recentEventsSnapshot.docs
+      .map(doc => {
+        const event = doc.data();
+        return {
+          id: doc.id,
+          type: event.type,
+          to: event.to,
+          subject: event.subject,
+          link: event.link,
+          timestamp: event.timestamp?.toDate?.()?.toISOString() || event.createdAt?.toDate?.()?.toISOString() || null
+        };
+      })
+      .filter(e => e.type === 'opened' || e.type === 'clicked')
+      .slice(0, 10);
+
+    // Calculate rates
+    stats.deliveryRate = stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0;
+    stats.openRate = stats.delivered > 0 ? Math.round((stats.opened / stats.delivered) * 100) : 0;
+    stats.clickRate = stats.opened > 0 ? Math.round((stats.clicked / stats.opened) * 100) : 0;
+    stats.bounceRate = stats.total > 0 ? Math.round((stats.bounced / stats.total) * 100) : 0;
+
+    response.json({ success: true, stats });
+
+  } catch (error) {
+    console.error("❌ getEmailStats error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * RESEND WEBHOOK HANDLER
+ *
+ * Receives email events from Resend (opens, clicks, bounces, etc.)
+ * Stores them in Firestore for tracking and analytics.
+ *
+ * Webhook events: https://resend.com/docs/dashboard/webhooks/event-types
+ * - email.sent
+ * - email.delivered
+ * - email.opened
+ * - email.clicked
+ * - email.bounced
+ * - email.complained
+ */
+exports.handleResendWebhook = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  if (request.method !== "POST") {
+    return response.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const event = request.body;
+
+    // Validate event structure
+    if (!event || !event.type || !event.data) {
+      console.warn("Invalid webhook payload:", JSON.stringify(event));
+      return response.status(400).json({ error: "Invalid payload" });
+    }
+
+    const { type, data } = event;
+    const emailId = data.email_id;
+    const createdAt = data.created_at || new Date().toISOString();
+
+    console.log(`📧 Resend webhook: ${type} for email ${emailId}`);
+
+    // Store event in Firestore
+    const eventDoc = {
+      emailId,
+      type: type.replace('email.', ''), // 'opened', 'clicked', etc.
+      fullType: type,
+      to: data.to?.[0] || null,
+      subject: data.subject || null,
+      link: data.click?.link || null, // For click events
+      ipAddress: data.click?.ipAddress || null,
+      userAgent: data.click?.userAgent || null,
+      timestamp: admin.firestore.Timestamp.fromDate(new Date(createdAt)),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      rawData: data
+    };
+
+    await db.collection("email_events").add(eventDoc);
+
+    // Update email tracking summary in emails collection
+    const emailRef = db.collection("emails").doc(emailId);
+    const emailDoc = await emailRef.get();
+
+    const updateData = {
+      lastEvent: type.replace('email.', ''),
+      lastEventAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // Track specific events
+    if (type === 'email.opened') {
+      updateData.openedAt = admin.firestore.FieldValue.serverTimestamp();
+      updateData.openCount = admin.firestore.FieldValue.increment(1);
+    } else if (type === 'email.clicked') {
+      updateData.clickedAt = admin.firestore.FieldValue.serverTimestamp();
+      updateData.clickCount = admin.firestore.FieldValue.increment(1);
+      if (!emailDoc.exists || !emailDoc.data().clickedLinks) {
+        updateData.clickedLinks = [data.click?.link];
+      } else {
+        updateData.clickedLinks = admin.firestore.FieldValue.arrayUnion(data.click?.link);
+      }
+    } else if (type === 'email.bounced') {
+      updateData.bouncedAt = admin.firestore.FieldValue.serverTimestamp();
+      updateData.bounceReason = data.bounce?.message || 'Unknown';
+    } else if (type === 'email.delivered') {
+      updateData.deliveredAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    if (emailDoc.exists) {
+      await emailRef.update(updateData);
+    } else {
+      // Create email record if it doesn't exist
+      await emailRef.set({
+        ...updateData,
+        to: data.to?.[0] || null,
+        subject: data.subject || null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    // Log high-value events (opens/clicks)
+    if (type === 'email.opened' || type === 'email.clicked') {
+      const action = type === 'email.opened' ? '👀 Opened' : '🖱️ Clicked';
+      const linkInfo = type === 'email.clicked' ? ` → ${data.click?.link}` : '';
+      console.log(`📊 ${action}: ${data.to?.[0] || 'Unknown'}${linkInfo}`);
+    }
+
+    response.json({ success: true, event: type });
+
+  } catch (error) {
+    console.error("❌ Resend webhook error:", error);
     response.status(500).json({ error: error.message });
   }
 });

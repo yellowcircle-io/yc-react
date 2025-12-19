@@ -119,9 +119,18 @@
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
 |------|--------|-------|
+| AI Image Generation | ⏳ Pending | $20/mo cap, tiered (Imagen 3 $0.03, Gemini Pro $0.13) |
+| Programmatic Ads | ⏳ Pending | Meta/LinkedIn/Google only, $100/mo total cap |
+| Headshot Sourcing | ⏳ Pending | CSV + Google Places simplified |
+| Claude Code Autonomous | ⏳ Pending | Hybrid B+C (Agent SDK + Sleepless) |
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
 | Firestore Security Rules | ⚠️ Documented | Needs hardening (permissive patterns found) |
+
+### P3 - Next Week (No Execution Yet)
+| Item | Status | Notes |
+|------|--------|-------|
+| Dynamic Newsletter | 📋 Scoped | LiveIntent/Movable Ink style live content, standard sections with dynamic population |
 
 ### API Keys - ALL CONFIGURED ✅
 | Key | Status | Notes |
