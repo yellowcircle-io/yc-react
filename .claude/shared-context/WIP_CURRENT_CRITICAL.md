@@ -2,13 +2,58 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 18, 2025 at 12:30 AM PST
-**Machine:** Mac Mini
-**Status:** ✅ Firebase Auth SSO Implemented - Ready to Deploy
+**Updated:** December 19, 2025 at 2:15 PM PST
+**Machine:** MacBook Air
+**Status:** ✅ Security Hardening Complete + API Integrations Deployed
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
 - `.claude/RESTORE_POINT_NOV18_2025.md` - Full context backup
+
+---
+
+## ✅ SECURITY + API INTEGRATIONS (Dec 19, 2025) - MacBook Air
+
+### Commits:
+- `ac3aa2f` - Security: Harden Firestore rules + Add Meta domain verification
+
+### What Changed:
+
+**Firestore Security Rules Hardening:**
+| Issue | Severity | Fix Applied |
+|-------|----------|-------------|
+| `users` collection duplicate rule allowing any auth to read ALL profiles | HIGH | Removed - now only own profile |
+| `access_requests` public read/update/delete | HIGH | Changed to `request.auth != null` |
+| `shortlinks` delete was public | MEDIUM | Now requires authentication |
+| `shortlinks/clicks` delete was public | MEDIUM | Now requires authentication |
+| `journeys` delete was public | MEDIUM | Now requires authentication |
+| `capsules` delete was public | MEDIUM | Now requires authentication |
+| `capsules/nodes` delete was public | MEDIUM | Now requires authentication |
+| `capsules/edges` delete was public | MEDIUM | Now requires authentication |
+
+**API Integrations Deployed:**
+- ✅ **FullEnrich** - Added to enrichment cascade at priority 2 (before Hunter)
+  - Reverse email lookup via `https://app.fullenrich.com/api/v1/contact/reverse/email/bulk`
+  - 65% success rate using 12+ internal providers
+- ✅ **LinkedIn Marketing API** - Token configured (but needs OAuth regeneration)
+- ✅ **Meta Domain Verification** - Tag deployed and verified live at yellowcircle.io
+
+**Enrichment Cascade Order (Updated):**
+1. PDL (free tier)
+2. FullEnrich ($39/mo) ← NEW
+3. Hunter.io
+4. Apollo.io
+
+### 🔴 PENDING USER ACTIONS:
+
+1. **LinkedIn OAuth Token** - Current token invalid, needs regeneration:
+   - LinkedIn Developer Portal → Your App → Auth → Token Generator
+   - Required scope: `rw_ads`
+   - Then: `firebase functions:config:set linkedin.access_token="NEW_TOKEN"`
+
+2. **Meta Business Verification** - Complete in Meta Business Suite (domain tag is live)
+
+3. **Google Ads API** - On hold for user approval
 
 ---
 

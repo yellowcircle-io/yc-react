@@ -3,7 +3,7 @@
 **Machine:** MacBook Air
 **Instance ID:** macbook-air-secondary
 **Created:** November 2, 2025
-**Last Updated:** December 7, 2025 at 3:30 PM PST
+**Last Updated:** December 19, 2025 at 2:15 PM PST
 
 ---
 
@@ -402,6 +402,47 @@ node shortcut-router.js edit-theme --field=primary --value="#FF0000"
 - Pending commit: yC-MSF documentation updates
 
 **Session Status:** ✅ Synced via Dropbox + GitHub
+
+---
+
+### Session 10: Security Hardening + API Integrations
+**Date:** December 19, 2025 at 2:15 PM PST
+**Machine:** MacBook Air
+**Context:** Firestore security rules hardening, enrichment cascade update, and ad platform integrations
+
+**Work Completed:**
+
+1. **Firestore Security Rules Hardening** (HIGH Priority)
+   - Fixed `users` collection - removed duplicate rule that allowed any auth user to read ALL profiles
+   - Fixed `access_requests` - changed public read/update/delete to require authentication
+   - Fixed all public delete operations (shortlinks, journeys, capsules, subcollections)
+   - Deployed via `firebase deploy --only firestore:rules`
+
+2. **FullEnrich Integration** (Enrichment Cascade)
+   - Added FullEnrich at priority 2 (before Hunter.io)
+   - Created `enrichViaFullEnrich()` function using reverse email lookup API
+   - Updated cascade: PDL → FullEnrich → Hunter → Apollo
+   - Deployed to Firebase Functions
+
+3. **LinkedIn Marketing API**
+   - Configured access token in Firebase functions config
+   - Created `createLinkedInCampaign` function
+   - Token validation failed (invalid format) - needs OAuth regeneration
+
+4. **Meta Domain Verification**
+   - Added meta tag to index.html for Facebook Business verification
+   - Built and deployed frontend
+   - Verified tag live at yellowcircle.io
+
+**Commit:**
+- `ac3aa2f` - Security: Harden Firestore rules + Add Meta domain verification
+
+**Pending User Actions:**
+- LinkedIn OAuth token regeneration (current token invalid)
+- Meta Business verification completion
+- Google Ads API (on hold for approval)
+
+**Session Status:** ✅ Complete
 
 ---
 
