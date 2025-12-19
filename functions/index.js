@@ -488,6 +488,358 @@ exports.health = functions.https.onRequest((request, response) => {
   });
 });
 
+// ============================================================
+// AI Image Generation (Tiered with Budget Cap)
+// ============================================================
+
+/**
+ * Image Generation - Tiered AI Image Creation
+ *
+ * Tiers:
+ * - free: Returns placeholder/gradient images (no API calls)
+ * - standard: Imagen 3 @ $0.03/image
+ * - premium: Gemini 3 Pro @ $0.13/image
+ *
+ * Monthly Budget: $20 cap (tracked in api_usage collection)
+ *
+ * Usage: POST /generateImage
+ * {
+ *   prompt: "Marketing banner for tech startup",
+ *   tier: "standard",
+ *   dimensions: { width: 1024, height: 1024 },
+ *   style: "photorealistic"
+ * }
+ */
+exports.generateImage = functions
+  .runWith({ memory: '1GB', timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    if (request.method !== "POST") {
+      return response.status(405).json({ error: "Method not allowed" });
+    }
+
+    try {
+      const {
+        prompt,
+        tier = 'free',
+        dimensions = { width: 1024, height: 1024 },
+        style = 'photorealistic',
+        aspectRatio = '1:1',
+        negativePrompt = '',
+        seed = null
+      } = request.body;
+
+      if (!prompt && tier !== 'free') {
+        return response.status(400).json({ error: "Missing prompt" });
+      }
+
+      // Tier pricing configuration
+      const TIER_CONFIG = {
+        free: { cost: 0, model: null, description: 'Placeholder/gradient images' },
+        standard: { cost: 0.03, model: 'imagen-3.0-generate', description: 'Imagen 3 - Good quality' },
+        premium: { cost: 0.13, model: 'gemini-2.0-flash-preview-image-generation', description: 'Gemini - Best quality' }
+      };
+
+      const tierConfig = TIER_CONFIG[tier];
+      if (!tierConfig) {
+        return response.status(400).json({
+          error: "Invalid tier",
+          validTiers: Object.keys(TIER_CONFIG)
+        });
+      }
+
+      // Check monthly budget ($20 cap)
+      const MONTHLY_BUDGET = 20.00;
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const usageRef = db.collection('api_usage').doc(`image-gen-${monthKey}`);
+      const usageDoc = await usageRef.get();
+      const currentSpend = usageDoc.exists ? (usageDoc.data().totalSpend || 0) : 0;
+
+      if (tier !== 'free' && currentSpend + tierConfig.cost > MONTHLY_BUDGET) {
+        return response.json({
+          success: false,
+          error: "Monthly budget exceeded",
+          budgetLimit: MONTHLY_BUDGET,
+          currentSpend: currentSpend,
+          fallbackToFree: true,
+          hint: "Using free tier placeholder instead",
+          image: generatePlaceholderImage(prompt, dimensions, style)
+        });
+      }
+
+      // FREE TIER: Generate placeholder/gradient
+      if (tier === 'free') {
+        const placeholder = generatePlaceholderImage(prompt, dimensions, style);
+        return response.json({
+          success: true,
+          tier: 'free',
+          cost: 0,
+          image: placeholder,
+          message: "Free tier: placeholder image generated"
+        });
+      }
+
+      // PAID TIERS: Use Gemini API
+      const geminiApiKey = functions.config().gemini?.api_key;
+      if (!geminiApiKey) {
+        // Fallback to free tier if no API key
+        console.log('⚠️ Gemini API key not configured, falling back to free tier');
+        return response.json({
+          success: true,
+          tier: 'free',
+          cost: 0,
+          fallback: true,
+          fallbackReason: 'API key not configured',
+          image: generatePlaceholderImage(prompt, dimensions, style),
+          hint: 'Set gemini.api_key via: firebase functions:config:set gemini.api_key=YOUR_KEY'
+        });
+      }
+
+      // Build Gemini API request
+      const enhancedPrompt = buildEnhancedPrompt(prompt, style, dimensions);
+
+      console.log(`🎨 Generating image with ${tierConfig.model}: ${enhancedPrompt.substring(0, 100)}...`);
+
+      // Gemini 2.0 Flash for image generation
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${tierConfig.model}:generateContent?key=${geminiApiKey}`;
+
+      const geminiResponse = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: enhancedPrompt
+            }]
+          }],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            responseMimeType: 'text/plain'
+          }
+        })
+      });
+
+      if (!geminiResponse.ok) {
+        const errorText = await geminiResponse.text();
+        console.error('❌ Gemini API error:', errorText);
+
+        // Fallback to free tier
+        return response.json({
+          success: true,
+          tier: 'free',
+          cost: 0,
+          fallback: true,
+          fallbackReason: `API error: ${geminiResponse.status}`,
+          image: generatePlaceholderImage(prompt, dimensions, style),
+          error: errorText
+        });
+      }
+
+      const geminiData = await geminiResponse.json();
+      let imageData = null;
+
+      // Extract image from response
+      if (geminiData.candidates?.[0]?.content?.parts) {
+        for (const part of geminiData.candidates[0].content.parts) {
+          if (part.inlineData?.mimeType?.startsWith('image/')) {
+            imageData = {
+              base64: part.inlineData.data,
+              mimeType: part.inlineData.mimeType
+            };
+            break;
+          }
+        }
+      }
+
+      if (!imageData) {
+        console.log('⚠️ No image in response, falling back to free tier');
+        return response.json({
+          success: true,
+          tier: 'free',
+          cost: 0,
+          fallback: true,
+          fallbackReason: 'No image in API response',
+          image: generatePlaceholderImage(prompt, dimensions, style),
+          rawResponse: geminiData
+        });
+      }
+
+      // Track usage and cost
+      await usageRef.set({
+        totalSpend: admin.firestore.FieldValue.increment(tierConfig.cost),
+        imageCount: admin.firestore.FieldValue.increment(1),
+        lastGenerated: admin.firestore.FieldValue.serverTimestamp(),
+        [`tier_${tier}_count`]: admin.firestore.FieldValue.increment(1)
+      }, { merge: true });
+
+      console.log(`✅ Image generated: ${tier} tier, cost $${tierConfig.cost}`);
+
+      response.json({
+        success: true,
+        tier,
+        cost: tierConfig.cost,
+        budgetRemaining: MONTHLY_BUDGET - currentSpend - tierConfig.cost,
+        image: {
+          dataUrl: `data:${imageData.mimeType};base64,${imageData.base64}`,
+          mimeType: imageData.mimeType,
+          dimensions
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ generateImage error:", error);
+
+      // Always provide a fallback
+      return response.json({
+        success: true,
+        tier: 'free',
+        cost: 0,
+        fallback: true,
+        fallbackReason: error.message,
+        image: generatePlaceholderImage(request.body?.prompt || '', { width: 1024, height: 1024 }, 'abstract'),
+        error: error.message
+      });
+    }
+  });
+
+/**
+ * Generate a placeholder/gradient image (free tier fallback)
+ */
+function generatePlaceholderImage(prompt, dimensions, style) {
+  const { width, height } = dimensions;
+
+  // Generate deterministic colors based on prompt
+  const hash = (prompt || 'default').split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+
+  const hue1 = Math.abs(hash) % 360;
+  const hue2 = (hue1 + 45) % 360;
+
+  // Color palettes by style
+  const palettes = {
+    photorealistic: ['#1a1a2e', '#16213e', '#0f3460'],
+    illustration: ['#ff6b6b', '#feca57', '#48dbfb'],
+    abstract: ['#6c5ce7', '#a29bfe', '#fd79a8'],
+    minimalist: ['#dfe6e9', '#b2bec3', '#636e72'],
+    vibrant: ['#00b894', '#00cec9', '#0984e3']
+  };
+
+  const colors = palettes[style] || palettes.abstract;
+  const primaryColor = colors[Math.abs(hash) % colors.length];
+
+  // SVG placeholder with gradient
+  const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:hsl(${hue1}, 70%, 50%);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:hsl(${hue2}, 70%, 40%);stop-opacity:1" />
+      </linearGradient>
+      <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+        <circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grad)"/>
+    <rect width="100%" height="100%" fill="url(#dots)"/>
+    <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="24" fill="rgba(255,255,255,0.9)">
+      ${(prompt || 'Placeholder Image').substring(0, 30)}${(prompt || '').length > 30 ? '...' : ''}
+    </text>
+    <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui" font-size="14" fill="rgba(255,255,255,0.6)">
+      ${width} × ${height} • Free Tier
+    </text>
+  </svg>`;
+
+  const base64 = Buffer.from(svg).toString('base64');
+
+  return {
+    dataUrl: `data:image/svg+xml;base64,${base64}`,
+    mimeType: 'image/svg+xml',
+    dimensions: { width, height },
+    placeholder: true
+  };
+}
+
+/**
+ * Build enhanced prompt for better image generation
+ */
+function buildEnhancedPrompt(prompt, style, dimensions) {
+  const stylePrompts = {
+    photorealistic: 'photorealistic, high-quality photography, professional lighting, 8K resolution',
+    illustration: 'digital illustration, clean lines, modern design, vector-style',
+    abstract: 'abstract art, creative composition, artistic, modern aesthetic',
+    minimalist: 'minimalist design, clean, simple, modern, professional',
+    vibrant: 'vibrant colors, bold design, eye-catching, dynamic composition'
+  };
+
+  const styleModifier = stylePrompts[style] || stylePrompts.photorealistic;
+  const aspectHint = dimensions.width > dimensions.height ? 'landscape composition' :
+                     dimensions.width < dimensions.height ? 'portrait composition' : 'square composition';
+
+  return `Create an image: ${prompt}. Style: ${styleModifier}. ${aspectHint}. High quality, professional marketing asset.`;
+}
+
+/**
+ * Get image generation usage stats
+ */
+exports.getImageGenUsage = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  // Auth check
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
+  }
+
+  try {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const usageRef = db.collection('api_usage').doc(`image-gen-${monthKey}`);
+    const usageDoc = await usageRef.get();
+
+    const MONTHLY_BUDGET = 20.00;
+    const usage = usageDoc.exists ? usageDoc.data() : {
+      totalSpend: 0,
+      imageCount: 0,
+      tier_standard_count: 0,
+      tier_premium_count: 0
+    };
+
+    response.json({
+      success: true,
+      month: monthKey,
+      budget: MONTHLY_BUDGET,
+      spent: usage.totalSpend || 0,
+      remaining: MONTHLY_BUDGET - (usage.totalSpend || 0),
+      imageCount: usage.imageCount || 0,
+      byTier: {
+        free: 'unlimited',
+        standard: usage.tier_standard_count || 0,
+        premium: usage.tier_premium_count || 0
+      },
+      pricing: {
+        free: '$0.00',
+        standard: '$0.03/image (~666 images with $20 budget)',
+        premium: '$0.13/image (~153 images with $20 budget)'
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ getImageGenUsage error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
 /**
  * Send Email via ESP - Hot-swappable provider (Resend or SendGrid)
  *
