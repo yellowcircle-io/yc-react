@@ -840,6 +840,490 @@ exports.getImageGenUsage = functions.https.onRequest(async (request, response) =
   }
 });
 
+// ============================================
+// Programmatic Ad Distribution ($100/month total cap)
+// ============================================
+
+/**
+ * Budget configuration for programmatic ads
+ * Total monthly cap: $100
+ * Per-platform cap: $35 (no single platform should dominate)
+ */
+const AD_BUDGET_CONFIG = {
+  monthly_total_cap: 100.00,
+  platform_caps: {
+    meta: 35.00,     // Facebook/Instagram
+    google: 35.00,   // Google Ads
+    linkedin: 35.00  // LinkedIn Ads
+  },
+  min_campaign_budget: 5.00,
+  default_daily_budget: 10.00
+};
+
+/**
+ * Get Ad Platform Usage Stats
+ * Returns current spend across all platforms
+ */
+exports.getAdBudgetStats = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
+      return;
+    }
+
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const usageRef = db.collection('api_usage').doc(`ads-${monthKey}`);
+    const usageDoc = await usageRef.get();
+
+    const usage = usageDoc.exists ? usageDoc.data() : {
+      totalSpend: 0,
+      byPlatform: { meta: 0, google: 0, linkedin: 0 },
+      campaigns: []
+    };
+
+    response.json({
+      success: true,
+      month: monthKey,
+      budget: AD_BUDGET_CONFIG,
+      usage: {
+        totalSpend: usage.totalSpend || 0,
+        remaining: AD_BUDGET_CONFIG.monthly_total_cap - (usage.totalSpend || 0),
+        byPlatform: {
+          meta: {
+            spent: usage.byPlatform?.meta || 0,
+            remaining: AD_BUDGET_CONFIG.platform_caps.meta - (usage.byPlatform?.meta || 0),
+            cap: AD_BUDGET_CONFIG.platform_caps.meta
+          },
+          google: {
+            spent: usage.byPlatform?.google || 0,
+            remaining: AD_BUDGET_CONFIG.platform_caps.google - (usage.byPlatform?.google || 0),
+            cap: AD_BUDGET_CONFIG.platform_caps.google
+          },
+          linkedin: {
+            spent: usage.byPlatform?.linkedin || 0,
+            remaining: AD_BUDGET_CONFIG.platform_caps.linkedin - (usage.byPlatform?.linkedin || 0),
+            cap: AD_BUDGET_CONFIG.platform_caps.linkedin
+          }
+        },
+        campaignCount: usage.campaigns?.length || 0
+      },
+      platformStatus: {
+        meta: {
+          configured: !!(functions.config().meta?.app_id),
+          apiVersion: "v21.0"
+        },
+        google: {
+          configured: !!(functions.config().googleads?.developer_token),
+          apiVersion: "v18"
+        },
+        linkedin: {
+          configured: !!(functions.config().linkedin?.client_id),
+          apiVersion: "202411"
+        }
+      }
+    });
+  } catch (error) {
+    console.error("❌ getAdBudgetStats error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Create Meta (Facebook/Instagram) Ad Campaign
+ * Requires: meta.app_id, meta.app_secret, meta.access_token
+ */
+exports.createMetaCampaign = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 60 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    try {
+      const authResult = await verifyAdminAuth(request);
+      if (!authResult.success) {
+        response.status(401).json({ error: authResult.error || "Unauthorized" });
+        return;
+      }
+
+      const {
+        name,
+        objective = "OUTCOME_AWARENESS",
+        dailyBudget = AD_BUDGET_CONFIG.default_daily_budget,
+        adAccountId,
+        targeting,
+        creative
+      } = request.body;
+
+      // Validate budget
+      if (dailyBudget < AD_BUDGET_CONFIG.min_campaign_budget) {
+        response.status(400).json({
+          error: `Minimum campaign budget is $${AD_BUDGET_CONFIG.min_campaign_budget}`
+        });
+        return;
+      }
+
+      // Check platform budget cap
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const usageRef = db.collection('api_usage').doc(`ads-${monthKey}`);
+      const usageDoc = await usageRef.get();
+      const currentMetaSpend = usageDoc.exists ? (usageDoc.data().byPlatform?.meta || 0) : 0;
+
+      if (currentMetaSpend + dailyBudget > AD_BUDGET_CONFIG.platform_caps.meta) {
+        response.status(400).json({
+          error: "Meta platform budget cap reached",
+          spent: currentMetaSpend,
+          cap: AD_BUDGET_CONFIG.platform_caps.meta,
+          remaining: AD_BUDGET_CONFIG.platform_caps.meta - currentMetaSpend
+        });
+        return;
+      }
+
+      // Check API credentials
+      const metaConfig = functions.config().meta || {};
+      if (!metaConfig.access_token) {
+        response.json({
+          success: false,
+          configured: false,
+          message: "Meta API not configured. Set via: firebase functions:config:set meta.app_id=X meta.app_secret=X meta.access_token=X",
+          docs: "https://developers.facebook.com/docs/marketing-apis/get-started"
+        });
+        return;
+      }
+
+      // Create campaign via Meta Marketing API
+      const campaignPayload = {
+        name: name || `yellowCircle Campaign ${monthKey}`,
+        objective,
+        special_ad_categories: [],
+        status: "PAUSED"  // Always start paused for safety
+      };
+
+      const fetch = (await import('node-fetch')).default;
+      const createUrl = `https://graph.facebook.com/v21.0/${adAccountId}/campaigns`;
+
+      const createResponse = await fetch(createUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...campaignPayload,
+          access_token: metaConfig.access_token
+        })
+      });
+
+      const result = await createResponse.json();
+
+      if (result.error) {
+        response.status(400).json({
+          success: false,
+          error: result.error.message,
+          code: result.error.code
+        });
+        return;
+      }
+
+      // Log usage
+      await usageRef.set({
+        totalSpend: admin.firestore.FieldValue.increment(dailyBudget),
+        byPlatform: {
+          meta: admin.firestore.FieldValue.increment(dailyBudget)
+        },
+        campaigns: admin.firestore.FieldValue.arrayUnion({
+          platform: 'meta',
+          id: result.id,
+          name: campaignPayload.name,
+          budget: dailyBudget,
+          createdAt: now.toISOString()
+        }),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        platform: 'meta',
+        campaign: {
+          id: result.id,
+          name: campaignPayload.name,
+          status: 'PAUSED',
+          objective,
+          dailyBudget
+        },
+        budgetRemaining: {
+          platform: AD_BUDGET_CONFIG.platform_caps.meta - currentMetaSpend - dailyBudget,
+          total: AD_BUDGET_CONFIG.monthly_total_cap - (usageDoc.exists ? usageDoc.data().totalSpend || 0 : 0) - dailyBudget
+        }
+      });
+    } catch (error) {
+      console.error("❌ createMetaCampaign error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Create Google Ads Campaign
+ * Requires: googleads.developer_token, googleads.client_id, googleads.client_secret, googleads.refresh_token
+ */
+exports.createGoogleCampaign = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 60 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    try {
+      const authResult = await verifyAdminAuth(request);
+      if (!authResult.success) {
+        response.status(401).json({ error: authResult.error || "Unauthorized" });
+        return;
+      }
+
+      const {
+        name,
+        campaignType = "DISPLAY",
+        dailyBudget = AD_BUDGET_CONFIG.default_daily_budget,
+        customerId,
+        targeting
+      } = request.body;
+
+      // Validate budget
+      if (dailyBudget < AD_BUDGET_CONFIG.min_campaign_budget) {
+        response.status(400).json({
+          error: `Minimum campaign budget is $${AD_BUDGET_CONFIG.min_campaign_budget}`
+        });
+        return;
+      }
+
+      // Check platform budget cap
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const usageRef = db.collection('api_usage').doc(`ads-${monthKey}`);
+      const usageDoc = await usageRef.get();
+      const currentGoogleSpend = usageDoc.exists ? (usageDoc.data().byPlatform?.google || 0) : 0;
+
+      if (currentGoogleSpend + dailyBudget > AD_BUDGET_CONFIG.platform_caps.google) {
+        response.status(400).json({
+          error: "Google Ads platform budget cap reached",
+          spent: currentGoogleSpend,
+          cap: AD_BUDGET_CONFIG.platform_caps.google,
+          remaining: AD_BUDGET_CONFIG.platform_caps.google - currentGoogleSpend
+        });
+        return;
+      }
+
+      // Check API credentials
+      const googleConfig = functions.config().googleads || {};
+      if (!googleConfig.developer_token) {
+        response.json({
+          success: false,
+          configured: false,
+          message: "Google Ads API not configured. Set via: firebase functions:config:set googleads.developer_token=X googleads.client_id=X googleads.client_secret=X googleads.refresh_token=X",
+          docs: "https://developers.google.com/google-ads/api/docs/first-call/overview"
+        });
+        return;
+      }
+
+      // TODO: Implement Google Ads API call
+      // This requires OAuth flow and the google-ads-api npm package
+      // For now, return a placeholder response
+
+      const campaignId = `google-${Date.now()}`;
+
+      // Log usage (when implemented)
+      await usageRef.set({
+        totalSpend: admin.firestore.FieldValue.increment(dailyBudget),
+        byPlatform: {
+          google: admin.firestore.FieldValue.increment(dailyBudget)
+        },
+        campaigns: admin.firestore.FieldValue.arrayUnion({
+          platform: 'google',
+          id: campaignId,
+          name: name || `yellowCircle Google Campaign ${monthKey}`,
+          budget: dailyBudget,
+          createdAt: now.toISOString(),
+          status: 'draft'
+        }),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        platform: 'google',
+        message: "Google Ads API integration pending. Campaign logged for manual creation.",
+        campaign: {
+          id: campaignId,
+          name: name || `yellowCircle Google Campaign ${monthKey}`,
+          status: 'draft',
+          type: campaignType,
+          dailyBudget
+        },
+        nextSteps: [
+          "1. Set up OAuth credentials in Firebase config",
+          "2. Install google-ads-api npm package",
+          "3. Complete API integration"
+        ],
+        budgetRemaining: {
+          platform: AD_BUDGET_CONFIG.platform_caps.google - currentGoogleSpend - dailyBudget,
+          total: AD_BUDGET_CONFIG.monthly_total_cap - (usageDoc.exists ? usageDoc.data().totalSpend || 0 : 0) - dailyBudget
+        }
+      });
+    } catch (error) {
+      console.error("❌ createGoogleCampaign error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Create LinkedIn Ad Campaign
+ * Requires: linkedin.client_id, linkedin.client_secret, linkedin.access_token
+ */
+exports.createLinkedInCampaign = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 60 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    try {
+      const authResult = await verifyAdminAuth(request);
+      if (!authResult.success) {
+        response.status(401).json({ error: authResult.error || "Unauthorized" });
+        return;
+      }
+
+      const {
+        name,
+        campaignType = "SPONSORED_UPDATES",
+        dailyBudget = AD_BUDGET_CONFIG.default_daily_budget,
+        accountId,
+        targeting
+      } = request.body;
+
+      // Validate budget
+      if (dailyBudget < AD_BUDGET_CONFIG.min_campaign_budget) {
+        response.status(400).json({
+          error: `Minimum campaign budget is $${AD_BUDGET_CONFIG.min_campaign_budget}`
+        });
+        return;
+      }
+
+      // Check platform budget cap
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const usageRef = db.collection('api_usage').doc(`ads-${monthKey}`);
+      const usageDoc = await usageRef.get();
+      const currentLinkedInSpend = usageDoc.exists ? (usageDoc.data().byPlatform?.linkedin || 0) : 0;
+
+      if (currentLinkedInSpend + dailyBudget > AD_BUDGET_CONFIG.platform_caps.linkedin) {
+        response.status(400).json({
+          error: "LinkedIn platform budget cap reached",
+          spent: currentLinkedInSpend,
+          cap: AD_BUDGET_CONFIG.platform_caps.linkedin,
+          remaining: AD_BUDGET_CONFIG.platform_caps.linkedin - currentLinkedInSpend
+        });
+        return;
+      }
+
+      // Check API credentials
+      const linkedinConfig = functions.config().linkedin || {};
+      if (!linkedinConfig.access_token) {
+        response.json({
+          success: false,
+          configured: false,
+          message: "LinkedIn Marketing API not configured. Set via: firebase functions:config:set linkedin.client_id=X linkedin.client_secret=X linkedin.access_token=X",
+          docs: "https://learn.microsoft.com/en-us/linkedin/marketing/getting-started"
+        });
+        return;
+      }
+
+      // Create campaign via LinkedIn Marketing API
+      const fetch = (await import('node-fetch')).default;
+      const campaignPayload = {
+        account: `urn:li:sponsoredAccount:${accountId}`,
+        name: name || `yellowCircle LinkedIn Campaign ${monthKey}`,
+        type: campaignType,
+        status: "DRAFT",  // Always start as draft for safety
+        costType: "CPM",
+        dailyBudget: {
+          amount: String(dailyBudget * 100),  // LinkedIn uses cents
+          currencyCode: "USD"
+        }
+      };
+
+      const createResponse = await fetch('https://api.linkedin.com/rest/adCampaigns', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${linkedinConfig.access_token}`,
+          'LinkedIn-Version': '202411',
+          'X-Restli-Protocol-Version': '2.0.0',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(campaignPayload)
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        response.status(createResponse.status).json({
+          success: false,
+          error: errorText,
+          statusCode: createResponse.status
+        });
+        return;
+      }
+
+      const result = await createResponse.json();
+
+      // Log usage
+      await usageRef.set({
+        totalSpend: admin.firestore.FieldValue.increment(dailyBudget),
+        byPlatform: {
+          linkedin: admin.firestore.FieldValue.increment(dailyBudget)
+        },
+        campaigns: admin.firestore.FieldValue.arrayUnion({
+          platform: 'linkedin',
+          id: result.id,
+          name: campaignPayload.name,
+          budget: dailyBudget,
+          createdAt: now.toISOString()
+        }),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      response.json({
+        success: true,
+        platform: 'linkedin',
+        campaign: {
+          id: result.id,
+          name: campaignPayload.name,
+          status: 'DRAFT',
+          type: campaignType,
+          dailyBudget
+        },
+        budgetRemaining: {
+          platform: AD_BUDGET_CONFIG.platform_caps.linkedin - currentLinkedInSpend - dailyBudget,
+          total: AD_BUDGET_CONFIG.monthly_total_cap - (usageDoc.exists ? usageDoc.data().totalSpend || 0 : 0) - dailyBudget
+        }
+      });
+    } catch (error) {
+      console.error("❌ createLinkedInCampaign error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
 /**
  * Send Email via ESP - Hot-swappable provider (Resend or SendGrid)
  *
