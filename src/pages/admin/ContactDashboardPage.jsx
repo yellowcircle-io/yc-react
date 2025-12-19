@@ -15,11 +15,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   listContacts,
   searchContacts,
-  archiveContact
+  archiveContact,
+  changeRecordType,
+  listContactsByRecordType,
+  upsertContact,
+  migrateContactsToRecordType,
+  RECORD_TYPES
 } from '../../utils/firestoreContacts';
-import {
-  listLeads
-} from '../../utils/firestoreLeads';
 import PipelineStatsCard from '../../components/admin/PipelineStatsCard';
 import EmailStatsCard from '../../components/admin/EmailStatsCard';
 import AnalyticsSummary from '../../components/admin/AnalyticsSummary';
@@ -27,6 +29,8 @@ import PESignalsPanel from '../../components/admin/PESignalsPanel';
 import {
   Users,
   UserPlus,
+  UserCheck,
+  Briefcase,
   Mail,
   Search,
   Filter,
@@ -50,7 +54,11 @@ import {
   MousePointer,
   Activity,
   Target,
-  BarChart3
+  BarChart3,
+  Upload,
+  Download,
+  MoreVertical,
+  Edit3
 } from 'lucide-react';
 
 // ============================================================
@@ -84,7 +92,15 @@ const STAGE_COLORS = {
   churned: { bg: '#f3f4f6', text: '#6b7280' }
 };
 
-// Type colors
+// Record Type colors (4-tier CRM taxonomy)
+const RECORD_TYPE_COLORS = {
+  client: { bg: '#dcfce7', text: '#15803d', icon: Briefcase },
+  contact: { bg: '#dbeafe', text: '#1d4ed8', icon: UserCheck },
+  lead: { bg: '#fef3c7', text: '#d97706', icon: UserPlus },
+  prospect: { bg: '#f3e8ff', text: '#7c3aed', icon: Target }
+};
+
+// Legacy type colors (for backwards compatibility)
 const TYPE_COLORS = {
   lead: { bg: '#fef3c7', text: '#d97706' },
   prospect: { bg: '#dbeafe', text: '#1d4ed8' },
@@ -169,24 +185,42 @@ const ContactDashboardPage = () => {
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState('contacts');
+  // Tab state - 4-tier CRM taxonomy
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'client' | 'contact' | 'lead' | 'prospect'
 
-  // Contacts state
+  // Contacts state (unified - includes all record types)
   const [contacts, setContacts] = useState([]);
   const [contactsLoading, setContactsLoading] = useState(true);
   const [contactsError, setContactsError] = useState(null);
   const [contactSearch, setContactSearch] = useState('');
-  const [contactFilter, setContactFilter] = useState({ type: null, stage: null, pipeline: null });
+  const [contactFilter, setContactFilter] = useState({ stage: null, pipeline: null });
 
   // PE Signals panel state
   const [showPESignals, setShowPESignals] = useState(false);
 
-  // Leads state
-  const [leads, setLeads] = useState([]);
-  const [leadsLoading, setLeadsLoading] = useState(true);
-  const [leadsError, setLeadsError] = useState(null);
-  const [leadFilter, setLeadFilter] = useState({ status: null, source: null });
+  // Counts per record type
+  const [recordTypeCounts, setRecordTypeCounts] = useState({
+    all: 0,
+    client: 0,
+    contact: 0,
+    lead: 0,
+    prospect: 0
+  });
+
+  // Import modal
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importMode, setImportMode] = useState('options'); // 'options' | 'csv' | 'manual'
+  const [manualEmails, setManualEmails] = useState('');
+  const [importRecordType, setImportRecordType] = useState('prospect');
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResults, setImportResults] = useState(null);
+
+  // Migration state
+  const [migrationLoading, setMigrationLoading] = useState(false);
+  const [migrationResults, setMigrationResults] = useState(null);
+
+  // Record type change dropdown
+  const [typeChangeDropdown, setTypeChangeDropdown] = useState(null);
 
   // Detail modal
   const [detailModal, setDetailModal] = useState(null);
@@ -199,7 +233,7 @@ const ContactDashboardPage = () => {
   const handleFooterToggle = () => {};
   const handleMenuToggle = () => {};
 
-  // Load contacts
+  // Load contacts with optional record type filter
   const loadContacts = useCallback(async () => {
     try {
       setContactsLoading(true);
@@ -208,54 +242,61 @@ const ContactDashboardPage = () => {
       let result;
       if (contactSearch.trim()) {
         result = await searchContacts(contactSearch.trim());
+      } else if (activeTab !== 'all') {
+        // Filter by record type when a specific tab is selected
+        result = await listContactsByRecordType(activeTab, { limit: 100 });
       } else {
         result = await listContacts({
-          type: contactFilter.type,
           stage: contactFilter.stage,
-          limit: 50
+          limit: 100
         });
       }
 
-      setContacts(result.contacts || result || []);
+      const allContacts = result.contacts || result || [];
+      setContacts(allContacts);
+
+      // Calculate counts for each record type
+      const counts = {
+        all: allContacts.length,
+        client: 0,
+        contact: 0,
+        lead: 0,
+        prospect: 0
+      };
+
+      allContacts.forEach(c => {
+        const type = c.recordType || 'prospect';
+        if (counts[type] !== undefined) {
+          counts[type]++;
+        }
+      });
+
+      // If filtering by tab, get total count separately
+      if (activeTab !== 'all') {
+        const allResult = await listContacts({ limit: 200 });
+        const allData = allResult.contacts || allResult || [];
+        counts.all = allData.length;
+        counts.client = allData.filter(c => c.recordType === 'client').length;
+        counts.contact = allData.filter(c => c.recordType === 'contact').length;
+        counts.lead = allData.filter(c => c.recordType === 'lead').length;
+        counts.prospect = allData.filter(c => (c.recordType || 'prospect') === 'prospect').length;
+      }
+
+      setRecordTypeCounts(counts);
     } catch (err) {
       console.error('Failed to load contacts:', err);
       setContactsError(err.message);
     } finally {
       setContactsLoading(false);
     }
-  }, [contactSearch, contactFilter]);
-
-  // Load leads
-  const loadLeads = useCallback(async () => {
-    try {
-      setLeadsLoading(true);
-      setLeadsError(null);
-
-      const result = await listLeads({
-        status: leadFilter.status,
-        source: leadFilter.source,
-        limit: 50
-      });
-
-      setLeads(result.leads || result || []);
-    } catch (err) {
-      console.error('Failed to load leads:', err);
-      setLeadsError(err.message);
-    } finally {
-      setLeadsLoading(false);
-    }
-  }, [leadFilter]);
+  }, [contactSearch, contactFilter, activeTab]);
 
   // Load data on mount and filter changes
   useEffect(() => {
     if (!authLoading && isAdmin) {
-      if (activeTab === 'contacts') {
-        loadContacts();
-      } else {
-        loadLeads();
-      }
+      loadContacts();
     }
-  }, [authLoading, isAdmin, activeTab, loadContacts, loadLeads]);
+  }, [authLoading, isAdmin, activeTab, loadContacts]);
 
   // Redirect non-admins
   useEffect(() => {
@@ -277,6 +318,157 @@ const ContactDashboardPage = () => {
       setContactsError(err.message);
     } finally {
       setActionLoading(prev => ({ ...prev, [contactId]: false }));
+    }
+  };
+
+  // Change record type
+  const handleChangeRecordType = async (contactId, newType) => {
+    setActionLoading(prev => ({ ...prev, [contactId]: true }));
+    setTypeChangeDropdown(null);
+    try {
+      await changeRecordType(contactId, newType, user?.email || 'admin');
+      await loadContacts();
+    } catch (err) {
+      console.error('Failed to change record type:', err);
+      setContactsError(err.message);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [contactId]: false }));
+    }
+  };
+
+  // Handle manual email import
+  const handleManualImport = async () => {
+    if (!manualEmails.trim()) return;
+
+    setImportLoading(true);
+    setImportResults(null);
+
+    try {
+      // Parse emails from text (comma, semicolon, newline, or space separated)
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+      const emails = manualEmails.match(emailRegex) || [];
+      const uniqueEmails = [...new Set(emails.map(e => e.toLowerCase()))];
+
+      let created = 0;
+      let updated = 0;
+      let errors = 0;
+
+      for (const email of uniqueEmails) {
+        try {
+          const result = await upsertContact({
+            email,
+            recordType: importRecordType,
+            source: { original: 'manual_import', medium: 'admin' }
+          });
+          if (result.created) {
+            created++;
+          } else {
+            updated++;
+          }
+        } catch (err) {
+          console.error(`Failed to import ${email}:`, err);
+          errors++;
+        }
+      }
+
+      setImportResults({ total: uniqueEmails.length, created, updated, errors });
+
+      // Reload contacts
+      await loadContacts();
+    } catch (err) {
+      console.error('Manual import failed:', err);
+      setImportResults({ error: err.message });
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  // Handle CSV file upload
+  const handleCSVUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    setImportResults(null);
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+
+      // Skip header if present
+      const hasHeader = lines[0].toLowerCase().includes('email');
+      const dataLines = hasHeader ? lines.slice(1) : lines;
+
+      let created = 0;
+      let updated = 0;
+      let errors = 0;
+
+      for (const line of dataLines) {
+        const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+        const email = parts[0];
+        const name = parts[1] || null;
+        const company = parts[2] || null;
+        const recordType = parts[3] || importRecordType;
+
+        if (!email || !email.includes('@')) continue;
+
+        try {
+          const result = await upsertContact({
+            email: email.toLowerCase(),
+            name,
+            company,
+            recordType,
+            source: { original: 'csv_import', medium: 'admin' }
+          });
+          if (result.created) {
+            created++;
+          } else {
+            updated++;
+          }
+        } catch (err) {
+          console.error(`Failed to import ${email}:`, err);
+          errors++;
+        }
+      }
+
+      setImportResults({ total: dataLines.length, created, updated, errors });
+      await loadContacts();
+    } catch (err) {
+      console.error('CSV import failed:', err);
+      setImportResults({ error: err.message });
+    } finally {
+      setImportLoading(false);
+      event.target.value = ''; // Reset file input
+    }
+  };
+
+  // Reset import modal state
+  const closeImportModal = () => {
+    setShowImportModal(false);
+    setImportMode('options');
+    setManualEmails('');
+    setImportResults(null);
+  };
+
+  // Run migration to ensure all contacts have recordType and status
+  const handleMigration = async () => {
+    if (!confirm('This will update all contacts to ensure they have recordType and status fields. Continue?')) {
+      return;
+    }
+
+    setMigrationLoading(true);
+    setMigrationResults(null);
+
+    try {
+      const result = await migrateContactsToRecordType();
+      setMigrationResults(result);
+      // Reload contacts after migration
+      await loadContacts();
+    } catch (err) {
+      console.error('Migration failed:', err);
+      setMigrationResults({ error: err.message });
+    } finally {
+      setMigrationLoading(false);
     }
   };
 
@@ -413,21 +605,55 @@ const ContactDashboardPage = () => {
                 ← Admin Hub
               </button>
               <button
-                onClick={() => activeTab === 'contacts' ? loadContacts() : loadLeads()}
-                disabled={contactsLoading || leadsLoading}
+                onClick={() => setShowImportModal(true)}
+                style={{
+                  ...styles.button,
+                  ...styles.secondaryButton,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Upload size={16} />
+                Import
+              </button>
+              <button
+                onClick={handleMigration}
+                disabled={migrationLoading}
+                title="Update all contacts to have recordType and status fields"
                 style={{
                   ...styles.button,
                   ...styles.secondaryButton,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  opacity: (contactsLoading || leadsLoading) ? 0.5 : 1
+                  opacity: migrationLoading ? 0.5 : 1
                 }}
               >
                 <RefreshCw
                   size={16}
                   style={{
-                    animation: (contactsLoading || leadsLoading) ? 'spin 1s linear infinite' : 'none'
+                    animation: migrationLoading ? 'spin 1s linear infinite' : 'none'
+                  }}
+                />
+                {migrationLoading ? 'Migrating...' : 'Fix Data'}
+              </button>
+              <button
+                onClick={() => loadContacts()}
+                disabled={contactsLoading}
+                style={{
+                  ...styles.button,
+                  ...styles.secondaryButton,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  opacity: contactsLoading ? 0.5 : 1
+                }}
+              >
+                <RefreshCw
+                  size={16}
+                  style={{
+                    animation: contactsLoading ? 'spin 1s linear infinite' : 'none'
                   }}
                 />
                 Refresh
@@ -444,129 +670,178 @@ const ContactDashboardPage = () => {
             <EmailStatsCard />
           </AnalyticsSummary>
 
-          {/* Tabs */}
+          {/* Tabs - 4-Tier CRM Taxonomy */}
           <div style={{
             display: 'flex',
             gap: '8px',
             marginBottom: '24px',
             borderBottom: `2px solid ${COLORS.border}`,
-            paddingBottom: '16px'
+            paddingBottom: '16px',
+            flexWrap: 'wrap'
           }}>
+            {/* All Tab */}
             <button
-              onClick={() => setActiveTab('contacts')}
+              onClick={() => setActiveTab('all')}
               style={{
                 ...styles.button,
-                backgroundColor: activeTab === 'contacts' ? COLORS.primary : COLORS.cardBg,
-                color: activeTab === 'contacts' ? '#000000' : COLORS.text,
-                fontWeight: activeTab === 'contacts' ? '600' : '400',
+                backgroundColor: activeTab === 'all' ? COLORS.primary : COLORS.cardBg,
+                color: activeTab === 'all' ? '#000000' : COLORS.text,
+                fontWeight: activeTab === 'all' ? '600' : '400',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}
             >
               <Users size={16} />
-              Contacts ({contacts.length})
+              All ({recordTypeCounts.all})
             </button>
+
+            {/* Clients Tab */}
             <button
-              onClick={() => setActiveTab('leads')}
+              onClick={() => setActiveTab('client')}
               style={{
                 ...styles.button,
-                backgroundColor: activeTab === 'leads' ? COLORS.primary : COLORS.cardBg,
-                color: activeTab === 'leads' ? '#000000' : COLORS.text,
-                fontWeight: activeTab === 'leads' ? '600' : '400',
+                backgroundColor: activeTab === 'client' ? RECORD_TYPE_COLORS.client.bg : COLORS.cardBg,
+                color: activeTab === 'client' ? RECORD_TYPE_COLORS.client.text : COLORS.text,
+                fontWeight: activeTab === 'client' ? '600' : '400',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                border: activeTab === 'client' ? `2px solid ${RECORD_TYPE_COLORS.client.text}` : `2px solid transparent`
               }}
             >
-              <Inbox size={16} />
-              Leads ({leads.length})
+              <Briefcase size={16} />
+              Clients ({recordTypeCounts.client})
+            </button>
+
+            {/* Contacts Tab */}
+            <button
+              onClick={() => setActiveTab('contact')}
+              style={{
+                ...styles.button,
+                backgroundColor: activeTab === 'contact' ? RECORD_TYPE_COLORS.contact.bg : COLORS.cardBg,
+                color: activeTab === 'contact' ? RECORD_TYPE_COLORS.contact.text : COLORS.text,
+                fontWeight: activeTab === 'contact' ? '600' : '400',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: activeTab === 'contact' ? `2px solid ${RECORD_TYPE_COLORS.contact.text}` : `2px solid transparent`
+              }}
+              title="Marketing opt-in, two-way permission"
+            >
+              <UserCheck size={16} />
+              Contacts ({recordTypeCounts.contact})
+            </button>
+
+            {/* Leads Tab */}
+            <button
+              onClick={() => setActiveTab('lead')}
+              style={{
+                ...styles.button,
+                backgroundColor: activeTab === 'lead' ? RECORD_TYPE_COLORS.lead.bg : COLORS.cardBg,
+                color: activeTab === 'lead' ? RECORD_TYPE_COLORS.lead.text : COLORS.text,
+                fontWeight: activeTab === 'lead' ? '600' : '400',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: activeTab === 'lead' ? `2px solid ${RECORD_TYPE_COLORS.lead.text}` : `2px solid transparent`
+              }}
+              title="Provided info without full opt-in"
+            >
+              <UserPlus size={16} />
+              Leads ({recordTypeCounts.lead})
+            </button>
+
+            {/* Prospects Tab */}
+            <button
+              onClick={() => setActiveTab('prospect')}
+              style={{
+                ...styles.button,
+                backgroundColor: activeTab === 'prospect' ? RECORD_TYPE_COLORS.prospect.bg : COLORS.cardBg,
+                color: activeTab === 'prospect' ? RECORD_TYPE_COLORS.prospect.text : COLORS.text,
+                fontWeight: activeTab === 'prospect' ? '600' : '400',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: activeTab === 'prospect' ? `2px solid ${RECORD_TYPE_COLORS.prospect.text}` : `2px solid transparent`
+              }}
+              title="Cold outreach targets"
+            >
+              <Target size={16} />
+              Prospects ({recordTypeCounts.prospect})
             </button>
           </div>
 
-          {/* Contacts Tab */}
-          {activeTab === 'contacts' && (
-            <>
-              {/* Search and Filters */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                marginBottom: '24px'
-              }}>
-                <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
-                  <Search
-                    size={16}
-                    style={{
-                      position: 'absolute',
-                      left: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: COLORS.textLight
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search by email or name..."
-                    value={contactSearch}
-                    onChange={(e) => setContactSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && loadContacts()}
-                    style={{
-                      ...styles.input,
-                      paddingLeft: '40px'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = COLORS.primary;
-                      e.target.style.boxShadow = `0 0 0 3px ${COLORS.primary}33`;
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = COLORS.border;
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-
-                <select
-                  value={contactFilter.type || ''}
-                  onChange={(e) => setContactFilter(prev => ({ ...prev, type: e.target.value || null }))}
-                  style={styles.select}
-                >
-                  <option value="">All Types</option>
-                  <option value="lead">Lead</option>
-                  <option value="prospect">Prospect</option>
-                  <option value="client">Client</option>
-                  <option value="partner">Partner</option>
-                </select>
-
-                <select
-                  value={contactFilter.stage || ''}
-                  onChange={(e) => setContactFilter(prev => ({ ...prev, stage: e.target.value || null }))}
-                  style={styles.select}
-                >
-                  <option value="">All Stages</option>
-                  <option value="new">New</option>
-                  <option value="nurturing">Nurturing</option>
-                  <option value="engaged">Engaged</option>
-                  <option value="qualified">Qualified</option>
-                  <option value="opportunity">Opportunity</option>
-                  <option value="customer">Customer</option>
-                </select>
-
-                <select
-                  value={contactFilter.pipeline || ''}
-                  onChange={(e) => setContactFilter(prev => ({ ...prev, pipeline: e.target.value || null }))}
-                  style={styles.select}
-                >
-                  <option value="">All Pipelines</option>
-                  <option value="A">Pipeline A (Traditional)</option>
-                  <option value="B">Pipeline B (Digital-First)</option>
-                  <option value="AB">Dual Pipeline (A+B)</option>
-                  <option value="QUALIFIED">Qualified</option>
-                  <option value="EXCLUDED_PE">PE Excluded</option>
-                  <option value="FLAGGED">Flagged for Review</option>
-                  <option value="PENDING">Pending Analysis</option>
-                </select>
+          {/* Unified Contacts View */}
+          <>
+            {/* Search and Filters */}
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginBottom: '24px'
+            }}>
+              <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+                <Search
+                  size={16}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: COLORS.textLight
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Search by email or name..."
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && loadContacts()}
+                  style={{
+                    ...styles.input,
+                    paddingLeft: '40px'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = COLORS.primary;
+                    e.target.style.boxShadow = `0 0 0 3px ${COLORS.primary}33`;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = COLORS.border;
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
               </div>
+
+              <select
+                value={contactFilter.stage || ''}
+                onChange={(e) => setContactFilter(prev => ({ ...prev, stage: e.target.value || null }))}
+                style={styles.select}
+              >
+                <option value="">All Stages</option>
+                <option value="new">New</option>
+                <option value="nurturing">Nurturing</option>
+                <option value="engaged">Engaged</option>
+                <option value="qualified">Qualified</option>
+                <option value="opportunity">Opportunity</option>
+                <option value="customer">Customer</option>
+              </select>
+
+              <select
+                value={contactFilter.pipeline || ''}
+                onChange={(e) => setContactFilter(prev => ({ ...prev, pipeline: e.target.value || null }))}
+                style={styles.select}
+              >
+                <option value="">All Pipelines</option>
+                <option value="A">Pipeline A (Traditional)</option>
+                <option value="B">Pipeline B (Digital-First)</option>
+                <option value="AB">Dual Pipeline (A+B)</option>
+                <option value="QUALIFIED">Qualified</option>
+                <option value="EXCLUDED_PE">PE Excluded</option>
+                <option value="FLAGGED">Flagged for Review</option>
+                <option value="PENDING">Pending Analysis</option>
+              </select>
+            </div>
 
               {/* Error */}
               {contactsError && (
@@ -585,6 +860,41 @@ const ContactDashboardPage = () => {
                   <button
                     onClick={() => setContactsError(null)}
                     style={{ color: '#f87171', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+
+              {/* Migration Results */}
+              {migrationResults && (
+                <div style={{
+                  backgroundColor: migrationResults.error ? '#fef2f2' : '#f0fdf4',
+                  border: `2px solid ${migrationResults.error ? '#fecaca' : '#bbf7d0'}`,
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  {migrationResults.error ? (
+                    <>
+                      <AlertTriangle size={20} style={{ color: COLORS.error, flexShrink: 0 }} />
+                      <span style={{ color: COLORS.error, flex: 1 }}>Migration failed: {migrationResults.error}</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={20} style={{ color: COLORS.success, flexShrink: 0 }} />
+                      <span style={{ color: COLORS.success, flex: 1 }}>
+                        Migration complete: {migrationResults.updated} updated, {migrationResults.skipped} already up-to-date
+                        {migrationResults.errors > 0 && `, ${migrationResults.errors} errors`}
+                      </span>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setMigrationResults(null)}
+                    style={{ color: migrationResults.error ? '#f87171' : '#4ade80', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     <X size={16} />
                   </button>
@@ -680,17 +990,98 @@ const ContactDashboardPage = () => {
                             }}>
                               {contact.name || contact.email}
                             </h3>
-                            {contact.type && (
-                              <span style={{
-                                ...TYPE_COLORS[contact.type] || TYPE_COLORS.other,
-                                padding: '2px 8px',
-                                borderRadius: '9999px',
-                                fontSize: '11px',
-                                fontWeight: '500'
-                              }}>
-                                {contact.type}
-                              </span>
-                            )}
+                            {/* Record Type Badge with Dropdown */}
+                            <div style={{ position: 'relative' }}>
+                              {(() => {
+                                const recordType = contact.recordType || 'prospect';
+                                const typeConfig = RECORD_TYPE_COLORS[recordType] || RECORD_TYPE_COLORS.prospect;
+                                const TypeIcon = typeConfig.icon;
+                                return (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setTypeChangeDropdown(typeChangeDropdown === contact.id ? null : contact.id);
+                                      }}
+                                      style={{
+                                        backgroundColor: typeConfig.bg,
+                                        color: typeConfig.text,
+                                        padding: '2px 8px',
+                                        borderRadius: '9999px',
+                                        fontSize: '11px',
+                                        fontWeight: '500',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}
+                                      title="Click to change record type"
+                                    >
+                                      <TypeIcon size={12} />
+                                      {recordType}
+                                      <ChevronDown size={10} />
+                                    </button>
+                                    {typeChangeDropdown === contact.id && (
+                                      <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        marginTop: '4px',
+                                        backgroundColor: COLORS.white,
+                                        border: `2px solid ${COLORS.border}`,
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        zIndex: 100,
+                                        minWidth: '140px',
+                                        overflow: 'hidden'
+                                      }}>
+                                        {Object.entries(RECORD_TYPE_COLORS).map(([type, config]) => {
+                                          const Icon = config.icon;
+                                          return (
+                                            <button
+                                              key={type}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleChangeRecordType(contact.id, type);
+                                              }}
+                                              disabled={type === recordType}
+                                              style={{
+                                                width: '100%',
+                                                padding: '8px 12px',
+                                                border: 'none',
+                                                backgroundColor: type === recordType ? config.bg : 'transparent',
+                                                color: type === recordType ? config.text : COLORS.text,
+                                                cursor: type === recordType ? 'default' : 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                fontSize: '13px',
+                                                textAlign: 'left'
+                                              }}
+                                              onMouseEnter={(e) => {
+                                                if (type !== recordType) {
+                                                  e.currentTarget.style.backgroundColor = config.bg;
+                                                }
+                                              }}
+                                              onMouseLeave={(e) => {
+                                                if (type !== recordType) {
+                                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                                }
+                                              }}
+                                            >
+                                              <Icon size={14} style={{ color: config.text }} />
+                                              <span style={{ textTransform: 'capitalize' }}>{type}</span>
+                                              {type === recordType && <CheckCircle size={12} style={{ marginLeft: 'auto' }} />}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
                             {contact.stage && (
                               <span style={{
                                 ...STAGE_COLORS[contact.stage] || STAGE_COLORS.new,
@@ -820,214 +1211,7 @@ const ContactDashboardPage = () => {
                   ))}
                 </div>
               )}
-            </>
-          )}
-
-          {/* Leads Tab */}
-          {activeTab === 'leads' && (
-            <>
-              {/* Filters */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                marginBottom: '24px'
-              }}>
-                <select
-                  value={leadFilter.status || ''}
-                  onChange={(e) => setLeadFilter(prev => ({ ...prev, status: e.target.value || null }))}
-                  style={styles.select}
-                >
-                  <option value="">All Statuses</option>
-                  <option value="new">New</option>
-                  <option value="processing">Processing</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="duplicate">Duplicate</option>
-                  <option value="error">Error</option>
-                </select>
-
-                <select
-                  value={leadFilter.source || ''}
-                  onChange={(e) => setLeadFilter(prev => ({ ...prev, source: e.target.value || null }))}
-                  style={styles.select}
-                >
-                  <option value="">All Sources</option>
-                  <option value="lead_gate">Lead Gate</option>
-                  <option value="contact_form">Contact Form</option>
-                  <option value="assessment">Assessment</option>
-                  <option value="footer">Footer</option>
-                  <option value="outreach_tool">Outreach Tool</option>
-                </select>
-              </div>
-
-              {/* Error */}
-              {leadsError && (
-                <div style={{
-                  backgroundColor: '#fef2f2',
-                  border: '2px solid #fecaca',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  marginBottom: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px'
-                }}>
-                  <AlertTriangle size={20} style={{ color: COLORS.error, flexShrink: 0 }} />
-                  <span style={{ color: COLORS.error, flex: 1 }}>{leadsError}</span>
-                  <button
-                    onClick={() => setLeadsError(null)}
-                    style={{ color: '#f87171', background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
-
-              {/* Leads List */}
-              {leadsLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {[1, 2, 3].map(i => (
-                    <div
-                      key={i}
-                      style={{
-                        height: '80px',
-                        borderRadius: '12px',
-                        backgroundColor: COLORS.cardBg,
-                        animation: 'pulse 2s ease-in-out infinite'
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : leads.length === 0 ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '48px 24px',
-                  borderRadius: '12px',
-                  backgroundColor: COLORS.cardBg,
-                  border: `2px solid ${COLORS.border}`
-                }}>
-                  <Inbox size={48} style={{ color: COLORS.textLight, marginBottom: '16px' }} />
-                  <h3 style={{ color: COLORS.text, fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-                    No Leads Found
-                  </h3>
-                  <p style={{ color: COLORS.textMuted }}>
-                    Lead submissions will appear here
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {leads.map(lead => {
-                    const statusConfig = LEAD_STATUS_COLORS[lead.status] || LEAD_STATUS_COLORS.new;
-                    const StatusIcon = statusConfig.icon;
-
-                    return (
-                      <div
-                        key={lead.id}
-                        style={styles.card}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = COLORS.primary;
-                          e.currentTarget.style.boxShadow = `0 4px 12px ${COLORS.primary}22`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = COLORS.border;
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        <div style={{
-                          padding: '16px 20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '16px'
-                        }}>
-                          {/* Status Icon */}
-                          <div style={{
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '50%',
-                            backgroundColor: statusConfig.bg,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            <StatusIcon size={20} style={{ color: statusConfig.text }} />
-                          </div>
-
-                          {/* Info */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              flexWrap: 'wrap'
-                            }}>
-                              <h3 style={{
-                                color: COLORS.text,
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                margin: 0,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {lead.email}
-                              </h3>
-                              <span style={{
-                                backgroundColor: statusConfig.bg,
-                                color: statusConfig.text,
-                                padding: '2px 8px',
-                                borderRadius: '9999px',
-                                fontSize: '11px',
-                                fontWeight: '500'
-                              }}>
-                                {lead.status}
-                              </span>
-                            </div>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              fontSize: '13px',
-                              color: COLORS.textMuted,
-                              marginTop: '4px'
-                            }}>
-                              <span>Source: {lead.source || 'Unknown'}</span>
-                              {lead.sourceTool && (
-                                <span>Tool: {lead.sourceTool}</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Date */}
-                          <div style={{
-                            fontSize: '13px',
-                            color: COLORS.textLight
-                          }}>
-                            {formatRelativeTime(lead.capturedAt)}
-                          </div>
-
-                          {/* Actions */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button
-                              onClick={() => setDetailModal({ type: 'lead', data: lead })}
-                              style={{
-                                ...styles.button,
-                                ...styles.secondaryButton,
-                                padding: '8px'
-                              }}
-                              title="View Details"
-                            >
-                              <Eye size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          )}
+          </>
         </div>
       </div>
 
@@ -1583,6 +1767,420 @@ const ContactDashboardPage = () => {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={closeImportModal}
+        >
+          <div
+            style={{
+              backgroundColor: COLORS.white,
+              border: `2px solid ${COLORS.border}`,
+              borderRadius: '16px',
+              padding: '28px',
+              maxWidth: '550px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '24px',
+              paddingBottom: '16px',
+              borderBottom: `2px solid ${COLORS.border}`
+            }}>
+              <h2 style={{
+                color: COLORS.text,
+                fontSize: '20px',
+                fontWeight: '700',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                {importMode === 'options' && <Upload size={22} style={{ color: COLORS.primary }} />}
+                {importMode === 'csv' && <Upload size={22} style={{ color: '#1d4ed8' }} />}
+                {importMode === 'manual' && <UserPlus size={22} style={{ color: '#15803d' }} />}
+                {importMode === 'options' ? 'Import Contacts' :
+                 importMode === 'csv' ? 'Upload CSV File' : 'Manually Add Contacts'}
+              </h2>
+              <button
+                onClick={closeImportModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: COLORS.textMuted,
+                  padding: '4px'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Import Results */}
+            {importResults && (
+              <div style={{
+                backgroundColor: importResults.error ? '#fef2f2' : '#dcfce7',
+                border: `2px solid ${importResults.error ? '#fecaca' : '#86efac'}`,
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px'
+              }}>
+                {importResults.error ? (
+                  <div style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertTriangle size={18} />
+                    <span>Error: {importResults.error}</span>
+                  </div>
+                ) : (
+                  <div style={{ color: '#15803d' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>Import Complete</div>
+                    <div style={{ fontSize: '14px' }}>
+                      {importResults.created} created, {importResults.updated} updated
+                      {importResults.errors > 0 && `, ${importResults.errors} errors`}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Options Mode */}
+            {importMode === 'options' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <p style={{ color: COLORS.textMuted, fontSize: '14px', margin: 0 }}>
+                  Choose how you want to import contacts:
+                </p>
+
+                {/* CSV Upload Option */}
+                <div
+                  onClick={() => setImportMode('csv')}
+                  style={{
+                    ...styles.card,
+                    padding: '20px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.primary;
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${COLORS.primary}22`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.border;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    backgroundColor: '#dbeafe',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Upload size={24} style={{ color: '#1d4ed8' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ color: COLORS.text, fontSize: '15px', fontWeight: '600', margin: 0 }}>
+                      Upload CSV File
+                    </h3>
+                    <p style={{ color: COLORS.textMuted, fontSize: '13px', margin: '4px 0 0' }}>
+                      Import from CSV with email, name, company columns
+                    </p>
+                  </div>
+                  <ChevronRight size={20} style={{ color: COLORS.textLight }} />
+                </div>
+
+                {/* Manual Entry Option */}
+                <div
+                  onClick={() => setImportMode('manual')}
+                  style={{
+                    ...styles.card,
+                    padding: '20px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.primary;
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${COLORS.primary}22`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.border;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    backgroundColor: '#dcfce7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <UserPlus size={24} style={{ color: '#15803d' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ color: COLORS.text, fontSize: '15px', fontWeight: '600', margin: 0 }}>
+                      Manually Add Contacts
+                    </h3>
+                    <p style={{ color: COLORS.textMuted, fontSize: '13px', margin: '4px 0 0' }}>
+                      Paste emails (comma or newline separated)
+                    </p>
+                  </div>
+                  <ChevronRight size={20} style={{ color: COLORS.textLight }} />
+                </div>
+              </div>
+            )}
+
+            {/* CSV Upload Mode */}
+            {importMode === 'csv' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Record Type Selector */}
+                <div>
+                  <label style={styles.label}>Default Record Type</label>
+                  <select
+                    value={importRecordType}
+                    onChange={(e) => setImportRecordType(e.target.value)}
+                    style={{ ...styles.select, width: '100%' }}
+                  >
+                    <option value="prospect">Prospect</option>
+                    <option value="lead">Lead</option>
+                    <option value="contact">Contact</option>
+                    <option value="client">Client</option>
+                  </select>
+                </div>
+
+                {/* File Upload Area */}
+                <div
+                  style={{
+                    border: `2px dashed ${COLORS.border}`,
+                    borderRadius: '12px',
+                    padding: '32px',
+                    textAlign: 'center',
+                    backgroundColor: COLORS.cardBg,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => document.getElementById('csv-file-input').click()}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.primary;
+                    e.currentTarget.style.backgroundColor = '#fef9e7';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = COLORS.border;
+                    e.currentTarget.style.backgroundColor = COLORS.cardBg;
+                  }}
+                >
+                  <Upload size={32} style={{ color: COLORS.textMuted, marginBottom: '12px' }} />
+                  <p style={{ color: COLORS.text, fontWeight: '500', margin: '0 0 8px' }}>
+                    Click to upload CSV file
+                  </p>
+                  <p style={{ color: COLORS.textMuted, fontSize: '13px', margin: 0 }}>
+                    Columns: email, name, company, recordType
+                  </p>
+                  <input
+                    id="csv-file-input"
+                    type="file"
+                    accept=".csv"
+                    style={{ display: 'none' }}
+                    onChange={handleCSVUpload}
+                    disabled={importLoading}
+                  />
+                </div>
+
+                {/* Download Template */}
+                <div style={{
+                  padding: '12px 16px',
+                  backgroundColor: COLORS.cardBg,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <Download size={16} style={{ color: COLORS.textMuted }} />
+                  <span style={{ fontSize: '13px', color: COLORS.textMuted }}>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const template = 'email,name,company,recordType\nexample@email.com,John Doe,Acme Inc,prospect\njane@company.com,Jane Smith,Beta LLC,lead';
+                        const blob = new Blob([template], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'contact_import_template.csv';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      style={{ color: COLORS.primary, textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                      Download CSV template
+                    </a>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Entry Mode */}
+            {importMode === 'manual' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Record Type Selector */}
+                <div>
+                  <label style={styles.label}>Record Type</label>
+                  <select
+                    value={importRecordType}
+                    onChange={(e) => setImportRecordType(e.target.value)}
+                    style={{ ...styles.select, width: '100%' }}
+                  >
+                    <option value="prospect">Prospect</option>
+                    <option value="lead">Lead</option>
+                    <option value="contact">Contact</option>
+                    <option value="client">Client</option>
+                  </select>
+                </div>
+
+                {/* Email Input */}
+                <div>
+                  <label style={styles.label}>Email Addresses</label>
+                  <textarea
+                    value={manualEmails}
+                    onChange={(e) => setManualEmails(e.target.value)}
+                    placeholder="Enter emails (one per line, or comma/space separated)&#10;&#10;Example:&#10;john@example.com&#10;jane@company.com, bob@startup.io"
+                    style={{
+                      ...styles.input,
+                      minHeight: '150px',
+                      resize: 'vertical',
+                      fontFamily: 'monospace',
+                      fontSize: '13px'
+                    }}
+                  />
+                  <p style={{ color: COLORS.textMuted, fontSize: '12px', marginTop: '8px' }}>
+                    Supports comma, semicolon, space, or newline separated emails
+                  </p>
+                </div>
+
+                {/* Preview Count */}
+                {manualEmails && (
+                  <div style={{
+                    padding: '12px 16px',
+                    backgroundColor: COLORS.cardBg,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: COLORS.text
+                  }}>
+                    {(() => {
+                      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                      const emails = manualEmails.match(emailRegex) || [];
+                      const unique = [...new Set(emails.map(e => e.toLowerCase()))];
+                      return `${unique.length} email${unique.length !== 1 ? 's' : ''} detected`;
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div style={{
+              marginTop: '24px',
+              paddingTop: '20px',
+              borderTop: `2px solid ${COLORS.border}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              {importMode !== 'options' && (
+                <button
+                  onClick={() => {
+                    setImportMode('options');
+                    setImportResults(null);
+                  }}
+                  style={{
+                    ...styles.button,
+                    ...styles.secondaryButton
+                  }}
+                >
+                  ← Back
+                </button>
+              )}
+              <div style={{ display: 'flex', gap: '12px', marginLeft: 'auto' }}>
+                <button
+                  onClick={closeImportModal}
+                  style={{
+                    ...styles.button,
+                    ...styles.secondaryButton
+                  }}
+                >
+                  {importResults ? 'Close' : 'Cancel'}
+                </button>
+                {importMode === 'manual' && !importResults && (
+                  <button
+                    onClick={handleManualImport}
+                    disabled={importLoading || !manualEmails.trim()}
+                    style={{
+                      ...styles.button,
+                      ...styles.primaryButton,
+                      opacity: (importLoading || !manualEmails.trim()) ? 0.5 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {importLoading ? (
+                      <>
+                        <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                        Importing...
+                      </>
+                    ) : (
+                      'Import Contacts'
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Click-away listener for dropdown */}
+      {typeChangeDropdown && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99
+          }}
+          onClick={() => setTypeChangeDropdown(null)}
+        />
       )}
     </Layout>
   );

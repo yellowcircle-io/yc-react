@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>yellowCircle Google Ads API Design Document</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+h1 { color: #333; border-bottom: 2px solid #f5c518; padding-bottom: 10px; }
+h2 { color: #444; margin-top: 30px; }
+h3 { color: #555; }
+table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+th { background-color: #f5f5f5; }
+code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+pre { background-color: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>yellowCircle Google Ads API Tool Design Document</h1>
+<p>**Company:** yellowCircle (yellowcircle.io)</p>
+<p>**Contact:** christopher@yellowcircle.io</p>
+<p>**Date:** December 19, 2025</p>
+<p>**Version:** 1.0</p>
+<hr>
+<h2>1. Tool Overview</h2>
+<p>yellowCircle is a boutique marketing operations platform serving founder-led B2B service companies and early-stage tech startups. Our Google Ads integration enables automated campaign creation and management for qualified leads generated through our marketing automation system.</p>
+<h2>2. Architecture</h2>
+<pre>
+┌─────────────────────────────────────────────────────────────┐
+│                    yellowCircle Platform                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
+│  │   Contact    │    │   Campaign   │    │   Budget     │   │
+│  │   Database   │───▶│   Builder    │───▶│   Manager    │   │
+│  │  (Firestore) │    │  (Internal)  │    │  ($35/mo cap)│   │
+│  └──────────────┘    └──────────────┘    └──────────────┘   │
+│                              │                               │
+│                              ▼                               │
+│                    ┌──────────────────┐                      │
+│                    │  Google Ads API  │                      │
+│                    │   Integration    │                      │
+│                    └────────┬─────────┘                      │
+│                              │                               │
+└──────────────────────────────┼───────────────────────────────┘
+                               │
+                               ▼
+                    ┌──────────────────┐
+                    │  Google Ads API  │
+                    │   (Display/PM)   │
+                    └──────────────────┘
+</pre>
+<h2>3. Technical Implementation</h2>
+<h3>3.1 Backend (Firebase Cloud Functions)</h3>
+<li>**Runtime:** Node.js 18 on Google Cloud Functions</li>
+<li>**Authentication:** OAuth 2.0 with refresh token</li>
+<li>**API Version:** Google Ads API v18</li>
+<h3>3.2 Core Functions</h3>
+<table>
+<tr><th>Function</th><th>Purpose</th></tr>
+<tr><td>`createGoogleCampaign`</td><td>Creates Display/Performance Max campaigns</td></tr>
+<tr><td>`getAdBudgetStats`</td><td>Tracks spend against monthly caps</td></tr>
+<tr><td>`pauseCampaign`</td><td>Pauses campaigns when budget reached</td></tr>
+</table>
+<h3>3.3 Campaign Types Supported</h3>
+<p>1. **Display Network Campaigns**</p>
+<p>   - Retargeting website visitors</p>
+<p>   - Lookalike audiences based on converters</p>
+<p>2. **Performance Max Campaigns**</p>
+<p>   - Automated cross-channel optimization</p>
+<p>   - Lead generation objectives</p>
+<h2>4. Budget Controls</h2>
+<table>
+<tr><th>Control</th><th>Value</th></tr>
+<tr><td>Monthly platform cap</td><td>$100</td></tr>
+<tr><td>Per-platform cap (Google)</td><td>$35</td></tr>
+<tr><td>Minimum campaign budget</td><td>$5/day</td></tr>
+<tr><td>Auto-pause on cap</td><td>Yes</td></tr>
+</table>
+<h2>5. User Flow</h2>
+<p>1. Admin creates campaign in yellowCircle dashboard</p>
+<p>2. System validates budget availability</p>
+<p>3. Campaign created via Google Ads API</p>
+<p>4. Daily spend tracked and reported</p>
+<p>5. Auto-pause when monthly cap reached</p>
+<h2>6. Data Handling</h2>
+<li>**PII:** No customer PII sent to Google Ads</li>
+<li>**Targeting:** Uses first-party website visitor data only</li>
+<li>**Storage:** Campaign IDs stored in Firestore</li>
+<li>**Retention:** Campaign data retained for reporting</li>
+<h2>7. Access Control</h2>
+<li>Internal use only (yellowCircle admin users)</li>
+<li>Firebase Authentication required</li>
+<li>Admin whitelist verification</li>
+<li>No external/public access</li>
+<h2>8. Compliance</h2>
+<li>GDPR compliant (EU user consent)</li>
+<li>CCPA compliant (CA user rights)</li>
+<li>Google Ads policies followed</li>
+<li>No prohibited content categories</li>
+<hr>
+<p>**Contact for Questions:**</p>
+<p>Christopher Cooper</p>
+<p>christopher@yellowcircle.io</p>
+<p>yellowcircle.io</p>
+</body></html>

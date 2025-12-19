@@ -100,10 +100,40 @@ export const createContactObject = ({
     timezone: '',
 
     // Classification
-    type: 'lead',
+    type: 'lead',  // Legacy field - use recordType instead
     stage: 'new',
     tags: [],
     lists: [],
+
+    // Record Type (4-tier CRM taxonomy - Dec 2025)
+    // client: Active revenue relationship
+    // contact: Marketing opt-in, two-way communication, using tools
+    // lead: Provided info (form/call/calendar) without full marketing opt-in
+    // prospect: Cold outreach targets, no prior relationship
+    recordType: 'prospect',
+
+    // Permission Tracking (GDPR/CAN-SPAM compliance)
+    permissions: {
+      marketingEmail: false,    // Can receive promotional emails
+      transactional: true,      // Can receive transactional emails
+      phone: false,             // Can receive phone calls
+      sms: false,               // Can receive SMS
+      consentSource: null,      // 'form' | 'platform' | 'import' | 'verbal' | null
+      consentDate: null,        // When consent was given
+      gdprStatus: 'pending',    // 'consented' | 'pending' | 'withdrawn'
+      ccpaOptOut: false,        // California opt-out flag
+      lastUpdated: null
+    },
+
+    // Lifecycle Tracking
+    lifecycle: {
+      acquiredAt: null,
+      convertedToLeadAt: null,
+      convertedToContactAt: null,
+      convertedToClientAt: null,
+      churnedAt: null,
+      reactivatedAt: null
+    },
 
     // Scoring
     score: 0,
@@ -359,6 +389,182 @@ export const updateContact = async (contactId, updates, updatedBy = 'system') =>
  */
 export const archiveContact = async (contactId, updatedBy = 'system') => {
   return updateContact(contactId, { status: 'archived' }, updatedBy);
+};
+
+// ============================================================
+// Record Type Management (4-Tier CRM Taxonomy)
+// ============================================================
+
+/**
+ * Valid record types with their properties
+ */
+export const RECORD_TYPES = {
+  client: {
+    label: 'Client',
+    description: 'Active revenue relationship',
+    color: { bg: '#dcfce7', text: '#15803d' },
+    icon: 'Briefcase',
+    emailRules: 'transactional + marketing',
+    defaultPermissions: { marketingEmail: true, transactional: true, phone: true }
+  },
+  contact: {
+    label: 'Contact',
+    description: 'Marketing opt-in, two-way communication',
+    color: { bg: '#dbeafe', text: '#1d4ed8' },
+    icon: 'UserCheck',
+    emailRules: 'full marketing',
+    defaultPermissions: { marketingEmail: true, transactional: true, phone: false }
+  },
+  lead: {
+    label: 'Lead',
+    description: 'Provided info without full opt-in',
+    color: { bg: '#fef3c7', text: '#d97706' },
+    icon: 'UserPlus',
+    emailRules: 'nurture only',
+    defaultPermissions: { marketingEmail: false, transactional: true, phone: false }
+  },
+  prospect: {
+    label: 'Prospect',
+    description: 'Cold outreach target',
+    color: { bg: '#f3e8ff', text: '#7c3aed' },
+    icon: 'Target',
+    emailRules: 'CAN-SPAM compliant only',
+    defaultPermissions: { marketingEmail: false, transactional: false, phone: false }
+  }
+};
+
+/**
+ * Change contact record type with lifecycle tracking
+ */
+export const changeRecordType = async (contactId, newType, updatedBy = 'system', notes = '') => {
+  if (!RECORD_TYPES[newType]) {
+    throw new Error(`Invalid record type: ${newType}. Valid types: ${Object.keys(RECORD_TYPES).join(', ')}`);
+  }
+
+  const contactRef = doc(db, 'contacts', contactId);
+  const contactSnap = await getDoc(contactRef);
+
+  if (!contactSnap.exists()) {
+    throw new Error(`Contact ${contactId} not found`);
+  }
+
+  const contact = contactSnap.data();
+  const oldType = contact.recordType || 'prospect';
+  const now = serverTimestamp();
+
+  // Build lifecycle update
+  const lifecycleUpdate = {};
+  if (newType === 'lead' && oldType === 'prospect') {
+    lifecycleUpdate['lifecycle.convertedToLeadAt'] = now;
+  } else if (newType === 'contact' && ['prospect', 'lead'].includes(oldType)) {
+    lifecycleUpdate['lifecycle.convertedToContactAt'] = now;
+  } else if (newType === 'client' && oldType !== 'client') {
+    lifecycleUpdate['lifecycle.convertedToClientAt'] = now;
+  }
+
+  // Get default permissions for new type
+  const defaultPerms = RECORD_TYPES[newType].defaultPermissions;
+
+  const updateData = {
+    recordType: newType,
+    type: newType, // Keep legacy field in sync
+    'permissions.marketingEmail': defaultPerms.marketingEmail,
+    'permissions.transactional': defaultPerms.transactional,
+    'permissions.phone': defaultPerms.phone,
+    'permissions.lastUpdated': now,
+    ...lifecycleUpdate,
+    updatedAt: now,
+    updatedBy
+  };
+
+  // Add conversion note if provided
+  if (notes) {
+    const existingNotes = contact.notes || '';
+    updateData.notes = `${existingNotes}\n[${new Date().toISOString()}] Type changed: ${oldType} → ${newType}. ${notes}`.trim();
+  }
+
+  await updateDoc(contactRef, updateData);
+
+  return {
+    success: true,
+    contactId,
+    previousType: oldType,
+    newType,
+    lifecycleUpdated: Object.keys(lifecycleUpdate).length > 0
+  };
+};
+
+/**
+ * Update contact permissions
+ */
+export const updatePermissions = async (contactId, permissions, updatedBy = 'system') => {
+  const contactRef = doc(db, 'contacts', contactId);
+
+  const updateData = {
+    updatedAt: serverTimestamp(),
+    updatedBy
+  };
+
+  // Map permission fields
+  Object.entries(permissions).forEach(([key, value]) => {
+    updateData[`permissions.${key}`] = value;
+  });
+
+  updateData['permissions.lastUpdated'] = serverTimestamp();
+
+  await updateDoc(contactRef, updateData);
+
+  return { success: true, contactId, updatedPermissions: Object.keys(permissions) };
+};
+
+/**
+ * Bulk update record types
+ */
+export const bulkChangeRecordType = async (contactIds, newType, updatedBy = 'system') => {
+  const results = {
+    success: 0,
+    failed: 0,
+    errors: []
+  };
+
+  for (const contactId of contactIds) {
+    try {
+      await changeRecordType(contactId, newType, updatedBy);
+      results.success++;
+    } catch (err) {
+      results.failed++;
+      results.errors.push({ contactId, error: err.message });
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Get contacts by record type
+ */
+export const listContactsByRecordType = async (recordType, options = {}) => {
+  const { limitCount = 50, lastDoc = null } = options;
+
+  // Use status == 'active' instead of != 'archived' for better index compatibility
+  let q = query(
+    collection(db, 'contacts'),
+    where('recordType', '==', recordType),
+    where('status', '==', 'active'),
+    limit(limitCount)
+  );
+
+  if (lastDoc) {
+    q = query(q, startAfter(lastDoc));
+  }
+
+  const snapshot = await getDocs(q);
+
+  return {
+    contacts: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+    lastDoc: snapshot.docs[snapshot.docs.length - 1] || null,
+    hasMore: snapshot.docs.length === limitCount
+  };
 };
 
 // ============================================================
@@ -976,6 +1182,84 @@ export const getPipelineStats = async () => {
 };
 
 // ============================================================
+// Migration: Set recordType on existing contacts (Dec 2025)
+// ============================================================
+
+/**
+ * Migrate existing contacts to set recordType field
+ * Call this once to update contacts without recordType
+ * @returns {Promise<{updated: number, skipped: number, errors: number}>}
+ */
+export const migrateContactsToRecordType = async () => {
+  const contactsRef = collection(db, 'contacts');
+  const snapshot = await getDocs(contactsRef);
+
+  let updated = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const docSnapshot of snapshot.docs) {
+    const data = docSnapshot.data();
+
+    // Check if this contact needs any updates
+    const needsRecordType = !data.recordType;
+    const needsStatus = !data.status;
+
+    // Skip if nothing needs updating
+    if (!needsRecordType && !needsStatus) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      const updates = {
+        updatedAt: serverTimestamp()
+      };
+
+      // Set status if missing
+      if (needsStatus) {
+        updates.status = 'active';
+      }
+
+      // Set recordType if missing
+      if (needsRecordType) {
+        // Determine recordType based on existing data
+        let recordType = 'prospect'; // Default
+
+        // If they have active journey or engagement, they're a contact
+        if (data.journey?.status === 'active' ||
+            (data.engagement?.emailsOpened && data.engagement.emailsOpened > 0)) {
+          recordType = 'contact';
+        }
+
+        // If they're marked as customer stage, they're a client
+        if (data.stage === 'customer') {
+          recordType = 'client';
+        }
+
+        // If they came from a form submission, they're a lead
+        if (data.source?.original &&
+            ['lead_gate', 'contact_form', 'assessment', 'footer'].includes(data.source.original)) {
+          recordType = 'lead';
+        }
+
+        updates.recordType = recordType;
+        updates['lifecycle.acquiredAt'] = data.createdAt || serverTimestamp();
+      }
+
+      // Update the contact
+      await updateDoc(doc(db, 'contacts', docSnapshot.id), updates);
+      updated++;
+    } catch (err) {
+      console.error(`Failed to migrate contact ${docSnapshot.id}:`, err);
+      errors++;
+    }
+  }
+
+  return { updated, skipped, errors };
+};
+
+// ============================================================
 // Export
 // ============================================================
 
@@ -1006,5 +1290,10 @@ export default {
   calculatePipelineScores,
   assessPipeline,
   listContactsByPipeline,
-  getPipelineStats
+  getPipelineStats,
+  // Record Type Management (Dec 2025)
+  changeRecordType,
+  bulkChangeRecordType,
+  listContactsByRecordType,
+  migrateContactsToRecordType
 };
