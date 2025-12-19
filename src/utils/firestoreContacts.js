@@ -663,28 +663,63 @@ export const listContacts = async ({
 
 /**
  * Search contacts by email or name
+ * Uses client-side filtering to avoid composite index requirement
  */
-export const searchContacts = async (searchTerm, maxResults = 10) => {
+export const searchContacts = async (searchTerm, maxResults = 50) => {
   const term = searchTerm.toLowerCase().trim();
+  if (!term) return [];
 
-  // Try email match first (exact prefix)
-  const emailQuery = query(
-    collection(db, 'contacts'),
-    where('email', '>=', term),
-    where('email', '<=', term + '\uf8ff'),
-    where('status', '==', 'active'),
-    limit(maxResults)
-  );
+  try {
+    // Get all active contacts (limited for performance)
+    const contactsQuery = query(
+      collection(db, 'contacts'),
+      where('status', '==', 'active'),
+      limit(200) // Get more to filter client-side
+    );
 
-  const emailResults = await getDocs(emailQuery);
+    const snapshot = await getDocs(contactsQuery);
 
-  if (emailResults.docs.length > 0) {
-    return emailResults.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Client-side filtering for email and name matches
+    const matches = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(contact => {
+        const email = (contact.email || '').toLowerCase();
+        const name = (contact.name || '').toLowerCase();
+        const firstName = (contact.firstName || '').toLowerCase();
+        const lastName = (contact.lastName || '').toLowerCase();
+        const company = (contact.company || '').toLowerCase();
+
+        return email.includes(term) ||
+               name.includes(term) ||
+               firstName.includes(term) ||
+               lastName.includes(term) ||
+               company.includes(term);
+      })
+      .slice(0, maxResults);
+
+    return matches;
+  } catch (error) {
+    console.error('Search error:', error);
+    // If index error, try simpler approach
+    if (error.code === 'failed-precondition') {
+      console.warn('Index not ready, using fallback search');
+      // Fallback: just get recent contacts and filter
+      const fallbackQuery = query(
+        collection(db, 'contacts'),
+        limit(100)
+      );
+      const fallbackSnapshot = await getDocs(fallbackQuery);
+      return fallbackSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(c => c.status === 'active')
+        .filter(c => {
+          const email = (c.email || '').toLowerCase();
+          return email.includes(term);
+        })
+        .slice(0, maxResults);
+    }
+    throw error;
   }
-
-  // Fall back to name search (requires composite index or client-side)
-  // For now, return empty - implement full-text search if needed
-  return [];
 };
 
 // ============================================================

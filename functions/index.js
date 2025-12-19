@@ -8821,6 +8821,225 @@ exports.migrateLeadsToContacts = functions.https.onRequest(async (request, respo
 });
 
 /**
+ * Enrich companies_raw and create contacts
+ * Uses Apollo to find people at discovered companies
+ */
+exports.enrichCompaniesRaw = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    const dryRun = request.query.dryRun !== 'false';  // Default to dryRun=true
+    const limit = parseInt(request.query.limit) || 10;  // Process 10 at a time
+
+    try {
+      const hunterApiKey = functions.config().hunter?.api_key;
+      if (!hunterApiKey) {
+        return response.status(500).json({
+          error: "Hunter API key not configured",
+          hint: "Set via: firebase functions:config:set hunter.api_key=YOUR_KEY"
+        });
+      }
+
+      // Get companies_raw that haven't been processed
+      const companiesSnapshot = await db.collection("companies_raw")
+        .where("processed", "==", false)
+        .limit(limit)
+        .get();
+
+      // If no unprocessed, get all
+      let companies = companiesSnapshot.docs;
+      if (companies.length === 0) {
+        const allCompaniesSnapshot = await db.collection("companies_raw").limit(limit).get();
+        companies = allCompaniesSnapshot.docs;
+      }
+
+      const results = {
+        dryRun,
+        processed: 0,
+        contactsCreated: 0,
+        noEmailsFound: 0,
+        errors: [],
+        details: []
+      };
+
+      // Get existing contact emails to avoid duplicates
+      const contactsSnapshot = await db.collection("contacts").get();
+      const existingEmails = new Set(
+        contactsSnapshot.docs.map(d => d.data().email?.toLowerCase()).filter(Boolean)
+      );
+
+      for (const companyDoc of companies) {
+        const company = companyDoc.data();
+        const companyName = company.companyName || company.rawData?.name;
+
+        if (!companyName) {
+          results.errors.push({ id: companyDoc.id, error: 'No company name' });
+          continue;
+        }
+
+        try {
+          // Extract domain from rawData if available, otherwise construct from company name
+          let domain = company.rawData?.website;
+          if (!domain) {
+            // Try to construct a likely domain from company name
+            const cleanName = companyName.toLowerCase()
+              .replace(/[^a-z0-9]/g, '')
+              .slice(0, 30);
+            domain = cleanName + '.com';
+          }
+
+          // Clean up domain - remove protocol if present
+          if (domain.startsWith('http')) {
+            domain = new URL(domain).hostname;
+          }
+
+          // Use Hunter's domain search to find emails
+          const hunterUrl = `https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(domain)}&api_key=${hunterApiKey}&limit=3&department=executive`;
+
+          const hunterResponse = await fetch(hunterUrl);
+          const hunterData = await hunterResponse.json();
+
+          if (!hunterResponse.ok || hunterData.errors) {
+            // Try company search as fallback
+            const companySearchUrl = `https://api.hunter.io/v2/domain-search?company=${encodeURIComponent(companyName)}&api_key=${hunterApiKey}&limit=3&department=executive`;
+            const companyResponse = await fetch(companySearchUrl);
+            const companyData = await companyResponse.json();
+
+            if (!companyResponse.ok || companyData.errors) {
+              results.errors.push({
+                id: companyDoc.id,
+                company: companyName,
+                domain: domain,
+                error: `Hunter error: ${(hunterData.errors || companyData.errors || []).map(e => e.details).join(', ') || 'Unknown'}`
+              });
+              continue;
+            }
+
+            // Use company search results
+            var people = companyData.data?.emails || [];
+          } else {
+            var people = hunterData.data?.emails || [];
+          }
+
+          if (people.length === 0) {
+            results.noEmailsFound++;
+            results.details.push({ company: companyName, status: 'no_people_found' });
+            continue;
+          }
+
+          // Create contacts for each person found (Hunter email format)
+          for (const person of people) {
+            if (!person.value) continue;  // Hunter uses 'value' for email
+
+            const email = person.value.toLowerCase();
+            if (existingEmails.has(email)) {
+              results.details.push({ company: companyName, email, status: 'duplicate_skipped' });
+              continue;
+            }
+
+            const contactId = generateContactId(email);
+            const contactData = {
+              id: contactId,
+              email: email,
+              firstName: person.first_name || '',
+              lastName: person.last_name || '',
+              name: [person.first_name, person.last_name].filter(Boolean).join(' ') || '',
+              company: companyName,
+              jobTitle: person.position || '',
+              phone: person.phone_number || '',
+              linkedinUrl: person.linkedin || '',
+
+              type: 'lead',
+              recordType: 'prospect',
+              stage: 'new',
+
+              tags: ['apollo-enriched', 'pipeline-a'],
+              score: 0,
+              scoreBreakdown: { engagement: 0, behavior: 0, profile: 0, recency: 0 },
+
+              source: {
+                original: 'companies_raw_enrichment',
+                medium: 'outbound',
+                campaign: 'pipeline-a-discovery',
+                referrer: company.source || 'google_places',
+                landingPage: ''
+              },
+
+              engagement: { emailsSent: 0, emailsOpened: 0, emailsClicked: 0, toolsUsed: [], assessmentScore: null, pageViews: 0 },
+              journeys: { active: [], completed: [], history: [] },
+              externalIds: { hunterId: person.id || null, airtableId: null, hubspotId: null, stripeId: null },
+              syncStatus: { airtable: "not_synced", airtableLastSync: null },
+              preferences: { emailOptIn: true, emailFrequency: 'weekly', doNotContact: false },
+
+              enrichment: { hunter: person },
+
+              pipelineAssignment: {
+                primaryPipeline: 'A',
+                pipelineAScore: 0.5,
+                pipelineBScore: 0,
+                pipelineAStatus: 'QUALIFIED',
+                pipelineBStatus: 'PENDING',
+                peExclusionReason: null,
+                confidenceScore: 0.5,
+                lastScoredAt: admin.firestore.FieldValue.serverTimestamp()
+              },
+
+              notes: `Enriched from ${company.source || 'companies_raw'}`,
+              customFields: {},
+              metadata: {
+                importedVia: 'companies_raw_enrichment',
+                companiesRawId: companyDoc.id,
+                enrichedAt: new Date().toISOString()
+              },
+
+              status: 'active',
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            };
+
+            results.details.push({
+              company: companyName,
+              email,
+              name: person.name,
+              status: dryRun ? 'would_create' : 'created'
+            });
+
+            if (!dryRun) {
+              await db.collection("contacts").doc(contactId).set(contactData);
+              existingEmails.add(email);
+              results.contactsCreated++;
+
+              // Mark company as processed
+              await companyDoc.ref.update({ processed: true, processedAt: admin.firestore.FieldValue.serverTimestamp() });
+            }
+          }
+
+          results.processed++;
+
+        } catch (companyError) {
+          results.errors.push({
+            id: companyDoc.id,
+            company: companyName,
+            error: companyError.message
+          });
+        }
+      }
+
+      response.json({ success: true, results });
+
+    } catch (error) {
+      console.error("❌ enrichCompaniesRaw error:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
  * Create missing contacts from email_events
  * For contacts that were emailed but no longer exist in contacts collection
  */
