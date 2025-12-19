@@ -1,6 +1,56 @@
 # Testing Preparation - December 2025 Sprint
 **Created:** December 19, 2025
+**Updated:** December 19, 2025 at 2:30 PM PST
 **Purpose:** Test all new endpoints from Platform Enhancements sprint
+
+---
+
+## 🔴 CURRENT STATUS (Dec 19, 2025)
+
+### API Keys Configured
+
+| API | Status | Key Configured | Notes |
+|-----|--------|----------------|-------|
+| **Gemini** | ✅ Ready | Yes | Image generation operational |
+| **Google Places** | ✅ Ready | Yes | Discovery API operational |
+| **PDL** | ✅ Ready | Yes | Enrichment cascade priority 1 |
+| **FullEnrich** | ✅ Ready | Yes | Enrichment cascade priority 2 |
+| **Hunter.io** | ✅ Ready | Yes | Enrichment cascade priority 3 |
+| **Apollo** | ✅ Ready | Yes | Enrichment cascade priority 4 |
+| **Groq** | ✅ Ready | Yes | AI text generation |
+| **Resend** | ✅ Ready | Yes | Email sending |
+| **LinkedIn** | ⚠️ Token Invalid | Yes | Needs OAuth regeneration |
+| **Meta** | ❌ Not Configured | No | Awaiting Business Verification |
+| **Google Ads** | ❌ Not Configured | No | On hold for approval |
+
+### Priority Order (Revised Dec 19, 2025)
+
+**P1 (This Week):**
+1. Automate Contact Import - `bulkImportContacts` function ready ✅
+2. Configure API Keys - Gemini, Places, enrichment all done ✅
+3. Test Functions - See test commands below
+4. Prepare Ads - Budget caps implemented ($100 total, $35/platform) ✅
+5. Claude Autonomous - Option B+C hybrid (research in progress)
+
+**P2 (After P1):**
+1. Launch Paid and Outbound Motions
+
+**P3 (Next Week):**
+1. ~~Firestore Security Rules~~ - COMPLETED Dec 19 ✅
+2. Dynamic Newsletter - LiveIntent/Movable Ink style content
+
+### Functions Ready for Testing
+
+| Function | Status | Budget Cap |
+|----------|--------|------------|
+| `generateImage` | ✅ Deployed | $20/month |
+| `discoverPipelineA` | ✅ Deployed | Google Places quota |
+| `discoverPipelineB` | ✅ Deployed | Free (YC-OSS) |
+| `bulkImportContacts` | ✅ Deployed | N/A |
+| `cascadeEnrich` | ✅ Deployed | API-dependent |
+| `createMetaCampaign` | ⚠️ Needs Config | $35/month cap |
+| `createLinkedInCampaign` | ⚠️ Needs Token | $35/month cap |
+| `createGoogleCampaign` | ⚠️ Needs Config | $35/month cap |
 
 ---
 
@@ -299,8 +349,88 @@ echo "=== All tests complete ==="
 
 ## Next Steps After Testing
 
-1. **Configure API Keys** - Set up Gemini, Meta, Google Ads, LinkedIn as needed
+1. ~~**Configure API Keys**~~ - Gemini, Places, enrichment all configured ✅
 2. **Enable Geocoding API** - For location string searches
 3. **Run Production Tests** - With real data, not dry runs
 4. **Monitor Usage** - Check api_usage collection in Firestore
 5. **Document Results** - Update this file with any findings
+
+---
+
+## 💰 COST PROJECTIONS (Updated Dec 19, 2025)
+
+### Monthly Infrastructure Budget
+
+| Category | Service | Monthly Cap | Expected Use | Notes |
+|----------|---------|-------------|--------------|-------|
+| **AI Images** | Gemini API | $20 | $5-15 | Hard cap enforced in code |
+| **Ads - Meta** | Meta Marketing API | $35 | $20-35 | Actual ad spend |
+| **Ads - LinkedIn** | LinkedIn Marketing API | $35 | $20-35 | Actual ad spend |
+| **Ads - Google** | Google Ads API | $35 | $20-35 | Actual ad spend |
+| **Enrichment** | FullEnrich | $39 | $39 | 1000 credits/mo |
+| **Enrichment** | PDL | Free | $0 | 100 free lookups |
+| **Enrichment** | Hunter.io | Free | $0 | 50 free/month |
+| **Email** | Resend | Free | $0 | 3000/month free |
+| **Hosting** | Firebase | Free→$5 | $0-5 | Spark tier currently |
+| **Automation** | Railway (n8n) | $5 | $5 | Current plan |
+
+### Budget Summary
+
+| Category | Hard Cap | Expected |
+|----------|----------|----------|
+| AI Image Generation | $20/mo | $5-15/mo |
+| Programmatic Ads (Total) | $100/mo | $60-100/mo |
+| Programmatic Ads (Per Platform) | $35/mo | $20-35/mo |
+| Enrichment | $39/mo | $39/mo |
+| Infrastructure | $10/mo | $5-10/mo |
+| **TOTAL** | **$169/mo** | **$109-164/mo** |
+
+### Free Tier Fallbacks
+
+| Service | Fallback Option | Notes |
+|---------|-----------------|-------|
+| Gemini | SVG Placeholder | Automatic when budget exceeded |
+| FullEnrich | Hunter.io → Apollo | Cascade fallback |
+| Google Places | Manual CSV import | Alternative for discovery |
+| Meta/LinkedIn/Google Ads | Manual posting | If API not configured |
+
+### Budget Enforcement
+
+All budget caps are **enforced in code**:
+
+```javascript
+// AI Image Generation - $20/month cap
+const MONTHLY_BUDGET = 20.00;
+
+// Programmatic Ads - $100/month total, $35/platform
+const AD_BUDGET = {
+  monthly_total_cap: 100,
+  per_platform_cap: 35,
+  platforms: ['meta', 'linkedin', 'google']
+};
+```
+
+---
+
+## 🤖 CLAUDE AUTONOMOUS OPERATION (Research)
+
+### Option B: Claude Agent SDK + Custom Bot
+- **Status:** Generally available
+- **Setup:** Python SDK + Slack bot + SSH access
+- **Best for:** 24/7 automated workflows
+
+### Option C: Headless/Non-Interactive Mode
+- **Status:** Available via `--no-interactive` flag
+- **Setup:** `claude --no-interactive --headless --output-format json`
+- **Best for:** CI/CD pipelines, containerized environments
+
+### Hybrid B+C Implementation
+
+1. **Slack Bot** - Use [claude-code-slack-bot](https://github.com/mpociot/claude-code-slack-bot) for team collaboration
+2. **Headless Mode** - Schedule automated tasks via n8n
+3. **MCP Integration** - Connect to Firestore/GitHub for context
+
+### Resources
+- [Claude Code Slack Integration (Official)](https://code.claude.com/docs/en/slack)
+- [Claude Flow Non-Interactive Mode](https://github.com/ruvnet/claude-flow/wiki/Non-Interactive-Mode)
+- [TechCrunch: Claude Code Slack Announcement](https://techcrunch.com/2025/12/08/claude-code-is-coming-to-slack-and-thats-a-bigger-deal-than-it-sounds/)
