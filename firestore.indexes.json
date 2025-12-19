@@ -22,6 +22,22 @@
         { "fieldPath": "recordType", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "contacts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "email", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "email_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipientEmail", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

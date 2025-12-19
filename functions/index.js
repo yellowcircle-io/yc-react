@@ -8493,7 +8493,9 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
           };
 
           // Update specific engagement metrics based on event type
-          if (type === 'email.sent' || type === 'email.delivered') {
+          // Only count 'delivered' (not 'sent') to avoid double-counting
+          // Note: Real-time increments may drift; use syncContactEngagement for accuracy
+          if (type === 'email.delivered') {
             contactUpdates['engagement.emailsSent'] = admin.firestore.FieldValue.increment(1);
             contactUpdates['engagement.lastEmailAt'] = admin.firestore.FieldValue.serverTimestamp();
           } else if (type === 'email.opened') {
@@ -8519,6 +8521,425 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
 
   } catch (error) {
     console.error("❌ Resend webhook error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Diagnose Contacts Collection
+ * Returns breakdown of contacts by recordType, status, type, pipeline
+ */
+exports.diagnoseContacts = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    const contactsSnapshot = await db.collection("contacts").get();
+
+    const stats = {
+      total: contactsSnapshot.size,
+      byRecordType: {},
+      byStatus: {},
+      byType: {},
+      byPipeline: {},
+      missingRecordType: [],
+      missingStatus: [],
+      missingBoth: [],
+      samples: []
+    };
+
+    contactsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+
+      // Count by recordType
+      const recordType = data.recordType || 'undefined';
+      stats.byRecordType[recordType] = (stats.byRecordType[recordType] || 0) + 1;
+
+      // Count by status
+      const status = data.status || 'undefined';
+      stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+
+      // Count by old type field
+      const type = data.type || 'undefined';
+      stats.byType[type] = (stats.byType[type] || 0) + 1;
+
+      // Count by pipeline
+      const pipeline = data.pipelineAssignment?.primaryPipeline || 'none';
+      stats.byPipeline[pipeline] = (stats.byPipeline[pipeline] || 0) + 1;
+
+      // Track missing fields
+      if (!data.recordType) {
+        stats.missingRecordType.push({ id: doc.id, email: data.email, type: data.type });
+      }
+      if (!data.status) {
+        stats.missingStatus.push({ id: doc.id, email: data.email });
+      }
+      if (!data.recordType && !data.status) {
+        stats.missingBoth.push({ id: doc.id, email: data.email, type: data.type });
+      }
+
+      // Sample first 10 contacts
+      if (stats.samples.length < 10) {
+        stats.samples.push({
+          id: doc.id,
+          email: data.email,
+          recordType: data.recordType,
+          status: data.status,
+          type: data.type,
+          pipeline: data.pipelineAssignment?.primaryPipeline,
+          createdAt: data.createdAt
+        });
+      }
+    });
+
+    // Also check email_events to see who was emailed
+    const emailEventsSnapshot = await db.collection("email_events").get();
+    const emailedContacts = new Set();
+    emailEventsSnapshot.docs.forEach(doc => {
+      const to = doc.data().to;
+      if (to) emailedContacts.add(to.toLowerCase());
+    });
+
+    // Find emails that were sent but have no contact record
+    const existingEmails = new Set(contactsSnapshot.docs.map(d => d.data().email?.toLowerCase()).filter(Boolean));
+    const emailedButMissing = [...emailedContacts].filter(e => !existingEmails.has(e));
+
+    stats.emailEvents = {
+      totalEvents: emailEventsSnapshot.size,
+      uniqueEmailedContacts: emailedContacts.size,
+      emailedButMissingFromContacts: emailedButMissing
+    };
+
+    // Check for other collections that might have contacts
+    const otherCollections = ['leads', 'companies', 'prospects', 'companies_raw'];
+    const collectionCounts = {};
+    for (const collName of otherCollections) {
+      try {
+        const snap = await db.collection(collName).limit(100).get();
+        collectionCounts[collName] = snap.size;
+      } catch (e) {
+        collectionCounts[collName] = 'error: ' + e.message;
+      }
+    }
+    stats.otherCollections = collectionCounts;
+
+    // Sample from companies_raw to see what's in there
+    const companiesRawSnapshot = await db.collection("companies_raw").limit(10).get();
+    stats.companiesRawSamples = companiesRawSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        source: data.source,
+        name: data.companyName || data.rawData?.name,
+        email: data.email,
+        pipeline: data.pipeline,
+        hasRawData: !!data.rawData
+      };
+    });
+
+    // Check emails collection for sent history
+    const emailsSnapshot = await db.collection("emails").limit(100).get();
+    const emailRecipients = new Set();
+    emailsSnapshot.docs.forEach(doc => {
+      const to = doc.data().to;
+      if (to) emailRecipients.add(to.toLowerCase());
+    });
+    stats.emails = {
+      totalEmailRecords: emailsSnapshot.size,
+      uniqueRecipients: emailRecipients.size,
+      recipients: [...emailRecipients].slice(0, 20)  // First 20 for review
+    };
+
+    response.json({ success: true, stats });
+
+  } catch (error) {
+    console.error("❌ diagnoseContacts error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Migrate leads collection to contacts
+ * Moves records from old 'leads' collection to 'contacts' collection
+ */
+exports.migrateLeadsToContacts = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const dryRun = request.query.dryRun !== 'false';  // Default to dryRun=true for safety
+
+  try {
+    // Get all leads
+    const leadsSnapshot = await db.collection("leads").get();
+
+    // Get existing contacts to avoid duplicates
+    const contactsSnapshot = await db.collection("contacts").get();
+    const existingEmails = new Set(
+      contactsSnapshot.docs.map(d => d.data().email?.toLowerCase()).filter(Boolean)
+    );
+
+    const results = {
+      dryRun,
+      totalLeads: leadsSnapshot.size,
+      existingContacts: existingEmails.size,
+      skippedDuplicates: 0,
+      migrated: 0,
+      errors: [],
+      migrationDetails: []
+    };
+
+    for (const leadDoc of leadsSnapshot.docs) {
+      const lead = leadDoc.data();
+      const email = (lead.email || '').toLowerCase().trim();
+
+      if (!email) {
+        results.errors.push({ id: leadDoc.id, error: 'No email' });
+        continue;
+      }
+
+      // Skip if already exists in contacts
+      if (existingEmails.has(email)) {
+        results.skippedDuplicates++;
+        continue;
+      }
+
+      const contactId = generateContactId(email);
+
+      const contactData = {
+        id: contactId,
+        email: email,
+        firstName: lead.firstName || lead.name?.split(' ')[0] || '',
+        lastName: lead.lastName || lead.name?.split(' ').slice(1).join(' ') || '',
+        name: lead.name || lead.firstName || '',
+        company: lead.company || lead.organization || '',
+        jobTitle: lead.title || lead.jobTitle || '',
+        phone: lead.phone || '',
+        linkedinUrl: lead.linkedinUrl || lead.linkedin || '',
+
+        // Set proper CRM taxonomy
+        type: 'lead',
+        recordType: 'prospect',  // All migrated leads start as prospects
+        stage: lead.stage || 'new',
+
+        // Tags and scoring
+        tags: [...(lead.tags || []), 'migrated-from-leads'],
+        score: lead.score || 0,
+        scoreBreakdown: lead.scoreBreakdown || { engagement: 0, behavior: 0, profile: 0, recency: 0 },
+
+        // Source tracking
+        source: lead.source || {
+          original: 'leads_migration',
+          medium: lead.medium || 'unknown',
+          campaign: lead.campaign || 'migrated',
+          referrer: lead.referrer || '',
+          landingPage: lead.landingPage || ''
+        },
+
+        // Engagement
+        engagement: lead.engagement || {
+          emailsSent: 0,
+          emailsOpened: 0,
+          emailsClicked: 0,
+          toolsUsed: [],
+          assessmentScore: null,
+          pageViews: 0
+        },
+
+        // Journeys
+        journeys: lead.journeys || { active: [], completed: [], history: [] },
+
+        // External IDs
+        externalIds: lead.externalIds || { airtableId: null, hubspotId: null, stripeId: null, apolloId: lead.apolloId || null },
+
+        // Sync status
+        syncStatus: { airtable: "not_synced", airtableLastSync: null },
+
+        // Preferences
+        preferences: lead.preferences || {
+          emailOptIn: true,
+          emailFrequency: 'weekly',
+          doNotContact: false
+        },
+
+        // Enrichment data
+        enrichment: lead.enrichment || {},
+
+        // Pipeline assignment (none by default)
+        pipelineAssignment: {
+          primaryPipeline: null,
+          pipelineAScore: 0,
+          pipelineBScore: 0,
+          pipelineAStatus: 'PENDING',
+          pipelineBStatus: 'PENDING',
+          peExclusionReason: null,
+          confidenceScore: 0,
+          lastScoredAt: null
+        },
+
+        // Notes
+        notes: lead.notes || '',
+        customFields: lead.customFields || {},
+        metadata: {
+          ...(lead.metadata || {}),
+          migratedFrom: 'leads',
+          migratedAt: new Date().toISOString(),
+          originalLeadId: leadDoc.id
+        },
+
+        status: 'active',
+        createdAt: lead.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      results.migrationDetails.push({
+        leadId: leadDoc.id,
+        email: email,
+        contactId: contactId,
+        name: contactData.name
+      });
+
+      if (!dryRun) {
+        await db.collection("contacts").doc(contactId).set(contactData);
+        results.migrated++;
+      }
+    }
+
+    response.json({ success: true, results });
+
+  } catch (error) {
+    console.error("❌ migrateLeadsToContacts error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Create missing contacts from email_events
+ * For contacts that were emailed but no longer exist in contacts collection
+ */
+exports.createMissingContacts = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const dryRun = request.query.dryRun === 'true';
+
+  try {
+    // Get all email events
+    const emailEventsSnapshot = await db.collection("email_events").get();
+    const emailedContacts = {};
+
+    // Group events by email to find the most info about each
+    emailEventsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const to = data.to?.toLowerCase();
+      if (!to) return;
+
+      if (!emailedContacts[to]) {
+        emailedContacts[to] = {
+          email: to,
+          subject: data.subject,
+          events: []
+        };
+      }
+      emailedContacts[to].events.push({
+        type: data.type,
+        timestamp: data.timestamp,
+        emailId: data.emailId
+      });
+    });
+
+    // Get existing contacts
+    const contactsSnapshot = await db.collection("contacts").get();
+    const existingEmails = new Set(
+      contactsSnapshot.docs.map(d => d.data().email?.toLowerCase()).filter(Boolean)
+    );
+
+    // Find missing contacts
+    const missingEmails = Object.keys(emailedContacts).filter(e => !existingEmails.has(e));
+
+    const results = {
+      dryRun,
+      totalEmailed: Object.keys(emailedContacts).length,
+      existingContacts: existingEmails.size,
+      missingContacts: missingEmails.length,
+      created: 0,
+      details: []
+    };
+
+    // Create contact records for missing emails
+    for (const email of missingEmails) {
+      const contactId = generateContactId(email);
+      const eventData = emailedContacts[email];
+
+      const contactData = {
+        id: contactId,
+        email: email,
+        firstName: "",
+        lastName: "",
+        name: email.split("@")[0],  // Use email prefix as name
+        company: email.split("@")[1]?.split(".")[0] || "",  // Domain as company hint
+        jobTitle: "",
+        phone: "",
+        type: "lead",
+        recordType: "prospect",  // Set proper recordType
+        stage: "new",
+        tags: ["recovered-from-emails"],
+        score: 0,
+        scoreBreakdown: { engagement: 0, behavior: 0, profile: 0, recency: 0 },
+        source: {
+          original: "email_recovery",
+          medium: "outbound",
+          campaign: "recovered",
+          referrer: "",
+          landingPage: ""
+        },
+        engagement: {
+          emailsSent: 0,
+          emailsOpened: 0,
+          emailsClicked: 0,
+          toolsUsed: [],
+          assessmentScore: null,
+          pageViews: 0
+        },
+        journeys: { active: [], completed: [], history: [] },
+        externalIds: { airtableId: null, hubspotId: null, stripeId: null },
+        syncStatus: { airtable: "not_synced", airtableLastSync: null },
+        preferences: { emailOptIn: true, emailFrequency: "weekly", doNotContact: false },
+        notes: `Recovered from email events. Subject: ${eventData.subject || 'Unknown'}`,
+        customFields: {},
+        metadata: { importedVia: "email_recovery", recoveredAt: new Date().toISOString() },
+        status: "active",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      results.details.push({
+        email,
+        contactId,
+        eventCount: eventData.events.length
+      });
+
+      if (!dryRun) {
+        await db.collection("contacts").doc(contactId).set(contactData);
+        results.created++;
+      }
+    }
+
+    response.json({ success: true, results });
+
+  } catch (error) {
+    console.error("❌ createMissingContacts error:", error);
     response.status(500).json({ error: error.message });
   }
 });
@@ -8592,6 +9013,10 @@ exports.syncContactEngagement = functions.https.onRequest(async (request, respon
 
 /**
  * Helper: Sync engagement for a single contact
+ * Counts UNIQUE emails by emailId to avoid double-counting
+ * - emailsSent = unique emails delivered (delivered is the definitive "sent" event)
+ * - emailsOpened = unique emails opened at least once
+ * - emailsClicked = unique emails clicked at least once
  */
 async function syncEngagementForContact(contactId, email) {
   try {
@@ -8611,10 +9036,11 @@ async function syncEngagementForContact(contactId, email) {
       return { updated: false, eventsCount: 0 };
     }
 
-    // Aggregate events
-    let emailsSent = 0;
-    let emailsOpened = 0;
-    let emailsClicked = 0;
+    // Track unique emails by emailId
+    const emailsDelivered = new Set();
+    const emailsOpened = new Set();
+    const emailsClicked = new Set();
+
     let lastEmailAt = null;
     let lastOpenAt = null;
     let lastClickAt = null;
@@ -8623,19 +9049,27 @@ async function syncEngagementForContact(contactId, email) {
     eventsSnapshot.docs.forEach(doc => {
       const event = doc.data();
       const eventTime = event.timestamp || event.createdAt;
+      const emailId = event.emailId;
 
-      if (event.type === 'sent' || event.type === 'delivered') {
-        emailsSent++;
+      // Only count 'delivered' as sent (not 'sent' to avoid double counting)
+      // An email that's delivered means it was definitely sent
+      if (event.type === 'delivered' && emailId) {
+        emailsDelivered.add(emailId);
         if (!lastEmailAt || (eventTime && eventTime > lastEmailAt)) {
           lastEmailAt = eventTime;
         }
-      } else if (event.type === 'opened') {
-        emailsOpened++;
+      } else if (event.type === 'opened' && emailId) {
+        emailsOpened.add(emailId);
+        // If we see an opened event, the email was definitely delivered
+        emailsDelivered.add(emailId);
         if (!lastOpenAt || (eventTime && eventTime > lastOpenAt)) {
           lastOpenAt = eventTime;
         }
-      } else if (event.type === 'clicked') {
-        emailsClicked++;
+      } else if (event.type === 'clicked' && emailId) {
+        emailsClicked.add(emailId);
+        // If clicked, it was also opened and delivered
+        emailsOpened.add(emailId);
+        emailsDelivered.add(emailId);
         if (!lastClickAt || (eventTime && eventTime > lastClickAt)) {
           lastClickAt = eventTime;
         }
@@ -8647,11 +9081,11 @@ async function syncEngagementForContact(contactId, email) {
       }
     });
 
-    // Update contact
+    // Update contact with unique counts
     const updates = {
-      'engagement.emailsSent': emailsSent,
-      'engagement.emailsOpened': emailsOpened,
-      'engagement.emailsClicked': emailsClicked,
+      'engagement.emailsSent': emailsDelivered.size,
+      'engagement.emailsOpened': emailsOpened.size,
+      'engagement.emailsClicked': emailsClicked.size,
       'engagement.lastTouchedAt': lastTouchedAt || admin.firestore.FieldValue.serverTimestamp(),
       'engagement.lastTouchType': 'email',
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -8663,7 +9097,7 @@ async function syncEngagementForContact(contactId, email) {
 
     await contactRef.update(updates);
 
-    console.log(`📇 Synced ${contactId}: ${emailsSent} sent, ${emailsOpened} opened, ${emailsClicked} clicked`);
+    console.log(`📇 Synced ${contactId}: ${emailsDelivered.size} sent, ${emailsOpened.size} opened, ${emailsClicked.size} clicked`);
     return { updated: true, eventsCount: eventsSnapshot.size };
 
   } catch (error) {

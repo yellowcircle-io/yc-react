@@ -1,8 +1,69 @@
 # Project Roadmap - December 2025
 
-**Date:** December 7, 2025
-**Status:** ✅ Unity Platform Comprehensive Fixes - DEPLOYED
-**Days Since Rho Exit:** 12 (Nov 25, 2025)
+**Date:** December 19, 2025
+**Status:** ✅ Platform Enhancements Sprint Complete
+**Days Since Rho Exit:** 24 (Nov 25, 2025)
+
+---
+
+## ✅ DECEMBER 18-19, 2025 - PLATFORM ENHANCEMENTS SPRINT
+
+### Major Features Implemented
+
+**Sprint Duration:** 2 days
+**Commits:** `53a2424`, `5a71ea4`, `9fa59bc`, plus Dec 19 enhancements
+**Deployed:** ✅ All functions live on Firebase
+
+#### 1. Firebase Auth SSO Migration ✅ COMPLETE
+- Created `verifyAdminAuth()` helper with hybrid authentication
+- Updated 25+ admin functions to use Firebase Auth ID tokens
+- Frontend now uses async `getAdminHeaders()` with Firebase ID token
+- Legacy tokens preserved for n8n workflows + backwards compatibility
+
+#### 2. AI Image Generation ✅ COMPLETE
+- `generateImage` function with tiered pricing (free/standard/premium)
+- Free tier: SVG placeholders (always available, no API cost)
+- Standard tier: Imagen 3 ($0.03/image)
+- Premium tier: Gemini 3 Pro ($0.13/image)
+- $20/month budget cap with usage tracking in `api_usage` collection
+- `getImageGenUsage` admin endpoint for monitoring
+
+#### 3. Programmatic Ads Infrastructure ✅ COMPLETE
+- `getAdBudgetStats` - Budget tracking across platforms
+- `createMetaCampaign` - Facebook/Instagram ads (placeholder until API configured)
+- `createGoogleCampaign` - Google Ads (placeholder until API configured)
+- `createLinkedInCampaign` - LinkedIn Marketing API (placeholder until API configured)
+- $100/month total budget cap, $35/platform cap
+- Budget allocation tracking in Firestore
+
+#### 4. Headshot Sourcing System ✅ COMPLETE
+- `discoverHeadshotProspects` - Google Places API for headshot-ready businesses
+- `importHeadshotProspectsCSV` - CSV/JSON bulk import with validation
+- `getHeadshotProspects` - Retrieve and filter by status, industry, priority
+- Quality scoring: 0-100 based on Google rating + review count
+- Targets: law firms, real estate, financial advisors, consultants
+- Stored in `headshot_prospects` collection
+
+#### 5. Claude Code Autonomous Setup ✅ COMPLETE
+- Created `.claude/CLAUDE_CODE_AUTONOMOUS_SETUP.md` comprehensive guide
+- Created `scripts/claude-auto.sh` automation script
+- Documented Hybrid B+C architecture (Agent SDK + Sleepless)
+- Supports headless mode, Slack integration, n8n orchestration
+
+### Test Documentation
+See: `dev-context/TESTING_PREPARATION_DEC2025.md` for all test commands and validation checklist.
+
+### API Keys to Configure (Future)
+```bash
+# AI Image Generation (when ready for paid tier)
+firebase functions:config:set gemini.api_key="YOUR_API_KEY"
+
+# Programmatic Ads
+firebase functions:config:set meta.app_id="YOUR_APP_ID"
+firebase functions:config:set meta.app_secret="YOUR_APP_SECRET"
+firebase functions:config:set googleads.developer_token="YOUR_TOKEN"
+firebase functions:config:set linkedin.client_id="YOUR_CLIENT_ID"
+```
 
 ---
 
@@ -1333,7 +1394,7 @@ h1.your-circle {
 
 ---
 
-**Last Updated:** December 7, 2025
-**Next Review:** December 10, 2025 (Week 2 of 60-Day Plan)
+**Last Updated:** December 19, 2025
+**Next Review:** December 26, 2025 (Week 4 of 60-Day Plan)
 **Owner:** Christopher Cooper
-**Version:** 2.5 (Dec 7 Unity Platform Comprehensive Fixes)
+**Version:** 2.6 (Dec 19 Platform Enhancements Sprint)
