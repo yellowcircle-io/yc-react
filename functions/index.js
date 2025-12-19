@@ -63,92 +63,60 @@ const checkRateLimit = async (ip, limit = 3) => {
 const setCors = (response) => {
   response.set("Access-Control-Allow-Origin", "*");
   response.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  response.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-token, x-n8n-token");
+  response.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 };
 
 // ============================================
-// Admin Authentication (SSO + Legacy Token Fallback)
+// Admin Authentication (Firebase SSO Only)
 // ============================================
 
 /**
- * Verify admin authentication using either:
- * 1. Firebase Auth Bearer token (preferred - checks admin whitelist)
- * 2. Legacy x-admin-token header (backwards compatibility for n8n/scripts)
+ * Verify admin authentication via Firebase Auth SSO ONLY
+ * All admin functions require Google SSO authentication
  *
  * @param {Object} request - HTTP request object
- * @param {Object} options - Options { allowCleanupToken: boolean, allowN8nToken: boolean }
  * @returns {Object} { success: boolean, error?: string, user?: { email, uid, method } }
  */
-const verifyAdminAuth = async (request, options = {}) => {
-  const { allowCleanupToken = false, allowN8nToken = false } = options;
-
-  // 1. Try Firebase Auth Bearer token first (preferred)
+const verifyAdminAuth = async (request) => {
+  // Firebase Auth Bearer token (SSO) - ONLY authentication method
   const authHeader = request.headers.authorization;
-  if (authHeader?.startsWith('Bearer ')) {
-    const idToken = authHeader.split('Bearer ')[1];
-    try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      const userEmail = decodedToken.email?.toLowerCase();
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { success: false, error: 'Missing Bearer token - authenticate via Google SSO' };
+  }
 
-      if (!userEmail) {
-        return { success: false, error: 'No email in token' };
+  const idToken = authHeader.split('Bearer ')[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const userEmail = decodedToken.email?.toLowerCase();
+
+    if (!userEmail) {
+      return { success: false, error: 'No email in token' };
+    }
+
+    // Check admin whitelist from Firestore
+    const adminWhitelistDoc = await db.collection('config').doc('admin_whitelist').get();
+    const adminEmails = adminWhitelistDoc.exists
+      ? (adminWhitelistDoc.data()?.emails || []).map(e => e.toLowerCase())
+      : [];
+
+    if (!adminEmails.includes(userEmail)) {
+      console.warn(`Admin auth rejected for ${userEmail} - not in whitelist`);
+      return { success: false, error: 'Not an admin' };
+    }
+
+    console.log(`Admin auth via Firebase SSO: ${userEmail}`);
+    return {
+      success: true,
+      user: {
+        email: userEmail,
+        uid: decodedToken.uid,
+        method: 'firebase_sso'
       }
-
-      // Check admin whitelist from Firestore
-      const adminWhitelistDoc = await db.collection('config').doc('admin_whitelist').get();
-      const adminEmails = adminWhitelistDoc.exists
-        ? (adminWhitelistDoc.data()?.emails || []).map(e => e.toLowerCase())
-        : [];
-
-      if (!adminEmails.includes(userEmail)) {
-        console.warn(`Admin auth rejected for ${userEmail} - not in whitelist`);
-        return { success: false, error: 'Not an admin' };
-      }
-
-      console.log(`Admin auth via Firebase SSO: ${userEmail}`);
-      return {
-        success: true,
-        user: {
-          email: userEmail,
-          uid: decodedToken.uid,
-          method: 'firebase_sso'
-        }
-      };
-    } catch (error) {
-      console.warn('Firebase token verification failed:', error.message);
-      // Fall through to legacy token check
-    }
+    };
+  } catch (error) {
+    console.warn('Firebase token verification failed:', error.message);
+    return { success: false, error: 'Invalid token' };
   }
-
-  // 2. Legacy x-admin-token fallback (for n8n, scripts, backwards compatibility)
-  const adminToken = request.headers["x-admin-token"];
-  const expectedAdminToken = functions.config().admin?.token;
-
-  if (adminToken && expectedAdminToken && adminToken === expectedAdminToken) {
-    console.log('Admin auth via legacy token');
-    return { success: true, user: { method: 'legacy_token' } };
-  }
-
-  // 3. Cleanup token (for storage cleanup functions)
-  if (allowCleanupToken) {
-    const expectedCleanupToken = functions.config().admin?.cleanup_token;
-    if (adminToken && expectedCleanupToken && adminToken === expectedCleanupToken) {
-      console.log('Admin auth via cleanup token');
-      return { success: true, user: { method: 'cleanup_token' } };
-    }
-  }
-
-  // 4. n8n token (for workflow automation)
-  if (allowN8nToken) {
-    const n8nToken = request.headers["x-n8n-token"];
-    const expectedN8nToken = functions.config().n8n?.token;
-    if (n8nToken && expectedN8nToken && n8nToken === expectedN8nToken) {
-      console.log('Admin auth via n8n token');
-      return { success: true, user: { method: 'n8n_token' } };
-    }
-  }
-
-  return { success: false, error: 'Unauthorized' };
 };
 
 // ============================================
@@ -2391,8 +2359,8 @@ exports.manualCleanup = functions.https.onRequest(async (request, response) => {
   }
 
   // Simple auth check - require bypass token
-  // Auth check (SSO + legacy cleanup token fallback)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -2481,8 +2449,8 @@ exports.stopAllJourneys = functions.https.onRequest(async (request, response) =>
   }
 
   // Auth check
-  // Auth check (SSO + legacy cleanup token fallback)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -2565,8 +2533,8 @@ exports.deleteAccessRequest = functions.https.onRequest(async (request, response
   }
 
   // Auth check
-  // Auth check (SSO + legacy cleanup token fallback)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -3500,13 +3468,10 @@ exports.syncLeadFromN8N = functions.https.onRequest(async (request, response) =>
     return;
   }
 
-  // Verify n8n token
-  const token = request.headers["x-n8n-token"];
-  const expectedToken = functions.config().n8n?.token;
-
-  if (!expectedToken || token !== expectedToken) {
-    console.error("❌ Invalid n8n token");
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -3625,12 +3590,10 @@ exports.syncContactFromAirtable = functions.https.onRequest(async (request, resp
     return;
   }
 
-  // Verify n8n token
-  const token = request.headers["x-n8n-token"];
-  const expectedToken = functions.config().n8n?.token;
-
-  if (!expectedToken || token !== expectedToken) {
-    response.status(401).json({ error: "Unauthorized" });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
   }
 
@@ -3740,8 +3703,8 @@ exports.createProspect = functions.https.onRequest(async (request, response) => 
     return;
   }
 
-  // Auth check (SSO + legacy token + n8n token fallback)
-  const authResult = await verifyAdminAuth(request, { allowN8nToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -3889,7 +3852,7 @@ exports.seedWelcomeJourney = functions.https.onRequest(async (request, response)
     return;
   }
 
-  // Auth check (SSO + legacy token fallback)
+  // Auth check (SSO only)
   const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -4314,7 +4277,7 @@ exports.seedOutboundJourneys = functions.https.onRequest(async (request, respons
     return;
   }
 
-  // Auth check (SSO + legacy token fallback)
+  // Auth check (SSO only)
   const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -4993,7 +4956,7 @@ exports.testLeadCapture = functions.https.onRequest(async (request, response) =>
     return;
   }
 
-  // Auth check (SSO + legacy token fallback)
+  // Auth check (SSO only)
   const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -5374,8 +5337,8 @@ exports.getCollectionStats = functions
   }
 
   // Auth check
-  // Auth check (SSO + legacy cleanup token fallback)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -5434,8 +5397,8 @@ exports.cleanupWithPreview = functions
   }
 
   // Auth check
-  // Auth check (SSO + legacy cleanup token fallback)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -5614,8 +5577,8 @@ exports.cleanupByTitlePattern = functions
   }
 
   // Auth check
-  // Auth check (SSO + legacy cleanup token fallback)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     response.status(401).json({ error: authResult.error || "Unauthorized" });
     return;
@@ -5716,7 +5679,7 @@ exports.cleanupByTitlePattern = functions
  * Admin: Add client email to whitelist
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *        -d '{"email": "user@example.com"}'
  */
 exports.addClientEmail = functions.https.onRequest(async (request, response) => {
@@ -5728,7 +5691,7 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
   }
 
   try {
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -5779,7 +5742,7 @@ exports.addClientEmail = functions.https.onRequest(async (request, response) => 
  * Admin: Add admin email to whitelist (for Firebase Auth SSO)
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addAdminEmail" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *        -d '{"email": "admin@example.com"}'
  */
 exports.addAdminEmail = functions.https.onRequest(async (request, response) => {
@@ -5791,12 +5754,10 @@ exports.addAdminEmail = functions.https.onRequest(async (request, response) => {
   }
 
   try {
-    // Auth check (legacy token only - can't use SSO to add yourself)
-    const adminToken = request.headers["x-admin-token"];
-    const expectedAdminToken = functions.config().admin?.token;
-
-    if (!adminToken || !expectedAdminToken || adminToken !== expectedAdminToken) {
-      response.status(401).json({ error: "Unauthorized - admin token required" });
+    // Auth check (SSO only)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
       return;
     }
 
@@ -5844,7 +5805,7 @@ exports.addAdminEmail = functions.https.onRequest(async (request, response) => {
  * Admin: Bulk import contacts for outbound campaigns
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *        -d '{"contacts": [{"email": "a@b.com", "name": "Test", "company": "Acme"}], "source": "outbound", "tags": ["outbound-campaign"]}'
  */
 exports.bulkImportContacts = functions.https.onRequest(async (request, response) => {
@@ -5856,7 +5817,7 @@ exports.bulkImportContacts = functions.https.onRequest(async (request, response)
   }
 
   try {
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -6200,7 +6161,7 @@ exports.apolloSearch = functions
  * Enrich a single contact using Apollo.io People Enrichment API
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/enrichContact" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *        -d '{"email": "user@company.com"}'
  */
 exports.enrichContact = functions.https.onRequest(async (request, response) => {
@@ -6212,7 +6173,7 @@ exports.enrichContact = functions.https.onRequest(async (request, response) => {
   }
 
   try {
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -6368,7 +6329,7 @@ exports.enrichContact = functions.https.onRequest(async (request, response) => {
  * Bulk enrich contacts using Apollo.io (up to 10 per request)
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkEnrichContacts" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *        -d '{"emails": ["a@b.com", "c@d.com"], "updateContacts": true}'
  */
 exports.bulkEnrichContacts = functions.https.onRequest(async (request, response) => {
@@ -6380,7 +6341,7 @@ exports.bulkEnrichContacts = functions.https.onRequest(async (request, response)
   }
 
   try {
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -6518,7 +6479,7 @@ exports.bulkEnrichContacts = functions.https.onRequest(async (request, response)
  * Search Apollo.io for prospects matching criteria
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/searchProspects" \
  *        -H "Content-Type: application/json" \
- *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *        -d '{"titles": ["VP Marketing", "CMO"], "industries": ["Software"], "employeeCount": "11,50", "limit": 25}'
  */
 exports.searchProspects = functions.https.onRequest(async (request, response) => {
@@ -6530,7 +6491,7 @@ exports.searchProspects = functions.https.onRequest(async (request, response) =>
   }
 
   try {
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -6893,7 +6854,7 @@ const enrichViaApollo = async (email, apiKey) => {
  *
  * Usage:
  *   curl -X POST ".../cascadeEnrich" \
- *     -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *     -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
  *     -d '{"email": "user@company.com", "updateContact": true}'
  *
  * Options:
@@ -6907,11 +6868,11 @@ exports.cascadeEnrich = functions.https.onRequest(async (request, response) => {
   response.set("Access-Control-Allow-Origin", "*");
   if (request.method === "OPTIONS") {
     response.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    response.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-token");
+    response.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     return response.status(204).send("");
   }
 
-  // Auth check (SSO + legacy token fallback)
+  // Auth check (SSO only)
   const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -7060,11 +7021,11 @@ exports.listEnrichmentProviders = functions.https.onRequest(async (request, resp
   response.set("Access-Control-Allow-Origin", "*");
   if (request.method === "OPTIONS") {
     response.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-    response.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-token");
+    response.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     return response.status(204).send("");
   }
 
-  // Auth check (SSO + legacy token fallback)
+  // Auth check (SSO only)
   const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -7169,7 +7130,7 @@ exports.discoverPipelineA = functions
       return response.status(204).send("");
     }
 
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -7321,7 +7282,7 @@ exports.discoverPipelineB = functions
       return response.status(204).send("");
     }
 
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -7337,71 +7298,143 @@ exports.discoverPipelineB = functions
       const results = [];
       const errors = [];
 
-      // YC GitHub - public data from Y Combinator companies
-      if (sources.includes("yc_github")) {
+      // YC-OSS API - Official Y Combinator companies (5,500+ companies, updated daily)
+      // Source: https://github.com/yc-oss/api
+      if (sources.includes("yc_github") || sources.includes("yc_oss")) {
         try {
-          // Fetch YC companies from public GitHub repo
-          const ycUrl = "https://raw.githubusercontent.com/toshi7711/YC_Company/main/YC_Company_v2.json";
+          // Use official YC-OSS API (free, daily updated from YC Algolia)
+          const ycUrl = "https://yc-oss.github.io/api/companies/all.json";
           const ycResponse = await fetch(ycUrl);
 
           if (ycResponse.ok) {
             const ycData = await ycResponse.json();
+
+            // Filter for recent batches (2022+) and active companies
+            // Batch format: "Winter 2024", "Summer 2023", "W24", "S23", etc.
             const recentYC = ycData
               .filter(c => {
-                const batchYear = parseInt(c.Batch?.match(/\d{4}/)?.[0] || '0');
-                return batchYear >= 2022;  // Last 3 years
+                if (c.status !== 'Active') return false;
+                if (!c.batch) return false;
+
+                // Try to extract year from batch
+                let year = 0;
+
+                // Format: "Winter 2024" or "Summer 2023"
+                const longMatch = c.batch.match(/(Winter|Summer)\s+(\d{4})/i);
+                if (longMatch) {
+                  year = parseInt(longMatch[2]);
+                }
+
+                // Format: "W24" or "S23"
+                const shortMatch = c.batch.match(/([WS])(\d{2})/);
+                if (shortMatch) {
+                  year = 2000 + parseInt(shortMatch[2]);
+                }
+
+                return year >= 2022;
               })
               .slice(0, Math.ceil(maxResults / sources.length));
 
+            console.log(`📊 YC-OSS: Found ${ycData.length} total, ${recentYC.length} recent active companies`);
+
             for (const company of recentYC) {
+              // Build rawData with only defined values (Firestore rejects undefined)
+              const rawData = {
+                name: company.name || null,
+                description: company.long_description || company.one_liner || null,
+                oneLiner: company.one_liner || null,
+                batch: company.batch || null,
+                website: company.website || null,
+                industry: company.industry || null,
+                subindustry: company.subindustry || null,
+                tags: company.tags || [],
+                teamSize: company.team_size || null,
+                status: company.status || null,
+                regions: company.regions || [],
+                logoUrl: company.logo_url || null
+              };
+
               results.push({
-                source: 'yc_github',
-                sourceId: `yc_${company.Name?.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`,
-                companyName: company.Name,
-                rawData: {
-                  name: company.Name,
-                  description: company.Description,
-                  batch: company.Batch,
-                  website: company.Website,
-                  location: company.Location,
-                  industry: company.Industry
-                },
+                source: 'yc_oss',
+                sourceId: `yc_${company.slug || company.name?.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`,
+                companyName: company.name,
+                website: company.website || null,
+                rawData,
                 pipeline: 'B'
               });
             }
+          } else {
+            errors.push({ source: 'yc_oss', error: `HTTP ${ycResponse.status}` });
           }
         } catch (error) {
-          errors.push({ source: 'yc_github', error: error.message });
+          errors.push({ source: 'yc_oss', error: error.message });
         }
       }
 
-      // Growjo - company growth data (free scraping)
+      // YC-OSS by Industry (for targeted discovery)
+      if (sources.includes("yc_saas") || sources.includes("yc_fintech") || sources.includes("yc_ai")) {
+        try {
+          const industryMap = {
+            'yc_saas': 'b2b',
+            'yc_fintech': 'fintech',
+            'yc_ai': 'ai'
+          };
+
+          for (const [sourceKey, industry] of Object.entries(industryMap)) {
+            if (sources.includes(sourceKey)) {
+              const url = `https://yc-oss.github.io/api/tags/${industry}.json`;
+              const response = await fetch(url);
+
+              if (response.ok) {
+                const companies = await response.json();
+                const activeCompanies = companies
+                  .filter(c => c.status === 'Active')
+                  .slice(0, Math.ceil(maxResults / sources.length));
+
+                console.log(`📊 YC-OSS ${industry}: Found ${activeCompanies.length} active companies`);
+
+                for (const company of activeCompanies) {
+                  results.push({
+                    source: sourceKey,
+                    sourceId: `yc_${company.slug}`,
+                    companyName: company.name,
+                    website: company.website,
+                    rawData: {
+                      name: company.name,
+                      description: company.long_description || company.one_liner,
+                      batch: company.batch,
+                      website: company.website,
+                      industry: company.industry,
+                      tags: company.tags,
+                      teamSize: company.team_size
+                    },
+                    pipeline: 'B'
+                  });
+                }
+              }
+            }
+          }
+        } catch (error) {
+          errors.push({ source: 'yc_industry', error: error.message });
+        }
+      }
+
+      // Growjo - Placeholder for future API integration
+      // Currently requires API key registration at growjo.com/company_data_api
       if (sources.includes("growjo")) {
         try {
-          // Growjo provides growth rankings and company data
-          // Using public data from growjo.com/all/all
-          // Note: Consider rate limiting and respecting robots.txt
+          const growjoApiKey = functions.config().growjo?.api_key;
 
-          // For now, generate mock results - real implementation would scrape or use API
-          const growjoResults = [];
-          const industries = ['Marketing', 'Sales', 'HR Tech', 'FinTech', 'E-commerce'];
-
-          for (let i = 0; i < Math.ceil(maxResults / sources.length); i++) {
-            growjoResults.push({
-              source: 'growjo',
-              sourceId: `growjo_company_${Date.now()}_${i}`,
-              companyName: `Growth Company ${i + 1}`,
-              rawData: {
-                name: `Growth Company ${i + 1}`,
-                growthRate: Math.floor(Math.random() * 200) + 50, // 50-250%
-                employees: Math.floor(Math.random() * 100) + 10,
-                industry: industries[Math.floor(Math.random() * industries.length)],
-                founded: 2020 + Math.floor(Math.random() * 4)
-              },
-              pipeline: 'B'
-            });
+          if (growjoApiKey) {
+            // Real Growjo API call when key is configured
+            console.log("📊 Growjo: API key configured, would fetch real data");
+            // TODO: Implement actual Growjo API call
+            errors.push({ source: 'growjo', error: 'API integration pending - key configured but endpoint not implemented' });
+          } else {
+            // Skip mock data - require real API key
+            console.log("⚠️ Growjo: No API key configured, skipping mock data");
+            errors.push({ source: 'growjo', error: 'API key not configured. Register at growjo.com/company_data_api' });
           }
-          results.push(...growjoResults);
         } catch (error) {
           errors.push({ source: 'growjo', error: error.message });
         }
@@ -7665,7 +7698,7 @@ exports.collectSignals = functions
       return response.status(204).send("");
     }
 
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -7832,7 +7865,7 @@ exports.filterPEBacked = functions
       return response.status(204).send("");
     }
 
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -8013,7 +8046,7 @@ exports.scorePipelines = functions
       return response.status(204).send("");
     }
 
-    // Auth check (SSO + legacy token fallback)
+    // Auth check (SSO only)
     const authResult = await verifyAdminAuth(request);
     if (!authResult.success) {
       return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -8159,7 +8192,7 @@ exports.getPipelineStats = functions.https.onRequest(async (request, response) =
     return response.status(204).send("");
   }
 
-  // Auth check (SSO + legacy token fallback)
+  // Auth check (SSO only)
   const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     return response.status(401).json({ error: authResult.error || "Unauthorized" });
@@ -8236,8 +8269,8 @@ exports.getEmailStats = functions.https.onRequest(async (request, response) => {
     return response.status(204).send("");
   }
 
-  // Auth check (SSO + legacy token fallback + cleanup token)
-  const authResult = await verifyAdminAuth(request, { allowCleanupToken: true });
+  // Auth check (SSO only)
+  const authResult = await verifyAdminAuth(request);
   if (!authResult.success) {
     return response.status(401).json({ error: authResult.error || "Unauthorized" });
   }
@@ -8415,11 +8448,13 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
     console.log(`📧 Resend webhook: ${type} for email ${emailId}`);
 
     // Store event in Firestore
+    const recipientEmail = data.to?.[0]?.toLowerCase() || null;
     const eventDoc = {
       emailId,
       type: type.replace('email.', ''), // 'opened', 'clicked', etc.
       fullType: type,
-      to: data.to?.[0] || null,
+      to: recipientEmail,
+      recipientEmail: recipientEmail, // Duplicate for query consistency
       subject: data.subject || null,
       link: data.click?.link || null, // For click events
       ipAddress: data.click?.ipAddress || null,
@@ -8430,6 +8465,7 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
     };
 
     await db.collection("email_events").add(eventDoc);
+    console.log(`✅ Stored email event: ${type} for ${recipientEmail}`);
 
     // Update email tracking summary in emails collection
     const emailRef = db.collection("emails").doc(emailId);
@@ -8478,8 +8514,7 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
       console.log(`📊 ${action}: ${data.to?.[0] || 'Unknown'}${linkInfo}`);
     }
 
-    // Update contact engagement stats
-    const recipientEmail = data.to?.[0];
+    // Update contact engagement stats (recipientEmail already defined above)
     if (recipientEmail) {
       try {
         const contactId = generateContactId(recipientEmail);
@@ -8521,6 +8556,82 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
 
   } catch (error) {
     console.error("❌ Resend webhook error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Email Webhook Status & Diagnostics
+ * Check webhook health and recent event activity
+ * Call: GET /emailWebhookStatus
+ */
+exports.emailWebhookStatus = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  try {
+    // Get recent email events (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentEventsQuery = await db.collection("email_events")
+      .where("createdAt", ">=", oneDayAgo)
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
+
+    // Get total events count
+    const totalEventsQuery = await db.collection("email_events").get();
+
+    // Get events by type
+    const eventsByType = {};
+    totalEventsQuery.docs.forEach(doc => {
+      const type = doc.data().type || 'unknown';
+      eventsByType[type] = (eventsByType[type] || 0) + 1;
+    });
+
+    // Get unique recipients
+    const uniqueRecipients = new Set();
+    totalEventsQuery.docs.forEach(doc => {
+      const to = doc.data().to || doc.data().recipientEmail;
+      if (to) uniqueRecipients.add(to.toLowerCase());
+    });
+
+    // Get recent events summary
+    const recentEvents = recentEventsQuery.docs.map(doc => {
+      const data = doc.data();
+      return {
+        type: data.type,
+        to: data.to || data.recipientEmail,
+        subject: data.subject?.substring(0, 50),
+        timestamp: data.createdAt?.toDate?.()?.toISOString() || null
+      };
+    });
+
+    // Webhook URL info
+    const webhookUrl = "https://us-central1-yellowcircle-app.cloudfunctions.net/handleResendWebhook";
+
+    response.json({
+      success: true,
+      webhookUrl,
+      status: recentEventsQuery.size > 0 ? "ACTIVE" : "NO_RECENT_EVENTS",
+      stats: {
+        totalEvents: totalEventsQuery.size,
+        eventsLast24h: recentEventsQuery.size,
+        uniqueRecipients: uniqueRecipients.size,
+        eventsByType
+      },
+      recentEvents,
+      instructions: {
+        setupUrl: "https://resend.com/webhooks",
+        requiredEvents: ["email.sent", "email.delivered", "email.opened", "email.clicked", "email.bounced"],
+        note: "Ensure webhook URL is configured in Resend Dashboard → Webhooks"
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Webhook status error:", error);
     response.status(500).json({ error: error.message });
   }
 });
@@ -8836,6 +8947,8 @@ exports.enrichCompaniesRaw = functions
 
     const dryRun = request.query.dryRun !== 'false';  // Default to dryRun=true
     const limit = parseInt(request.query.limit) || 10;  // Process 10 at a time
+    const pipeline = request.query.pipeline || request.body?.pipeline;  // Filter by pipeline A or B
+    const source = request.query.source || request.body?.source;  // Filter by source (yc_oss, google_places, etc.)
 
     try {
       const hunterApiKey = functions.config().hunter?.api_key;
@@ -8846,16 +8959,29 @@ exports.enrichCompaniesRaw = functions
         });
       }
 
-      // Get companies_raw that haven't been processed
-      const companiesSnapshot = await db.collection("companies_raw")
-        .where("processed", "==", false)
-        .limit(limit)
-        .get();
+      // Build query with optional pipeline/source filters
+      let query = db.collection("companies_raw").where("processed", "==", false);
 
-      // If no unprocessed, get all
+      if (pipeline) {
+        query = query.where("pipeline", "==", pipeline);
+      }
+      if (source) {
+        query = query.where("source", "==", source);
+      }
+
+      const companiesSnapshot = await query.limit(limit).get();
+
+      // If no unprocessed with filters, try without processed filter
       let companies = companiesSnapshot.docs;
       if (companies.length === 0) {
-        const allCompaniesSnapshot = await db.collection("companies_raw").limit(limit).get();
+        let fallbackQuery = db.collection("companies_raw");
+        if (pipeline) {
+          fallbackQuery = fallbackQuery.where("pipeline", "==", pipeline);
+        }
+        if (source) {
+          fallbackQuery = fallbackQuery.where("source", "==", source);
+        }
+        const allCompaniesSnapshot = await fallbackQuery.limit(limit).get();
         companies = allCompaniesSnapshot.docs;
       }
 
@@ -8944,6 +9070,10 @@ exports.enrichCompaniesRaw = functions
             }
 
             const contactId = generateContactId(email);
+            // Inherit pipeline from source company (default to A if not specified)
+            const sourcePipeline = company.pipeline || 'A';
+            const isPipelineB = sourcePipeline === 'B';
+
             const contactData = {
               id: contactId,
               email: email,
@@ -8958,17 +9088,25 @@ exports.enrichCompaniesRaw = functions
               type: 'lead',
               recordType: 'prospect',
               stage: 'new',
+              pipeline: sourcePipeline,
 
-              tags: ['apollo-enriched', 'pipeline-a'],
+              tags: ['hunter-enriched', `pipeline-${sourcePipeline.toLowerCase()}`],
               score: 0,
               scoreBreakdown: { engagement: 0, behavior: 0, profile: 0, recency: 0 },
 
               source: {
                 original: 'companies_raw_enrichment',
                 medium: 'outbound',
-                campaign: 'pipeline-a-discovery',
+                campaign: `pipeline-${sourcePipeline.toLowerCase()}-discovery`,
                 referrer: company.source || 'google_places',
                 landingPage: ''
+              },
+
+              discoverySource: {
+                primary: company.source || 'unknown',
+                sources: [company.source].filter(Boolean),
+                discoveredAt: admin.firestore.FieldValue.serverTimestamp(),
+                rawDataRef: companyDoc.id
               },
 
               engagement: { emailsSent: 0, emailsOpened: 0, emailsClicked: 0, toolsUsed: [], assessmentScore: null, pageViews: 0 },
@@ -8980,17 +9118,17 @@ exports.enrichCompaniesRaw = functions
               enrichment: { hunter: person },
 
               pipelineAssignment: {
-                primaryPipeline: 'A',
-                pipelineAScore: 0.5,
-                pipelineBScore: 0,
-                pipelineAStatus: 'QUALIFIED',
-                pipelineBStatus: 'PENDING',
+                primaryPipeline: sourcePipeline,
+                pipelineAScore: isPipelineB ? 0 : 0.5,
+                pipelineBScore: isPipelineB ? 0.5 : 0,
+                pipelineAStatus: isPipelineB ? 'PENDING' : 'QUALIFIED',
+                pipelineBStatus: isPipelineB ? 'QUALIFIED' : 'PENDING',
                 peExclusionReason: null,
                 confidenceScore: 0.5,
                 lastScoredAt: admin.firestore.FieldValue.serverTimestamp()
               },
 
-              notes: `Enriched from ${company.source || 'companies_raw'}`,
+              notes: `Enriched from ${company.source || 'companies_raw'} (Pipeline ${sourcePipeline})`,
               customFields: {},
               metadata: {
                 importedVia: 'companies_raw_enrichment',
@@ -9159,6 +9297,93 @@ exports.createMissingContacts = functions.https.onRequest(async (request, respon
 
   } catch (error) {
     console.error("❌ createMissingContacts error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Fix Pipeline Assignment for Contacts from YC-OSS
+ * Updates contacts that came from YC-OSS source to Pipeline B
+ * Call: POST /fixPipelineBContacts?dryRun=true
+ */
+exports.fixPipelineBContacts = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const dryRun = request.query.dryRun !== 'false';
+
+  try {
+    // Get all contacts and check their metadata/discoverySource for YC-OSS
+    const contactsSnapshot = await db.collection("contacts").get();
+
+    const results = {
+      dryRun,
+      checked: 0,
+      updated: 0,
+      alreadyCorrect: 0,
+      details: []
+    };
+
+    const batch = db.batch();
+
+    for (const doc of contactsSnapshot.docs) {
+      const contact = doc.data();
+      results.checked++;
+
+      // Check if this contact came from YC-OSS source
+      const isYCOSS = contact.discoverySource?.primary === 'yc_oss' ||
+                      contact.source?.referrer === 'yc_oss' ||
+                      contact.metadata?.companiesRawId?.startsWith('yc_oss_');
+
+      if (isYCOSS) {
+        // Should be Pipeline B
+        if (contact.pipeline === 'B' && contact.pipelineAssignment?.primaryPipeline === 'B') {
+          results.alreadyCorrect++;
+          results.details.push({ email: contact.email, status: 'already_correct' });
+        } else {
+          // Needs update
+          results.updated++;
+          results.details.push({
+            email: contact.email,
+            company: contact.company,
+            oldPipeline: contact.pipeline,
+            newPipeline: 'B',
+            status: dryRun ? 'would_update' : 'updated'
+          });
+
+          if (!dryRun) {
+            batch.update(doc.ref, {
+              pipeline: 'B',
+              tags: admin.firestore.FieldValue.arrayUnion('pipeline-b'),
+              pipelineAssignment: {
+                primaryPipeline: 'B',
+                pipelineAScore: 0,
+                pipelineBScore: 0.5,
+                pipelineAStatus: 'PENDING',
+                pipelineBStatus: 'QUALIFIED',
+                peExclusionReason: null,
+                confidenceScore: 0.5,
+                lastScoredAt: admin.firestore.FieldValue.serverTimestamp()
+              },
+              'source.campaign': 'pipeline-b-discovery',
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
+      }
+    }
+
+    if (!dryRun && results.updated > 0) {
+      await batch.commit();
+    }
+
+    response.json({ success: true, results });
+  } catch (error) {
+    console.error("❌ fixPipelineBContacts error:", error);
     response.status(500).json({ error: error.message });
   }
 });
@@ -9823,6 +10048,609 @@ function calculateHeadshotQualityScore(place) {
   // Cap at 100
   return Math.min(100, score);
 }
+
+/**
+ * Add Email Event Manually (Admin)
+ * Directly add an email event to Firestore
+ * Call: POST /addEmailEventManual with JSON body
+ */
+exports.addEmailEventManual = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const { emailId, type, to, subject, timestamp } = request.body;
+
+  if (!emailId || !type || !to) {
+    response.status(400).json({ error: "emailId, type, and to are required" });
+    return;
+  }
+
+  try {
+    const eventRef = db.collection("email_events").doc();
+    await eventRef.set({
+      emailId,
+      type,
+      to: to.toLowerCase(),
+      recipientEmail: to.toLowerCase(),
+      subject: subject || "",
+      timestamp: timestamp ? admin.firestore.Timestamp.fromDate(new Date(timestamp)) : admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      backfilled: true,
+      manualEntry: true
+    });
+
+    console.log(`✅ Manually added ${type} event for ${to}`);
+    response.json({ success: true, eventId: eventRef.id, type, to });
+
+  } catch (error) {
+    console.error("❌ Failed to add event:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Backfill Email Events from Resend API
+ * Fetches emails for a specific recipient and creates missing email_events
+ * Call: POST /backfillEmailEventsFromResend?email=user@example.com
+ */
+exports.backfillEmailEventsFromResend = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const email = request.query.email || request.body?.email;
+  const dryRun = request.query.dryRun === 'true';
+
+  if (!email) {
+    response.status(400).json({ error: "Email parameter required" });
+    return;
+  }
+
+  try {
+    const resendApiKey = functions.config().resend?.api_key;
+    if (!resendApiKey) {
+      response.status(500).json({ error: "Resend API key not configured" });
+      return;
+    }
+
+    // Fetch recent emails from Resend
+    const resendResponse = await fetch("https://api.resend.com/emails?limit=100", {
+      headers: { "Authorization": `Bearer ${resendApiKey}` }
+    });
+
+    if (!resendResponse.ok) {
+      const errorText = await resendResponse.text();
+      response.status(500).json({ error: `Resend API error: ${errorText}` });
+      return;
+    }
+
+    const resendData = await resendResponse.json();
+    const allEmails = resendData.data || [];
+
+    // Filter for target email
+    const targetEmails = allEmails.filter(e => {
+      const toList = Array.isArray(e.to) ? e.to : [e.to];
+      return toList.some(t => t.toLowerCase() === email.toLowerCase());
+    });
+
+    console.log(`📧 Found ${targetEmails.length} emails for ${email} in Resend`);
+
+    // Check which emails are already in email_events
+    const existingEventsQuery = await db.collection("email_events")
+      .where("to", "==", email.toLowerCase())
+      .get();
+
+    const existingEmailIds = new Set();
+    existingEventsQuery.docs.forEach(doc => {
+      const eventEmailId = doc.data().emailId;
+      if (eventEmailId) existingEmailIds.add(eventEmailId);
+    });
+
+    console.log(`📋 Already have ${existingEmailIds.size} unique emailIds in email_events`);
+
+    // Find missing emails
+    const missingEmails = targetEmails.filter(e => !existingEmailIds.has(e.id));
+    console.log(`🔍 Missing ${missingEmails.length} emails - need to backfill`);
+
+    if (dryRun) {
+      response.json({
+        success: true,
+        dryRun: true,
+        email,
+        totalInResend: targetEmails.length,
+        alreadyTracked: existingEmailIds.size,
+        needBackfill: missingEmails.length,
+        missingEmails: missingEmails.map(e => ({
+          id: e.id,
+          subject: e.subject,
+          createdAt: e.created_at
+        }))
+      });
+      return;
+    }
+
+    // Fetch details and create events for missing emails
+    const results = { created: 0, errors: [] };
+
+    for (const emailItem of missingEmails) {
+      try {
+        // Get detailed email info from Resend
+        const detailResponse = await fetch(`https://api.resend.com/emails/${emailItem.id}`, {
+          headers: { "Authorization": `Bearer ${resendApiKey}` }
+        });
+
+        if (!detailResponse.ok) {
+          results.errors.push({ id: emailItem.id, error: "Failed to fetch details" });
+          continue;
+        }
+
+        const detail = await detailResponse.json();
+        const lastEvent = detail.last_event || "delivered";
+
+        // Create delivered event (since we know it was sent)
+        const eventRef = db.collection("email_events").doc();
+        await eventRef.set({
+          emailId: emailItem.id,
+          type: "delivered",
+          to: email.toLowerCase(),
+          recipientEmail: email.toLowerCase(),
+          subject: emailItem.subject,
+          timestamp: admin.firestore.Timestamp.fromDate(new Date(emailItem.created_at)),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          backfilled: true,
+          originalLastEvent: lastEvent
+        });
+
+        results.created++;
+        console.log(`✅ Created delivered event for ${emailItem.id}`);
+
+        // If opened, create opened event too
+        if (lastEvent === "opened" || lastEvent === "clicked") {
+          const openRef = db.collection("email_events").doc();
+          await openRef.set({
+            emailId: emailItem.id,
+            type: "opened",
+            to: email.toLowerCase(),
+            recipientEmail: email.toLowerCase(),
+            subject: emailItem.subject,
+            timestamp: admin.firestore.Timestamp.fromDate(new Date(emailItem.created_at)),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            backfilled: true
+          });
+          console.log(`✅ Created opened event for ${emailItem.id}`);
+        }
+
+        // If clicked, create clicked event too
+        if (lastEvent === "clicked") {
+          const clickRef = db.collection("email_events").doc();
+          await clickRef.set({
+            emailId: emailItem.id,
+            type: "clicked",
+            to: email.toLowerCase(),
+            recipientEmail: email.toLowerCase(),
+            subject: emailItem.subject,
+            timestamp: admin.firestore.Timestamp.fromDate(new Date(emailItem.created_at)),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            backfilled: true
+          });
+          console.log(`✅ Created clicked event for ${emailItem.id}`);
+        }
+
+      } catch (emailError) {
+        results.errors.push({ id: emailItem.id, error: emailError.message });
+      }
+    }
+
+    // Now sync the contact engagement
+    const contactId = generateContactId(email);
+    let syncResult = null;
+    try {
+      syncResult = await syncEngagementForContact(contactId, email.toLowerCase());
+    } catch (syncErr) {
+      syncResult = { error: syncErr.message };
+    }
+
+    console.log(`🎯 Backfill complete: ${results.created} events created`);
+    response.json({
+      success: true,
+      email,
+      eventsCreated: results.created,
+      errors: results.errors,
+      syncResult
+    });
+
+  } catch (error) {
+    console.error("❌ Backfill failed:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Bulk enroll contacts into their pipeline journeys
+ * Assigns contacts to outbound-pipeline-a or outbound-pipeline-b based on pipelineAssignment
+ */
+exports.enrollContactsInJourneys = functions
+  .runWith({ memory: '256MB', timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
+      return;
+    }
+
+    const dryRun = request.query.dryRun !== 'false';
+    const limit = parseInt(request.query.limit) || 50;
+
+    try {
+      // Get contacts without journeyId that have a pipeline assignment
+      const contactsSnapshot = await db.collection("contacts")
+        .where("recordType", "==", "prospect")
+        .limit(limit)
+        .get();
+
+      const results = {
+        dryRun,
+        total: contactsSnapshot.size,
+        enrolled: 0,
+        skipped: 0,
+        alreadyEnrolled: 0,
+        noPipeline: 0,
+        details: []
+      };
+
+      const PIPELINE_A_JOURNEY = "outbound-pipeline-a";
+      const PIPELINE_B_JOURNEY = "outbound-pipeline-b";
+
+      // Domains to exclude from outbound (internal/test)
+      const EXCLUDE_DOMAINS = [
+        'yellowcircle.io',
+        'goldenunknown.com',
+        'acme.com',
+        'example.com',
+        'test.com',
+        'gmail.com',  // Personal emails - not B2B
+        'hotmail.com',
+        'aol.com',
+        'live.com',
+        'yahoo.com'
+      ];
+
+      for (const doc of contactsSnapshot.docs) {
+        const contact = doc.data();
+        const contactId = doc.id;
+        const email = contact.email;
+
+        // Skip test/internal emails
+        const emailDomain = email?.split('@')[1]?.toLowerCase();
+        if (EXCLUDE_DOMAINS.includes(emailDomain)) {
+          results.skipped++;
+          results.details.push({ email, status: 'skipped_test_domain', domain: emailDomain });
+          continue;
+        }
+
+        // Skip if already in a journey
+        if (contact.journeys?.active?.length > 0) {
+          results.alreadyEnrolled++;
+          results.details.push({ email, status: 'already_enrolled', journeys: contact.journeys.active });
+          continue;
+        }
+
+        // Determine journey based on pipeline
+        const pipeline = contact.pipelineAssignment?.primaryPipeline || contact.pipeline;
+        let journeyId = null;
+
+        if (pipeline === 'A') {
+          journeyId = PIPELINE_A_JOURNEY;
+        } else if (pipeline === 'B') {
+          journeyId = PIPELINE_B_JOURNEY;
+        } else {
+          // No pipeline - assign to A by default for now
+          journeyId = PIPELINE_A_JOURNEY;
+          results.noPipeline++;
+        }
+
+        if (!dryRun) {
+          // Update contact with journey enrollment
+          const journeyRef = db.collection("journeys").doc(journeyId);
+          const journey = await journeyRef.get();
+
+          if (!journey.exists) {
+            results.details.push({ email, status: 'error', error: `Journey ${journeyId} not found` });
+            continue;
+          }
+
+          // Update contact to enroll in journey
+          await db.collection("contacts").doc(contactId).update({
+            'journeys.active': admin.firestore.FieldValue.arrayUnion(journeyId),
+            'journeys.history': admin.firestore.FieldValue.arrayUnion({
+              journeyId,
+              enrolledAt: new Date().toISOString(),
+              source: 'bulk_enrollment'
+            }),
+            'currentJourney': {
+              journeyId,
+              currentNodeId: journey.data().nodes?.[0]?.id || 'start',
+              enteredAt: new Date().toISOString(),
+              lastProcessedAt: null,
+              status: 'active',
+              variant: null  // Will be assigned during processing (A/B/C split)
+            },
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
+        results.enrolled++;
+        results.details.push({
+          email,
+          pipeline,
+          journeyId,
+          status: dryRun ? 'would_enroll' : 'enrolled'
+        });
+      }
+
+      console.log(`📧 Journey enrollment: ${results.enrolled} enrolled, ${results.alreadyEnrolled} already enrolled, ${results.skipped} skipped`);
+
+      response.json({
+        success: true,
+        dryRun,
+        results,
+        nextSteps: dryRun ? [
+          "Run with ?dryRun=false to actually enroll contacts",
+          "Then trigger processOutboundJourneys to send initial emails"
+        ] : [
+          "Contacts enrolled! Call triggerJourneyProcessing to send emails",
+          "Monitor with emailWebhookStatus endpoint"
+        ]
+      });
+
+    } catch (error) {
+      console.error("❌ Enrollment failed:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Process outbound journeys - sends emails to enrolled contacts
+ * Handles A/B/C split testing, throttling, and merge tag replacement
+ */
+exports.processOutboundJourneys = functions
+  .runWith({ memory: '512MB', timeoutSeconds: 300 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
+      return;
+    }
+
+    const dryRun = request.query.dryRun !== 'false';
+    const maxSendsPerRun = parseInt(request.query.limit) || 10;  // Default: 10/day throttle
+
+    try {
+      const resendApiKey = functions.config().resend?.api_key;
+      if (!resendApiKey) {
+        return response.status(500).json({ error: "Resend API key not configured" });
+      }
+
+      // Get today's send count
+      const today = new Date().toISOString().split('T')[0];
+      const dailyStatsRef = db.collection('email_daily_stats').doc(today);
+      const dailyStatsDoc = await dailyStatsRef.get();
+      let todaysSendCount = dailyStatsDoc.exists ? (dailyStatsDoc.data()?.outboundSent || 0) : 0;
+
+      const results = {
+        dryRun,
+        todaysSendCount,
+        maxSendsPerRun,
+        remainingQuota: Math.max(0, maxSendsPerRun - todaysSendCount),
+        processed: 0,
+        sent: 0,
+        skipped: 0,
+        errors: [],
+        details: []
+      };
+
+      // Check if we've hit daily limit
+      if (todaysSendCount >= maxSendsPerRun && !dryRun) {
+        return response.json({
+          success: true,
+          message: "Daily send limit reached",
+          results
+        });
+      }
+
+      // Find contacts enrolled in outbound journeys that haven't been processed yet
+      const contactsSnapshot = await db.collection('contacts')
+        .where('journeys.active', 'array-contains-any', ['outbound-pipeline-a', 'outbound-pipeline-b'])
+        .limit(50)
+        .get();
+
+      console.log(`📧 Found ${contactsSnapshot.size} contacts in outbound journeys`);
+
+      // Get journey configs
+      const pipelineADoc = await db.collection('journeys').doc('outbound-pipeline-a').get();
+      const pipelineBDoc = await db.collection('journeys').doc('outbound-pipeline-b').get();
+
+      const journeyConfigs = {
+        'outbound-pipeline-a': pipelineADoc.exists ? pipelineADoc.data() : null,
+        'outbound-pipeline-b': pipelineBDoc.exists ? pipelineBDoc.data() : null
+      };
+
+      for (const doc of contactsSnapshot.docs) {
+        const contact = doc.data();
+        const contactId = doc.id;
+        const email = contact.email;
+
+        // Skip if already processed (has variant assigned and email sent)
+        if (contact.currentJourney?.variant && contact.currentJourney?.emailSentAt) {
+          results.skipped++;
+          results.details.push({ email, status: 'already_sent' });
+          continue;
+        }
+
+        // Check daily limit
+        if (results.sent >= (maxSendsPerRun - todaysSendCount) && !dryRun) {
+          results.details.push({ email, status: 'throttled', reason: 'daily_limit' });
+          continue;
+        }
+
+        const journeyId = contact.currentJourney?.journeyId || contact.journeys?.active?.[0];
+        const journeyConfig = journeyConfigs[journeyId];
+
+        if (!journeyConfig) {
+          results.errors.push({ email, error: `Journey ${journeyId} not found` });
+          continue;
+        }
+
+        // Assign random A/B/C variant if not already assigned
+        let variant = contact.currentJourney?.variant;
+        if (!variant) {
+          const variants = ['A', 'B', 'C'];
+          variant = variants[Math.floor(Math.random() * variants.length)];
+        }
+
+        const emailVariant = journeyConfig.emailVariants?.[variant];
+        if (!emailVariant) {
+          results.errors.push({ email, error: `Variant ${variant} not found in journey` });
+          continue;
+        }
+
+        // Replace merge tags in subject and body
+        const replaceMergeTags = (text, contact) => {
+          if (!text) return text;
+          return text
+            .replace(/\{\{#if name\}\}(.*?)\{\{else\}\}(.*?)\{\{\/if\}\}/gi,
+              contact.name ? contact.name : '$2')
+            .replace(/\{\{#if company\}\}(.*?)\{\{else\}\}(.*?)\{\{\/if\}\}/gi,
+              contact.company ? '$1'.replace(/\{\{company\}\}/gi, contact.company) : '$2')
+            .replace(/\{\{#if industry\}\}(.*?)\{\{else\}\}(.*?)\{\{\/if\}\}/gi,
+              contact.industry ? '$1'.replace(/\{\{industry\}\}/gi, contact.industry) : '$2')
+            .replace(/\{\{name\}\}/gi, contact.name || '')
+            .replace(/\{\{company\}\}/gi, contact.company || '')
+            .replace(/\{\{industry\}\}/gi, contact.industry || '');
+        };
+
+        // Use failback subject if merge tags would fail
+        let subject = emailVariant.subject;
+        if (emailVariant.subjectWithMerge && contact.company) {
+          subject = replaceMergeTags(emailVariant.subjectWithMerge, contact);
+        }
+
+        const body = replaceMergeTags(emailVariant.body, contact);
+
+        results.details.push({
+          email,
+          variant,
+          subject,
+          journeyId,
+          status: dryRun ? 'would_send' : 'sending'
+        });
+
+        if (!dryRun) {
+          try {
+            // Send email via Resend
+            const sendResponse = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${resendApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: 'Christopher Cooper <christopher@yellowcircle.io>',
+                to: [email],
+                subject: subject,
+                html: body.replace(/\n/g, '<br>'),
+                tags: [
+                  { name: 'journey', value: journeyId },
+                  { name: 'variant', value: variant },
+                  { name: 'type', value: 'outbound' }
+                ]
+              })
+            });
+
+            const sendResult = await sendResponse.json();
+
+            if (sendResponse.ok && sendResult.id) {
+              // Update contact with send info
+              await db.collection('contacts').doc(contactId).update({
+                'currentJourney.variant': variant,
+                'currentJourney.emailSentAt': admin.firestore.FieldValue.serverTimestamp(),
+                'currentJourney.emailId': sendResult.id,
+                'currentJourney.status': 'email_sent',
+                'emailsSent': admin.firestore.FieldValue.increment(1),
+                'lastEmailSent': admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+
+              results.sent++;
+              results.details[results.details.length - 1].status = 'sent';
+              results.details[results.details.length - 1].emailId = sendResult.id;
+
+              console.log(`✅ Sent ${variant} to ${email}: ${sendResult.id}`);
+            } else {
+              results.errors.push({ email, error: sendResult.message || 'Send failed' });
+              results.details[results.details.length - 1].status = 'error';
+            }
+          } catch (sendError) {
+            results.errors.push({ email, error: sendError.message });
+            results.details[results.details.length - 1].status = 'error';
+          }
+        }
+
+        results.processed++;
+      }
+
+      // Update daily stats
+      if (!dryRun && results.sent > 0) {
+        await dailyStatsRef.set({
+          date: today,
+          outboundSent: admin.firestore.FieldValue.increment(results.sent),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+
+      console.log(`🏁 Outbound processing: ${results.sent} sent, ${results.skipped} skipped, ${results.errors.length} errors`);
+
+      response.json({
+        success: true,
+        dryRun,
+        results,
+        nextSteps: dryRun ? [
+          "Run with ?dryRun=false to actually send emails",
+          "Monitor daily limit with emailWebhookStatus"
+        ] : results.sent > 0 ? [
+          "Emails sent! Monitor engagement via Contact Dashboard",
+          `Today's send count: ${todaysSendCount + results.sent}/${maxSendsPerRun}`
+        ] : [
+          "No emails sent - check errors or daily limit"
+        ]
+      });
+
+    } catch (error) {
+      console.error("❌ Outbound processing failed:", error);
+      response.status(500).json({ error: error.message });
+    }
+  });
 
 /**
  * Generate mock headshot prospects for testing
