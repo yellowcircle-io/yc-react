@@ -92,6 +92,31 @@
 - Proper signature: Christopher, phone, cal.com link
 - Test addresses added: christopher@goldenunknown.com, christopher.ramon.cooper@gmail.com
 
+### ✅ Platform Enhancements Sprint (Dec 18-19)
+**AI Image Generation:**
+- `generateImage` function with tiered pricing (free/standard/premium)
+- Free tier: SVG placeholders (always available)
+- $20/month budget cap with usage tracking
+- `getImageGenUsage` admin endpoint
+
+**Programmatic Ads:**
+- `getAdBudgetStats` - Budget tracking across platforms
+- `createMetaCampaign` - Facebook/Instagram ads
+- `createGoogleCampaign` - Google Ads (placeholder)
+- `createLinkedInCampaign` - LinkedIn Marketing API
+- $100/month total cap, $35/platform cap
+
+**Headshot Sourcing:**
+- `discoverHeadshotProspects` - Google Places for headshot-ready businesses
+- `importHeadshotProspectsCSV` - CSV/JSON import
+- `getHeadshotProspects` - Retrieve and filter prospects
+- Targets: law firms, real estate, financial advisors, consultants
+
+**Claude Code Autonomous:**
+- Created `.claude/CLAUDE_CODE_AUTONOMOUS_SETUP.md` guide
+- `scripts/claude-auto.sh` automation script
+- Hybrid B+C architecture documented (Agent SDK + Sleepless)
+
 ---
 
 ## ACTUALLY NOT DONE
@@ -119,10 +144,10 @@
 ### P2 - Platform Enhancements
 | Item | Status | Notes |
 |------|--------|-------|
-| AI Image Generation | ⏳ Pending | $20/mo cap, tiered (Imagen 3 $0.03, Gemini Pro $0.13) |
-| Programmatic Ads | ⏳ Pending | Meta/LinkedIn/Google only, $100/mo total cap |
-| Headshot Sourcing | ⏳ Pending | CSV + Google Places simplified |
-| Claude Code Autonomous | ⏳ Pending | Hybrid B+C (Agent SDK + Sleepless) |
+| AI Image Generation | ✅ Done | Free tier + $20/mo cap (Imagen $0.03, Gemini $0.13) |
+| Programmatic Ads | ✅ Done | Meta/LinkedIn/Google ($100/mo cap, $35/platform) |
+| Headshot Sourcing | ✅ Done | CSV import + Google Places discovery |
+| Claude Code Autonomous | ✅ Done | Setup guide + automation script |
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
 | Firestore Security Rules | ⚠️ Documented | Needs hardening (permissive patterns found) |
