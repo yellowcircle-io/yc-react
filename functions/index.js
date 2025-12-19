@@ -8478,6 +8478,43 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
       console.log(`📊 ${action}: ${data.to?.[0] || 'Unknown'}${linkInfo}`);
     }
 
+    // Update contact engagement stats
+    const recipientEmail = data.to?.[0];
+    if (recipientEmail) {
+      try {
+        const contactId = generateContactId(recipientEmail);
+        const contactRef = db.collection("contacts").doc(contactId);
+        const contactDoc = await contactRef.get();
+
+        if (contactDoc.exists) {
+          const contactUpdates = {
+            'engagement.lastTouchedAt': admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          };
+
+          // Update specific engagement metrics based on event type
+          if (type === 'email.sent' || type === 'email.delivered') {
+            contactUpdates['engagement.emailsSent'] = admin.firestore.FieldValue.increment(1);
+            contactUpdates['engagement.lastEmailAt'] = admin.firestore.FieldValue.serverTimestamp();
+          } else if (type === 'email.opened') {
+            contactUpdates['engagement.emailsOpened'] = admin.firestore.FieldValue.increment(1);
+            contactUpdates['engagement.lastOpenAt'] = admin.firestore.FieldValue.serverTimestamp();
+          } else if (type === 'email.clicked') {
+            contactUpdates['engagement.emailsClicked'] = admin.firestore.FieldValue.increment(1);
+            contactUpdates['engagement.lastClickAt'] = admin.firestore.FieldValue.serverTimestamp();
+          }
+
+          await contactRef.update(contactUpdates);
+          console.log(`📇 Updated contact ${contactId} engagement for ${type}`);
+        } else {
+          console.log(`⚠️ Contact not found for ${recipientEmail} (${contactId})`);
+        }
+      } catch (contactError) {
+        console.error(`❌ Failed to update contact engagement:`, contactError);
+        // Don't fail the webhook, just log the error
+      }
+    }
+
     response.json({ success: true, event: type });
 
   } catch (error) {
@@ -8485,6 +8522,155 @@ exports.handleResendWebhook = functions.https.onRequest(async (request, response
     response.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * Sync Email Events to Contact Engagement
+ * Backfills engagement stats from email_events collection
+ * Call: POST /syncContactEngagement?email=user@example.com
+ */
+exports.syncContactEngagement = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  const email = request.query.email || request.body?.email;
+  const syncAll = request.query.syncAll === 'true';
+
+  if (!email && !syncAll) {
+    response.status(400).json({ error: "Email parameter required (or syncAll=true)" });
+    return;
+  }
+
+  try {
+    const results = {
+      contactsUpdated: 0,
+      emailsProcessed: 0,
+      errors: []
+    };
+
+    if (email) {
+      // Single contact sync
+      const contactId = generateContactId(email);
+      const result = await syncEngagementForContact(contactId, email);
+      results.contactsUpdated = result.updated ? 1 : 0;
+      results.emailsProcessed = result.eventsCount || 0;
+      if (result.error) results.errors.push(result.error);
+    } else if (syncAll) {
+      // Sync all contacts that have email events
+      const emailsSnapshot = await db.collection("email_events")
+        .select("to")
+        .get();
+
+      const uniqueEmails = new Set();
+      emailsSnapshot.docs.forEach(doc => {
+        const to = doc.data().to;
+        if (to) uniqueEmails.add(to.toLowerCase());
+      });
+
+      console.log(`📧 Found ${uniqueEmails.size} unique emails with events`);
+
+      for (const recipientEmail of uniqueEmails) {
+        const contactId = generateContactId(recipientEmail);
+        const result = await syncEngagementForContact(contactId, recipientEmail);
+        if (result.updated) results.contactsUpdated++;
+        results.emailsProcessed += result.eventsCount || 0;
+        if (result.error) results.errors.push({ email: recipientEmail, error: result.error });
+      }
+    }
+
+    console.log(`✅ Sync complete: ${results.contactsUpdated} contacts, ${results.emailsProcessed} events`);
+    response.json({ success: true, results });
+
+  } catch (error) {
+    console.error("❌ Sync failed:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Helper: Sync engagement for a single contact
+ */
+async function syncEngagementForContact(contactId, email) {
+  try {
+    const contactRef = db.collection("contacts").doc(contactId);
+    const contactDoc = await contactRef.get();
+
+    if (!contactDoc.exists) {
+      return { updated: false, error: `Contact not found: ${contactId}` };
+    }
+
+    // Query email events for this email
+    const eventsSnapshot = await db.collection("email_events")
+      .where("to", "==", email)
+      .get();
+
+    if (eventsSnapshot.empty) {
+      return { updated: false, eventsCount: 0 };
+    }
+
+    // Aggregate events
+    let emailsSent = 0;
+    let emailsOpened = 0;
+    let emailsClicked = 0;
+    let lastEmailAt = null;
+    let lastOpenAt = null;
+    let lastClickAt = null;
+    let lastTouchedAt = null;
+
+    eventsSnapshot.docs.forEach(doc => {
+      const event = doc.data();
+      const eventTime = event.timestamp || event.createdAt;
+
+      if (event.type === 'sent' || event.type === 'delivered') {
+        emailsSent++;
+        if (!lastEmailAt || (eventTime && eventTime > lastEmailAt)) {
+          lastEmailAt = eventTime;
+        }
+      } else if (event.type === 'opened') {
+        emailsOpened++;
+        if (!lastOpenAt || (eventTime && eventTime > lastOpenAt)) {
+          lastOpenAt = eventTime;
+        }
+      } else if (event.type === 'clicked') {
+        emailsClicked++;
+        if (!lastClickAt || (eventTime && eventTime > lastClickAt)) {
+          lastClickAt = eventTime;
+        }
+      }
+
+      // Track latest touch
+      if (!lastTouchedAt || (eventTime && eventTime > lastTouchedAt)) {
+        lastTouchedAt = eventTime;
+      }
+    });
+
+    // Update contact
+    const updates = {
+      'engagement.emailsSent': emailsSent,
+      'engagement.emailsOpened': emailsOpened,
+      'engagement.emailsClicked': emailsClicked,
+      'engagement.lastTouchedAt': lastTouchedAt || admin.firestore.FieldValue.serverTimestamp(),
+      'engagement.lastTouchType': 'email',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (lastEmailAt) updates['engagement.lastEmailAt'] = lastEmailAt;
+    if (lastOpenAt) updates['engagement.lastOpenAt'] = lastOpenAt;
+    if (lastClickAt) updates['engagement.lastClickAt'] = lastClickAt;
+
+    await contactRef.update(updates);
+
+    console.log(`📇 Synced ${contactId}: ${emailsSent} sent, ${emailsOpened} opened, ${emailsClicked} clicked`);
+    return { updated: true, eventsCount: eventsSnapshot.size };
+
+  } catch (error) {
+    console.error(`❌ Failed to sync ${contactId}:`, error);
+    return { updated: false, error: error.message };
+  }
+}
 
 /**
  * MOCK DATA GENERATORS (for testing when APIs not configured)

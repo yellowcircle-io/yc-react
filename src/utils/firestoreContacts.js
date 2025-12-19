@@ -162,11 +162,25 @@ export const createContactObject = ({
       lastEmailAt: null,
       lastOpenAt: null,
       lastClickAt: null,
+      lastTouchedAt: null,    // Last time any interaction occurred
+      lastTouchType: null,    // 'email' | 'call' | 'meeting' | 'form' | 'import' | null
       toolsUsed: [],
       assessmentScore: null,
       assessmentCompletedAt: null,
       pageViews: 0,
       lastVisitAt: null
+    },
+
+    // Targeting / ICP (Ideal Customer Profile)
+    targeting: {
+      icp: null,              // Primary ICP segment: 'headshot_studio' | 'b2b_services' | 'startup' | 'agency' | null
+      campaigns: [],          // Campaign tags: ['client_a_launch', 'q1_outbound', etc.]
+      useCase: null,          // Business use case: 'headshot_prospecting' | 'lead_gen' | 'nurture' | null
+      verticals: [],          // Industry verticals: ['legal', 'real_estate', 'tech', etc.]
+      companySize: null,      // 'solo' | 'small' | 'medium' | 'enterprise' | null
+      priority: 'normal',     // 'high' | 'normal' | 'low'
+      excludeFromCampaigns: false,
+      notes: ''
     },
 
     // Journey tracking
@@ -842,10 +856,72 @@ export const recordEmailEvent = async (contactId, eventType, _eventData = {}) =>
   }
 
   if (Object.keys(updates).length > 0) {
+    // Also update lastTouchedAt
+    updates['engagement.lastTouchedAt'] = serverTimestamp();
+    updates['engagement.lastTouchType'] = 'email';
     return updateContact(contactId, updates, 'system');
   }
 
   return contact;
+};
+
+/**
+ * Update contact targeting/ICP
+ * @param {string} contactId
+ * @param {object} targeting - Targeting fields to update
+ * @param {string} updatedBy
+ */
+export const updateContactTargeting = async (contactId, targeting, updatedBy = 'admin') => {
+  const updates = {};
+
+  if (targeting.icp !== undefined) updates['targeting.icp'] = targeting.icp;
+  if (targeting.campaigns !== undefined) updates['targeting.campaigns'] = targeting.campaigns;
+  if (targeting.useCase !== undefined) updates['targeting.useCase'] = targeting.useCase;
+  if (targeting.verticals !== undefined) updates['targeting.verticals'] = targeting.verticals;
+  if (targeting.companySize !== undefined) updates['targeting.companySize'] = targeting.companySize;
+  if (targeting.priority !== undefined) updates['targeting.priority'] = targeting.priority;
+  if (targeting.excludeFromCampaigns !== undefined) updates['targeting.excludeFromCampaigns'] = targeting.excludeFromCampaigns;
+  if (targeting.notes !== undefined) updates['targeting.notes'] = targeting.notes;
+
+  if (Object.keys(updates).length > 0) {
+    return updateContact(contactId, updates, updatedBy);
+  }
+  return null;
+};
+
+/**
+ * Add campaign tag to contact
+ */
+export const addCampaignToContact = async (contactId, campaignTag, updatedBy = 'admin') => {
+  const contact = await getContact(contactId);
+  if (!contact) return null;
+
+  const campaigns = contact.targeting?.campaigns || [];
+  if (!campaigns.includes(campaignTag)) {
+    campaigns.push(campaignTag);
+    return updateContact(contactId, { 'targeting.campaigns': campaigns }, updatedBy);
+  }
+  return contact;
+};
+
+/**
+ * Record a touch event (call, meeting, manual contact)
+ */
+export const recordTouch = async (contactId, touchType, notes = '', updatedBy = 'admin') => {
+  const updates = {
+    'engagement.lastTouchedAt': serverTimestamp(),
+    'engagement.lastTouchType': touchType
+  };
+
+  if (notes) {
+    // Append to notes or create
+    const contact = await getContact(contactId);
+    const existingNotes = contact?.notes || '';
+    const timestamp = new Date().toISOString().split('T')[0];
+    updates.notes = existingNotes + (existingNotes ? '\n\n' : '') + `[${timestamp}] ${touchType}: ${notes}`;
+  }
+
+  return updateContact(contactId, updates, updatedBy);
 };
 
 // ============================================================
@@ -1285,6 +1361,10 @@ export default {
   // Engagement
   recordToolUsage,
   recordEmailEvent,
+  recordTouch,
+  // Targeting / ICP (Dec 2025)
+  updateContactTargeting,
+  addCampaignToContact,
   // Dual-Pipeline Prospecting (Dec 2025)
   evaluatePESignals,
   calculatePipelineScores,
