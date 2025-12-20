@@ -11,10 +11,12 @@
 ```
 .claude/shared-context/
 ├── README.md                    (this file)
-├── WIP_CURRENT_CRITICAL.md              (current work-in-progress)
-├── WIP_[YYYY-MM-DD].md         (archived WIP notes)
-├── DECISIONS.md                (cross-machine decision log)
-└── SESSION_[DATE]_[MACHINE].md (session summaries)
+├── WIP_CURRENT_CRITICAL.md      (current work-in-progress)
+├── MCP_SERVER_CONFIG.md         (MCP server setup - per-machine)
+├── ACTIVE_SPRINT.md             (current sprint status)
+├── DECISIONS.md                 (cross-machine decision log)
+├── WIP_[YYYY-MM-DD].md          (archived WIP notes)
+└── SESSION_[DATE]_[MACHINE].md  (session summaries)
 ```
 
 ---
@@ -52,6 +54,18 @@
 **When to Create:**
 - Archive WIP_CURRENT_CRITICAL.md when starting fresh task
 - Preserve context from completed sessions
+
+### MCP_SERVER_CONFIG.md
+**Purpose:** Document MCP server setup commands for all machines
+
+**Note:** MCP servers are configured per-machine at `~/.claude/` (not synced).
+This file provides the commands to replicate the setup on each machine.
+
+**Contains:**
+- Required MCP servers (Playwright, GitHub, Notion)
+- Setup commands for each server
+- Troubleshooting guide
+- Machine status tracking
 
 ### DECISIONS.md
 **Purpose:** Log of important decisions made across all machines
@@ -227,5 +241,5 @@ cat ~/.dropbox/info.json | grep path
 ---
 
 **Created:** November 2, 2025
-**Last Updated:** November 2, 2025
+**Last Updated:** December 19, 2025
 **Maintained By:** All Claude Code instances across machines
