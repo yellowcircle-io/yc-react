@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** December 19, 2025
+**Updated:** December 20, 2025
 **Purpose:** Concise, accurate status tracking (replaces verbose WIP)
 
 ---
@@ -12,9 +12,10 @@
 | Firebase Hosting | ✅ Live | yellowcircle.io |
 | n8n (Railway) | ✅ Live | `n8n-production-9ef7.up.railway.app` |
 | Firestore | ✅ Live | capsules, journeys, rate_limits, config |
-| Cloud Functions | ✅ 25+ deployed | processJourneys, sendEmail, onLeadCreated, etc. |
+| Cloud Functions | ✅ 36+ deployed | processJourneys, sendEmail, onLeadCreated, etc. |
 | Resend ESP | ✅ Configured | via Firebase Functions config |
 | Admin Auth | ✅ Firebase SSO | Hybrid auth (SSO + legacy tokens) |
+| Email Tracking | ✅ Active | handleResendWebhook (19 events, 5 recipients) |
 
 ### Admin Pages - ALL IMPLEMENTED
 | Page | Lines | Route | Status |
@@ -42,43 +43,62 @@
 
 ---
 
-## COMPLETED TODAY (Dec 19, 2025)
+## P1 TASKS - CURRENT STATUS
 
-### ✅ P1 Contact Import Automation
+| Priority | Task | Status |
+|----------|------|--------|
+| P1 | Configure API Keys | ✅ **DONE** (Gemini, Places, PDL, FullEnrich, Hunter, Apollo) |
+| P1 | Meta/LinkedIn/Google Ads | ⚠️ User action (tokens/verification pending) |
+| P1 | Launch Outbound Campaign | ⏳ Ready after ad platform tokens |
+| ~~P2~~ | Firestore Security Rules | ✅ **COMPLETED** Dec 19 (deployed + committed) |
+| P3 | Dynamic Newsletter | ⏳ Scoped only (Next Week) |
+
+### API Keys Summary
+| Configured ✅ | Pending ⚠️ |
+|--------------|------------|
+| Gemini, Google Places, PDL, FullEnrich, Hunter, Apollo | LinkedIn (OAuth regen), Meta (Business Verification), Google Ads (On hold) |
+
+---
+
+## PHOTOGRAPHER USE CASE (dash@dashkolos.com)
+
+### Email Tracking: ✅ OPERATIONAL
+- Webhook handler deployed (`handleResendWebhook`)
+- Events tracked: sent, delivered, opened, clicked, bounced
+- 19 events tracked across 5 recipients (live data)
+
+### 300 Contacts Capacity
+| ESP | Free Tier | 300 in 1 Day? | Recommendation |
+|-----|-----------|---------------|----------------|
+| **Brevo** | 300/day (9K/mo) | ✅ Yes | **Best free option** |
+| Resend | 100/day (3K/mo) | ❌ 3 days | Upgrade to $20/mo |
+| SendGrid | 100/day (3K/mo) | ❌ 3 days | Already integrated |
+| MailerSend | 3K/month | ✅ Yes | Clean API |
+
+### Recommended Path
+1. Dash creates Brevo account (free, 2 min)
+2. Verifies sending domain (DNS)
+3. Generates API key
+4. Store in `config/client_esp_keys` for per-client isolation
+
+---
+
+## COMPLETED THIS WEEK (Dec 16-20, 2025)
+
+### ✅ P1 Contact Import Automation (Dec 19)
 - **121 contacts/prospects imported** (exceeded 50 target by 142%)
 - Headshot prospects: 36 stored (SF, LA, NYC)
 - Pipeline A (traditional): 48 stored (accounting, marketing, consulting)
 - Pipeline B (digital-first): 25 stored (YC GitHub, Growjo)
 
-### ✅ P1 Function Testing Complete
-All new endpoints validated:
-- `generateImage` (free tier) ✅
-- `getAdBudgetStats` ✅
-- `getImageGenUsage` ✅
-- `discoverHeadshotProspects` ✅
-- `importHeadshotProspectsCSV` ✅
-- `discoverPipelineA` ✅
-- `discoverPipelineB` ✅
-- `listEnrichmentProviders` ✅
-
-### ⏳ P1 API Keys - User Action Required
-| API | Status | Action |
-|-----|--------|--------|
-| Gemini (AI Image) | ❌ Not configured | Get key from Google AI Studio |
-| Meta Ads | ❌ Not configured | Setup in Meta Business Manager |
-| Google Ads | ❌ Not configured | Setup in Google Ads API |
-| LinkedIn | ❌ Not configured | Setup in LinkedIn Developer |
-| PDL/Hunter/Apollo | ✅ All configured | None needed |
-
-### ⏳ P1 Claude Code Autonomous
-- `scripts/claude-auto.sh` ✅ Ready
-- Claude CLI v2.0.73 ✅ Verified
-- `logs/claude-auto/` directory ✅ Created
-- Slack app setup ❌ Requires user action
-
----
-
-## COMPLETED THIS WEEK (Dec 16-18, 2025)
+### ✅ Firestore Security Rules Hardening (Dec 19)
+| Issue | Severity | Fix Applied |
+|-------|----------|-------------|
+| `users` collection duplicate rule | HIGH | Removed - now only own profile |
+| `access_requests` public read/update/delete | HIGH | Changed to `request.auth != null` |
+| `shortlinks` delete was public | MEDIUM | Now requires authentication |
+| All capsule operations | MEDIUM | Now requires authentication |
+- **Commit:** `ac3aa2f`
 
 ### ✅ Firebase Auth SSO Migration (Dec 18)
 - Created `verifyAdminAuth()` helper with hybrid authentication
@@ -86,11 +106,6 @@ All new endpoints validated:
 - Frontend now uses async `getAdminHeaders()` with Firebase ID token
 - Legacy tokens preserved for n8n workflows + backwards compatibility
 - **Commits:** `53a2424`, `5a71ea4`, `9fa59bc`
-
-### ✅ Security Audit (Dec 18)
-- Removed hardcoded admin tokens from codebase
-- Documented Firestore rules needing hardening (future work)
-- **Commit:** `53a2424`
 
 ### ✅ Dual-Project Implementation (Dec 17)
 **Project 1: Outbound Motion Enhancement**
@@ -107,101 +122,22 @@ All new endpoints validated:
 - platform-specs.js (636 lines) - All platform dimensions
 - **Commit:** `2762d9e`
 
-### ✅ Blog Public Display (Dec 16)
-- BlogPage.jsx fetches published articles from Firestore
-- Static fallback + category filtering
-- **Commit:** `69fb4bd`
-
-### ✅ Production Deployment + Security Fix (Dec 17)
-- Built and deployed to Firebase Hosting
-- Rotated exposed Google API key
-- **Commits:** `f3bf7e9`, `186544a`
-
----
-
-### ✅ Outbound Journeys V2 (Dec 18)
-- Restructured for A/B/C testing (random 1-of-3 initial email)
-- Merge tag failbacks (emails work even if tokens fail)
-- 10/day throttle with deliverability monitoring
-- Email verification before send
-- Follow-up only on engagement (click/reply/book)
-- Proper signature: Christopher, phone, cal.com link
-- Test addresses added: christopher@goldenunknown.com, christopher.ramon.cooper@gmail.com
-
 ### ✅ Platform Enhancements Sprint (Dec 18-19)
 **AI Image Generation:**
 - `generateImage` function with tiered pricing (free/standard/premium)
 - Free tier: SVG placeholders (always available)
 - $20/month budget cap with usage tracking
-- `getImageGenUsage` admin endpoint
 
 **Programmatic Ads:**
 - `getAdBudgetStats` - Budget tracking across platforms
 - `createMetaCampaign` - Facebook/Instagram ads
-- `createGoogleCampaign` - Google Ads (placeholder)
 - `createLinkedInCampaign` - LinkedIn Marketing API
 - $100/month total cap, $35/platform cap
 
 **Headshot Sourcing:**
 - `discoverHeadshotProspects` - Google Places for headshot-ready businesses
 - `importHeadshotProspectsCSV` - CSV/JSON import
-- `getHeadshotProspects` - Retrieve and filter prospects
 - Targets: law firms, real estate, financial advisors, consultants
-
-**Claude Code Autonomous:**
-- Created `.claude/CLAUDE_CODE_AUTONOMOUS_SETUP.md` guide
-- `scripts/claude-auto.sh` automation script
-- Hybrid B+C architecture documented (Agent SDK + Sleepless)
-
----
-
-## ACTUALLY NOT DONE
-
-### P1 - Revenue Critical
-| Item | Status | Notes |
-|------|--------|-------|
-| Deploy Functions & Hosting | ✅ Done | Deployed Dec 18, 2025 |
-| Outbound Journeys V2 | ✅ Done | A/B/C testing, throttle, verification |
-| Import 50 Contacts | ⏳ Ready | See `OUTBOUND_50_CONTACTS_PLAN.md` |
-| Launch Outbound Campaign | ❌ Waiting | After contacts imported |
-
-**50 Contact Plan:**
-- Pipeline A: 25 traditional (Google Places) - accounting, marketing, consulting
-- Pipeline B: 25 digital-first (YC + Growjo) - non-SaaS tech, agencies
-- Alternative: Apollo.io search (50 of 130 credits)
-
-**Outbound Strategy:**
-- Random 1-of-3 email (A/B/C test), NOT sequential 3-email drip
-- 10/day send limit to protect domain reputation
-- Email verification/ping before send
-- Follow-up ONLY if engaged (clicked, replied, booked call)
-- Scale based on deliverability/response rates
-
-### P2 - Platform Enhancements
-| Item | Status | Notes |
-|------|--------|-------|
-| AI Image Generation | ✅ Done | Free tier + $20/mo cap (Imagen $0.03, Gemini $0.13) |
-| Programmatic Ads | ✅ Done | Meta/LinkedIn/Google ($100/mo cap, $35/platform) |
-| Headshot Sourcing | ✅ Done | CSV import + Google Places discovery |
-| Claude Code Autonomous | ✅ Done | Setup guide + automation script |
-| Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
-| @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
-| Firestore Security Rules | ⚠️ Documented | Needs hardening (permissive patterns found) |
-
-### P3 - Next Week (No Execution Yet)
-| Item | Status | Notes |
-|------|--------|-------|
-| Dynamic Newsletter | 📋 Scoped | LiveIntent/Movable Ink style live content, standard sections with dynamic population |
-
-### API Keys - ALL CONFIGURED ✅
-| Key | Status | Notes |
-|-----|--------|-------|
-| Google Places | ✅ Configured | For discoverPipelineA |
-| Apollo.io | ✅ Configured | 130 credits/mo (0 used) |
-| Hunter.io | ✅ Configured | Cascade enrichment |
-| PDL | ✅ Configured | Cascade enrichment |
-
-**Deprecated:** Crunchbase, OpenCorporates - Pipeline B uses YC GitHub + Growjo instead
 
 ---
 
@@ -209,9 +145,23 @@ All new endpoints validated:
 
 1. [x] **Deploy Functions** - ✅ Deployed Dec 18, 2025 (36 functions)
 2. [x] **Deploy Hosting** - ✅ Deployed Dec 18, 2025 (85 files)
-3. [x] **Import Contacts** - ✅ 121 contacts imported Dec 19 (SF/LA/NYC, Pipelines A/B)
-4. [ ] **Configure API Keys** - User action: Gemini, Meta, Google Ads, LinkedIn
-5. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
+3. [x] **Import Contacts** - ✅ 121 contacts imported Dec 19
+4. [x] **Configure API Keys** - ✅ Gemini, Places, PDL, FullEnrich, Hunter, Apollo
+5. [x] **Firestore Security Rules** - ✅ Hardened Dec 19
+6. [ ] **Ad Platform Tokens** - User action: LinkedIn OAuth, Meta Verification, Google Ads
+7. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
+8. [ ] **Brevo Integration** - For Photographer 300-contact use case
+
+---
+
+## P2/P3 - FUTURE WORK
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
+| @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
+| Dynamic Newsletter | 📋 Scoped | LiveIntent/Movable Ink style live content |
+| Brevo ESP Integration | 📋 Recommended | Multi-tenant ESP key system |
 
 ---
 
@@ -239,7 +189,7 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImport
   -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{"contacts": [{"email": "a@b.com", "name": "Test", "company": "Acme"}], "source": "outbound"}'
 
-# Cascade Enrichment (PDL > Hunter > Apollo)
+# Cascade Enrichment (PDL > FullEnrich > Hunter > Apollo)
 curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: YOUR_ADMIN_TOKEN" \
@@ -253,24 +203,21 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnr
 
 ### Git Status
 - Branch: main
-- Last commit: `9fa59bc` (Dec 18, 2025) - "Update: WIP - Firebase Auth SSO implemented"
+- Last commit: `c827392` (Dec 20, 2025) - "Docs: Add MCP server configuration to shared context"
 - All changes pushed to GitHub
 
 ---
 
-## RECENT COMMITS (Dec 16-18)
+## RECENT COMMITS (Dec 16-20)
 
 | Hash | Date | Description |
 |------|------|-------------|
-| `9fa59bc` | Dec 18 | Update: WIP - Firebase Auth SSO implemented |
+| `c827392` | Dec 20 | Docs: Add MCP server configuration to shared context |
+| `479cbac` | Dec 19 | Docs: Update Testing Prep with status, costs, Claude autonomous |
+| `948e646` | Dec 19 | Docs: Update yC-MSF context for Dec 19 MacBook Air session |
+| `ac3aa2f` | Dec 19 | Security: Harden Firestore rules + Add Meta domain verification |
+| `349d858` | Dec 19 | Feature: Add FullEnrich to enrichment cascade (priority 2) |
 | `5a71ea4` | Dec 18 | Security: Implement Firebase Auth SSO for admin functions |
-| `0284319` | Dec 18 | Update: WIP - Security audit complete |
 | `53a2424` | Dec 18 | Security: Remove hardcoded admin tokens |
-| `186544a` | Dec 17 | Update: Security audit handoff |
-| `f3bf7e9` | Dec 17 | Update: WIP for MacBook Air transition |
 | `2762d9e` | Dec 17 | Feature: UnitySTUDIO Rearchitecture + Dual-Pipeline |
-| `aabe78d` | Dec 16 | Update: Cascade enrichment order |
-| `c79cbd4` | Dec 16 | Add: Cascade enrichment system |
-| `80e4a39` | Dec 16 | Feature: Apollo.io integration |
-| `8d2a962` | Dec 16 | Feature: Outbound campaign infrastructure |
 | `69fb4bd` | Dec 16 | Feature: Blog public display |

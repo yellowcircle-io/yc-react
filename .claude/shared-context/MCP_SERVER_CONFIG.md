@@ -61,6 +61,21 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp
 - `notion-create-pages` - Create new pages
 - `notion-update-page` - Update existing pages
 
+### 4. Brevo (Email Marketing)
+**Purpose:** Email campaign management, contact lists, transactional emails
+
+```bash
+claude mcp add --transport http brevo https://mcp.brevo.com/sse
+```
+
+**Requires:** Brevo MCP API key (from Brevo dashboard → Settings → MCP Integration)
+
+**Capabilities:**
+- Send transactional emails
+- Manage contact lists
+- View campaign stats
+- Template management
+
 ---
 
 ## Quick Setup Script
@@ -84,6 +99,11 @@ claude mcp add github -- npx -y @modelcontextprotocol/server-github
 echo "Adding Notion..."
 claude mcp add --transport http notion https://mcp.notion.com/mcp
 
+# Brevo (requires MCP key from dashboard)
+echo "Adding Brevo..."
+echo "Note: Get MCP key from Brevo Dashboard → Settings → MCP Integration"
+# claude mcp add --transport http brevo https://mcp.brevo.com/sse
+
 echo ""
 echo "=== Verifying MCP servers ==="
 claude mcp list
@@ -96,10 +116,10 @@ echo "Done! If GitHub shows issues, ensure GITHUB_TOKEN is set."
 
 ## Machine Status
 
-| Machine | Playwright | GitHub | Notion | Last Verified |
-|---------|------------|--------|--------|---------------|
-| Mac Mini | ✅ | ✅ | ⚠️ | Dec 19, 2025 |
-| MacBook Air | ❓ | ❓ | ❓ | Needs setup |
+| Machine | Playwright | GitHub | Notion | Brevo | Last Verified |
+|---------|------------|--------|--------|-------|---------------|
+| Mac Mini | ✅ | ✅ | ⚠️ | ❓ | Dec 19, 2025 |
+| MacBook Air | ❓ | ❓ | ❓ | ❓ | Dec 20, 2025 |
 
 ---
 

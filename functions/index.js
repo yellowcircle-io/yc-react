@@ -126,12 +126,42 @@ const verifyAdminAuth = async (request) => {
 /**
  * Get configured ESP provider
  * Priority: request param > Firebase config > default (resend)
+ * Supported: resend, sendgrid, brevo, mailersend
  */
 const getESPProvider = (requestProvider = null) => {
-  if (requestProvider && ['resend', 'sendgrid'].includes(requestProvider)) {
+  const validProviders = ['resend', 'sendgrid', 'brevo', 'mailersend'];
+  if (requestProvider && validProviders.includes(requestProvider)) {
     return requestProvider;
   }
   return functions.config().esp?.provider || 'resend';
+};
+
+/**
+ * Get client-specific ESP key from Firestore config/client_esp_keys
+ * Falls back to main yellowCircle keys if not found
+ */
+const getClientESPKey = async (clientEmail, provider) => {
+  try {
+    const clientConfig = await db.collection('config').doc('client_esp_keys').get();
+    if (clientConfig.exists) {
+      const data = clientConfig.data();
+      const clientSettings = data[clientEmail];
+      if (clientSettings) {
+        // Return client-specific key for their configured provider
+        if (clientSettings.provider === provider || !provider) {
+          return {
+            apiKey: clientSettings.api_key,
+            provider: clientSettings.provider || 'brevo',
+            dailyLimit: clientSettings.daily_limit || 300,
+            monthlyLimit: clientSettings.monthly_limit || 9000
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching client ESP key:', error);
+  }
+  return null; // Fall back to main keys
 };
 
 /**
@@ -212,28 +242,153 @@ const sendViaSendGrid = async (options, apiKey) => {
 };
 
 /**
+ * Send email via Brevo (formerly Sendinblue)
+ * Free tier: 300 emails/day (9,000/month)
+ */
+const sendViaBrevo = async (options, apiKey) => {
+  const { to, from, subject, html, text, replyTo, tags } = options;
+
+  const fromAddress = from || "yellowCircle <hello@yellowcircle.io>";
+  const fromParsed = typeof fromAddress === 'string'
+    ? {
+        email: fromAddress.match(/<(.+)>/)?.[1] || fromAddress,
+        name: fromAddress.match(/(.+) </)?.[1]?.trim() || 'yellowCircle'
+      }
+    : fromAddress;
+
+  const payload = {
+    sender: fromParsed,
+    to: Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }],
+    subject,
+    htmlContent: html,
+    textContent: text
+  };
+
+  if (replyTo) {
+    payload.replyTo = { email: replyTo };
+  }
+
+  if (tags && tags.length > 0) {
+    payload.tags = tags.map(tag => tag.name || tag.value || tag);
+  }
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Brevo API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return { id: data.messageId, status: "sent", provider: "brevo" };
+};
+
+/**
+ * Send email via MailerSend
+ * Free tier: 3,000 emails/month
+ */
+const sendViaMailerSend = async (options, apiKey) => {
+  const { to, from, subject, html, text, replyTo, tags } = options;
+
+  const fromAddress = from || "yellowCircle <hello@yellowcircle.io>";
+  const fromEmail = fromAddress.match(/<(.+)>/)?.[1] || fromAddress;
+  const fromName = fromAddress.match(/(.+) </)?.[1]?.trim() || 'yellowCircle';
+
+  const payload = {
+    from: { email: fromEmail, name: fromName },
+    to: Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }],
+    subject,
+    html,
+    text
+  };
+
+  if (replyTo) {
+    payload.reply_to = [{ email: replyTo }];
+  }
+
+  if (tags && tags.length > 0) {
+    payload.tags = tags.map(tag => tag.name || tag.value || tag);
+  }
+
+  const response = await fetch("https://api.mailersend.com/v1/email", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `MailerSend API error: ${response.status}`);
+  }
+
+  const messageId = response.headers.get('X-Message-Id');
+  return { id: messageId, status: "sent", provider: "mailersend" };
+};
+
+/**
  * Unified email sender - routes to configured ESP
+ * Supports: resend, sendgrid, brevo, mailersend
+ * Also checks for client-specific keys in Firestore
  */
 const sendEmailViaESP = async (options, provider = null) => {
   const esp = getESPProvider(provider || options.provider);
 
   let apiKey;
-  if (options.apiKey) {
-    apiKey = options.apiKey;
-  } else if (esp === 'sendgrid') {
-    apiKey = functions.config().sendgrid?.api_key;
-  } else {
-    apiKey = functions.config().resend?.api_key;
+
+  // Check for client-specific key first (if clientEmail provided)
+  if (options.clientEmail) {
+    const clientConfig = await getClientESPKey(options.clientEmail, esp);
+    if (clientConfig) {
+      apiKey = clientConfig.apiKey;
+    }
+  }
+
+  // Fall back to provided key or global config
+  if (!apiKey) {
+    if (options.apiKey) {
+      apiKey = options.apiKey;
+    } else {
+      switch (esp) {
+        case 'sendgrid':
+          apiKey = functions.config().sendgrid?.api_key;
+          break;
+        case 'brevo':
+          apiKey = functions.config().brevo?.api_key;
+          break;
+        case 'mailersend':
+          apiKey = functions.config().mailersend?.api_key;
+          break;
+        default:
+          apiKey = functions.config().resend?.api_key;
+      }
+    }
   }
 
   if (!apiKey) {
     throw new Error(`${esp} API key not configured. Set firebase functions:config:set ${esp}.api_key="YOUR_KEY"`);
   }
 
-  if (esp === 'sendgrid') {
-    return sendViaSendGrid(options, apiKey);
+  // Route to appropriate provider
+  switch (esp) {
+    case 'sendgrid':
+      return sendViaSendGrid(options, apiKey);
+    case 'brevo':
+      return sendViaBrevo(options, apiKey);
+    case 'mailersend':
+      return sendViaMailerSend(options, apiKey);
+    default:
+      return sendViaResend(options, apiKey);
   }
-  return sendViaResend(options, apiKey);
 };
 
 /**
@@ -283,24 +438,251 @@ exports.getESPStatus = functions.https.onRequest(async (request, response) => {
   const currentProvider = getESPProvider();
   const resendConfigured = !!functions.config().resend?.api_key;
   const sendgridConfigured = !!functions.config().sendgrid?.api_key;
+  const brevoConfigured = !!functions.config().brevo?.api_key;
+  const mailersendConfigured = !!functions.config().mailersend?.api_key;
+
+  // Also check client ESP keys
+  let clientESPKeys = [];
+  try {
+    const clientConfig = await db.collection('config').doc('client_esp_keys').get();
+    if (clientConfig.exists) {
+      clientESPKeys = Object.keys(clientConfig.data());
+    }
+  } catch (e) {
+    // Ignore errors
+  }
 
   response.json({
     currentProvider,
     providers: {
       resend: {
         configured: resendConfigured,
-        freeTier: "100 emails/day"
+        freeTier: "100 emails/day (3K/month)"
       },
       sendgrid: {
         configured: sendgridConfigured,
-        freeTier: "100 emails/day"
+        freeTier: "100 emails/day (3K/month)"
+      },
+      brevo: {
+        configured: brevoConfigured,
+        freeTier: "300 emails/day (9K/month)"
+      },
+      mailersend: {
+        configured: mailersendConfigured,
+        freeTier: "3,000 emails/month"
       }
     },
-    switchCommand: `firebase functions:config:set esp.provider="sendgrid"`,
+    clientESPKeys: clientESPKeys.length > 0 ? clientESPKeys : "None configured",
+    switchCommand: `firebase functions:config:set esp.provider="brevo"`,
     configuredProviders: [
       resendConfigured && 'resend',
-      sendgridConfigured && 'sendgrid'
+      sendgridConfigured && 'sendgrid',
+      brevoConfigured && 'brevo',
+      mailersendConfigured && 'mailersend'
     ].filter(Boolean)
+  });
+});
+
+/**
+ * Send Bulk Email - For larger blasts with rate limiting
+ * Supports batching, per-client ESP keys, and progress tracking
+ */
+exports.sendBulkEmail = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  // Auth check
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.authenticated) {
+    response.status(401).json({ error: authResult.error || "Unauthorized" });
+    return;
+  }
+
+  const {
+    recipients,      // Array of { email, name?, variables? }
+    subject,
+    html,
+    text,
+    from,
+    replyTo,
+    provider,        // Override ESP provider
+    clientEmail,     // Use client-specific ESP key
+    batchSize = 10,  // Emails per batch
+    delayMs = 1000,  // Delay between batches (rate limiting)
+    tags,
+    trackOpens = true,
+    trackClicks = true
+  } = request.body;
+
+  if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+    response.status(400).json({ error: "recipients array required" });
+    return;
+  }
+
+  if (!subject || (!html && !text)) {
+    response.status(400).json({ error: "subject and (html or text) required" });
+    return;
+  }
+
+  // Determine ESP and check limits
+  let esp = provider;
+  let dailyLimit = 100;
+
+  if (clientEmail) {
+    const clientConfig = await getClientESPKey(clientEmail, provider);
+    if (clientConfig) {
+      esp = clientConfig.provider;
+      dailyLimit = clientConfig.dailyLimit;
+    }
+  }
+
+  if (!esp) {
+    esp = getESPProvider();
+    // Set daily limits based on provider
+    switch (esp) {
+      case 'brevo':
+        dailyLimit = 300;
+        break;
+      case 'mailersend':
+        dailyLimit = 100; // 3K/month ≈ 100/day
+        break;
+      default:
+        dailyLimit = 100;
+    }
+  }
+
+  // Check if within daily limit
+  const today = new Date().toISOString().split('T')[0];
+  const rateLimitKey = clientEmail || 'yellowcircle';
+  const rateLimitRef = db.collection('esp_rate_limits').doc(`${rateLimitKey}_${today}`);
+  const rateLimitDoc = await rateLimitRef.get();
+  const currentSent = rateLimitDoc.exists ? rateLimitDoc.data().sent || 0 : 0;
+
+  if (currentSent + recipients.length > dailyLimit) {
+    response.status(429).json({
+      error: "Daily email limit would be exceeded",
+      currentSent,
+      dailyLimit,
+      requested: recipients.length,
+      remaining: Math.max(0, dailyLimit - currentSent)
+    });
+    return;
+  }
+
+  // Process in batches
+  const results = {
+    total: recipients.length,
+    sent: 0,
+    failed: 0,
+    errors: [],
+    provider: esp
+  };
+
+  const batches = [];
+  for (let i = 0; i < recipients.length; i += batchSize) {
+    batches.push(recipients.slice(i, i + batchSize));
+  }
+
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+    const batch = batches[batchIndex];
+
+    // Process batch in parallel
+    const batchPromises = batch.map(async (recipient) => {
+      const recipientEmail = typeof recipient === 'string' ? recipient : recipient.email;
+      const recipientName = typeof recipient === 'object' ? recipient.name : null;
+      const variables = typeof recipient === 'object' ? recipient.variables : {};
+
+      // Replace variables in subject/html/text
+      let finalSubject = subject;
+      let finalHtml = html;
+      let finalText = text;
+
+      if (variables) {
+        for (const [key, value] of Object.entries(variables)) {
+          const regex = new RegExp(`{{${key}}}`, 'g');
+          if (finalSubject) finalSubject = finalSubject.replace(regex, value);
+          if (finalHtml) finalHtml = finalHtml.replace(regex, value);
+          if (finalText) finalText = finalText.replace(regex, value);
+        }
+      }
+
+      // Replace {{name}} with recipient name
+      if (recipientName) {
+        const nameRegex = /{{name}}/g;
+        if (finalSubject) finalSubject = finalSubject.replace(nameRegex, recipientName);
+        if (finalHtml) finalHtml = finalHtml.replace(nameRegex, recipientName);
+        if (finalText) finalText = finalText.replace(nameRegex, recipientName);
+      }
+
+      try {
+        const result = await sendEmailViaESP({
+          to: recipientEmail,
+          from,
+          subject: finalSubject,
+          html: finalHtml,
+          text: finalText,
+          replyTo,
+          tags,
+          clientEmail
+        }, esp);
+
+        // Log email event
+        await db.collection('email_events').add({
+          type: 'bulk_sent',
+          recipientEmail,
+          subject: finalSubject,
+          provider: esp,
+          messageId: result.id,
+          batchId: `bulk_${Date.now()}`,
+          timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return { success: true, email: recipientEmail, id: result.id };
+      } catch (error) {
+        return { success: false, email: recipientEmail, error: error.message };
+      }
+    });
+
+    const batchResults = await Promise.all(batchPromises);
+
+    for (const result of batchResults) {
+      if (result.success) {
+        results.sent++;
+      } else {
+        results.failed++;
+        results.errors.push({ email: result.email, error: result.error });
+      }
+    }
+
+    // Delay between batches (rate limiting)
+    if (batchIndex < batches.length - 1 && delayMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  // Update rate limit counter
+  await rateLimitRef.set({
+    sent: currentSent + results.sent,
+    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  response.json({
+    success: results.failed === 0,
+    ...results,
+    rateLimitStatus: {
+      todaySent: currentSent + results.sent,
+      dailyLimit,
+      remaining: Math.max(0, dailyLimit - currentSent - results.sent)
+    }
   });
 });
 
