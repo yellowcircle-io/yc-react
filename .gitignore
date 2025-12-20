@@ -58,3 +58,4 @@ backups/
 # Firebase
 .firebase/
 firebase-debug.log
+workspace/

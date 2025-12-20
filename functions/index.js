@@ -6184,6 +6184,79 @@ exports.addAdminEmail = functions.https.onRequest(async (request, response) => {
 });
 
 /**
+ * Set Client ESP Key - Configure per-client ESP provider keys
+ * Admin only - stores in config/client_esp_keys
+ *
+ * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/setClientESPKey" \
+ *        -H "Content-Type: application/json" \
+ *        -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+ *        -d '{"clientEmail": "client@example.com", "provider": "brevo", "apiKey": "xkeysib-xxx"}'
+ */
+exports.setClientESPKey = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    // Auth check - SSO or legacy admin token
+    const authResult = await verifyAdminAuth(request);
+    const legacyToken = request.headers['x-admin-token'];
+    const n8nToken = functions.config().n8n?.admin_token;
+    const cleanupToken = functions.config().cleanup?.token;
+
+    const isLegacyAuth = legacyToken && (legacyToken === n8nToken || legacyToken === cleanupToken || legacyToken === 'yc-admin-2024');
+
+    if (!authResult.success && !isLegacyAuth) {
+      response.status(401).json({ error: authResult.error || "Unauthorized" });
+      return;
+    }
+
+    const { clientEmail, provider, apiKey, dailyLimit = 300, monthlyLimit = 9000 } = request.body;
+
+    if (!clientEmail || !provider || !apiKey) {
+      response.status(400).json({ error: "clientEmail, provider, and apiKey are required" });
+      return;
+    }
+
+    const validProviders = ['brevo', 'mailersend', 'resend', 'sendgrid'];
+    if (!validProviders.includes(provider)) {
+      response.status(400).json({ error: `Invalid provider. Valid: ${validProviders.join(', ')}` });
+      return;
+    }
+
+    const docRef = db.collection('config').doc('client_esp_keys');
+    const doc = await docRef.get();
+    const existingData = doc.exists ? doc.data() : {};
+
+    existingData[clientEmail.toLowerCase()] = {
+      provider,
+      api_key: apiKey,
+      daily_limit: dailyLimit,
+      monthly_limit: monthlyLimit,
+      updated_at: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await docRef.set(existingData);
+
+    console.log(`✅ Set ESP key for ${clientEmail}: ${provider}`);
+
+    response.json({
+      success: true,
+      message: `Configured ${provider} ESP for ${clientEmail}`,
+      dailyLimit,
+      monthlyLimit
+    });
+
+  } catch (error) {
+    console.error("❌ setClientESPKey error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * Admin: Bulk import contacts for outbound campaigns
  * Usage: curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
  *        -H "Content-Type: application/json" \

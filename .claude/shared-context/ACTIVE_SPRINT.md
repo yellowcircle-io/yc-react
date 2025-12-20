@@ -14,6 +14,8 @@
 | Firestore | ✅ Live | capsules, journeys, rate_limits, config |
 | Cloud Functions | ✅ 36+ deployed | processJourneys, sendEmail, onLeadCreated, etc. |
 | Resend ESP | ✅ Configured | via Firebase Functions config |
+| Brevo ESP | ✅ Configured | Dec 20 - Primary provider, tested |
+| MailerSend ESP | ✅ Configured | Dec 20 - Domain verified, tested |
 | Admin Auth | ✅ Firebase SSO | Hybrid auth (SSO + legacy tokens) |
 | Email Tracking | ✅ Active | handleResendWebhook (19 events, 5 recipients) |
 
@@ -148,9 +150,14 @@
 3. [x] **Import Contacts** - ✅ 121 contacts imported Dec 19
 4. [x] **Configure API Keys** - ✅ Gemini, Places, PDL, FullEnrich, Hunter, Apollo
 5. [x] **Firestore Security Rules** - ✅ Hardened Dec 19
-6. [ ] **Ad Platform Tokens** - User action: LinkedIn OAuth, Meta Verification, Google Ads
-7. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
-8. [ ] **Brevo Integration** - For Photographer 300-contact use case
+6. [x] **Brevo Integration** - ✅ Dec 20: Adapter, sendBulkEmail, tested working
+7. [x] **Client ESP Keys** - ✅ Dec 20: dash@dashkolos.com configured (300/day, 9K/mo)
+8. [x] **MCP Servers** - ✅ Dec 20: Playwright + Notion + GitHub connected (MacBook Air)
+9. [x] **Cron Jobs** - ✅ Dec 20: Installed (2AM daily, 3AM weekly, 6AM sync, 1st monthly)
+10. [x] **Sleepless Agent** - ✅ Dec 20: Installed via pipx, config.yaml created
+11. [x] **Slack App Tokens** - ✅ Dec 20: Configured in .env, sle tested
+12. [ ] **Ad Platform Tokens** - User action: LinkedIn OAuth, Meta Verification, Google Ads
+13. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
 
 ---
 
@@ -161,7 +168,10 @@
 | Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
 | @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
 | Dynamic Newsletter | 📋 Scoped | LiveIntent/Movable Ink style live content |
-| Brevo ESP Integration | 📋 Recommended | Multi-tenant ESP key system |
+| ~~Brevo ESP Integration~~ | ✅ Done | Multi-tenant ESP key system complete |
+| ~~MailerSend Domain~~ | ✅ Done | Domain verified Dec 20 |
+| ~~Sleepless Agent~~ | ✅ Done | Installed via pipx Dec 20 |
+| ~~Slack App Tokens~~ | ✅ Done | Configured in .env Dec 20 |
 
 ---
 

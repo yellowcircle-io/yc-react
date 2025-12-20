@@ -1,0 +1,39 @@
+# Sleepless Agent Configuration for yellowCircle
+# Created: December 20, 2025
+
+workspace_dir: ./workspace
+
+# Usage thresholds (Claude Pro subscription optimization)
+usage_thresholds:
+  night:  # 1 AM - 9 AM
+    max_usage: 0.96  # Use up to 96% of allocation
+  day:    # 9 AM - 1 AM
+    max_usage: 0.95  # Use up to 95% of allocation
+
+# Git automation
+git:
+  remote_url: git@github.com:yellowcircle-io/yc-react.git
+  thought_branch: thought-ideas
+  feature_branch_prefix: feature/
+  auto_commit: true
+  create_prs: true
+
+# Multi-agent workflow
+agents:
+  planner:
+    max_turns: 10
+  worker:
+    max_turns: 50
+  evaluator:
+    max_turns: 5
+
+# Task generation (idle time)
+auto_generate:
+  enabled: false  # Enable after Slack setup
+  strategies:
+    - name: refine_focused
+      weight: 45
+    - name: balanced
+      weight: 35
+    - name: new_friendly
+      weight: 20

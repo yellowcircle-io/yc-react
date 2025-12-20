@@ -119,7 +119,11 @@ echo "Done! If GitHub shows issues, ensure GITHUB_TOKEN is set."
 | Machine | Playwright | GitHub | Notion | Brevo | Last Verified |
 |---------|------------|--------|--------|-------|---------------|
 | Mac Mini | ✅ | ✅ | ⚠️ | ❓ | Dec 19, 2025 |
-| MacBook Air | ❓ | ❓ | ❓ | ❓ | Dec 20, 2025 |
+| MacBook Air | ✅ | ⚠️ | ✅ | ❓ | Dec 20, 2025 |
+
+**Notes:**
+- MacBook Air Notion: Using `@notionhq/notion-mcp-server` with API key authentication
+- MacBook Air GitHub: Needs `GITHUB_TOKEN` environment variable set
 
 ---
 

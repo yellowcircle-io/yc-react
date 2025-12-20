@@ -402,6 +402,6 @@ sle report
 1. [x] Create this documentation
 2. [ ] Install Sleepless Agent on Mac Mini
 3. [ ] Configure Slack app for yellowCircle workspace
-4. [ ] Create initial automation scripts
+4. [x] Create initial automation scripts (`scripts/claude-auto.sh`)
 5. [ ] Set up cron jobs for scheduled tasks
 6. [ ] Test end-to-end workflow

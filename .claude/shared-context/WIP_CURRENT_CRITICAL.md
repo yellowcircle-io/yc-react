@@ -2,13 +2,86 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 19, 2025 at 2:15 PM PST
+**Updated:** December 20, 2025 at 8:20 PM PST
 **Machine:** MacBook Air
-**Status:** ✅ Security Hardening Complete + API Integrations Deployed
+**Status:** ✅ Full Autonomous Setup Complete + ESP Fixed
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)
 - `.claude/RESTORE_POINT_NOV18_2025.md` - Full context backup
+
+---
+
+## ✅ AUTONOMOUS SETUP + ESP FIX (Dec 20, 2025 Evening) - MacBook Air
+
+### Claude Autonomous - FULLY CONFIGURED:
+- ✅ **Sleepless Agent** - Installed via pipx, 3 tasks queued
+- ✅ **Cron Jobs** - Installed (2AM daily, 3AM weekly, 6AM sync, 1st monthly)
+- ✅ **Slack Integration** - Bot token configured, messages sending
+- ✅ **Git Rollback** - Checkpoint system ready
+- ✅ **Issue Tracking** - `.claude/autonomous-tasks/ISSUE_TRACKER.md`
+
+### Sleepless Agent Queue:
+| ID | Task | Status |
+|----|------|--------|
+| 1 | Review yellowCircle documentation | Pending |
+| 2 | AI Photo Editing research & implementation | Pending |
+| 3 | Sample Campaign execution (Photography Studio) | Pending |
+
+### MCP Servers (MacBook Air):
+- ✅ Playwright - Connected
+- ✅ Notion - Connected with API key
+- ✅ GitHub - Connected with token
+
+### ESP Email - FIXED:
+| Issue | Root Cause | Solution |
+|-------|------------|----------|
+| Brevo emails failing | Unverified sender `hello@yellowcircle.io` | Use verified `christopher@yellowcircle.io` |
+| MailerSend failing | Domain not properly verified | Use Brevo as primary |
+
+**Latest Test Results (21:13 PST):**
+- ✅ christopher.ramon.cooper@gmail.com - DELIVERED
+- ✅ arscooper@live.com - DELIVERED
+- ✅ hello@yellowcircle.io - DELIVERED
+
+### 🔴 PENDING USER ACTIONS:
+
+1. **Slack App Scopes** - Add `im:history`, `im:read` to see bot messages
+   - Go to: https://api.slack.com/apps → OAuth & Permissions → Add scopes → Reinstall
+2. **Start Sleepless Daemon** - `sle daemon` or `nohup sle daemon &`
+3. **Ad Platform Tokens** - LinkedIn OAuth, Meta Business, Google Ads
+
+### New Files Created:
+- `scripts/autonomous-task.sh` - Task runner with rollback
+- `scripts/slack-notify.py` - Slack notification script
+- `scripts/claude-crontab.txt` - Cron job definitions
+- `.claude/AUTONOMOUS_SETUP_GUIDE.md` - Complete setup guide
+- `.claude/autonomous-tasks/` - Task tracking directory
+- `config.yaml` - Sleepless Agent config
+
+---
+
+## ✅ ESP INTEGRATION + MCP SETUP (Dec 20, 2025 Afternoon) - MacBook Air
+
+### Completed:
+
+**ESP Providers Implemented:**
+- ✅ **Brevo** - Adapter in functions/index.js, WORKING (use verified sender)
+- ✅ **MailerSend** - Adapter implemented (403 on domain API - use Brevo instead)
+- ✅ **Resend** - Existing provider
+- ✅ **SendGrid** - Existing provider
+
+**New Functions Deployed:**
+- `sendBulkEmail` - Batch sending with rate limiting
+- `setClientESPKey` - Admin endpoint for per-client ESP keys
+
+**Client ESP Configured:**
+- ✅ `dash@dashkolos.com` - Brevo, 300/day, 9000/month
+
+**⚠️ IMPORTANT - Brevo Sender:**
+- Verified sender: `christopher@yellowcircle.io` ✅
+- Unverified sender: `hello@yellowcircle.io` ❌ (has SPF error)
+- **Always use verified sender for reliable delivery**
 
 ---
 

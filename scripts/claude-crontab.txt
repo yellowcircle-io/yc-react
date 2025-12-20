@@ -1,0 +1,24 @@
+# Claude Code Automation Cron Jobs for yellowCircle
+# Install with: crontab scripts/claude-crontab.txt
+# View with: crontab -l
+# Remove with: crontab -r
+#
+# Note: These run on the local machine (MacBook Air or Mac Mini)
+# Ensure the machine is awake/powered on for jobs to run
+
+# Environment setup
+SHELL=/bin/zsh
+PATH=/Users/christophercooper/.nvm/versions/node/v20.19.0/bin:/usr/local/bin:/usr/bin:/bin
+PROJECT_DIR=/Users/christophercooper/Dropbox/CC Projects/yellowcircle/yellow-circle
+
+# Daily code review at 2 AM (low priority, catches issues)
+0 2 * * * cd "$PROJECT_DIR" && ./scripts/claude-auto.sh "Review functions/index.js for potential issues, security concerns, and code quality. Summarize findings." >> logs/claude-auto/cron-daily.log 2>&1
+
+# Weekly dependency audit on Sunday at 3 AM
+0 3 * * 0 cd "$PROJECT_DIR" && ./scripts/claude-auto.sh "Audit package.json dependencies for security vulnerabilities and outdated packages. Run npm audit and summarize results." >> logs/claude-auto/cron-weekly.log 2>&1
+
+# Daily sync verification at 6 AM (ensures multi-machine context is current)
+0 6 * * * cd "$PROJECT_DIR" && ./.claude/verify-sync.sh >> logs/claude-auto/cron-sync.log 2>&1
+
+# Monthly performance report on the 1st at 4 AM
+0 4 1 * * cd "$PROJECT_DIR" && ./scripts/claude-auto.sh "Generate a monthly performance report: review Firebase function logs, check for errors, analyze Firestore usage patterns." >> logs/claude-auto/cron-monthly.log 2>&1
