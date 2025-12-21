@@ -16,7 +16,7 @@
 
 | ID | Task | Started | Assignee | Notes |
 |----|------|---------|----------|-------|
-| AI-001 | AI Photo Editing Implementation | Dec 20 | Claude Agent | Researching APIs |
+| - | - | - | - | No tasks in progress |
 
 ---
 
@@ -24,7 +24,9 @@
 
 | ID | Task | Completed | Result |
 |----|------|-----------|--------|
-| - | - | - | - |
+| DOC-001 | Review yellowCircle Documentation | Dec 20, 2025 | ✅ Full platform review completed |
+| AI-001 | AI Photo Editing Implementation | Dec 20, 2025 | ✅ 3 functions added: removeBackground, enhanceHeadshot, getPhotoEditStats |
+| CAMP-001 | Photography Studio Sample Campaign | Dec 20, 2025 | ✅ Journey created: seedHeadshotJourney function + 3-variant A/B/C emails |
 
 ---
 

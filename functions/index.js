@@ -11211,3 +11211,662 @@ function generateMockHeadshotProspects(count) {
   }
   return results;
 }
+
+// ============================================================================
+// PHOTO EDITING APIs
+// ============================================================================
+
+/**
+ * Remove background from image
+ * Supports transparent, solid color, gradient, or custom backgrounds
+ *
+ * Usage: POST /removeBackground
+ * {
+ *   imageUrl: "https://example.com/photo.jpg",  // OR base64 data
+ *   imageBase64: "data:image/jpeg;base64,...",
+ *   backgroundType: "transparent" | "solid" | "gradient",
+ *   backgroundColor: "#FFFFFF" | { start: "#000", end: "#FFF", direction: "vertical" }
+ * }
+ */
+exports.removeBackground = functions
+  .runWith({ memory: '1GB', timeoutSeconds: 120 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    if (request.method !== "POST") {
+      return response.status(405).json({ error: "Method not allowed" });
+    }
+
+    try {
+      const {
+        imageUrl,
+        imageBase64,
+        backgroundType = 'transparent',
+        backgroundColor = null,
+        outputFormat = 'png',
+        clientId = null
+      } = request.body;
+
+      if (!imageUrl && !imageBase64) {
+        return response.status(400).json({ error: "Missing imageUrl or imageBase64" });
+      }
+
+      // Check monthly budget ($25 cap for photo editing)
+      const MONTHLY_BUDGET = 25.00;
+      const COST_PER_REMOVAL = 0.02;
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const usageRef = db.collection('api_usage').doc(`photo-edit-${monthKey}`);
+      const usageDoc = await usageRef.get();
+      const currentSpend = usageDoc.exists ? (usageDoc.data().totalSpend || 0) : 0;
+
+      if (currentSpend + COST_PER_REMOVAL > MONTHLY_BUDGET) {
+        return response.status(429).json({
+          success: false,
+          error: "Monthly photo editing budget exceeded",
+          budgetLimit: MONTHLY_BUDGET,
+          currentSpend,
+          nextReset: `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}-01`
+        });
+      }
+
+      // Try Picsart API first
+      const picsartApiKey = functions.config().picsart?.api_key;
+
+      if (picsartApiKey) {
+        console.log('🎨 Using Picsart API for background removal');
+
+        const formData = new URLSearchParams();
+        if (imageUrl) {
+          formData.append('image_url', imageUrl);
+        }
+        formData.append('format', outputFormat);
+        formData.append('output_type', 'cutout');
+
+        const picsartResponse = await fetch('https://api.picsart.io/tools/1.0/removebg', {
+          method: 'POST',
+          headers: {
+            'X-Picsart-API-Key': picsartApiKey,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formData
+        });
+
+        if (picsartResponse.ok) {
+          const result = await picsartResponse.json();
+
+          // Track usage
+          await usageRef.set({
+            totalSpend: admin.firestore.FieldValue.increment(COST_PER_REMOVAL),
+            removeBackground: admin.firestore.FieldValue.increment(1),
+            lastOperation: admin.firestore.FieldValue.serverTimestamp(),
+            provider: 'picsart'
+          }, { merge: true });
+
+          return response.json({
+            success: true,
+            provider: 'picsart',
+            cost: COST_PER_REMOVAL,
+            budgetRemaining: MONTHLY_BUDGET - currentSpend - COST_PER_REMOVAL,
+            result: {
+              imageUrl: result.data?.url,
+              backgroundType,
+              format: outputFormat
+            }
+          });
+        }
+
+        console.log('⚠️ Picsart failed, trying remove.bg fallback');
+      }
+
+      // Fallback to remove.bg
+      const removebgApiKey = functions.config().removebg?.api_key;
+
+      if (removebgApiKey) {
+        console.log('🎨 Using remove.bg API for background removal');
+
+        const formData = new URLSearchParams();
+        if (imageUrl) {
+          formData.append('image_url', imageUrl);
+        }
+        formData.append('size', 'auto');
+        formData.append('format', outputFormat);
+
+        if (backgroundType === 'solid' && backgroundColor) {
+          formData.append('bg_color', backgroundColor.replace('#', ''));
+        }
+
+        const removebgResponse = await fetch('https://api.remove.bg/v1.0/removebg', {
+          method: 'POST',
+          headers: {
+            'X-Api-Key': removebgApiKey,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formData
+        });
+
+        if (removebgResponse.ok) {
+          const imageBuffer = await removebgResponse.arrayBuffer();
+          const base64Image = Buffer.from(imageBuffer).toString('base64');
+
+          // Track usage
+          await usageRef.set({
+            totalSpend: admin.firestore.FieldValue.increment(COST_PER_REMOVAL),
+            removeBackground: admin.firestore.FieldValue.increment(1),
+            lastOperation: admin.firestore.FieldValue.serverTimestamp(),
+            provider: 'removebg'
+          }, { merge: true });
+
+          return response.json({
+            success: true,
+            provider: 'removebg',
+            cost: COST_PER_REMOVAL,
+            budgetRemaining: MONTHLY_BUDGET - currentSpend - COST_PER_REMOVAL,
+            result: {
+              dataUrl: `data:image/${outputFormat};base64,${base64Image}`,
+              backgroundType,
+              format: outputFormat
+            }
+          });
+        }
+      }
+
+      // No API keys configured
+      return response.status(503).json({
+        success: false,
+        error: "No photo editing API configured",
+        hint: "Set picsart.api_key or removebg.api_key via: firebase functions:config:set picsart.api_key=YOUR_KEY"
+      });
+
+    } catch (error) {
+      console.error("❌ removeBackground error:", error);
+      return response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Enhance headshot photo with AI
+ * Full pipeline: face detection, skin retouching, lighting, color grading
+ *
+ * Usage: POST /enhanceHeadshot
+ * {
+ *   imageUrl: "https://example.com/headshot.jpg",
+ *   preset: "corporate" | "creative" | "casual" | "natural",
+ *   enhanceLevel: 0.5,  // 0-1 intensity
+ *   removeBackground: false,
+ *   backgroundColor: "#FFFFFF"
+ * }
+ */
+exports.enhanceHeadshot = functions
+  .runWith({ memory: '1GB', timeoutSeconds: 180 })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      return response.status(204).send("");
+    }
+
+    if (request.method !== "POST") {
+      return response.status(405).json({ error: "Method not allowed" });
+    }
+
+    try {
+      const {
+        imageUrl,
+        imageBase64,
+        preset = 'natural',
+        enhanceLevel = 0.5,
+        removeBackground = false,
+        backgroundColor = null,
+        outputFormat = 'jpeg',
+        outputQuality = 90
+      } = request.body;
+
+      if (!imageUrl && !imageBase64) {
+        return response.status(400).json({ error: "Missing imageUrl or imageBase64" });
+      }
+
+      // Preset configurations
+      const PRESETS = {
+        corporate: {
+          description: 'Professional, polished look',
+          faceEnhance: 0.7,
+          skinSmoothing: 0.5,
+          eyeEnhance: 0.6,
+          teethWhitening: 0.3,
+          lighting: 'studio',
+          colorGrade: 'neutral'
+        },
+        creative: {
+          description: 'Artistic, stylized look',
+          faceEnhance: 0.8,
+          skinSmoothing: 0.4,
+          eyeEnhance: 0.7,
+          teethWhitening: 0.2,
+          lighting: 'dramatic',
+          colorGrade: 'warm'
+        },
+        casual: {
+          description: 'Natural, approachable look',
+          faceEnhance: 0.4,
+          skinSmoothing: 0.3,
+          eyeEnhance: 0.4,
+          teethWhitening: 0.1,
+          lighting: 'natural',
+          colorGrade: 'vivid'
+        },
+        natural: {
+          description: 'Minimal enhancement, authentic look',
+          faceEnhance: 0.3,
+          skinSmoothing: 0.2,
+          eyeEnhance: 0.3,
+          teethWhitening: 0,
+          lighting: 'natural',
+          colorGrade: 'neutral'
+        }
+      };
+
+      const presetConfig = PRESETS[preset] || PRESETS.natural;
+
+      // Calculate cost based on operations
+      const MONTHLY_BUDGET = 25.00;
+      const baseCost = 0.03; // Face enhancement
+      const bgRemovalCost = removeBackground ? 0.02 : 0;
+      const totalCost = baseCost + bgRemovalCost;
+
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const usageRef = db.collection('api_usage').doc(`photo-edit-${monthKey}`);
+      const usageDoc = await usageRef.get();
+      const currentSpend = usageDoc.exists ? (usageDoc.data().totalSpend || 0) : 0;
+
+      if (currentSpend + totalCost > MONTHLY_BUDGET) {
+        return response.status(429).json({
+          success: false,
+          error: "Monthly photo editing budget exceeded",
+          budgetLimit: MONTHLY_BUDGET,
+          currentSpend,
+          requestedCost: totalCost
+        });
+      }
+
+      // Use Picsart Face Enhancement API
+      const picsartApiKey = functions.config().picsart?.api_key;
+
+      if (!picsartApiKey) {
+        return response.status(503).json({
+          success: false,
+          error: "Picsart API not configured",
+          hint: "Set picsart.api_key via: firebase functions:config:set picsart.api_key=YOUR_KEY"
+        });
+      }
+
+      console.log(`🎨 Enhancing headshot with preset: ${preset}`);
+
+      // Step 1: Face Enhancement
+      const formData = new URLSearchParams();
+      if (imageUrl) {
+        formData.append('image_url', imageUrl);
+      }
+      formData.append('format', outputFormat);
+
+      const enhanceResponse = await fetch('https://api.picsart.io/tools/1.0/upscale/enhance/face', {
+        method: 'POST',
+        headers: {
+          'X-Picsart-API-Key': picsartApiKey,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+      });
+
+      if (!enhanceResponse.ok) {
+        const errorText = await enhanceResponse.text();
+        console.error('❌ Picsart face enhancement failed:', errorText);
+        return response.status(502).json({
+          success: false,
+          error: "Face enhancement failed",
+          details: errorText
+        });
+      }
+
+      let result = await enhanceResponse.json();
+      let enhancedImageUrl = result.data?.url;
+
+      // Step 2: Background removal (optional)
+      if (removeBackground && enhancedImageUrl) {
+        console.log('🎨 Removing background...');
+
+        const bgFormData = new URLSearchParams();
+        bgFormData.append('image_url', enhancedImageUrl);
+        bgFormData.append('format', 'png');
+        bgFormData.append('output_type', 'cutout');
+
+        if (backgroundColor) {
+          bgFormData.append('bg_color', backgroundColor.replace('#', ''));
+        }
+
+        const bgResponse = await fetch('https://api.picsart.io/tools/1.0/removebg', {
+          method: 'POST',
+          headers: {
+            'X-Picsart-API-Key': picsartApiKey,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: bgFormData
+        });
+
+        if (bgResponse.ok) {
+          const bgResult = await bgResponse.json();
+          enhancedImageUrl = bgResult.data?.url;
+        }
+      }
+
+      // Track usage
+      await usageRef.set({
+        totalSpend: admin.firestore.FieldValue.increment(totalCost),
+        enhanceHeadshot: admin.firestore.FieldValue.increment(1),
+        lastOperation: admin.firestore.FieldValue.serverTimestamp(),
+        [`preset_${preset}`]: admin.firestore.FieldValue.increment(1)
+      }, { merge: true });
+
+      console.log(`✅ Headshot enhanced: ${preset} preset, cost $${totalCost}`);
+
+      response.json({
+        success: true,
+        cost: totalCost,
+        budgetRemaining: MONTHLY_BUDGET - currentSpend - totalCost,
+        preset,
+        presetConfig,
+        result: {
+          imageUrl: enhancedImageUrl,
+          originalUrl: imageUrl,
+          operations: removeBackground ? ['face_enhance', 'remove_background'] : ['face_enhance'],
+          format: removeBackground ? 'png' : outputFormat
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ enhanceHeadshot error:", error);
+      return response.status(500).json({ error: error.message });
+    }
+  });
+
+/**
+ * Get photo editing usage stats
+ *
+ * Usage: GET /getPhotoEditStats
+ */
+exports.getPhotoEditStats = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  try {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const usageRef = db.collection('api_usage').doc(`photo-edit-${monthKey}`);
+    const usageDoc = await usageRef.get();
+
+    const MONTHLY_BUDGET = 25.00;
+    const usage = usageDoc.exists ? usageDoc.data() : {
+      totalSpend: 0,
+      removeBackground: 0,
+      enhanceHeadshot: 0
+    };
+
+    response.json({
+      success: true,
+      month: monthKey,
+      budget: {
+        limit: MONTHLY_BUDGET,
+        spent: usage.totalSpend || 0,
+        remaining: MONTHLY_BUDGET - (usage.totalSpend || 0),
+        percentUsed: ((usage.totalSpend || 0) / MONTHLY_BUDGET * 100).toFixed(1)
+      },
+      operations: {
+        removeBackground: usage.removeBackground || 0,
+        enhanceHeadshot: usage.enhanceHeadshot || 0
+      },
+      presets: {
+        corporate: usage.preset_corporate || 0,
+        creative: usage.preset_creative || 0,
+        casual: usage.preset_casual || 0,
+        natural: usage.preset_natural || 0
+      },
+      lastOperation: usage.lastOperation || null,
+      apiStatus: {
+        picsart: functions.config().picsart?.api_key ? 'configured' : 'not_configured',
+        removebg: functions.config().removebg?.api_key ? 'configured' : 'not_configured'
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ getPhotoEditStats error:", error);
+    return response.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// HEADSHOT PHOTOGRAPHY CAMPAIGN
+// ============================================================================
+
+/**
+ * Seed headshot photography outreach journey
+ * For photography studio clients targeting headshot-ready businesses
+ *
+ * Usage: POST /seedHeadshotJourney
+ * { clientId: "dash@dashkolos.com", senderName: "Dash Kolos", calLink: "..." }
+ */
+exports.seedHeadshotJourney = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  // Auth check
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
+  }
+
+  try {
+    const {
+      clientId = 'dash@dashkolos.com',
+      senderName = 'Dash Kolos',
+      senderEmail = 'dash@dashkolos.com',
+      calLink = 'https://cal.com/dash-kolos/headshot-consultation',
+      pricePerSession = 350,
+      normalPrice = 450
+    } = request.body || {};
+
+    const JOURNEY_ID = `headshot-outreach-${clientId.split('@')[0]}`;
+
+    // Email templates with merge tags
+    const emailA = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+I came across {{#if company}}{{company}}{{else}}your firm{{/if}} and noticed your team might benefit from professional headshots.
+
+I'm a professional photographer specializing in corporate headshots - the kind that make people look approachable AND professional on LinkedIn, company websites, and marketing materials.
+
+What sets my work apart:
+• 30-minute sessions (no all-day commitments)
+• Same-day digital delivery
+• Retouching included (tasteful - you'll still look like you)
+• Indoor studio or on-location options
+
+Would you be open to a quick call to see if this might be useful for you or your team?
+
+Best,
+${senderName}
+Professional Headshot Photographer
+
+P.S. - Happy to share some recent work if helpful. Just reply "portfolio" and I'll send it over.`;
+
+    const emailB = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+Here's something I see constantly with {{#if industry}}{{industry}}{{else}}professional services{{/if}} firms:
+
+Amazing work. Great reputation. But LinkedIn photos that look like they were taken in 2015 with an iPhone 4.
+
+Why it matters: Studies show that profiles with professional headshots get 14x more profile views and 36x more messages.
+
+For {{#if company}}{{company}}{{else}}your firm{{/if}}, that could mean:
+• More inbound leads finding you credible at first glance
+• Clients choosing you over competitors with outdated photos
+• A team that looks cohesive and professional online
+
+I offer headshot sessions specifically designed for busy professionals:
+→ 30 minutes in-studio or at your office
+→ 5+ retouched images delivered same day
+→ Team packages available (groups of 3+)
+
+Interested in seeing what this could look like for your team?
+
+Best,
+${senderName}
+Professional Headshot Photographer
+
+Book a call: ${calLink}`;
+
+    const emailC = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+I'll be direct: if your team's headshots are already polished and consistent, feel free to ignore this.
+
+But if:
+→ Some team members don't have professional photos yet
+→ Photos are inconsistent across LinkedIn, website, and email signatures
+→ It's been more than 2-3 years since the last update
+
+Then a quick 30-minute session could be worth your time.
+
+I'm offering a special rate for {{#if industry}}{{industry}}{{else}}local{{/if}} professionals this month: $${pricePerSession}/person (normally $${normalPrice}), includes:
+• 30-minute session
+• 5+ retouched images
+• Same-day delivery
+• Indoor studio or on-location
+
+Team of 3+? I'll throw in an extra 2 images per person.
+
+Book here: ${calLink}
+
+Best,
+${senderName}
+Professional Headshot Photographer
+
+P.S. - Not the right time? Just reply "later" and I'll follow up in 6 months.`;
+
+    const followUpEmail = `Hi{{#if name}} {{name}}{{else}} there{{/if}},
+
+Just following up on my earlier message about professional headshots.
+
+I noticed you clicked through - was there something specific you were curious about?
+
+Happy to answer any questions or share my portfolio. Just reply to this email.
+
+Best,
+${senderName}`;
+
+    // Create journey document
+    const journeyRef = db.collection("journeys").doc(JOURNEY_ID);
+    const journeyData = {
+      id: JOURNEY_ID,
+      title: `Headshot Outreach - ${senderName}`,
+      description: "Cold outreach for headshot-ready businesses: law firms, real estate, financial advisors, consulting. A/B/C test with random initial email.",
+      status: "active",
+      clientId,
+
+      config: {
+        version: "2.0",
+        testMode: "abc_split",
+        throttle: {
+          maxPerDay: 50,
+          requireVerification: false
+        },
+        followUpMode: "engagement_only",
+        conversionAction: "booking"
+      },
+
+      emailVariants: {
+        A: {
+          id: "variant-a",
+          subject: "Quick question about headshots",
+          body: emailA,
+          label: "Personal Introduction"
+        },
+        B: {
+          id: "variant-b",
+          subject: "Your LinkedIn photo might be costing you clients",
+          body: emailB,
+          label: "Value Proposition"
+        },
+        C: {
+          id: "variant-c",
+          subject: "Quick headshot session this month?",
+          body: emailC,
+          label: "Direct Offer"
+        }
+      },
+
+      followUp: {
+        enabled: true,
+        triggerOn: ["clicked", "opened"],
+        delayDays: 3,
+        email: {
+          subject: "Following up on headshots",
+          body: followUpEmail
+        }
+      },
+
+      sender: {
+        name: senderName,
+        email: senderEmail,
+        replyTo: senderEmail
+      },
+
+      targeting: {
+        prospectTypes: ["headshot"],
+        industries: ["law_firm", "real_estate_agency", "financial_advisor", "consulting"]
+      },
+
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+
+      _sync: {
+        source: "seedHeadshotJourney",
+        createdBy: authResult.email || "admin"
+      }
+    };
+
+    await journeyRef.set(journeyData);
+
+    console.log(`✅ Headshot journey created: ${JOURNEY_ID}`);
+
+    response.json({
+      success: true,
+      journeyId: JOURNEY_ID,
+      journey: {
+        title: journeyData.title,
+        status: journeyData.status,
+        variants: Object.keys(journeyData.emailVariants),
+        sender: journeyData.sender
+      },
+      nextSteps: [
+        `1. Verify sender email (${senderEmail}) in Brevo`,
+        "2. Import headshot prospects or use existing 36",
+        `3. Enroll prospects: POST /enrollContactsInJourneys { journeyId: "${JOURNEY_ID}", prospectType: "headshot" }`,
+        "4. Dry run: GET /processOutboundJourneys?dryRun=true",
+        "5. Go live: GET /processOutboundJourneys?dryRun=false"
+      ]
+    });
+
+  } catch (error) {
+    console.error("❌ seedHeadshotJourney error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
