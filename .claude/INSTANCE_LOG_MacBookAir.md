@@ -3,7 +3,7 @@
 **Machine:** MacBook Air
 **Instance ID:** macbook-air-secondary
 **Created:** November 2, 2025
-**Last Updated:** December 19, 2025 at 2:15 PM PST
+**Last Updated:** December 21, 2025 at 12:50 AM PST
 
 ---
 
@@ -441,6 +441,58 @@ node shortcut-router.js edit-theme --field=primary --value="#FF0000"
 - LinkedIn OAuth token regeneration (current token invalid)
 - Meta Business verification completion
 - Google Ads API (on hold for approval)
+
+**Session Status:** ✅ Complete
+
+---
+
+### Session 11: Montreal Trip Planner + MapNode Component
+**Date:** December 21, 2025 at 12:00 AM - 1:00 AM PST
+**Machine:** MacBook Air
+**Context:** Completing Phase 2 of Montreal Trip Planner - MapNode component creation and capsule seeding
+
+**Work Completed:**
+
+1. **MapNode Component** (Phase 2 - Complete)
+   - Created `src/components/unity-plus/nodes/MapNode.jsx` (~450 lines)
+   - Google Maps Embed API integration (no new npm dependencies)
+   - Address search with geocoding via Firebase function
+   - Place markers with 6 categories: attraction, restaurant, hotel, shopping, activity, transport
+   - Connection handles for ReactFlow linking
+   - Registered in `src/components/unity-plus/nodes/index.js`
+
+2. **Firebase Functions Added**
+   - `seedTripPlannerCapsule` - Creates V3 capsule with 12 pre-populated nodes
+   - `geocodeAddress` - Google Geocoding API endpoint for address lookup
+
+3. **Montreal Trip Capsule Seeded**
+   - **Capsule ID:** `montreal-trip-dec2025`
+   - **Access URL:** https://yellowcircle.io/unity-notes?id=montreal-trip-dec2025
+   - **Collaboration:** christopher@yellowcircle.io + dash@dashkolos.com (editor)
+   - **Nodes (12):** 3 GroupNodes, 3 TodoNodes, 4 StickyNodes, 1 AI TextNode, 1 Map placeholder
+
+4. **Sleepless Agent Tasks (Completed Earlier)**
+   - **DOC-001:** Full yellowCircle documentation review
+   - **AI-001:** AI Photo Editing - 3 functions (removeBackground, enhanceHeadshot, getPhotoEditStats)
+   - **CAMP-001:** Photography Studio campaign - seedHeadshotJourney with A/B/C email variants
+
+5. **Documentation Sync**
+   - Updated `WIP_CURRENT_CRITICAL.md` with completion status
+   - Updated `ACTIVE_SPRINT.md` with Montreal Trip Planner + MapNode section
+   - Updated this instance log
+
+**Technical Notes:**
+- Used temporary seedKey bypass for capsule seeding (removed after use)
+- Firebase re-auth required during session (`firebase login --reauth`)
+
+**Files Created:**
+- `src/components/unity-plus/nodes/MapNode.jsx`
+
+**Files Modified:**
+- `src/components/unity-plus/nodes/index.js` - Registered MapNode
+- `functions/index.js` - Added seedTripPlannerCapsule, geocodeAddress
+
+**Commit:** Pending (to be committed for Mac Mini sync)
 
 **Session Status:** ✅ Complete
 

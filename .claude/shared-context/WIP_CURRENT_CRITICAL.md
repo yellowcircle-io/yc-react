@@ -2,9 +2,47 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 20, 2025 at 8:20 PM PST
+**Updated:** December 21, 2025 at 12:45 AM PST
 **Machine:** MacBook Air
-**Status:** ✅ Full Autonomous Setup Complete + ESP Fixed
+**Status:** ✅ Montreal Trip Planner Complete
+
+---
+
+## ✅ MONTREAL TRIP PLANNER (Dec 21, 2025) - MacBook Air
+
+### Completed:
+
+**Backend Functions (Deployed):**
+- ✅ `seedTripPlannerCapsule` - Creates shared V3 capsule with 12 pre-configured nodes
+- ✅ `geocodeAddress` - Google Geocoding API endpoint for MapNode
+
+**Frontend Component (Deployed):**
+- ✅ `MapNode.jsx` - Google Maps Embed with location search, places list, categories
+- ✅ Registered in `nodes/index.js` with PREMIUM_CARD_TYPES
+
+**Capsule Created:**
+- **ID:** `montreal-trip-dec2025`
+- **Access URL:** https://yellowcircle.io/unity-notes?id=montreal-trip-dec2025
+- Shared between `christopher@yellowcircle.io` and `dash@dashkolos.com`
+- 12 nodes: 3 GroupNodes, 3 TodoNodes, 4 StickyNodes, 1 AI TextNode, 1 Map placeholder
+- AI Assistant with Montreal-specific travel knowledge
+
+### Files Created:
+- `src/components/unity-plus/nodes/MapNode.jsx` - Map node component
+- `functions/index.js` - Added seedTripPlannerCapsule, geocodeAddress
+
+---
+
+## ✅ SLEEPLESS AGENT TASKS COMPLETE (Dec 20, 2025 Evening)
+
+All 3 queued tasks executed:
+1. ✅ **DOC-001**: Full platform review - yellowCircle documentation
+2. ✅ **AI-001**: AI Photo Editing - `removeBackground`, `enhanceHeadshot`, `getPhotoEditStats`
+3. ✅ **CAMP-001**: Photography Studio campaign - `seedHeadshotJourney`
+
+---
+
+## ✅ Previous: AUTONOMOUS SETUP + ESP FIX (Dec 20, 2025 Evening)
 
 **🔴 RESTORE POINTS**:
 - `.claude/RESTORE_POINT_P2P3_DEC12_2025.md` - Pre-P2/P3 state (commit `f0b90e39`)

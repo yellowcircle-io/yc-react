@@ -18,6 +18,7 @@ import CommentNode from './CommentNode';
 import ColorSwatchNode from './ColorSwatchNode';
 import CodeBlockNode from './CodeBlockNode';
 import GroupNode from './GroupNode';
+import MapNode from './MapNode';
 
 // Node type registry for ReactFlow
 export const premiumNodeTypes = {
@@ -27,6 +28,7 @@ export const premiumNodeTypes = {
   colorSwatchNode: ColorSwatchNode,
   codeBlockNode: CodeBlockNode,
   groupNode: GroupNode,
+  mapNode: MapNode,
 };
 
 // Individual exports for direct imports
@@ -37,6 +39,7 @@ export {
   ColorSwatchNode,
   CodeBlockNode,
   GroupNode,
+  MapNode,
 };
 
 // Premium card type configuration (for Add Note dialog)
@@ -110,6 +113,21 @@ export const PREMIUM_CARD_TYPES = {
       color: 'gray',
       width: 300,
       height: 200,
+    },
+  },
+  map: {
+    label: 'Map',
+    icon: '🗺️',
+    color: '#22c55e',
+    description: 'Location with Google Maps',
+    nodeType: 'mapNode',
+    defaultData: {
+      title: 'Map',
+      address: '',
+      coordinates: null,
+      zoom: 14,
+      places: [],
+      apiKey: '', // Set from environment or capsule config
     },
   },
 };

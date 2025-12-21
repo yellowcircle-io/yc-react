@@ -11870,3 +11870,348 @@ ${senderName}`;
     response.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================================
+// TRIP PLANNER - Montreal Trip Capsule
+// ============================================================================
+
+/**
+ * Seed a shared trip planner capsule
+ * Creates a V3 capsule with collaborators, pre-populated nodes, and AI assistant
+ *
+ * Usage: POST /seedTripPlannerCapsule
+ * {
+ *   tripId: "montreal-dec2025",
+ *   title: "Montreal Trip - December 2025",
+ *   ownerEmail: "christopher@yellowcircle.io",
+ *   collaboratorEmail: "dash@dashkolos.com",
+ *   days: 3
+ * }
+ */
+exports.seedTripPlannerCapsule = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  // Auth check
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error || "Unauthorized" });
+  }
+
+  try {
+    const {
+      tripId = 'montreal-trip-dec2025',
+      title = 'Montreal Trip - December 2025',
+      description = 'Collaborative trip planner',
+      ownerEmail = 'christopher@yellowcircle.io',
+      collaboratorEmail = 'dash@dashkolos.com',
+      days = 3,
+      destination = 'Montreal'
+    } = request.body || {};
+
+    const CAPSULE_ID = tripId;
+    const now = Date.now();
+
+    // Build nodes array
+    const nodes = [];
+    let nodeId = 1;
+
+    // Group Node: Days Container
+    nodes.push({
+      id: `group-days-${nodeId++}`,
+      type: 'groupNode',
+      position: { x: 50, y: 50 },
+      data: {
+        label: 'Daily Itinerary',
+        color: 'blue',
+        width: 400,
+        height: 700
+      }
+    });
+
+    // Group Node: Places to Visit
+    nodes.push({
+      id: `group-places-${nodeId++}`,
+      type: 'groupNode',
+      position: { x: 500, y: 50 },
+      data: {
+        label: 'Places to Visit',
+        color: 'green',
+        width: 400,
+        height: 350
+      }
+    });
+
+    // Group Node: Food & Dining
+    nodes.push({
+      id: `group-food-${nodeId++}`,
+      type: 'groupNode',
+      position: { x: 500, y: 430 },
+      data: {
+        label: 'Food & Dining',
+        color: 'orange',
+        width: 400,
+        height: 320
+      }
+    });
+
+    // Todo Nodes for each day
+    for (let day = 1; day <= days; day++) {
+      nodes.push({
+        id: `todo-day${day}-${nodeId++}`,
+        type: 'todoNode',
+        position: { x: 70, y: 80 + (day - 1) * 210 },
+        data: {
+          title: `Day ${day}`,
+          items: [
+            { text: `Morning activity`, completed: false },
+            { text: `Lunch spot`, completed: false },
+            { text: `Afternoon activity`, completed: false },
+            { text: `Dinner reservation`, completed: false }
+          ]
+        }
+      });
+    }
+
+    // Sticky Notes for Places
+    nodes.push({
+      id: `sticky-mustsee-${nodeId++}`,
+      type: 'stickyNode',
+      position: { x: 520, y: 100 },
+      data: {
+        content: 'Must See:\n• Old Montreal\n• Notre-Dame Basilica\n• Mount Royal\n• Jean-Talon Market',
+        color: 'yellow',
+        size: 180
+      }
+    });
+
+    nodes.push({
+      id: `sticky-iftimepermits-${nodeId++}`,
+      type: 'stickyNode',
+      position: { x: 720, y: 100 },
+      data: {
+        content: 'If Time Permits:\n• Biodome\n• Fine Arts Museum\n• Mile End walk\n• Lachine Canal',
+        color: 'blue',
+        size: 180
+      }
+    });
+
+    // Sticky Notes for Food
+    nodes.push({
+      id: `sticky-restaurants-${nodeId++}`,
+      type: 'stickyNode',
+      position: { x: 520, y: 480 },
+      data: {
+        content: 'Restaurants:\n• Schwartz\'s Deli\n• Joe Beef\n• Au Pied de Cochon\n• L\'Express',
+        color: 'pink',
+        size: 180
+      }
+    });
+
+    nodes.push({
+      id: `sticky-cafes-${nodeId++}`,
+      type: 'stickyNode',
+      position: { x: 720, y: 480 },
+      data: {
+        content: 'Cafes & Bars:\n• Cafe Olimpico\n• Crew Collective\n• Bar Palco\n• Atwater Cocktail Club',
+        color: 'green',
+        size: 180
+      }
+    });
+
+    // AI Assistant Node (TextNoteNode with cardType: 'ai')
+    nodes.push({
+      id: `ai-assistant-${nodeId++}`,
+      type: 'textNode',
+      position: { x: 950, y: 50 },
+      data: {
+        title: `${destination} AI Assistant`,
+        cardType: 'ai',
+        content: '',
+        width: 380,
+        theme: 'dark',
+        color: 'rgb(251, 191, 36)',
+        aiMessages: [
+          {
+            role: 'assistant',
+            content: `Hi! I'm your ${destination} trip assistant. Ask me about:\n\n• Restaurant recommendations by cuisine or neighborhood\n• Best activities for the weather\n• Optimal day planning & logistics\n• Local insider tips\n• Walking routes between attractions\n\nJust type your question below!`,
+            timestamp: now
+          }
+        ],
+        systemPrompt: `You are a ${destination} travel expert helping plan a December trip.
+
+Context: Two travelers visiting ${destination}. Provide:
+- Specific restaurant names and addresses
+- Realistic walking/transit times between attractions
+- Weather-appropriate suggestions (December = cold, dress warm)
+- Local insider tips
+- Budget-conscious options when relevant
+
+Key ${destination} neighborhoods to know:
+- Old Montreal: Historic, touristy, beautiful architecture
+- Plateau Mont-Royal: Hip, artistic, great cafes
+- Mile End: Hipster, bagels, indie shops
+- Downtown: Shopping, museums, modern
+- Jean-Talon/Little Italy: Food market, Italian heritage
+
+Format responses with clear sections and bullet points. Be specific with addresses when possible.`,
+        createdAt: now,
+        updatedAt: now
+      }
+    });
+
+    // MapNode placeholder (will be enhanced when MapNode component is built)
+    nodes.push({
+      id: `map-montreal-${nodeId++}`,
+      type: 'stickyNode', // Using sticky as placeholder until MapNode exists
+      position: { x: 950, y: 480 },
+      data: {
+        content: '🗺️ Map View\n\nMapNode coming soon!\n\nFor now, use:\nmaps.google.com/?q=Montreal',
+        color: 'purple',
+        size: 200
+      }
+    });
+
+    // Build capsule document
+    const capsuleData = {
+      id: CAPSULE_ID,
+      version: 3,
+      title,
+      description,
+
+      // Ownership & Collaboration
+      ownerId: ownerEmail,
+      collaborators: [
+        {
+          id: `collab-${now}`,
+          email: collaboratorEmail.toLowerCase().trim(),
+          role: 'editor',
+          addedAt: new Date().toISOString()
+        }
+      ],
+      isPublic: false,
+      shareSlug: CAPSULE_ID.substring(0, 8),
+
+      // Content
+      nodes,
+      edges: [], // No connections needed initially
+
+      // Stats
+      stats: {
+        nodeCount: nodes.length,
+        edgeCount: 0,
+        photoCount: 0
+      },
+
+      // Metadata
+      viewCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+
+      // Sync info
+      _sync: {
+        source: 'seedTripPlannerCapsule',
+        createdBy: authResult?.email || 'admin',
+        destination,
+        days
+      }
+    };
+
+    // Save to Firestore
+    const capsuleRef = db.collection('capsules').doc(CAPSULE_ID);
+    await capsuleRef.set(capsuleData);
+
+    console.log(`✅ Trip planner capsule created: ${CAPSULE_ID}`);
+
+    response.json({
+      success: true,
+      capsuleId: CAPSULE_ID,
+      capsule: {
+        title,
+        owner: ownerEmail,
+        collaborators: [collaboratorEmail],
+        nodeCount: nodes.length,
+        destination,
+        days
+      },
+      accessUrls: {
+        view: `https://yellowcircle.io/unity-notes?id=${CAPSULE_ID}`,
+        edit: `https://yellowcircle.io/unity-notes?id=${CAPSULE_ID}&mode=edit`
+      },
+      nextSteps: [
+        `1. Open: https://yellowcircle.io/unity-notes?id=${CAPSULE_ID}`,
+        `2. Both ${ownerEmail} and ${collaboratorEmail} can edit`,
+        '3. Use the AI Assistant to get recommendations',
+        '4. Add MapNodes when the component is deployed',
+        '5. Customize the todo items for your specific plans'
+      ]
+    });
+
+  } catch (error) {
+    console.error("❌ seedTripPlannerCapsule error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Geocode an address to coordinates
+ * For MapNode integration
+ *
+ * Usage: GET /geocodeAddress?address=Old+Montreal
+ */
+exports.geocodeAddress = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  try {
+    const { address } = request.query;
+
+    if (!address) {
+      return response.status(400).json({ error: "Missing address parameter" });
+    }
+
+    const googlePlacesKey = functions.config().googleplaces?.api_key;
+
+    if (!googlePlacesKey) {
+      return response.status(503).json({
+        error: "Google Places API not configured",
+        hint: "Set via: firebase functions:config:set googleplaces.api_key=YOUR_KEY"
+      });
+    }
+
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googlePlacesKey}`;
+    const geocodeRes = await fetch(geocodeUrl);
+    const geocodeData = await geocodeRes.json();
+
+    if (geocodeData.status !== 'OK' || !geocodeData.results[0]) {
+      return response.status(404).json({
+        error: "Address not found",
+        status: geocodeData.status
+      });
+    }
+
+    const result = geocodeData.results[0];
+
+    response.json({
+      success: true,
+      coordinates: {
+        lat: result.geometry.location.lat,
+        lng: result.geometry.location.lng
+      },
+      formattedAddress: result.formatted_address,
+      placeId: result.place_id,
+      types: result.types
+    });
+
+  } catch (error) {
+    console.error("❌ geocodeAddress error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});

@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** December 20, 2025
+**Updated:** December 21, 2025
 **Purpose:** Concise, accurate status tracking (replaces verbose WIP)
 
 ---
@@ -36,12 +36,13 @@
 - `firestoreArticles.js` (12.2K) - CMS content
 
 ### Unity Platform - COMPLETE
-- UnityNOTES canvas with 10+ node types
+- UnityNOTES canvas with 12+ node types (incl. MapNode)
 - AI Canvas generation (text, image, video)
 - Collaboration (sharing, collaborators)
 - Star/bookmark system
 - Local-first with cloud sync
 - Rate limiting + tier gating
+- Trip Planner capsule template (Montreal Dec 2025)
 
 ---
 
@@ -85,7 +86,22 @@
 
 ---
 
-## COMPLETED THIS WEEK (Dec 16-20, 2025)
+## COMPLETED THIS WEEK (Dec 16-21, 2025)
+
+### ✅ Montreal Trip Planner + MapNode (Dec 21)
+- **Capsule:** `montreal-trip-dec2025` created with 12 nodes
+- **Access:** https://yellowcircle.io/unity-notes?id=montreal-trip-dec2025
+- **Collaboration:** christopher@yellowcircle.io + dash@dashkolos.com
+- **Components Built:**
+  - `MapNode.jsx` - Google Maps Embed with location search, categories
+  - `seedTripPlannerCapsule` function - Creates shared V3 capsules
+  - `geocodeAddress` function - Google Geocoding API endpoint
+- **Nodes:** 3 GroupNodes, 3 TodoNodes, 4 StickyNodes, 1 AI TextNode, 1 Map placeholder
+
+### ✅ Sleepless Agent Tasks (Dec 20-21)
+- **DOC-001:** Full yellowCircle documentation review completed
+- **AI-001:** AI Photo Editing - 3 functions added (removeBackground, enhanceHeadshot, getPhotoEditStats)
+- **CAMP-001:** Photography Studio campaign - seedHeadshotJourney with A/B/C email variants
 
 ### ✅ P1 Contact Import Automation (Dec 19)
 - **121 contacts/prospects imported** (exceeded 50 target by 142%)
