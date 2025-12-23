@@ -11,17 +11,18 @@
 ## ✅ SECURITY CLEANUP (Dec 22, 2025) - MacBook Air
 
 ### Issue: GitGuardian Detected Exposed API Keys
-- Old Google API Key `***REMOVED***` was in commit history
+- Old Google API Key was in commit history (rotated - see GCP console)
 - Found in deleted utility scripts: `functions/reseed-*.js`, `functions/update-*.js`
 
 ### Actions Completed:
 1. ✅ **Deleted utility scripts** with hardcoded API keys
-2. ✅ **Used BFG Repo Cleaner** to scrub key from 536 commits
-3. ✅ **Rotated to new API key**: `***REMOVED***`
+2. ✅ **Used BFG Repo Cleaner** to scrub keys from git history
+3. ✅ **Rotated to new API key** (stored in .env only - NEVER in tracked files!)
 4. ✅ **Updated .gitignore** with patterns to prevent future exposure
-5. ✅ **Force pushed** cleaned history to GitHub
-6. ✅ **Rebuilt and redeployed** to production
-7. ✅ **Verified** production Google Maps working
+5. ✅ **Added pre-commit hook** to scan for API key patterns
+6. ✅ **Force pushed** cleaned history to GitHub
+7. ✅ **Rebuilt and redeployed** to production
+8. ✅ **Verified** production Google Maps working
 
 ### Also Fixed:
 - Google Maps Places API race condition (`googleMapsLoader.js`)
