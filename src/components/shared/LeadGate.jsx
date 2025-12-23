@@ -113,8 +113,8 @@ function LeadGate({
         );
 
         // Track conversion
-        if (typeof gtag === 'function') {
-          gtag('event', 'conversion', {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'conversion', {
             'send_to': 'AW-17772974519/lead_gate_sso',
             'event_category': 'lead_gate',
             'event_label': toolName
@@ -182,13 +182,13 @@ function LeadGate({
       }));
 
       // Track conversion in Google Ads + GA4
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'conversion', {
           'send_to': 'AW-17772974519/lead_gate',
           'event_category': 'lead_gate',
           'event_label': toolName
         });
-        gtag('event', 'sign_up', {
+        window.gtag('event', 'sign_up', {
           'event_category': 'lead_gate',
           'event_label': toolName
         });

@@ -324,14 +324,14 @@ function AssessmentPage() {
       }));
 
       // Track conversion in Google Ads + GA4
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'conversion', {
           'send_to': 'AW-17772974519/assessment',
           'event_category': 'assessment',
           'event_label': level,
           'value': score
         });
-        gtag('event', 'generate_lead', {
+        window.gtag('event', 'generate_lead', {
           'event_category': 'assessment',
           'event_label': `score_${score}_${level}`
         });

@@ -84,7 +84,7 @@ function ContactModal() {
           savedEmail = parsed.email || '';
           savedName = parsed.name || parsed.company || ''; // Assessment uses company field
         }
-      } catch (e) {
+      } catch (_e) {
         // Ignore parse errors
       }
 
@@ -116,7 +116,7 @@ function ContactModal() {
 
     // Update tracking ref
     wasOpen.current = contactModalOpen;
-  }, [contactModalOpen, contactModalEmail]);
+  }, [contactModalOpen, contactModalEmail, name]);
 
   // Handle escape key
   useEffect(() => {
@@ -197,13 +197,13 @@ function ContactModal() {
       );
 
       // Track conversion in Google Ads + GA4
-      if (typeof gtag === 'function') {
-        gtag('event', 'conversion', {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'conversion', {
           'send_to': 'AW-17772974519/contact_form',
           'event_category': 'form',
           'event_label': serviceName || 'general'
         });
-        gtag('event', 'generate_lead', {
+        window.gtag('event', 'generate_lead', {
           'event_category': 'form',
           'event_label': 'contact_form'
         });
