@@ -2,9 +2,36 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 21, 2025 at 2:35 PM PST
-**Machine:** Mac Mini
-**Status:** ✅ All Systems Verified & Working
+**Updated:** December 22, 2025 at 12:15 PM PST
+**Machine:** MacBook Air
+**Status:** ✅ Security Cleanup Complete - API Keys Rotated
+
+---
+
+## ✅ SECURITY CLEANUP (Dec 22, 2025) - MacBook Air
+
+### Issue: GitGuardian Detected Exposed API Keys
+- Old Google API Key `***REMOVED***` was in commit history
+- Found in deleted utility scripts: `functions/reseed-*.js`, `functions/update-*.js`
+
+### Actions Completed:
+1. ✅ **Deleted utility scripts** with hardcoded API keys
+2. ✅ **Used BFG Repo Cleaner** to scrub key from 536 commits
+3. ✅ **Rotated to new API key**: `***REMOVED***`
+4. ✅ **Updated .gitignore** with patterns to prevent future exposure
+5. ✅ **Force pushed** cleaned history to GitHub
+6. ✅ **Rebuilt and redeployed** to production
+7. ✅ **Verified** production Google Maps working
+
+### Also Fixed:
+- Google Maps Places API race condition (`googleMapsLoader.js`)
+- Added polling for Places Autocomplete initialization
+
+### Security Review Results:
+- No hardcoded API keys in codebase
+- No service account JSON files
+- No PEM/private keys
+- All sensitive patterns in `.gitignore`
 
 ---
 
