@@ -7,6 +7,7 @@ import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import { mapNodeTypes } from '../components/unity/map';
 import { premiumNodeTypes } from '../components/unity-plus/nodes';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
+import { prepareNodesForRendering } from '../utils/nodeUtils';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -30,8 +31,14 @@ const CapsuleView = () => {
     const fetchCapsule = async () => {
       try {
         const data = await loadCapsule(capsuleId);
-        setNodes(data.nodes);
-        setEdges(data.edges);
+
+        // Prepare nodes for ReactFlow rendering
+        // This validates parentId references and sorts parents before children
+        const preparedNodes = prepareNodesForRendering(data.nodes);
+        console.log('📦 Prepared', preparedNodes.length, 'nodes for rendering');
+
+        setNodes(preparedNodes);
+        setEdges(data.edges || []);
         setMetadata(data.metadata);
       } catch (err) {
         console.error('Failed to load capsule:', err);

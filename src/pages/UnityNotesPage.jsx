@@ -36,6 +36,7 @@ import WaitEditModal from '../components/unity/map/WaitEditModal';
 import ConditionEditModal from '../components/unity/map/ConditionEditModal';
 import ProspectInputModal from '../components/unity/map/ProspectInputModal';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
+import { prepareNodesForRendering } from '../utils/nodeUtils';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
@@ -288,10 +289,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             setCurrentCapsuleId(capsuleToLoad);
 
             // Restore nodes and edges from the capsule
-            // IMPORTANT: Inject callbacks before setting nodes
+            // IMPORTANT: First prepare nodes (validate parentId, sort parents before children)
+            // Then inject callbacks before setting nodes
             // Callbacks can't be serialized to Firestore, so we add them here
             if (capsuleData.nodes && capsuleData.nodes.length > 0) {
-              const nodesWithCallbacks = capsuleData.nodes.map((node) => {
+              // Prepare nodes first to fix parentId references and ordering
+              const preparedNodes = prepareNodesForRendering(capsuleData.nodes);
+              console.log('📦 Prepared', preparedNodes.length, 'nodes for rendering');
+
+              const nodesWithCallbacks = preparedNodes.map((node) => {
                 if (node.type === 'todoNode') {
                   return {
                     ...node,
@@ -435,7 +441,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
               // Restore starred node IDs from capsule data
               // This preserves star state when loading saved capsules
-              const loadedStarredIds = capsuleData.nodes
+              const loadedStarredIds = preparedNodes
                 .filter(n => n.data?.isStarred)
                 .map(n => n.id);
               if (loadedStarredIds.length > 0) {
