@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
  * - perplexityApiKey: Perplexity API key
  * - resendApiKey: Resend ESP API key
  * - openaiApiKey: OpenAI API key
+ * - googleMapsApiKey: Google Maps JavaScript API key
  */
 
 // Simple encryption for storing keys (not for security, just obfuscation)
@@ -45,7 +46,8 @@ export function useApiKeyStorage() {
     groqApiKey: '',
     perplexityApiKey: '',
     resendApiKey: '',
-    openaiApiKey: ''
+    openaiApiKey: '',
+    googleMapsApiKey: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [lastSynced, setLastSynced] = useState(null);
@@ -69,7 +71,8 @@ export function useApiKeyStorage() {
               groqApiKey: deobfuscate(storedKeys.groqApiKey || ''),
               perplexityApiKey: deobfuscate(storedKeys.perplexityApiKey || ''),
               resendApiKey: deobfuscate(storedKeys.resendApiKey || ''),
-              openaiApiKey: deobfuscate(storedKeys.openaiApiKey || '')
+              openaiApiKey: deobfuscate(storedKeys.openaiApiKey || ''),
+              googleMapsApiKey: deobfuscate(storedKeys.googleMapsApiKey || '')
             });
             setLastSynced(new Date());
             console.log('✅ API keys loaded from Firestore');
@@ -93,7 +96,8 @@ export function useApiKeyStorage() {
           groqApiKey: localStorage.getItem('groq_api_key') || '',
           perplexityApiKey: localStorage.getItem('perplexity_api_key') || '',
           resendApiKey: localStorage.getItem('resend_api_key') || '',
-          openaiApiKey: localStorage.getItem('openai_api_key') || ''
+          openaiApiKey: localStorage.getItem('openai_api_key') || '',
+          googleMapsApiKey: localStorage.getItem('google_maps_api_key') || ''
         });
         console.log('📦 API keys loaded from localStorage');
       } catch (error) {
@@ -134,7 +138,8 @@ export function useApiKeyStorage() {
       groqApiKey: 'groq_api_key',
       perplexityApiKey: 'perplexity_api_key',
       resendApiKey: 'resend_api_key',
-      openaiApiKey: 'openai_api_key'
+      openaiApiKey: 'openai_api_key',
+      googleMapsApiKey: 'google_maps_api_key'
     };
 
     try {
@@ -161,7 +166,8 @@ export function useApiKeyStorage() {
             groqApiKey: obfuscate(newKeys.groqApiKey || ''),
             perplexityApiKey: obfuscate(newKeys.perplexityApiKey || ''),
             resendApiKey: obfuscate(newKeys.resendApiKey || ''),
-            openaiApiKey: obfuscate(newKeys.openaiApiKey || '')
+            openaiApiKey: obfuscate(newKeys.openaiApiKey || ''),
+            googleMapsApiKey: obfuscate(newKeys.googleMapsApiKey || '')
           }
         });
         setLastSynced(new Date());
@@ -187,7 +193,8 @@ export function useApiKeyStorage() {
       groqApiKey: '',
       perplexityApiKey: '',
       resendApiKey: '',
-      openaiApiKey: ''
+      openaiApiKey: '',
+      googleMapsApiKey: ''
     };
     setKeys(emptyKeys);
 
@@ -202,7 +209,7 @@ export function useApiKeyStorage() {
     }
 
     // Also clear localStorage
-    ['groq_api_key', 'perplexity_api_key', 'resend_api_key', 'openai_api_key'].forEach(key => {
+    ['groq_api_key', 'perplexity_api_key', 'resend_api_key', 'openai_api_key', 'google_maps_api_key'].forEach(key => {
       localStorage.removeItem(key);
     });
     console.log('📦 API keys cleared from localStorage');
@@ -216,7 +223,8 @@ export function useApiKeyStorage() {
       groqApiKey: localStorage.getItem('groq_api_key') || '',
       perplexityApiKey: localStorage.getItem('perplexity_api_key') || '',
       resendApiKey: localStorage.getItem('resend_api_key') || '',
-      openaiApiKey: localStorage.getItem('openai_api_key') || ''
+      openaiApiKey: localStorage.getItem('openai_api_key') || '',
+      googleMapsApiKey: localStorage.getItem('google_maps_api_key') || ''
     };
 
     const hasLocalKeys = Object.values(localKeys).some(k => k);
@@ -225,7 +233,7 @@ export function useApiKeyStorage() {
     try {
       await saveAllKeys(localKeys);
       // Clear localStorage after successful migration
-      ['groq_api_key', 'perplexity_api_key', 'resend_api_key', 'openai_api_key'].forEach(key => {
+      ['groq_api_key', 'perplexity_api_key', 'resend_api_key', 'openai_api_key', 'google_maps_api_key'].forEach(key => {
         localStorage.removeItem(key);
       });
       console.log('✅ API keys migrated from localStorage to Firestore');
@@ -249,7 +257,8 @@ export function useApiKeyStorage() {
     groqApiKey: keys.groqApiKey,
     perplexityApiKey: keys.perplexityApiKey,
     resendApiKey: keys.resendApiKey,
-    openaiApiKey: keys.openaiApiKey
+    openaiApiKey: keys.openaiApiKey,
+    googleMapsApiKey: keys.googleMapsApiKey
   };
 }
 

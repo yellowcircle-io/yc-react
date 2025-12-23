@@ -78,45 +78,62 @@ const setCors = (response) => {
  * @returns {Object} { success: boolean, error?: string, user?: { email, uid, method } }
  */
 const verifyAdminAuth = async (request) => {
-  // Firebase Auth Bearer token (SSO) - ONLY authentication method
+  // Method 1: Firebase Auth Bearer token (SSO) - preferred for frontend
   const authHeader = request.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return { success: false, error: 'Missing Bearer token - authenticate via Google SSO' };
+  if (authHeader?.startsWith('Bearer ')) {
+    const idToken = authHeader.split('Bearer ')[1];
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const userEmail = decodedToken.email?.toLowerCase();
+
+      if (!userEmail) {
+        return { success: false, error: 'No email in token' };
+      }
+
+      // Check admin whitelist from Firestore
+      const adminWhitelistDoc = await db.collection('config').doc('admin_whitelist').get();
+      const adminEmails = adminWhitelistDoc.exists
+        ? (adminWhitelistDoc.data()?.emails || []).map(e => e.toLowerCase())
+        : [];
+
+      if (!adminEmails.includes(userEmail)) {
+        console.warn(`Admin auth rejected for ${userEmail} - not in whitelist`);
+        return { success: false, error: 'Not an admin' };
+      }
+
+      console.log(`Admin auth via Firebase SSO: ${userEmail}`);
+      return {
+        success: true,
+        user: {
+          email: userEmail,
+          uid: decodedToken.uid,
+          method: 'firebase_sso'
+        }
+      };
+    } catch (error) {
+      console.warn('Firebase token verification failed:', error.message);
+      // Fall through to legacy token check
+    }
   }
 
-  const idToken = authHeader.split('Bearer ')[1];
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const userEmail = decodedToken.email?.toLowerCase();
+  // Method 2: Legacy x-admin-token for CLI/automation
+  const legacyToken = request.headers['x-admin-token'];
+  const journeyKey = functions.config().journey?.auth_key;
+  const n8nToken = functions.config().n8n?.token;
 
-    if (!userEmail) {
-      return { success: false, error: 'No email in token' };
-    }
-
-    // Check admin whitelist from Firestore
-    const adminWhitelistDoc = await db.collection('config').doc('admin_whitelist').get();
-    const adminEmails = adminWhitelistDoc.exists
-      ? (adminWhitelistDoc.data()?.emails || []).map(e => e.toLowerCase())
-      : [];
-
-    if (!adminEmails.includes(userEmail)) {
-      console.warn(`Admin auth rejected for ${userEmail} - not in whitelist`);
-      return { success: false, error: 'Not an admin' };
-    }
-
-    console.log(`Admin auth via Firebase SSO: ${userEmail}`);
+  if (legacyToken && (legacyToken === journeyKey || legacyToken === n8nToken)) {
+    console.log('Admin auth via legacy token');
     return {
       success: true,
       user: {
-        email: userEmail,
-        uid: decodedToken.uid,
-        method: 'firebase_sso'
+        email: 'automation@yellowcircle.io',
+        uid: 'automation',
+        method: 'legacy_token'
       }
     };
-  } catch (error) {
-    console.warn('Firebase token verification failed:', error.message);
-    return { success: false, error: 'Invalid token' };
   }
+
+  return { success: false, error: 'Missing Bearer token - authenticate via Google SSO or use x-admin-token' };
 };
 
 // ============================================
@@ -12063,15 +12080,51 @@ Format responses with clear sections and bullet points. Be specific with address
       }
     });
 
-    // MapNode placeholder (will be enhanced when MapNode component is built)
+    // TripPlannerMapNode with interactive map, markers, and AI suggestions
+    const googlePlacesKey = functions.config().googleplaces?.api_key || '';
+
+    // Pre-geocoded Montreal places with coordinates for immediate map plotting
+    const montrealPlaces = [
+      { id: 'place-1', name: 'Old Montreal', formattedAddress: 'Vieux-Montréal, Montreal, QC', lat: 45.5048, lng: -73.5572, category: 'attraction', distanceFromBase: { text: '0.3 km', duration: '4 min', meters: 300 } },
+      { id: 'place-2', name: 'Notre-Dame Basilica', formattedAddress: '110 Rue Notre-Dame O, Montréal', lat: 45.5046, lng: -73.5560, category: 'attraction', distanceFromBase: { text: '0.4 km', duration: '5 min', meters: 400 } },
+      { id: 'place-3', name: 'Mount Royal', formattedAddress: 'Parc du Mont-Royal, Montréal', lat: 45.5048, lng: -73.5877, category: 'activity', distanceFromBase: { text: '2.5 km', duration: '32 min', meters: 2500 } },
+      { id: 'place-4', name: 'Schwartz\'s Deli', formattedAddress: '3895 St Laurent Blvd, Montréal', lat: 45.5168, lng: -73.5792, category: 'restaurant', distanceFromBase: { text: '1.8 km', duration: '23 min', meters: 1800 } },
+      { id: 'place-5', name: 'Jean-Talon Market', formattedAddress: '7070 Henri Julien Ave, Montréal', lat: 45.5369, lng: -73.6147, category: 'shopping', distanceFromBase: { text: '5.2 km', duration: '65 min', meters: 5200 }, assignedDay: 2 },
+      { id: 'place-6', name: 'Mile End', formattedAddress: 'Mile End, Montréal', lat: 45.5256, lng: -73.5969, category: 'activity', distanceFromBase: { text: '3.5 km', duration: '44 min', meters: 3500 }, assignedDay: 2 },
+      { id: 'place-7', name: 'Biodome', formattedAddress: '4777 Pierre-De Coubertin Ave, Montréal', lat: 45.5612, lng: -73.5466, category: 'attraction', distanceFromBase: { text: '6.5 km', duration: '20 min transit', meters: 6500 }, assignedDay: 3 },
+      { id: 'place-8', name: 'Fine Arts Museum', formattedAddress: '1380 Sherbrooke St W, Montréal', lat: 45.4986, lng: -73.5793, category: 'attraction', distanceFromBase: { text: '1.2 km', duration: '15 min', meters: 1200 } }
+    ];
+
+    // Pre-assign Day 1 to Old Montreal area places
+    montrealPlaces.forEach(p => {
+      if (!p.assignedDay && p.distanceFromBase.meters < 1500) {
+        p.assignedDay = 1;
+      }
+    });
+
     nodes.push({
-      id: `map-montreal-${nodeId++}`,
-      type: 'stickyNode', // Using sticky as placeholder until MapNode exists
-      position: { x: 950, y: 480 },
+      id: `tripplanner-montreal-${nodeId++}`,
+      type: 'tripPlannerMapNode',
+      position: { x: 950, y: 430 },
       data: {
-        content: '🗺️ Map View\n\nMapNode coming soon!\n\nFor now, use:\nmaps.google.com/?q=Montreal',
-        color: 'purple',
-        size: 200
+        title: `${destination} Trip Planner`,
+        apiKey: googlePlacesKey,
+        // Hotel as base location (Old Montreal area)
+        baseLocation: {
+          name: 'Hotel Le St-James (Old Montreal)',
+          lat: 45.5035,
+          lng: -73.5563,
+          formattedAddress: '355 Rue Saint-Jacques, Montréal, QC H2Y 1N9'
+        },
+        // All places pre-geocoded with distances
+        places: montrealPlaces,
+        // AI-suggested day groupings
+        proximityGroups: [
+          { groupId: 1, suggestedDay: 'Day 1', places: ['Old Montreal', 'Notre-Dame Basilica', 'Fine Arts Museum', 'Schwartz\'s Deli'], count: 4 },
+          { groupId: 2, suggestedDay: 'Day 2', places: ['Mile End', 'Jean-Talon Market', 'Mount Royal'], count: 3 },
+          { groupId: 3, suggestedDay: 'Day 3', places: ['Biodome'], count: 1 }
+        ],
+        aiSuggestion: 'Based on proximity, I suggest: Day 1 - Start in Old Montreal (Notre-Dame, historic streets) then walk to Fine Arts Museum, end at Schwartz\'s for dinner. Day 2 - Head to Mile End for bagels and coffee, walk to Jean-Talon Market for lunch, then up to Mount Royal for sunset. Day 3 - Take transit to Biodome, explore Olympic Park area.'
       }
     });
 
@@ -12212,6 +12265,470 @@ exports.geocodeAddress = functions.https.onRequest(async (request, response) => 
 
   } catch (error) {
     console.error("❌ geocodeAddress error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// Slack Bi-directional Communication
+// ============================================
+
+/**
+ * Slack Events Webhook - Receives messages FROM Slack
+ * Used for bi-directional communication with Claude Code
+ *
+ * Setup:
+ * 1. Go to https://api.slack.com/apps → Event Subscriptions
+ * 2. Enable Events → Set Request URL to this function's URL
+ * 3. Subscribe to: message.im, message.channels, app_mention
+ * 4. Save and reinstall app
+ */
+exports.slackWebhook = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  try {
+    const body = request.body;
+
+    // Slack URL verification challenge (one-time setup)
+    if (body.type === 'url_verification') {
+      console.log("✅ Slack URL verification received");
+      return response.status(200).json({ challenge: body.challenge });
+    }
+
+    // Handle actual events
+    if (body.type === 'event_callback') {
+      const event = body.event;
+      console.log("📨 Slack event received:", event.type, event.subtype || '');
+
+      // Ignore bot messages to prevent loops
+      if (event.bot_id || event.subtype === 'bot_message') {
+        return response.status(200).json({ ok: true, ignored: 'bot_message' });
+      }
+
+      // Store the message in Firestore for Claude Code to poll
+      const slackMessage = {
+        type: event.type,
+        channel: event.channel,
+        user: event.user,
+        text: event.text || '',
+        ts: event.ts,
+        threadTs: event.thread_ts || null,
+        eventTs: event.event_ts,
+        teamId: body.team_id,
+        receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processed: false,
+        // Extract any commands (messages starting with ! or /)
+        isCommand: (event.text || '').startsWith('!') || (event.text || '').startsWith('/'),
+        command: (event.text || '').startsWith('!') ? (event.text || '').split(' ')[0].slice(1) : null
+      };
+
+      // Store in Firestore queue
+      await db.collection('slack_messages').add(slackMessage);
+      console.log("✅ Slack message queued:", slackMessage.text?.substring(0, 50));
+
+      // If it's a command, create a task for Claude
+      if (slackMessage.isCommand) {
+        await db.collection('claude_tasks').add({
+          source: 'slack',
+          command: slackMessage.command,
+          fullMessage: slackMessage.text,
+          slackChannel: event.channel,
+          slackUser: event.user,
+          slackTs: event.ts,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          status: 'pending'
+        });
+        console.log("📋 Claude task created from Slack command:", slackMessage.command);
+      }
+
+      return response.status(200).json({ ok: true });
+    }
+
+    // Unknown event type
+    console.warn("⚠️ Unknown Slack event type:", body.type);
+    response.status(200).json({ ok: true, warning: 'unknown_event_type' });
+
+  } catch (error) {
+    console.error("❌ slackWebhook error:", error);
+    // Always return 200 to Slack to prevent retries
+    response.status(200).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * Send Slack message - Outbound from Claude/Functions to Slack
+ * Supports DMs and channels
+ */
+exports.sendSlackMessage = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  // Verify admin auth
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error });
+  }
+
+  try {
+    const { channel, message, threadTs, attachments } = request.body;
+
+    if (!message) {
+      return response.status(400).json({ error: "Missing message" });
+    }
+
+    const slackToken = functions.config().slack?.bot_token;
+    if (!slackToken) {
+      return response.status(503).json({
+        error: "Slack not configured",
+        hint: "Set via: firebase functions:config:set slack.bot_token=xoxb-..."
+      });
+    }
+
+    // Default channel from config
+    const targetChannel = channel || functions.config().slack?.default_channel || 'U3JP2J8NS';
+
+    const payload = {
+      channel: targetChannel,
+      text: message,
+      unfurl_links: false
+    };
+
+    if (threadTs) {
+      payload.thread_ts = threadTs;
+    }
+
+    if (attachments) {
+      payload.attachments = attachments;
+    }
+
+    const slackRes = await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${slackToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const slackData = await slackRes.json();
+
+    if (!slackData.ok) {
+      console.error("❌ Slack API error:", slackData.error);
+      return response.status(400).json({ error: slackData.error });
+    }
+
+    console.log("✅ Slack message sent to", targetChannel);
+    response.json({
+      success: true,
+      channel: targetChannel,
+      ts: slackData.ts,
+      messageId: slackData.message?.ts
+    });
+
+  } catch (error) {
+    console.error("❌ sendSlackMessage error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Get pending Slack messages for Claude Code to process
+ */
+exports.getSlackMessages = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  // Verify admin auth
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error });
+  }
+
+  try {
+    const { limit = 10, includeProcessed = false } = request.query;
+
+    let query = db.collection('slack_messages')
+      .orderBy('receivedAt', 'desc')
+      .limit(parseInt(limit));
+
+    if (!includeProcessed) {
+      query = query.where('processed', '==', false);
+    }
+
+    const snapshot = await query.get();
+    const messages = [];
+
+    snapshot.forEach(doc => {
+      messages.push({
+        id: doc.id,
+        ...doc.data(),
+        receivedAt: doc.data().receivedAt?.toDate?.() || null
+      });
+    });
+
+    response.json({
+      success: true,
+      count: messages.length,
+      messages
+    });
+
+  } catch (error) {
+    console.error("❌ getSlackMessages error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Mark Slack message as processed
+ */
+exports.markSlackMessageProcessed = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  const authResult = await verifyAdminAuth(request);
+  if (!authResult.success) {
+    return response.status(401).json({ error: authResult.error });
+  }
+
+  try {
+    const { messageId, responseText } = request.body;
+
+    if (!messageId) {
+      return response.status(400).json({ error: "Missing messageId" });
+    }
+
+    await db.collection('slack_messages').doc(messageId).update({
+      processed: true,
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      responseText: responseText || null
+    });
+
+    response.json({ success: true, messageId });
+
+  } catch (error) {
+    console.error("❌ markSlackMessageProcessed error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// Trip Planner Map Functions
+// ============================================
+
+/**
+ * Calculate walking distances between multiple locations
+ * Uses Google Distance Matrix API
+ */
+exports.calculateDistances = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  try {
+    const { origins, destinations, mode = 'walking' } = request.body;
+
+    if (!origins || !destinations) {
+      return response.status(400).json({
+        error: "Missing origins or destinations",
+        hint: "Provide arrays of addresses or lat,lng strings"
+      });
+    }
+
+    const googlePlacesKey = functions.config().googleplaces?.api_key;
+    if (!googlePlacesKey) {
+      return response.status(503).json({
+        error: "Google API not configured"
+      });
+    }
+
+    // Format locations for API
+    const originsStr = Array.isArray(origins) ? origins.join('|') : origins;
+    const destinationsStr = Array.isArray(destinations) ? destinations.join('|') : destinations;
+
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(originsStr)}&destinations=${encodeURIComponent(destinationsStr)}&mode=${mode}&key=${googlePlacesKey}`;
+
+    const distanceRes = await fetch(url);
+    const distanceData = await distanceRes.json();
+
+    if (distanceData.status !== 'OK') {
+      return response.status(400).json({
+        error: "Distance Matrix API error",
+        status: distanceData.status,
+        errorMessage: distanceData.error_message
+      });
+    }
+
+    // Parse results into usable format
+    const results = [];
+    distanceData.rows.forEach((row, originIndex) => {
+      row.elements.forEach((element, destIndex) => {
+        if (element.status === 'OK') {
+          results.push({
+            from: distanceData.origin_addresses[originIndex],
+            to: distanceData.destination_addresses[destIndex],
+            distance: element.distance,
+            duration: element.duration,
+            mode
+          });
+        }
+      });
+    });
+
+    response.json({
+      success: true,
+      mode,
+      results,
+      raw: distanceData
+    });
+
+  } catch (error) {
+    console.error("❌ calculateDistances error:", error);
+    response.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Geocode multiple places and return with distances from base location
+ * Perfect for trip planning - "How far is each place from my hotel?"
+ */
+exports.geocodePlacesWithDistances = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    return response.status(204).send("");
+  }
+
+  try {
+    const { baseLocation, places, mode = 'walking' } = request.body;
+
+    if (!baseLocation || !places || !Array.isArray(places)) {
+      return response.status(400).json({
+        error: "Missing baseLocation or places array",
+        example: {
+          baseLocation: "Hotel Le St-James, Montreal",
+          places: ["Old Montreal", "Notre-Dame Basilica", "Mount Royal"]
+        }
+      });
+    }
+
+    const googlePlacesKey = functions.config().googleplaces?.api_key;
+    if (!googlePlacesKey) {
+      return response.status(503).json({ error: "Google API not configured" });
+    }
+
+    // First, geocode all locations
+    const geocodePlace = async (place) => {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(place)}&key=${googlePlacesKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === 'OK' && data.results[0]) {
+        return {
+          name: place,
+          formattedAddress: data.results[0].formatted_address,
+          lat: data.results[0].geometry.location.lat,
+          lng: data.results[0].geometry.location.lng,
+          placeId: data.results[0].place_id
+        };
+      }
+      return { name: place, error: 'Not found' };
+    };
+
+    // Geocode base and all places
+    const baseGeo = await geocodePlace(baseLocation);
+    const placesGeo = await Promise.all(places.map(geocodePlace));
+
+    // Now get distances from base to all places
+    const validPlaces = placesGeo.filter(p => !p.error);
+    const destinations = validPlaces.map(p => `${p.lat},${p.lng}`);
+
+    let distances = [];
+    if (destinations.length > 0 && baseGeo.lat) {
+      const distanceUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${baseGeo.lat},${baseGeo.lng}&destinations=${destinations.join('|')}&mode=${mode}&key=${googlePlacesKey}`;
+      const distRes = await fetch(distanceUrl);
+      const distData = await distRes.json();
+
+      if (distData.status === 'OK' && distData.rows[0]) {
+        distances = distData.rows[0].elements;
+      }
+    }
+
+    // Combine geocode + distance data
+    const enrichedPlaces = validPlaces.map((place, i) => ({
+      ...place,
+      distanceFromBase: distances[i]?.status === 'OK' ? {
+        text: distances[i].distance.text,
+        meters: distances[i].distance.value,
+        duration: distances[i].duration.text,
+        durationSeconds: distances[i].duration.value
+      } : null
+    }));
+
+    // Sort by distance
+    enrichedPlaces.sort((a, b) => {
+      const aDist = a.distanceFromBase?.meters || 999999;
+      const bDist = b.distanceFromBase?.meters || 999999;
+      return aDist - bDist;
+    });
+
+    // Group by proximity (within 10 min walk = ~800m)
+    const proximityGroups = [];
+    const ungrouped = [...enrichedPlaces];
+
+    while (ungrouped.length > 0) {
+      const anchor = ungrouped.shift();
+      const group = [anchor];
+
+      // Find places within 800m of anchor
+      for (let i = ungrouped.length - 1; i >= 0; i--) {
+        const place = ungrouped[i];
+        // Calculate distance between anchor and place (Haversine)
+        const R = 6371000; // Earth radius in meters
+        const dLat = (place.lat - anchor.lat) * Math.PI / 180;
+        const dLon = (place.lng - anchor.lng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(anchor.lat * Math.PI / 180) * Math.cos(place.lat * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+
+        if (distance < 800) { // Within 10 min walk
+          group.push(place);
+          ungrouped.splice(i, 1);
+        }
+      }
+      proximityGroups.push(group);
+    }
+
+    response.json({
+      success: true,
+      baseLocation: baseGeo,
+      places: enrichedPlaces,
+      proximityGroups: proximityGroups.map((group, i) => ({
+        groupId: i + 1,
+        suggestedDay: `Day ${i + 1}`,
+        places: group.map(p => p.name),
+        count: group.length
+      })),
+      aiSuggestion: `Based on proximity, I suggest visiting these places in ${proximityGroups.length} day(s). ${proximityGroups.map((g, i) => `Day ${i+1}: ${g.map(p => p.name).join(', ')}`).join('. ')}`
+    });
+
+  } catch (error) {
+    console.error("❌ geocodePlacesWithDistances error:", error);
     response.status(500).json({ error: error.message });
   }
 });

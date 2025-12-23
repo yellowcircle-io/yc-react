@@ -5,13 +5,16 @@ import '@xyflow/react/dist/style.css';
 import DraggablePhotoNode from '../components/travel/DraggablePhotoNode';
 import TextNoteNode from '../components/unity-plus/TextNoteNode';
 import { mapNodeTypes } from '../components/unity/map';
+import { premiumNodeTypes } from '../components/unity-plus/nodes';
 import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
   textNode: TextNoteNode,
   // Include all UnityMAP node types for journey sharing
-  ...mapNodeTypes
+  ...mapNodeTypes,
+  // Include premium node types (sticky, todo, group, map, etc.)
+  ...premiumNodeTypes
 };
 
 const CapsuleView = () => {

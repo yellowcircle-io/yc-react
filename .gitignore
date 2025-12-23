@@ -59,3 +59,4 @@ backups/
 .firebase/
 firebase-debug.log
 workspace/
+.env

@@ -19,6 +19,7 @@ import ColorSwatchNode from './ColorSwatchNode';
 import CodeBlockNode from './CodeBlockNode';
 import GroupNode from './GroupNode';
 import MapNode from './MapNode';
+import TripPlannerMapNode from './TripPlannerMapNode';
 
 // Node type registry for ReactFlow
 export const premiumNodeTypes = {
@@ -29,6 +30,7 @@ export const premiumNodeTypes = {
   codeBlockNode: CodeBlockNode,
   groupNode: GroupNode,
   mapNode: MapNode,
+  tripPlannerMapNode: TripPlannerMapNode,
 };
 
 // Individual exports for direct imports
@@ -40,6 +42,7 @@ export {
   CodeBlockNode,
   GroupNode,
   MapNode,
+  TripPlannerMapNode,
 };
 
 // Premium card type configuration (for Add Note dialog)
@@ -90,18 +93,6 @@ export const PREMIUM_CARD_TYPES = {
       colors: ['#fbbf24', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6'],
     },
   },
-  codeBlock: {
-    label: 'Code Block',
-    icon: '💻',
-    color: '#1e1e1e',
-    description: 'Code snippet',
-    nodeType: 'codeBlockNode',
-    defaultData: {
-      code: '// Your code here',
-      language: 'javascript',
-      filename: '',
-    },
-  },
   group: {
     label: 'Group',
     icon: '📦',
@@ -128,6 +119,33 @@ export const PREMIUM_CARD_TYPES = {
       zoom: 14,
       places: [],
       apiKey: '', // Set from environment or capsule config
+    },
+  },
+  tripPlanner: {
+    label: 'Trip Planner',
+    icon: '✈️',
+    color: '#3b82f6',
+    description: 'Interactive map with destinations, distances & AI itinerary',
+    nodeType: 'tripPlannerMapNode',
+    defaultData: {
+      title: 'Trip Planner',
+      baseLocation: null,
+      places: [],
+      proximityGroups: [],
+      aiSuggestion: '',
+      apiKey: '', // Set from environment or capsule config
+    },
+  },
+  codeBlock: {
+    label: 'Code Block',
+    icon: '💻',
+    color: '#1e1e1e',
+    description: 'Code snippet',
+    nodeType: 'codeBlockNode',
+    defaultData: {
+      code: '// Your code here',
+      language: 'javascript',
+      filename: '',
     },
   },
 };

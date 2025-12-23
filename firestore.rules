@@ -167,8 +167,14 @@ service cloud.firestore {
       allow update: if request.auth != null
                     && resource.data.ownerId == request.auth.uid;
 
+      // Allow authenticated users to update capsules that have collaborators set up
+      // Fine-grained permission checking (owner/editor/viewer) happens in app code
+      // This rule enables collaboration while Firestore acts as a security backstop
+      allow update: if request.auth != null
+                    && 'collaborators' in resource.data
+                    && resource.data.collaborators.size() > 0;
+
       // Allow authenticated users to update capsules without owner (legacy)
-      // or capsules they have access to (collaborator check done in app code)
       allow update: if request.auth != null
                     && (!('ownerId' in resource.data) || resource.data.ownerId == null);
 

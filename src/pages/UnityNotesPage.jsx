@@ -74,7 +74,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // SSO Authentication hooks
   const { user, userProfile, isAuthenticated, isAdmin } = useAuth();
-  const { isCloudSynced, migrateLocalToCloud, groqApiKey: storedGroqKey, openaiApiKey: storedOpenaiKey } = useApiKeyStorage();
+  const { isCloudSynced, migrateLocalToCloud, groqApiKey: storedGroqKey, openaiApiKey: storedOpenaiKey, googleMapsApiKey: storedGoogleMapsKey } = useApiKeyStorage();
   const { creditsRemaining, tier } = useCredits();
 
   // Node limit for canvas (tier-based) - must be defined early for handleAddCard
@@ -143,10 +143,25 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     addCollaborator,
     removeCollaborator,
     updateVisibility,
-    toggleBookmark
+    toggleBookmark,
+    getBookmarkedCapsules,
+    checkAccess
   } = useFirebaseCapsule();
+
   const [shareUrl, setShareUrl] = useState('');
-  const [currentCapsuleId, setCurrentCapsuleId] = useState('');
+  // Capsule ID - persisted in localStorage for session continuity across navigation
+  const [currentCapsuleId, setCurrentCapsuleId] = useState(() => {
+    // Check URL parameter first, then fall back to localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const capsuleParam = urlParams.get('capsule');
+    if (capsuleParam) return capsuleParam;
+
+    try {
+      return localStorage.getItem('unity-notes-current-capsule') || '';
+    } catch {
+      return '';
+    }
+  });
   const [showShareModal, setShowShareModal] = useState(false);
   const [showAICanvasModal, setShowAICanvasModal] = useState(false);
   const [isGeneratingCanvas, setIsGeneratingCanvas] = useState(false);
@@ -156,8 +171,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   // Collaboration state (v3)
   const [collaborators, setCollaborators] = useState([]);
   const [isPublic, setIsPublic] = useState(false);
+  const [canEditCapsule, setCanEditCapsule] = useState(false); // Track if user can edit loaded capsule
   // Bookmark state
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkedCapsules, setBookmarkedCapsules] = useState([]);
   // Starred nodes state - persisted in localStorage
   const [starredNodeIds, setStarredNodeIds] = useState(() => {
     try {
@@ -219,21 +236,212 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   }, [isAuthenticated, isCloudSynced, migrateLocalToCloud]);
 
-  // Load capsule from URL parameter (for editing shared capsules)
+  // Fetch bookmarked capsules when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.uid) {
+      getBookmarkedCapsules(user.uid)
+        .then(capsules => {
+          setBookmarkedCapsules(capsules);
+          console.log(`✅ Loaded ${capsules.length} bookmarked capsules`);
+        })
+        .catch(err => {
+          console.error('Failed to load bookmarked capsules:', err);
+        });
+    } else {
+      setBookmarkedCapsules([]);
+    }
+  }, [isAuthenticated, user?.uid, getBookmarkedCapsules]);
+
+  // Persist capsule ID to localStorage for session continuity
+  // This ensures the same capsule is updated even if user navigates away and returns
+  useEffect(() => {
+    if (currentCapsuleId) {
+      try {
+        localStorage.setItem('unity-notes-current-capsule', currentCapsuleId);
+        console.log('💾 Capsule ID persisted to localStorage:', currentCapsuleId);
+      } catch (e) {
+        console.error('Failed to persist capsule ID:', e);
+      }
+    }
+  }, [currentCapsuleId]);
+
+  // Track if capsule has been loaded this session (to avoid re-loading)
+  const capsuleLoadedRef = React.useRef(false);
+  // Guard flag to prevent auto-save during clear operation (prevents race condition)
+  const isClearingRef = useRef(false);
+
+  // Load capsule from URL parameter OR localStorage (for editing shared capsules)
   useEffect(() => {
     const capsuleParam = searchParams.get('capsule');
-    if (capsuleParam && isInitialized && !currentCapsuleId) {
+    // Determine which capsule to load: URL param takes priority, then localStorage
+    const capsuleToLoad = capsuleParam || currentCapsuleId;
+
+    // Only load if we have a capsule ID, app is initialized, and we haven't loaded yet this session
+    if (capsuleToLoad && isInitialized && !capsuleLoadedRef.current) {
+      capsuleLoadedRef.current = true; // Mark as loading to prevent duplicate loads
       const loadSharedCapsule = async () => {
         try {
-          console.log('📂 Loading shared capsule for editing:', capsuleParam);
-          const capsuleData = await loadCapsule(capsuleParam);
+          console.log('📂 Loading capsule for editing:', capsuleToLoad);
+          const capsuleData = await loadCapsule(capsuleToLoad);
           if (capsuleData) {
             // Set the capsule ID so updates go to the same document
-            setCurrentCapsuleId(capsuleParam);
+            setCurrentCapsuleId(capsuleToLoad);
 
             // Restore nodes and edges from the capsule
+            // IMPORTANT: Inject callbacks before setting nodes
+            // Callbacks can't be serialized to Firestore, so we add them here
             if (capsuleData.nodes && capsuleData.nodes.length > 0) {
-              setNodes(capsuleData.nodes);
+              const nodesWithCallbacks = capsuleData.nodes.map((node) => {
+                if (node.type === 'todoNode') {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      onUpdateItems: (nodeId, newItems) => {
+                        console.log('🔄 onUpdateItems called:', nodeId, newItems);
+                        setNodes((nds) =>
+                          nds.map((n) =>
+                            n.id === nodeId
+                              ? { ...n, data: { ...n.data, items: newItems } }
+                              : n
+                          )
+                        );
+                      },
+                      onTitleChange: (nodeId, newTitle) => {
+                        setNodes((nds) =>
+                          nds.map((n) =>
+                            n.id === nodeId
+                              ? { ...n, data: { ...n.data, title: newTitle } }
+                              : n
+                          )
+                        );
+                      },
+                      onDelete: (nodeId) => {
+                        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                      },
+                    },
+                  };
+                }
+                // GroupNode needs special callbacks for label, color, resize
+                if (node.type === 'groupNode') {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      onLabelChange: (nodeId, label) => {
+                        setNodes((nds) =>
+                          nds.map((n) =>
+                            n.id === nodeId
+                              ? { ...n, data: { ...n.data, label } }
+                              : n
+                          )
+                        );
+                      },
+                      onResize: (nodeId, width, height) => {
+                        setNodes((nds) =>
+                          nds.map((n) =>
+                            n.id === nodeId
+                              ? { ...n, data: { ...n.data, width, height } }
+                              : n
+                          )
+                        );
+                      },
+                      onColorChange: (nodeId, color) => {
+                        setNodes((nds) =>
+                          nds.map((n) =>
+                            n.id === nodeId
+                              ? { ...n, data: { ...n.data, color } }
+                              : n
+                          )
+                        );
+                      },
+                      onDelete: (nodeId) => {
+                        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                      },
+                    },
+                    style: { zIndex: -1 }, // Groups should be behind other nodes
+                  };
+                }
+                // TextNode needs groqApiKey for AI functionality
+                if (node.type === 'textNode') {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      groqApiKey: storedGroqKey, // Pass API key from Firestore
+                      onDelete: (nodeId) => {
+                        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                      },
+                    },
+                  };
+                }
+                if (['stickyNode', 'commentNode', 'linkNode'].includes(node.type)) {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      onDelete: (nodeId) => {
+                        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                      },
+                    },
+                  };
+                }
+                // TripPlannerMapNode needs onDataChange for persisting places/day changes
+                // Also inject Google Maps API key for map rendering
+                if (node.type === 'tripPlannerMapNode') {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      apiKey: storedGoogleMapsKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '', // Google Maps API key
+                      onDataChange: (nodeId, updates) => {
+                        setNodes((nds) =>
+                          nds.map((n) =>
+                            n.id === nodeId
+                              ? { ...n, data: { ...n.data, ...updates } }
+                              : n
+                          )
+                        );
+                      },
+                      onDelete: (nodeId) => {
+                        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                      },
+                    },
+                  };
+                }
+                // MapNode also needs Google Maps API key
+                if (node.type === 'mapNode') {
+                  return {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      apiKey: storedGoogleMapsKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+                      onDelete: (nodeId) => {
+                        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+                        setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+                      },
+                    },
+                  };
+                }
+                return node;
+              });
+              console.log('✅ Injected callbacks into', nodesWithCallbacks.length, 'nodes');
+              setNodes(nodesWithCallbacks);
+
+              // Restore starred node IDs from capsule data
+              // This preserves star state when loading saved capsules
+              const loadedStarredIds = capsuleData.nodes
+                .filter(n => n.data?.isStarred)
+                .map(n => n.id);
+              if (loadedStarredIds.length > 0) {
+                setStarredNodeIds(new Set(loadedStarredIds));
+                console.log('⭐ Restored', loadedStarredIds.length, 'starred nodes from capsule');
+              }
             }
             if (capsuleData.edges) {
               setEdges(capsuleData.edges);
@@ -246,20 +454,95 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               setIsBookmarked(capsuleData.metadata.isBookmarked || false);
             }
 
+            // Check if user can edit this capsule (admins can always edit)
+            if (user?.uid) {
+              const access = await checkAccess(capsuleToLoad, user.uid, user.email);
+              const canEdit = access.role === 'owner' || access.role === 'editor' || isAdmin;
+              setCanEditCapsule(canEdit);
+              console.log('🔐 Capsule access:', access.role, '- Can edit:', canEdit, '- isAdmin:', isAdmin);
+            }
+
             // Generate share URL for the loaded capsule
-            const url = `${window.location.origin}/unity-notes/view/${capsuleParam}`;
+            const url = `${window.location.origin}/unity-notes/view/${capsuleToLoad}`;
             setShareUrl(url);
 
-            console.log('✅ Loaded capsule:', capsuleParam, '- Nodes:', capsuleData.nodes?.length || 0, '- Collaborators:', capsuleData.metadata?.collaborators?.length || 0);
+            // Update browser URL if loading from localStorage (no URL param)
+            if (!capsuleParam && capsuleToLoad) {
+              const editUrl = `${window.location.pathname}?capsule=${capsuleToLoad}`;
+              window.history.replaceState({}, '', editUrl);
+            }
+
+            console.log('✅ Loaded capsule:', capsuleToLoad, '- Nodes:', capsuleData.nodes?.length || 0, '- Collaborators:', capsuleData.metadata?.collaborators?.length || 0);
           }
         } catch (err) {
           console.error('❌ Failed to load capsule:', err);
-          alert('Failed to load the capsule for editing. It may have been deleted or the link is invalid.');
+          capsuleLoadedRef.current = false; // Allow retry on next render
+          // Clear the stored capsule ID if it's invalid
+          localStorage.removeItem('unity-notes-current-capsule');
+          setCurrentCapsuleId('');
+          alert('Failed to load the capsule. It may have been deleted or the link is invalid.');
         }
       };
       loadSharedCapsule();
     }
-  }, [searchParams, isInitialized, currentCapsuleId, loadCapsule, setNodes, setEdges]);
+  }, [searchParams, isInitialized, currentCapsuleId, loadCapsule, setNodes, setEdges, storedGroqKey, storedGoogleMapsKey, user, checkAccess]);
+
+  // Update canEditCapsule when isAdmin changes (admin check loads async from Firestore)
+  useEffect(() => {
+    if (isAdmin && currentCapsuleId && !canEditCapsule) {
+      console.log('🔐 Admin access granted - enabling capsule edit');
+      setCanEditCapsule(true);
+    }
+  }, [isAdmin, currentCapsuleId, canEditCapsule]);
+
+  // Update existing textNodes when storedGroqKey becomes available (async loading fix)
+  useEffect(() => {
+    if (storedGroqKey && nodes.length > 0) {
+      const hasTextNodes = nodes.some(n => n.type === 'textNode');
+      if (hasTextNodes) {
+        console.log('🔑 Updating textNodes with Groq API key from Firestore');
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.type === 'textNode') {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  groqApiKey: storedGroqKey,
+                },
+              };
+            }
+            return node;
+          })
+        );
+      }
+    }
+  }, [storedGroqKey, nodes.length, setNodes]);
+
+  // Update existing map nodes when storedGoogleMapsKey becomes available (async loading fix)
+  useEffect(() => {
+    const googleMapsKey = storedGoogleMapsKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (googleMapsKey && nodes.length > 0) {
+      const hasMapNodes = nodes.some(n => n.type === 'tripPlannerMapNode' || n.type === 'mapNode');
+      if (hasMapNodes) {
+        console.log('🗺️ Updating map nodes with Google Maps API key');
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.type === 'tripPlannerMapNode' || node.type === 'mapNode') {
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  apiKey: googleMapsKey,
+                },
+              };
+            }
+            return node;
+          })
+        );
+      }
+    }
+  }, [storedGoogleMapsKey, nodes.length, setNodes]);
 
   // Persist journey ID to localStorage when it changes
   useEffect(() => {
@@ -1059,6 +1342,29 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     );
   }, [setNodes]);
 
+  // Callback for updating todo items (used for loaded nodes)
+  const _handleUpdateTodoItems = useCallback((nodeId, newItems) => {
+    console.log('🔄 handleUpdateTodoItems called:', nodeId, newItems);
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, items: newItems } }
+          : node
+      )
+    );
+  }, [setNodes]);
+
+  // Callback for updating todo title (used for loaded nodes)
+  const _handleUpdateTodoTitle = useCallback((nodeId, newTitle) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, title: newTitle } }
+          : node
+      )
+    );
+  }, [setNodes]);
+
   // Helper function to check if a node is inside a group's bounds
   const isNodeInsideGroup = useCallback((node, groupNode) => {
     if (!groupNode || groupNode.type !== 'groupNode') return false;
@@ -1453,6 +1759,68 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         },
         style: { zIndex: -1 }, // Groups should be behind other nodes
       };
+    } else if (type === 'map') {
+      // Premium: Map Node (single location)
+      const googleMapsKey = storedGoogleMapsKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const nodeId = `map-${timestamp}`;
+      newNode = {
+        id: nodeId,
+        type: 'mapNode',
+        position: {
+          x: 300 + gridX * 400,
+          y: 100 + gridY * 350
+        },
+        data: {
+          title: 'Map',
+          address: '',
+          coordinates: null,
+          zoom: 14,
+          places: [],
+          apiKey: googleMapsKey || '',
+          createdAt: timestamp,
+          onDataChange: (id, updates) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === id
+                  ? { ...n, data: { ...n.data, ...updates } }
+                  : n
+              )
+            );
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
+    } else if (type === 'tripPlanner') {
+      // Premium: Trip Planner Map Node
+      const googleMapsKey = storedGoogleMapsKey || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const nodeId = `trip-${timestamp}`;
+      newNode = {
+        id: nodeId,
+        type: 'tripPlannerMapNode',
+        position: {
+          x: 300 + gridX * 500,
+          y: 100 + gridY * 400
+        },
+        data: {
+          title: 'Trip Planner',
+          baseLocation: null,
+          places: [],
+          proximityGroups: [],
+          aiSuggestion: '',
+          apiKey: googleMapsKey || '',
+          createdAt: timestamp,
+          onDataChange: (id, updates) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === id
+                  ? { ...n, data: { ...n.data, ...updates } }
+                  : n
+              )
+            );
+          },
+          onDelete: handleDeleteNode,
+        }
+      };
     }
 
     if (newNode) {
@@ -1461,7 +1829,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         fitView({ duration: 400, padding: 0.2 });
       }, 100);
     }
-  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio, user, userProfile]);
+  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio, user, userProfile, storedGoogleMapsKey]);
 
   // Handle Deploy from ProspectNode - opens prospect modal
   // Uses refs to avoid circular dependency with useEffect that injects callbacks
@@ -1615,7 +1983,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           ...node,
           data: {
             ...node.data,
-            onResize: handlePhotoResize,
+            // Only apply handlePhotoResize to photoNodes - GroupNodes have their own resize handler
+            onResize: node.type === 'photoNode' ? handlePhotoResize : node.data?.onResize,
             onLightbox: handleLightbox,
             onEdit: handleEdit,
             onUpdate: handleNodeUpdate,
@@ -1644,7 +2013,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
   // Save to localStorage with status indicator
   useEffect(() => {
-    if (!isInitialized) return;
+    // Skip auto-save during clear operation to prevent race condition
+    if (!isInitialized || isClearingRef.current) return;
     setIsSavingLocal(true);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
@@ -1657,6 +2027,67 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setTimeout(() => setIsSavingLocal(false), 300);
     }
   }, [nodes, edges, isInitialized]);
+
+  // Auto-save to Firestore when editing a capsule (debounced)
+  const autoSaveTimerRef = useRef(null);
+  useEffect(() => {
+    // Only auto-save if we're editing an existing capsule AND have edit permissions
+    // Also skip during clear operation to prevent race conditions
+    if (!isInitialized || !currentCapsuleId || nodes.length === 0 || !canEditCapsule || isClearingRef.current) return;
+
+    // Clear any pending save
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Debounce: wait 2 seconds after last change before saving
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        console.log('☁️ Auto-saving capsule to Firestore...');
+
+        // Serialize nodes - preserve all data fields except callback functions
+        const serializableNodes = nodes.map(node => {
+          const serializableData = {};
+          if (node.data) {
+            Object.keys(node.data).forEach(key => {
+              const value = node.data[key];
+              if (typeof value !== 'function') {
+                serializableData[key] = value;
+              }
+            });
+          }
+          return {
+            id: node.id,
+            type: node.type,
+            position: { x: node.position.x, y: node.position.y },
+            ...(node.parentId && { parentId: node.parentId }),
+            ...(node.extent && { extent: node.extent }),
+            data: serializableData
+          };
+        });
+
+        const serializableEdges = edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type || 'default'
+        }));
+
+        await updateCapsule(currentCapsuleId, serializableNodes, serializableEdges);
+        console.log('✅ Auto-saved capsule:', currentCapsuleId);
+      } catch (error) {
+        console.error('❌ Auto-save to Firestore failed:', error);
+        // Don't show alert - localStorage save is the fallback
+      }
+    }, 2000); // 2 second debounce
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [nodes, edges, isInitialized, currentCapsuleId, canEditCapsule, updateCapsule]);
 
   // Update zoom level when viewport changes
   useEffect(() => {
@@ -2069,6 +2500,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       const url = `${window.location.origin}/unity-notes/view/${capsuleId}`;
       setShareUrl(url);
 
+      // Update browser URL with capsule ID so it persists across page refreshes
+      // This ensures the same capsule is updated on subsequent saves
+      const editUrl = `${window.location.pathname}?capsule=${capsuleId}`;
+      window.history.replaceState({}, '', editUrl);
+      console.log('📍 URL updated with capsule ID:', capsuleId);
+
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(url);
@@ -2194,8 +2631,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     try {
       const newBookmarkStatus = await toggleBookmark(currentCapsuleId);
       setIsBookmarked(newBookmarkStatus);
+
+      // Refresh bookmarked capsules list after toggling
+      if (user?.uid) {
+        const updatedCapsules = await getBookmarkedCapsules(user.uid);
+        setBookmarkedCapsules(updatedCapsules);
+        console.log(`📚 Refreshed bookmarked capsules: ${updatedCapsules.length}`);
+      }
     } catch (err) {
       console.error('Failed to toggle bookmark:', err);
+      // If it's an index error, log a helpful message
+      if (err.message?.includes('index')) {
+        console.error('⚠️ Firestore composite index may be required. Check Firebase Console.');
+      }
     }
   };
 
@@ -2279,13 +2727,33 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   };
 
-  // Clear all notes
+  // Clear all notes and start a new canvas
   const handleClearAll = () => {
-    if (confirm('⚠️ Clear all notes and reset layout?\n\nThis cannot be undone.\n\nClick OK to proceed.')) {
+    if (confirm('⚠️ Start a new canvas?\n\nThis will clear all notes and create a fresh canvas.\nYour previous canvas can still be accessed via its share link.\n\nClick OK to proceed.')) {
+      // Set guard flag FIRST to prevent auto-save from re-saving old nodes
+      isClearingRef.current = true;
+      // Remove localStorage BEFORE clearing state (order matters for race condition)
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('unity-notes-current-capsule');
+      // Now clear state
       setNodes([]);
       setEdges([]);
-      localStorage.removeItem(STORAGE_KEY);
       setCurrentJourneyId(null);
+      setCurrentCapsuleId('');
+      capsuleLoadedRef.current = false;
+      // Clear URL parameter
+      window.history.replaceState({}, '', window.location.pathname);
+      // Reset collaboration state
+      setCollaborators([]);
+      setIsPublic(false);
+      setIsBookmarked(false);
+      setCanEditCapsule(false);
+      setShareUrl('');
+      console.log('✅ New canvas started');
+      // Reset guard flag after state updates have propagated
+      setTimeout(() => {
+        isClearingRef.current = false;
+      }, 100);
     }
   };
 
@@ -4127,7 +4595,7 @@ Example format:
         onClose={() => setShowOverviewTray(false)}
         nodes={nodes}
         starredNodes={starredNodes}
-        bookmarkedCapsules={[]} // TODO: Wire up bookmarked capsules
+        bookmarkedCapsules={bookmarkedCapsules}
         notifications={[]} // TODO: Wire up notifications
         onNodeClick={(node) => {
           // Focus on the clicked node
@@ -4140,16 +4608,24 @@ Example format:
           setShowOverviewTray(false);
         }}
         onCapsuleLoad={(capsule) => {
-          // TODO: Load capsule
-          console.log('Load capsule:', capsule.id);
+          // Navigate to edit the capsule
+          window.location.href = `/unity-notes?capsule=${capsule.id}`;
         }}
         onNotificationClick={(notification) => {
-          // TODO: Handle notification click
           console.log('Notification clicked:', notification);
         }}
-        onUnstar={(capsuleId) => {
-          // TODO: Unstar capsule
-          console.log('Unstar capsule:', capsuleId);
+        onUnstar={async (capsuleId) => {
+          // Unstar capsule and refresh list
+          try {
+            await toggleBookmark(capsuleId);
+            // Refresh bookmarked capsules
+            if (user?.uid) {
+              const capsules = await getBookmarkedCapsules(user.uid);
+              setBookmarkedCapsules(capsules);
+            }
+          } catch (err) {
+            console.error('Failed to unstar capsule:', err);
+          }
         }}
         onUnstarNode={handleUnstarNode}
       />

@@ -1,5 +1,6 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { loadGoogleMapsAPI } from '../../../utils/googleMapsLoader';
 
 /**
  * MapNode - Interactive map with location markers
@@ -24,10 +25,14 @@ const MAP_CATEGORIES = {
 const MapNode = memo(({ id, data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [showPlaceForm, setShowPlaceForm] = useState(false);
   const [newPlace, setNewPlace] = useState({ name: '', address: '', category: 'attraction' });
+
+  const searchInputRef = useRef(null);
+  const searchAutocompleteRef = useRef(null);
+  const placeInputRef = useRef(null);
+  const placeAutocompleteRef = useRef(null);
 
   // Node data
   const title = data.title || 'Map';
@@ -39,31 +44,110 @@ const MapNode = memo(({ id, data, selected }) => {
   // Google Maps API Key (passed from parent or config)
   const apiKey = data.apiKey || '';
 
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) return;
+  // Load Google Maps API for autocomplete
+  useEffect(() => {
+    if (!apiKey) return;
+    loadGoogleMapsAPI(apiKey).catch(console.error);
+  }, [apiKey]);
+
+  // Initialize Places Autocomplete for search
+  useEffect(() => {
+    if (!window.google?.maps?.places || !searchInputRef.current) return;
+    if (searchAutocompleteRef.current) return;
+
+    try {
+      const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+        types: ['establishment', 'geocode'],
+        fields: ['name', 'formatted_address', 'geometry', 'place_id']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry && data.onDataChange) {
+          data.onDataChange(id, {
+            address: place.formatted_address || place.name,
+            coordinates: {
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng()
+            }
+          });
+          // Clear the input after selection
+          if (searchInputRef.current) {
+            searchInputRef.current.value = '';
+          }
+        }
+      });
+
+      searchAutocompleteRef.current = autocomplete;
+    } catch (e) {
+      console.warn('Could not initialize search autocomplete:', e);
+    }
+  }, [apiKey, id, data]);
+
+  // Initialize Places Autocomplete for add place form
+  useEffect(() => {
+    if (!window.google?.maps?.places || !placeInputRef.current || !showPlaceForm) return;
+    if (placeAutocompleteRef.current) return;
+
+    try {
+      const autocomplete = new window.google.maps.places.Autocomplete(placeInputRef.current, {
+        types: ['establishment', 'geocode'],
+        fields: ['name', 'formatted_address', 'geometry', 'place_id']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          setNewPlace(prev => ({
+            ...prev,
+            name: place.name || place.formatted_address,
+            address: place.formatted_address
+          }));
+        }
+      });
+
+      placeAutocompleteRef.current = autocomplete;
+    } catch (e) {
+      console.warn('Could not initialize place autocomplete:', e);
+    }
+
+    return () => {
+      placeAutocompleteRef.current = null;
+    };
+  }, [showPlaceForm]);
+
+  // Fallback search using browser-side Geocoder (for Enter key without autocomplete selection)
+  const handleSearch = useCallback(() => {
+    const searchQuery = searchInputRef.current?.value || '';
+    if (!searchQuery.trim() || !window.google?.maps) return;
     setIsSearching(true);
 
     try {
-      // Call geocoding endpoint
-      const response = await fetch(
-        `https://us-central1-yellowcircle-app.cloudfunctions.net/geocodeAddress?address=${encodeURIComponent(searchQuery)}`
-      );
-      const result = await response.json();
-
-      if (result.lat && result.lng) {
-        if (data.onDataChange) {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ address: searchQuery }, (results, status) => {
+        setIsSearching(false);
+        if (status === 'OK' && results[0] && data.onDataChange) {
+          const result = results[0];
           data.onDataChange(id, {
-            address: result.formattedAddress || searchQuery,
-            coordinates: { lat: result.lat, lng: result.lng },
+            address: result.formatted_address || searchQuery,
+            coordinates: {
+              lat: result.geometry.location.lat(),
+              lng: result.geometry.location.lng()
+            }
           });
+          // Clear the input after search
+          if (searchInputRef.current) {
+            searchInputRef.current.value = '';
+          }
+        } else {
+          console.warn('Geocode failed:', status);
         }
-      }
+      });
     } catch (error) {
       console.error('Geocoding error:', error);
-    } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, id, data]);
+  }, [id, data]);
 
   const handleAddPlace = useCallback(() => {
     if (!newPlace.name.trim()) return;
@@ -237,13 +321,12 @@ const MapNode = memo(({ id, data, selected }) => {
           )}
         </div>
 
-        {/* Search bar */}
+        {/* Search bar - uncontrolled for Google Places Autocomplete compatibility */}
         <div style={{ display: 'flex', gap: '6px' }}>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             className="nodrag"
             style={{
@@ -361,8 +444,9 @@ const MapNode = memo(({ id, data, selected }) => {
             }}
           >
             <input
+              ref={placeInputRef}
               type="text"
-              placeholder="Place name"
+              placeholder="Search place..."
               value={newPlace.name}
               onChange={(e) => setNewPlace({ ...newPlace, name: e.target.value })}
               style={{

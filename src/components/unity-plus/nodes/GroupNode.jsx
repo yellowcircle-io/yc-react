@@ -84,20 +84,24 @@ const GroupNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Resizer */}
+      {/* Resizer - needs high zIndex to be clickable above other nodes */}
       <NodeResizer
         minWidth={150}
         minHeight={100}
-        isVisible={selected}
+        isVisible={selected || isHovered}
         lineStyle={{
           borderColor: colorScheme.border,
-          borderWidth: 1,
+          borderWidth: 2,
+          zIndex: 1000,
         }}
         handleStyle={{
           backgroundColor: colorScheme.border,
-          width: 10,
-          height: 10,
+          width: 12,
+          height: 12,
           borderRadius: '50%',
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          zIndex: 1000,
         }}
         onResize={(_, params) => {
           if (data.onResize) {

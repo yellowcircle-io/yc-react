@@ -505,18 +505,30 @@ const TextNoteNode = memo(({ data, id, selected }) => {
 
     setIsAiLoading(true);
     try {
-      // First try to get API keys from Hub's encrypted settings (requires user ID)
+      // Priority 1: Check for API key passed via props (from Firestore via useApiKeyStorage)
+      // Priority 2: Try Hub's encrypted localStorage settings
+      // Priority 3: Fall back to environment variables
+      const propsApiKey = data.groqApiKey;
       const hubKeys = await getHubApiKeys(user?.uid);
       let adapter = null;
       let providerUsed = '';
 
-      // Try Groq first (fastest/cheapest)
-      if (hubKeys.groq) {
+      // Try props API key first (from Firestore)
+      if (propsApiKey) {
+        adapter = await getLLMAdapterByName('groq');
+        if (adapter) {
+          adapter._hubApiKey = propsApiKey;
+          providerUsed = 'Groq (Firestore)';
+        }
+      }
+
+      // Try Groq from Hub localStorage (fastest/cheapest)
+      if (!adapter && hubKeys.groq) {
         adapter = await getLLMAdapterByName('groq');
         if (adapter) {
           // Temporarily set the API key for this request
           adapter._hubApiKey = hubKeys.groq;
-          providerUsed = 'Groq';
+          providerUsed = 'Groq (Hub)';
         }
       }
 
@@ -1348,7 +1360,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           {/* Thread view - scrollable message history */}
           <div
             ref={threadRef}
-            className="nodrag nopan"
+            className="nodrag nopan nowheel"
             style={{
               maxHeight: '200px',
               minHeight: aiMessages.length > 0 ? '100px' : '40px',

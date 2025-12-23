@@ -234,7 +234,10 @@ const BookmarksTab = memo(({ capsules = [], starredNodes = [], onLoad, onUnstar,
                   {capsule.nodeCount || 0} nodes
                   {capsule.updatedAt && (
                     <span style={{ marginLeft: '8px' }}>
-                      {new Date(capsule.updatedAt).toLocaleDateString()}
+                      {/* Handle both Firestore Timestamp and regular Date */}
+                      {capsule.updatedAt.toDate
+                        ? capsule.updatedAt.toDate().toLocaleDateString()
+                        : new Date(capsule.updatedAt).toLocaleDateString()}
                     </span>
                   )}
                 </div>

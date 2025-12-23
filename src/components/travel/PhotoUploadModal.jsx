@@ -108,6 +108,8 @@ const PhotoUploadModal = ({
     { type: 'sticky', icon: '📌', label: 'STICKY', description: 'Quick colored note', color: '#fbbf24' },
     { type: 'comment', icon: '💬', label: 'COMMENT', description: 'Annotation bubble', color: '#6366f1' },
     { type: 'swatch', icon: '🎨', label: 'COLOR SWATCH', description: 'Color collection', color: '#f97316' },
+    { type: 'map', icon: '🗺️', label: 'MAP', description: 'Location with Google Maps', color: '#22c55e' },
+    { type: 'tripPlanner', icon: '✈️', label: 'TRIP PLANNER', description: 'Map with destinations & AI itinerary', color: '#3b82f6' },
     { type: 'code', icon: '💻', label: 'CODE BLOCK', description: 'Code snippet', color: '#1e1e1e' },
   ];
 

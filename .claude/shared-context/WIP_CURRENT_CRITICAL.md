@@ -2,9 +2,61 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 21, 2025 at 12:45 AM PST
-**Machine:** MacBook Air
-**Status:** ✅ Montreal Trip Planner Complete
+**Updated:** December 21, 2025 at 2:35 PM PST
+**Machine:** Mac Mini
+**Status:** ✅ All Systems Verified & Working
+
+---
+
+## ✅ MAC MINI SESSION (Dec 21, 2025 Afternoon) - VERIFICATION COMPLETE
+
+### Systems Verified:
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Slack Integration** | ✅ WORKING | Bot token configured, notifications sending |
+| **Montreal Trip Planner** | ✅ FIXED | Capsule ID: `montreal-trip-dec2025` |
+| **ESP - Resend** | ✅ WORKING | Test email sent successfully |
+| **ESP - SendGrid** | ✅ WORKING | Test email sent successfully |
+| **ESP - Brevo** | ✅ WORKING | Test email sent successfully |
+| **ESP - MailerSend** | ✅ WORKING | Test email sent successfully |
+| **Comet Browser** | ✅ CONFIGURED | Playwright MCP using Comet (Chromium-based) |
+
+### Montreal Trip Planner Fix:
+- **Issue:** Previous capsule ID was incorrect (`montreal-trip-2025` vs `montreal-trip-dec2025`)
+- **Fix:** Re-seeded via `seedTripPlannerCapsule` function with correct auth token
+- **View URL:** https://yellowcircle.io/unity-notes/view/montreal-trip-dec2025
+- **Edit URL:** https://yellowcircle.io/unity-notes?capsule=montreal-trip-dec2025
+- **Collaborators:** christopher@yellowcircle.io, dash@dashkolos.com
+- **Nodes:** 12 (Daily Itinerary, Places to Visit, Food & Dining, AI Assistant, etc.)
+
+### ESP Test Results (All 4 Concurrent):
+```
+Resend:     0c8c7e77-22ee-4180-b4cc-5332693890c0
+SendGrid:   GM-Z7CWKT5SVUQ3u-cankQ
+Brevo:      202512212133.20286370242@smtp-relay.mailin.fr
+MailerSend: 694867bd133f0c759d789deb
+```
+
+### Use Cases Ready for Manual Testing:
+
+**6A. Internal (yellowCircle Native):**
+- Journey/Ads via prompt (MAP mode)
+- Deploy Ads (STUDIO mode)
+- Outbound Prospecting
+- Track Contacts
+- Dynamic Newsletter
+
+**6B. Client A (Photography Studio):**
+- Headshot prospect sourcing
+- Email drip sequences
+- Instagram ads via UnitySTUDIO
+- UnityNOTE vision boarding
+- AI photo editing
+
+**Note:** Use cases require authentication to fully test.
+
+---
 
 ---
 

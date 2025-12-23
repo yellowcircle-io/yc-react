@@ -221,11 +221,14 @@ const TodoNode = memo(({ id, data, selected }) => {
       </div>
 
       {/* Todo items */}
-      <div style={{
-        maxHeight: '200px',
-        overflowY: 'auto',
-        marginBottom: '8px',
-      }}>
+      <div
+        className="nowheel nodrag"
+        style={{
+          maxHeight: '200px',
+          overflowY: 'auto',
+          marginBottom: '8px',
+        }}
+      >
         {items.map((item, index) => (
           <div
             key={index}

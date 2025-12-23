@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   collection,
   doc,
@@ -128,30 +128,62 @@ export const useFirebaseCapsule = () => {
   const [error, setError] = useState(null);
 
   /**
-   * Serialize node for storage (minimal footprint)
+   * Recursively remove undefined values from objects/arrays (Firestore doesn't support undefined)
    */
-  const serializeNode = (node) => ({
-    id: node.id,
-    type: node.type,
-    position: {
-      x: Math.round(node.position.x),
-      y: Math.round(node.position.y)
-    },
-    data: {
-      imageUrl: node.data?.imageUrl || '',
-      location: node.data?.location || '',
-      date: node.data?.date || '',
-      description: node.data?.description || '',
-      content: node.data?.content || '',
-      size: node.data?.size || 350,
-      // Include additional data for MAP nodes
-      label: node.data?.label || '',
-      subject: node.data?.subject || '',
-      preview: node.data?.preview || '',
-      fullBody: node.data?.fullBody || '',
-      status: node.data?.status || 'draft'
+  const cleanUndefined = (obj) => {
+    if (obj === null || obj === undefined) return null;
+    if (Array.isArray(obj)) {
+      return obj.map(item => cleanUndefined(item)).filter(item => item !== undefined);
     }
-  });
+    if (typeof obj === 'object' && obj !== null) {
+      const cleaned = {};
+      Object.keys(obj).forEach(key => {
+        const value = obj[key];
+        if (value !== undefined) {
+          cleaned[key] = cleanUndefined(value);
+        }
+      });
+      return cleaned;
+    }
+    return obj;
+  };
+
+  /**
+   * Serialize node for storage (preserves all non-function data)
+   * Supports all node types: photoNode, textNode, todoNode, tripPlannerMapNode, etc.
+   */
+  const serializeNode = (node) => {
+    // Serialize data by copying all non-function properties
+    const serializableData = {};
+    if (node.data) {
+      Object.keys(node.data).forEach(key => {
+        const value = node.data[key];
+        // Skip functions (callbacks like onDelete, onUpdateItems, etc.) and undefined values
+        if (typeof value !== 'function' && value !== undefined) {
+          // Recursively clean nested objects/arrays of undefined values
+          serializableData[key] = cleanUndefined(value);
+        }
+      });
+    }
+
+    return {
+      id: node.id,
+      type: node.type,
+      position: {
+        x: Math.round(node.position.x),
+        y: Math.round(node.position.y)
+      },
+      // Preserve parentId and extent for grouped nodes
+      ...(node.parentId && { parentId: node.parentId }),
+      ...(node.extent && { extent: node.extent }),
+      // Preserve width/height for resizable nodes (GroupNode, etc.)
+      ...(node.width && { width: node.width }),
+      ...(node.height && { height: node.height }),
+      // Preserve style for dimension overrides
+      ...(node.style && { style: cleanUndefined(node.style) }),
+      data: serializableData
+    };
+  };
 
   /**
    * Serialize edge for storage
@@ -372,8 +404,8 @@ export const useFirebaseCapsule = () => {
       const capsuleSnap = await getDoc(capsuleRef);
       const capsuleData = capsuleSnap.data();
 
-      if (capsuleData?.version === 2) {
-        // v2 embedded model - single document update
+      if (capsuleData?.version >= 2) {
+        // v2/v3 embedded model - single document update
         await updateDoc(capsuleRef, {
           updatedAt: serverTimestamp(),
           nodes: nodes.map(serializeNode),
@@ -384,7 +416,7 @@ export const useFirebaseCapsule = () => {
         });
         // Record save for rate limiting
         recordSave(capsuleId);
-        console.log('✅ Capsule updated (v2 embedded)');
+        console.log(`✅ Capsule updated (v${capsuleData.version} embedded)`);
       } else {
         // v1 subcollection model (legacy) - batch updates
         const batch = writeBatch(db);
@@ -913,7 +945,7 @@ export const useFirebaseCapsule = () => {
    * @param {string} userId - User ID
    * @returns {Promise<Array>} Array of bookmarked capsules
    */
-  const getBookmarkedCapsules = async (userId) => {
+  const getBookmarkedCapsules = useCallback(async (userId) => {
     try {
       const capsulesRef = collection(db, 'capsules');
 
@@ -926,7 +958,8 @@ export const useFirebaseCapsule = () => {
         limit(50)
       );
       const bookmarkedSnap = await getDocs(bookmarkedQuery);
-      const bookmarked = bookmarkedSnap.docs.map(doc => doc.data());
+      // Include document ID in returned data (required for BookmarksTab to use as key and for unstar)
+      const bookmarked = bookmarkedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       console.log(`✅ Found ${bookmarked.length} bookmarked capsules`);
       return bookmarked;
@@ -935,7 +968,7 @@ export const useFirebaseCapsule = () => {
       console.error('❌ Get bookmarked capsules failed:', err);
       throw err;
     }
-  };
+  }, []);
 
   return {
     // Original functions
