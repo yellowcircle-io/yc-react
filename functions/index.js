@@ -12309,11 +12309,16 @@ exports.slackWebhook = functions.https.onRequest(async (request, response) => {
         return response.status(200).json({ ok: true, ignored: 'bot_message' });
       }
 
+      // Ignore message edits/changes - we only want new messages
+      if (event.subtype === 'message_changed' || event.subtype === 'message_deleted') {
+        return response.status(200).json({ ok: true, ignored: event.subtype });
+      }
+
       // Store the message in Firestore for Claude Code to poll
       const slackMessage = {
         type: event.type,
-        channel: event.channel,
-        user: event.user,
+        channel: event.channel || null,
+        user: event.user || null,
         text: event.text || '',
         ts: event.ts,
         threadTs: event.thread_ts || null,
