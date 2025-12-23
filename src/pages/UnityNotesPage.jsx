@@ -3971,9 +3971,25 @@ Example format:
     setNodes((nds) => [...nds, ...newNodes]);
   }, [nodes, setNodes, handleNodeUpdate, handleDeleteNode, handlePhotoResize]);
 
+  // Smart save handler - saves journey if MAP nodes exist, otherwise saves capsule
+  const handleSmartSave = useCallback(async () => {
+    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
+    const hasMapNodes = nodes.some(n => mapNodeTypes.includes(n.type));
+
+    if (hasMapNodes) {
+      // Has MAP nodes - save as journey
+      await handleSaveJourney();
+    } else if (nodes.length > 0) {
+      // Has regular nodes - save as capsule
+      await handleSaveAndShare();
+    } else {
+      alert('⚠️ No nodes to save.\n\nAdd some notes or content first.');
+    }
+  }, [nodes, handleSaveJourney, handleSaveAndShare]);
+
   // Keyboard shortcuts hook
   const { showHelp: showShortcutsHelp, setShowHelp: setShowShortcutsHelp } = useKeyboardShortcuts({
-    onSave: handleSaveJourney,
+    onSave: handleSmartSave,
     onExport: handleExportJSON,
     onAddCard: () => handleAddCard('note'),
     onDelete: handleDeleteSelected,

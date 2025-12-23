@@ -231,7 +231,7 @@ const BookmarksTab = memo(({ capsules = [], starredNodes = [], onLoad, onUnstar,
                     marginTop: '4px',
                   }}
                 >
-                  {capsule.nodeCount || 0} nodes
+                  {capsule.stats?.nodeCount || capsule.nodeCount || 0} nodes
                   {capsule.updatedAt && (
                     <span style={{ marginLeft: '8px' }}>
                       {/* Handle both Firestore Timestamp and regular Date */}
