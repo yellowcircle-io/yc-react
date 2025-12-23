@@ -1,1 +1,62 @@
+#!/usr/bin/env sh
+
+# Run lint-staged first
 npx lint-staged
+
+# Secret scanning - prevent committing API keys
+echo "🔍 Scanning for secrets..."
+
+# Get staged files (excluding .env which should never be staged anyway)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -v "^\.env$" | grep -v "node_modules" | grep -v "^dist/")
+
+if [ -n "$STAGED_FILES" ]; then
+    # Patterns to detect (common API key formats)
+    # Google API Key: AIza followed by 35 chars
+    # AWS Access Key: AKIA followed by 16 chars
+    # Generic base64 secrets
+
+    SECRETS_FOUND=""
+
+    for FILE in $STAGED_FILES; do
+        if [ -f "$FILE" ]; then
+            # Check for Google API keys (AIzaSy...)
+            if grep -qE 'AIzaSy[a-zA-Z0-9_-]{33}' "$FILE" 2>/dev/null; then
+                SECRETS_FOUND="$SECRETS_FOUND\n  ❌ Google API Key in: $FILE"
+            fi
+
+            # Check for AWS Access Keys
+            if grep -qE 'AKIA[A-Z0-9]{16}' "$FILE" 2>/dev/null; then
+                SECRETS_FOUND="$SECRETS_FOUND\n  ❌ AWS Access Key in: $FILE"
+            fi
+
+            # Check for Slack tokens
+            if grep -qE 'xox[baprs]-[a-zA-Z0-9-]+' "$FILE" 2>/dev/null; then
+                SECRETS_FOUND="$SECRETS_FOUND\n  ❌ Slack Token in: $FILE"
+            fi
+
+            # Check for OpenAI keys
+            if grep -qE 'sk-[a-zA-Z0-9]{48}' "$FILE" 2>/dev/null; then
+                SECRETS_FOUND="$SECRETS_FOUND\n  ❌ OpenAI Key in: $FILE"
+            fi
+
+            # Check for private keys
+            if grep -qE '-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----' "$FILE" 2>/dev/null; then
+                SECRETS_FOUND="$SECRETS_FOUND\n  ❌ Private Key in: $FILE"
+            fi
+        fi
+    done
+
+    if [ -n "$SECRETS_FOUND" ]; then
+        echo ""
+        echo "🚨 SECRETS DETECTED IN STAGED FILES! 🚨"
+        echo "$SECRETS_FOUND"
+        echo ""
+        echo "Please remove secrets before committing."
+        echo "Store secrets in .env (gitignored) only."
+        echo ""
+        echo "To bypass (DANGEROUS): git commit --no-verify"
+        exit 1
+    fi
+fi
+
+echo "✅ No secrets detected"
