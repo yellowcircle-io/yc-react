@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApiKeyStorage } from '../../hooks/useApiKeyStorage';
@@ -106,7 +106,6 @@ ${brand.sender.name ? `- Sign off as "— ${brand.sender.name.split(' ')[0]}"` :
 
 function OutreachGeneratorPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
   const { user, isAuthenticated, isAdmin, userProfile } = useAuth();
   const {
@@ -221,7 +220,7 @@ function OutreachGeneratorPage() {
     if (savedBrand) {
       try {
         setBrand(JSON.parse(savedBrand));
-      } catch (e) {
+      } catch (_e) {
         console.error('Failed to parse saved brand config');
       }
     }
@@ -299,13 +298,13 @@ function OutreachGeneratorPage() {
         }
       }
     }
-  }, []);
+  }, [groqApiKey]);
 
   // Check if user can generate (tiered: admins/premium unlimited, API key 10, free 3)
   const canGenerate = hasUnlimitedCredits || (apiKey && apiKeyCreditsRemaining > 0) || freeCreditsRemaining > 0;
 
-  // Use a credit (tiered system)
-  const useCredit = () => {
+  // Consume a credit (tiered system)
+  const consumeCredit = () => {
     if (hasUnlimitedCredits) return; // Admins and premium users don't use credits
 
     if (apiKey) {
@@ -617,8 +616,8 @@ Return ONLY a JSON object with this exact format:
         };
       }
 
-      // Use a credit on successful generation
-      useCredit();
+      // Consume a credit on successful generation
+      consumeCredit();
 
       // Save prospect to storage (for closed-loop tracking)
       try {
