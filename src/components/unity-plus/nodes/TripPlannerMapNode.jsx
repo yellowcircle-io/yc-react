@@ -33,6 +33,35 @@ const DAY_COLORS = [
   '#8b5cf6', // Day 6 - Purple
 ];
 
+// Get Map ID from environment for AdvancedMarkerElement support
+const GOOGLE_MAP_ID = import.meta.env.VITE_GOOGLE_MAP_ID || '';
+
+/**
+ * Create a DOM element for marker content (used by AdvancedMarkerElement)
+ */
+const createMarkerContent = (color, label = null, scale = 24) => {
+  const container = document.createElement('div');
+  container.style.cssText = `
+    width: ${scale}px;
+    height: ${scale}px;
+    border-radius: 50%;
+    background-color: ${color};
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: ${scale * 0.5}px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  `;
+  if (label) {
+    container.textContent = label;
+  }
+  return container;
+};
+
 const TripPlannerMapNode = memo(({ id, data, selected }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -42,6 +71,7 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
   const placeInputRef = useRef(null);
   const baseAutocompleteRef = useRef(null);
   const placeAutocompleteRef = useRef(null);
+  const useAdvancedMarkers = useRef(false);
 
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,10 +142,14 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
 
     return () => {
       isMounted = false;
-      // Cleanup markers
+      // Cleanup markers (handle both legacy Marker and AdvancedMarkerElement)
       markersRef.current.forEach(m => {
         try {
-          m.setMap(null);
+          if (typeof m.setMap === 'function') {
+            m.setMap(null); // Legacy Marker API
+          } else if ('map' in m) {
+            m.map = null; // AdvancedMarkerElement API
+          }
         } catch (_e) {
           // Ignore errors during cleanup
         }
@@ -203,7 +237,17 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
       ? { lat: baseLocation.lat, lng: baseLocation.lng }
       : { lat: 45.5017, lng: -73.5673 }; // Default Montreal
 
-    mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+    // Check if AdvancedMarkerElement is available (requires mapId and marker library)
+    const canUseAdvancedMarkers = GOOGLE_MAP_ID && window.google?.maps?.marker?.AdvancedMarkerElement;
+    useAdvancedMarkers.current = canUseAdvancedMarkers;
+
+    if (!canUseAdvancedMarkers && GOOGLE_MAP_ID) {
+      console.warn('⚠️ AdvancedMarkerElement not available. Ensure marker library is loaded.');
+    } else if (!GOOGLE_MAP_ID) {
+      console.info('ℹ️ No Map ID configured. Using legacy markers. Set VITE_GOOGLE_MAP_ID for AdvancedMarkerElement.');
+    }
+
+    const mapOptions = {
       center,
       zoom: 13,
       styles: [
@@ -213,7 +257,14 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: true,
-    });
+    };
+
+    // Add mapId if available (required for AdvancedMarkerElement)
+    if (GOOGLE_MAP_ID) {
+      mapOptions.mapId = GOOGLE_MAP_ID;
+    }
+
+    mapInstanceRef.current = new window.google.maps.Map(mapRef.current, mapOptions);
 
     infoWindowRef.current = new window.google.maps.InfoWindow();
 
@@ -239,7 +290,10 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
           if (markersRef.current.length > 0) {
             const bounds = new window.google.maps.LatLngBounds();
             markersRef.current.forEach(marker => {
-              const pos = marker.getPosition?.();
+              // Handle both legacy Marker (getPosition) and AdvancedMarkerElement (position property)
+              const pos = typeof marker.getPosition === 'function'
+                ? marker.getPosition()
+                : marker.position;
               if (pos) bounds.extend(pos);
             });
             mapInstanceRef.current.fitBounds(bounds, { padding: 50 });
@@ -271,11 +325,16 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
   const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current || !window.google?.maps) return;
 
-    // Clear existing markers safely
+    const AdvancedMarker = window.google?.maps?.marker?.AdvancedMarkerElement;
+    const shouldUseAdvanced = useAdvancedMarkers.current && AdvancedMarker;
+
+    // Clear existing markers safely (handle both APIs)
     markersRef.current.forEach(m => {
       try {
-        if (m && typeof m.setMap === 'function') {
-          m.setMap(null);
+        if (typeof m.setMap === 'function') {
+          m.setMap(null); // Legacy Marker
+        } else if ('map' in m) {
+          m.map = null; // AdvancedMarkerElement
         }
       } catch (_e) {
         // Ignore errors during cleanup
@@ -287,20 +346,36 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
 
     // Add base location marker (hotel)
     if (baseLocation?.lat && baseLocation?.lng) {
-      const baseMarker = new window.google.maps.Marker({
-        position: { lat: baseLocation.lat, lng: baseLocation.lng },
-        map: mapInstanceRef.current,
-        title: baseLocation.name || 'Hotel',
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: PLACE_CATEGORIES.hotel.color,
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 3,
-        },
-        zIndex: 1000,
-      });
+      const position = { lat: baseLocation.lat, lng: baseLocation.lng };
+      let baseMarker;
+
+      if (shouldUseAdvanced) {
+        // Use AdvancedMarkerElement
+        const content = createMarkerContent(PLACE_CATEGORIES.hotel.color, '🏨', 28);
+        baseMarker = new AdvancedMarker({
+          position,
+          map: mapInstanceRef.current,
+          title: baseLocation.name || 'Hotel',
+          content,
+          zIndex: 1000,
+        });
+      } else {
+        // Fallback to legacy Marker
+        baseMarker = new window.google.maps.Marker({
+          position,
+          map: mapInstanceRef.current,
+          title: baseLocation.name || 'Hotel',
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: PLACE_CATEGORIES.hotel.color,
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 3,
+          },
+          zIndex: 1000,
+        });
+      }
 
       baseMarker.addListener('click', () => {
         infoWindowRef.current.setContent(`
@@ -309,11 +384,19 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
             <p style="margin: 4px 0 0; font-size: 12px; color: #666;">Your base location</p>
           </div>
         `);
-        infoWindowRef.current.open(mapInstanceRef.current, baseMarker);
+        // AdvancedMarkerElement requires different anchor handling
+        if (shouldUseAdvanced) {
+          infoWindowRef.current.open({
+            anchor: baseMarker,
+            map: mapInstanceRef.current,
+          });
+        } else {
+          infoWindowRef.current.open(mapInstanceRef.current, baseMarker);
+        }
       });
 
       markersRef.current.push(baseMarker);
-      bounds.extend({ lat: baseLocation.lat, lng: baseLocation.lng });
+      bounds.extend(position);
     }
 
     // Add place markers
@@ -323,25 +406,41 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
       const category = PLACE_CATEGORIES[place.category] || PLACE_CATEGORIES.attraction;
       const dayIndex = place.assignedDay ? place.assignedDay - 1 : null;
       const markerColor = dayIndex !== null ? DAY_COLORS[dayIndex % DAY_COLORS.length] : category.color;
+      const position = { lat: place.lat, lng: place.lng };
+      const label = dayIndex !== null ? String(place.assignedDay) : category.icon;
 
-      const marker = new window.google.maps.Marker({
-        position: { lat: place.lat, lng: place.lng },
-        map: mapInstanceRef.current,
-        title: place.name,
-        label: {
-          text: dayIndex !== null ? String(place.assignedDay) : category.icon,
-          fontSize: dayIndex !== null ? '12px' : '14px',
-          fontWeight: 'bold',
-        },
-        icon: dayIndex !== null ? {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 16,
-          fillColor: markerColor,
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 2,
-        } : undefined,
-      });
+      let marker;
+
+      if (shouldUseAdvanced) {
+        // Use AdvancedMarkerElement with DOM content
+        const content = createMarkerContent(markerColor, label, dayIndex !== null ? 32 : 28);
+        marker = new AdvancedMarker({
+          position,
+          map: mapInstanceRef.current,
+          title: place.name,
+          content,
+        });
+      } else {
+        // Fallback to legacy Marker
+        marker = new window.google.maps.Marker({
+          position,
+          map: mapInstanceRef.current,
+          title: place.name,
+          label: {
+            text: label,
+            fontSize: dayIndex !== null ? '12px' : '14px',
+            fontWeight: 'bold',
+          },
+          icon: dayIndex !== null ? {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 16,
+            fillColor: markerColor,
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 2,
+          } : undefined,
+        });
+      }
 
       marker.addListener('click', () => {
         const distance = place.distanceFromBase;
@@ -361,12 +460,20 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
             </a>
           </div>
         `);
-        infoWindowRef.current.open(mapInstanceRef.current, marker);
+        // AdvancedMarkerElement requires different anchor handling
+        if (shouldUseAdvanced) {
+          infoWindowRef.current.open({
+            anchor: marker,
+            map: mapInstanceRef.current,
+          });
+        } else {
+          infoWindowRef.current.open(mapInstanceRef.current, marker);
+        }
         setSelectedPlace(place);
       });
 
       markersRef.current.push(marker);
-      bounds.extend({ lat: place.lat, lng: place.lng });
+      bounds.extend(position);
     });
 
     // Fit bounds if we have markers

@@ -86,7 +86,7 @@ export const loadGoogleMapsAPI = (apiKey) => {
   // Create and load the script
   loadingPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry,marker&loading=async`;
     script.async = true;
     script.defer = true;
     script.id = 'google-maps-script';
