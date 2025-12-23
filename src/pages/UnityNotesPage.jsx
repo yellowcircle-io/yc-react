@@ -1304,9 +1304,40 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   }, [editingNodeId, setNodes]);
 
   // Handle delete memory (from edit modal)
+  // When deleting a group, unparent all children first to prevent orphaned nodes
   const handleDeleteMemory = useCallback(() => {
 
-    setNodes((nds) => nds.filter((node) => node.id !== editingNodeId));
+    setNodes((nds) => {
+      // Find the node being deleted
+      const nodeToDelete = nds.find(n => n.id === editingNodeId);
+
+      // If it's a group node, we need to unparent all children
+      if (nodeToDelete?.type === 'groupNode') {
+        const children = nds.filter(n => n.parentId === editingNodeId);
+
+        if (children.length > 0) {
+          // Convert children to absolute positions and remove parent reference
+          const updatedNodes = nds.map(node => {
+            if (node.parentId === editingNodeId) {
+              return {
+                ...node,
+                position: {
+                  x: node.position.x + (nodeToDelete.position?.x || 0),
+                  y: node.position.y + (nodeToDelete.position?.y || 0)
+                },
+                parentId: undefined,
+                extent: undefined
+              };
+            }
+            return node;
+          });
+
+          return updatedNodes.filter(node => node.id !== editingNodeId);
+        }
+      }
+
+      return nds.filter((node) => node.id !== editingNodeId);
+    });
     setEdges((eds) => eds.filter((edge) =>
       edge.source !== editingNodeId && edge.target !== editingNodeId
     ));
@@ -1314,10 +1345,45 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   }, [editingNodeId, setNodes, setEdges]);
 
   // Handle direct delete from node (for text/non-photo nodes)
+  // When deleting a group, unparent all children first to prevent orphaned nodes
   const handleDeleteNode = useCallback((nodeId) => {
 
     if (confirm('⚠️ Delete this note?\n\nThis cannot be undone.')) {
-      setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+      setNodes((nds) => {
+        // Find the node being deleted
+        const nodeToDelete = nds.find(n => n.id === nodeId);
+
+        // If it's a group node, we need to unparent all children
+        if (nodeToDelete?.type === 'groupNode') {
+          // Find all children of this group
+          const children = nds.filter(n => n.parentId === nodeId);
+
+          if (children.length > 0) {
+            // Convert children to absolute positions and remove parent reference
+            const updatedNodes = nds.map(node => {
+              if (node.parentId === nodeId) {
+                // Convert relative position to absolute by adding parent's position
+                return {
+                  ...node,
+                  position: {
+                    x: node.position.x + (nodeToDelete.position?.x || 0),
+                    y: node.position.y + (nodeToDelete.position?.y || 0)
+                  },
+                  parentId: undefined,
+                  extent: undefined
+                };
+              }
+              return node;
+            });
+
+            // Now filter out the deleted group
+            return updatedNodes.filter(node => node.id !== nodeId);
+          }
+        }
+
+        // Default: just filter out the node
+        return nds.filter((node) => node.id !== nodeId);
+      });
       setEdges((eds) => eds.filter((edge) =>
         edge.source !== nodeId && edge.target !== nodeId
       ));
