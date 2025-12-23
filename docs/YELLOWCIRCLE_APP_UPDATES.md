@@ -548,7 +548,7 @@ docs/                 # NEW - Project documentation
 
 **Required for Firebase** (.env):
 ```env
-VITE_FIREBASE_API_KEY=***REMOVED***
+VITE_FIREBASE_API_KEY=YOUR_API_KEY_HERE
 VITE_FIREBASE_AUTH_DOMAIN=yellowcircle-app.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=yellowcircle-app
 VITE_FIREBASE_STORAGE_BUCKET=yellowcircle-app.firebasestorage.app

@@ -60,3 +60,14 @@ backups/
 firebase-debug.log
 workspace/
 .env
+
+# Utility scripts with potential secrets
+functions/reseed-*.js
+functions/update-*.js
+scripts/*-capsule.cjs
+scripts/*-local.js
+
+# Any file with "secret" or "key" in name
+*secret*
+*-key.js
+*-keys.js
