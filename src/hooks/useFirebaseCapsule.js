@@ -970,6 +970,26 @@ export const useFirebaseCapsule = () => {
     }
   }, []);
 
+  /**
+   * Rename a capsule
+   * @param {string} capsuleId - Capsule ID to rename
+   * @param {string} newTitle - New title for the capsule
+   * @returns {Promise<void>}
+   */
+  const renameCapsule = useCallback(async (capsuleId, newTitle) => {
+    try {
+      const capsuleRef = doc(db, 'capsules', capsuleId);
+      await updateDoc(capsuleRef, {
+        title: newTitle,
+        updatedAt: serverTimestamp()
+      });
+      console.log('✅ Capsule renamed:', capsuleId, '→', newTitle);
+    } catch (err) {
+      console.error('❌ Rename capsule failed:', err);
+      throw err;
+    }
+  }, []);
+
   return {
     // Original functions
     saveCapsule,
@@ -989,6 +1009,7 @@ export const useFirebaseCapsule = () => {
     // Bookmark functions
     toggleBookmark,
     getBookmarkedCapsules,
+    renameCapsule,
     // State
     isSaving,
     isLoading,

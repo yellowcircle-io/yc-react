@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 
 /**
  * BookmarksTab - Displays bookmarked/starred capsules AND starred nodes
@@ -19,8 +19,39 @@ const NODE_TYPE_ICONS = {
   aiChatNode: '🤖',
 };
 
-const BookmarksTab = memo(({ capsules = [], starredNodes = [], onLoad, onUnstar, onNodeClick, onUnstarNode }) => {
+const BookmarksTab = memo(({ capsules = [], starredNodes = [], onLoad, onUnstar, onNodeClick, onUnstarNode, onRename }) => {
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
   const hasNoItems = capsules.length === 0 && starredNodes.length === 0;
+
+  const handleStartEdit = (e, capsule) => {
+    e.stopPropagation();
+    setEditingId(capsule.id);
+    setEditTitle(capsule.title || 'Untitled Capsule');
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.stopPropagation();
+    if (editingId && editTitle.trim() && onRename) {
+      await onRename(editingId, editTitle.trim());
+    }
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleCancelEdit = (e) => {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit(e);
+    } else if (e.key === 'Escape') {
+      handleCancelEdit(e);
+    }
+  };
 
   if (hasNoItems) {
     return (
@@ -212,68 +243,158 @@ const BookmarksTab = memo(({ capsules = [], starredNodes = [], onLoad, onUnstar,
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#111827',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {capsule.title || 'Untitled Capsule'}
-                </div>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    color: '#6b7280',
-                    marginTop: '4px',
-                  }}
-                >
-                  {capsule.stats?.nodeCount || capsule.nodeCount || 0} nodes
-                  {capsule.updatedAt && (
-                    <span style={{ marginLeft: '8px' }}>
-                      {/* Handle both Firestore Timestamp and regular Date */}
-                      {capsule.updatedAt.toDate
-                        ? capsule.updatedAt.toDate().toLocaleDateString()
-                        : new Date(capsule.updatedAt).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
+                {editingId === capsule.id ? (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        padding: '4px 8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        border: '2px solid #fbbf24',
+                        borderRadius: '4px',
+                        outline: 'none',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                      <button
+                        onClick={handleSaveEdit}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#fbbf24',
+                          color: '#000',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#e5e7eb',
+                          color: '#374151',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#111827',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {capsule.title || 'Untitled Capsule'}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#6b7280',
+                        marginTop: '4px',
+                      }}
+                    >
+                      {capsule.stats?.nodeCount || capsule.nodeCount || 0} nodes
+                      {capsule.updatedAt && (
+                        <span style={{ marginLeft: '8px' }}>
+                          {/* Handle both Firestore Timestamp and regular Date */}
+                          {capsule.updatedAt.toDate
+                            ? capsule.updatedAt.toDate().toLocaleDateString()
+                            : new Date(capsule.updatedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
+              {/* Edit button */}
+              {editingId !== capsule.id && onRename && (
+                <button
+                  onClick={(e) => handleStartEdit(e, capsule)}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    color: '#6b7280',
+                    transition: 'all 0.15s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.color = '#374151';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#6b7280';
+                  }}
+                  title="Rename capsule"
+                >
+                  ✏️
+                </button>
+              )}
+
               {/* Unstar button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUnstar?.(capsule.id);
-                }}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  color: '#fbbf24',
-                  transition: 'all 0.15s',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fef3c7';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                title="Remove from saved"
-              >
-                ★
-              </button>
+              {editingId !== capsule.id && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUnstar?.(capsule.id);
+                  }}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#fbbf24',
+                    transition: 'all 0.15s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fef3c7';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  title="Remove from saved"
+                >
+                  ★
+                </button>
+              )}
             </div>
           ))}
         </>

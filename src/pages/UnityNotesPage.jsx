@@ -146,6 +146,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     updateVisibility,
     toggleBookmark,
     getBookmarkedCapsules,
+    renameCapsule,
     checkAccess
   } = useFirebaseCapsule();
 
@@ -4716,6 +4717,19 @@ Example format:
           }
         }}
         onUnstarNode={handleUnstarNode}
+        onRenameCapsule={async (capsuleId, newTitle) => {
+          try {
+            await renameCapsule(capsuleId, newTitle);
+            // Refresh bookmarked capsules to show updated title
+            if (user?.uid) {
+              const capsules = await getBookmarkedCapsules(user.uid);
+              setBookmarkedCapsules(capsules);
+            }
+          } catch (err) {
+            console.error('Failed to rename capsule:', err);
+            alert('Failed to rename capsule. Please try again.');
+          }
+        }}
       />
 
       {/* Lightbox Modal */}

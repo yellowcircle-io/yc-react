@@ -53,6 +53,7 @@ const OverviewTray = memo(({
   onNotificationClick,
   onUnstar,
   onUnstarNode,
+  onRenameCapsule,
 }) => {
   const [activeTab, setActiveTab] = useState('nodes');
 
@@ -219,6 +220,7 @@ const OverviewTray = memo(({
               onUnstar={onUnstar}
               onNodeClick={onNodeClick}
               onUnstarNode={onUnstarNode}
+              onRename={onRenameCapsule}
             />
           )}
           {activeTab === 'nodes' && (
