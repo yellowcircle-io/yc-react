@@ -100,8 +100,8 @@ yellowCircle | Growth Infrastructure Solutions
 https://yellowcircle.io`;
 
 // Script version for sync tracking
-const SCRIPT_VERSION = '1.2.0';
-const SCRIPT_UPDATED_AT = '2025-12-11';
+const SCRIPT_VERSION = '1.3.0';
+const SCRIPT_UPDATED_AT = '2025-12-24';
 
 // Journey structure
 const welcomeJourney = {
@@ -279,7 +279,7 @@ const welcomeTriggerRule = {
   dedup: {
     enabled: true,
     strategy: 'email_journey',
-    windowSeconds: 86400 * 7 // 7 days
+    windowSeconds: 86400 * 365 // 365 days - prevent re-sending to existing leads
   },
 
   stats: {

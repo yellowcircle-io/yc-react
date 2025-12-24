@@ -4261,7 +4261,7 @@ exports.seedWelcomeJourney = functions.https.onRequest(async (request, response)
   const WELCOME_JOURNEY_ID = "welcome-new-leads";
   const TRIGGER_RULE_ID = "welcome-new-leads-rule";
   const ASSESSMENT_RULE_ID = "assessment-results-rule";
-  const SCRIPT_VERSION = "1.2.0"; // Sync with scripts/seed-welcome-journey.cjs
+  const SCRIPT_VERSION = "1.3.0"; // Sync with scripts/seed-welcome-journey.cjs
 
   // Welcome email content
   const welcomeEmailContent = `Hi {{name}},
@@ -4502,7 +4502,7 @@ https://yellowcircle.io`;
       dedup: {
         enabled: true,
         strategy: "email_journey",
-        windowSeconds: 86400 * 7
+        windowSeconds: 86400 * 365 // 365 days - prevent re-sending to existing leads
       },
 
       stats: {
