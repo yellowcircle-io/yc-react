@@ -2,9 +2,47 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 23, 2025 at 3:50 AM PST
-**Machine:** MacBook Air (Autonomous)
-**Status:** ✅ Autonomous Investigation Complete
+**Updated:** December 24, 2025 at 4:45 PM EST
+**Machine:** Mac Mini → MacBook Air
+**Status:** 🔄 Sleepless Agent Thread Support - Needs Slack Config
+
+---
+
+## 🔄 SLEEPLESS AGENT THREAD SUPPORT (Dec 24, 2025 - 3:30-4:45 PM EST) - Mac Mini
+
+### What Was Done:
+1. **Thread Command Support Implemented** in Sleepless Agent bot:
+   - Modified `/Users/christophercooper_1/.local/pipx/venvs/sleepless-agent/lib/python3.14/site-packages/sleepless_agent/interfaces/bot.py`
+   - Added `!think`, `!check`, `!cancel`, `!usage` commands for threads
+   - Uses `!` prefix instead of `/` (Slack intercepts `/` before it becomes a message)
+
+2. **The Problem:** Bot not receiving message events via Socket Mode
+   - Slash commands work (Socket Mode connection is fine)
+   - Message events never arrive at the bot
+   - Debug logging added - shows NO message events coming through
+
+### What Needs To Be Done (MacBook Air):
+**Check Slack App settings at [api.slack.com/apps](https://api.slack.com/apps):**
+
+1. **OAuth & Permissions** → Bot Token Scopes should include:
+   - `channels:history` (read messages in public channels)
+   - `channels:read` (view basic channel info)
+
+2. **Event Subscriptions** → Verify events are enabled
+
+3. **REINSTALL THE APP** - Go to "Install App" and click "Reinstall to Workspace"
+
+4. After reinstall, restart Sleepless Agent:
+   ```bash
+   pkill -f sleepless_agent
+   ./scripts/start-sleepless.sh
+   ```
+
+5. Test in Slack thread: `!think test message`
+
+### Files Modified:
+- `sleepless_agent/interfaces/bot.py` - Thread command handlers (in pipx venv)
+- `scripts/start-sleepless.sh` - Committed in previous session
 
 ---
 

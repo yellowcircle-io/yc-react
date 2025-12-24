@@ -3,7 +3,7 @@
 **Machine:** Mac Mini
 **Instance ID:** mac-mini-primary
 **Created:** November 2, 2025
-**Last Updated:** December 7, 2025
+**Last Updated:** December 24, 2025
 
 ---
 
@@ -26,6 +26,28 @@
 ---
 
 ## Session History
+
+### Session: Sleepless Agent Thread Support
+**Date:** December 24, 2025 (3:30-4:45 PM EST)
+**Context:** Implementing thread command support for Sleepless Agent
+
+**Tasks Completed:**
+1. **Thread Command Implementation**
+   - Modified `sleepless_agent/interfaces/bot.py` (in pipx venv)
+   - Added `!think`, `!check`, `!cancel`, `!usage` thread commands
+   - Uses `!` prefix since Slack intercepts `/` in threads
+
+2. **Debugging Message Events**
+   - Added info-level logging to trace Socket Mode events
+   - Discovered: Message events not reaching bot
+   - Slash commands work fine (Socket Mode connection OK)
+
+**Handoff to MacBook Air:**
+- Need to check Slack App OAuth scopes (`channels:history`)
+- May need to reinstall Slack app to activate event subscriptions
+- Test with `!think test` in a Slack thread after fix
+
+---
 
 ### Session 1: Deep Strategic Analysis
 **Date:** October 27, 2025
