@@ -16,9 +16,17 @@ const TodoNode = memo(({ id, data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [newItemText, setNewItemText] = useState('');
   const [editingIndex, setEditingIndex] = useState(-1);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   const items = data.items || [];
   const title = data.title || 'To-Do List';
+
+  const handleTitleChange = (newTitle) => {
+    if (data.onTitleChange && newTitle.trim()) {
+      data.onTitleChange(id, newTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
   const completedCount = items.filter(item => item.completed).length;
   const progress = items.length > 0 ? (completedCount / items.length) * 100 : 0;
 
@@ -186,15 +194,46 @@ const TodoNode = memo(({ id, data, selected }) => {
         marginBottom: '12px',
       }}>
         <span style={{ fontSize: '18px' }}>✅</span>
-        <h3 style={{
-          margin: 0,
-          fontSize: '14px',
-          fontWeight: '700',
-          color: '#111827',
-          flex: 1,
-        }}>
-          {title}
-        </h3>
+        {isEditingTitle ? (
+          <input
+            type="text"
+            defaultValue={title}
+            autoFocus
+            className="nodrag"
+            onBlur={(e) => handleTitleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleTitleChange(e.target.value);
+              if (e.key === 'Escape') setIsEditingTitle(false);
+            }}
+            style={{
+              flex: 1,
+              margin: 0,
+              padding: '2px 4px',
+              fontSize: '14px',
+              fontWeight: '700',
+              color: '#111827',
+              border: '1px solid #22c55e',
+              borderRadius: '4px',
+              outline: 'none',
+              backgroundColor: '#fff',
+            }}
+          />
+        ) : (
+          <h3
+            onDoubleClick={() => setIsEditingTitle(true)}
+            style={{
+              margin: 0,
+              fontSize: '14px',
+              fontWeight: '700',
+              color: '#111827',
+              flex: 1,
+              cursor: 'text',
+            }}
+            title="Double-click to edit title"
+          >
+            {title}
+          </h3>
+        )}
         <span style={{
           fontSize: '11px',
           fontWeight: '600',
