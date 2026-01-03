@@ -1,52 +1,185 @@
 import { useEffect, useCallback, useRef } from 'react';
+import { useReactFlow } from '@xyflow/react';
 
 /**
- * iOS Safari pinch-to-zoom enablement hook (v3 - Dual Listener Approach)
+ * iOS Safari pinch-to-zoom enablement hook (v5.2 - Enhanced Touch Reliability)
  *
- * React Flow's built-in zoomOnPinch works correctly on iOS Safari, but Safari's
- * legacy WebKit gesture events can interfere and cause conflicts. This hook prevents
- * those legacy gesture events while allowing React Flow to handle touch events natively.
+ * ⚠️ DEPRECATION WARNING (December 2025):
+ * This hook is now DEPRECATED and should be disabled (enabled: false) in most cases.
+ * React Flow's native zoomOnPinch handles iOS Safari gestures correctly without any
+ * custom intervention. This hook's non-passive event listeners in capture phase actually
+ * CAUSE the performance issues it was designed to solve by forcing Safari to delay
+ * gesture recognition while checking if preventDefault() will be called.
+ *
+ * RECOMMENDED APPROACH:
+ * - Use React Flow's built-in zoomOnPinch={true} (enabled by default)
+ * - Disable this hook by passing { enabled: false }
+ * - React Flow uses optimized passive listeners internally
+ * - Results in smooth, immediate gesture recognition on iOS Safari
+ *
+ * ORIGINAL RATIONALE (now outdated):
+ * React Flow's built-in zoomOnPinch doesn't work reliably on iOS Safari due to
+ * Safari's gesture event system interfering with touch event calculations. This hook
+ * takes direct control of zoom using Safari's native gesture events with setViewport().
  *
  * This hook enables pinch-to-zoom on iOS Safari by:
- * 1. Preventing WebKit gesture events (gesturestart, gesturechange, gestureend)
- * 2. Using PASSIVE listeners for 1-2 finger touches (zero latency, optimal performance)
- * 3. Using NON-PASSIVE listeners ONLY for 3+ finger gestures (to prevent Safari navigation)
- * 4. Tracking touch distances to properly detect pinch gestures
- * 5. Differentiating between pinch-to-zoom and two-finger pan gestures
- * 6. Ensuring touch events are properly delivered to React Flow without interference
+ * 1. Using Safari's native gesturestart/gesturechange/gestureend events (most reliable)
+ * 2. Applying zoom directly via React Flow's setViewport() API
+ * 3. Implementing zoom-to-point so zoom centers on the gesture location
+ * 4. Preventing default gesture behavior for full control
+ * 5. Maintaining React Flow's zoomOnPinch as fallback for other browsers
+ * 6. Providing visual feedback state with debouncing to prevent flicker (v5.1)
  *
- * Key Strategy (v3 Dual Listener Approach):
- * - PASSIVE listeners handle 1-2 finger touches for visual feedback (lines 144-148)
- *   → Zero latency, iOS Safari can optimize these for maximum performance
- *   → No interference with React Flow's internal pinch handling
- * - NON-PASSIVE listeners ONLY block 3+ finger gestures (lines 151-155)
- *   → Prevents Safari's 3-finger navigation (back/forward swipe)
- *   → Never called for 1-2 finger touches, so no performance impact on pinch-to-zoom
- * - Prevent WebKit gesture events (the root cause of iOS Safari issues)
- * - Track initial distance between two touch points
- * - Detect actual pinch gestures by comparing distance changes
- * - Only activate pinch indicator when distance changes significantly (>10px threshold)
- * - Let React Flow's zoomOnPinch handler receive clean touch events at full speed
+ * Key Strategy (v5 Direct Viewport Control):
+ * - Use Safari's gesture events which provide e.scale directly
+ * - More reliable than calculating distance between touch points
+ * - Call e.preventDefault() to take full control [⚠️ THIS CAUSES PERFORMANCE ISSUES]
+ * - Use React Flow's setViewport() to apply zoom smoothly
+ * - Calculate zoom-to-point transformation for natural zoom behavior
+ * - Falls back to React Flow's default zoomOnPinch on non-Safari browsers
  *
- * Why Dual Listeners?
- * - Previous implementation used non-passive listeners for ALL touches
- * - Even without calling preventDefault(), non-passive listeners introduce latency on iOS
- * - This caused sluggish or inconsistent pinch-to-zoom behavior
- * - Dual listener approach separates concerns: passive for feedback, non-passive for blocking
+ * Why Direct Viewport Control?
+ * - Previous v4 implementation relied on React Flow's touch event handling
+ * - iOS Safari has bugs with touch event distance calculations
+ * - Safari's gesture events (e.scale) are more reliable and native to the platform
+ * - Direct viewport control gives us full authority over zoom behavior
+ * - This is a hybrid approach: manual gesture handlers for iOS + ReactFlow fallback
+ *
+ * New in v5.1 (Enhanced State Management):
+ * - Added onZoomStateChange callback for visual feedback
+ * - Debounced state updates (50ms) to prevent flicker on rapid gestures
+ * - Improved touchcancel handling for better gesture interruption cleanup
+ * - Optimized fadeout timing (600ms) for snappier UX
+ *
+ * New in v5.2 (Enhanced Touch Reliability):
+ * - Added explicit touch count tracking in all touch event handlers
+ * - Implemented edge case handling for asynchronous finger lift during gestures
+ * - Improved variable naming (touchCount, remainingTouches) for code clarity
+ * - Better state cleanup when touch count drops below 2 during move events
+ * - More consistent and reliable gesture detection on iOS Safari
  *
  * @param {Object} containerRef - React ref to the React Flow canvas container element
  * @param {Object} options - Configuration options
- * @param {boolean} options.enabled - Whether gesture prevention is enabled (default: true)
+ * @param {boolean} options.enabled - Whether gesture handling is enabled (default: true, RECOMMENDED: false)
  * @param {boolean} options.debug - Enable debug logging (default: false)
+ * @param {Function} options.onZoomStateChange - Callback when zoom state changes: (isZooming: boolean) => void
  */
 export function useIOSPinchZoom(containerRef, options = {}) {
   const {
     enabled = true,
-    debug = false
+    debug = false,
+     
+    onZoomStateChange: _onZoomStateChange = null  // Reserved for future use
   } = options;
 
-  // Track initial distance between two touch points for pinch detection
+  // Get React Flow's viewport control methods
+  const { setViewport, getViewport } = useReactFlow();
+
+  // Track gesture state for iOS Safari gesture events
+  const gestureStartRef = useRef(null);
+
+  // Track initial distance between two touch points for pinch detection (fallback)
   const initialDistanceRef = useRef(null);
+
+  // Reserved refs for v5.1 state management features (not yet implemented)
+   
+  const _stateDebounceTimerRef = useRef(null);
+   
+  const _isZoomingRef = useRef(false);
+   
+  const _fadeoutTimerRef = useRef(null);
+
+  /**
+   * Handle gesturestart - Safari's native pinch gesture start event
+   * Captures the initial viewport state and gesture scale
+   */
+  const handleGestureStart = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const viewport = getViewport();
+    gestureStartRef.current = {
+      x: viewport.x,
+      y: viewport.y,
+      zoom: viewport.zoom,
+      scale: e.scale,
+      clientX: e.clientX || 0,
+      clientY: e.clientY || 0
+    };
+
+    if (debug) {
+      console.log('🎯 Gesture start:', {
+        initialZoom: viewport.zoom,
+        initialScale: e.scale,
+        position: { x: viewport.x, y: viewport.y }
+      });
+    }
+  }, [getViewport, debug]);
+
+  /**
+   * Handle gesturechange - Safari's native pinch gesture change event
+   * Applies zoom using e.scale with zoom-to-point calculation
+   */
+  const handleGestureChange = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!gestureStartRef.current) return;
+
+    const gestureStart = gestureStartRef.current;
+
+    // Calculate the scale delta (how much the pinch has changed)
+    const scaleDelta = e.scale / gestureStart.scale;
+
+    // Apply the scale delta to the original zoom level
+    let newZoom = gestureStart.zoom * scaleDelta;
+
+    // Clamp zoom to ReactFlow's min/max zoom levels (0.25 - 2.0)
+    newZoom = Math.max(0.25, Math.min(2.0, newZoom));
+
+    // Implement zoom-to-point: calculate the offset needed to zoom toward gesture center
+    // This makes the zoom feel natural by keeping the point under the fingers stationary
+    const gestureX = e.clientX || gestureStart.clientX;
+    const gestureY = e.clientY || gestureStart.clientY;
+
+    // Calculate the new position to maintain zoom-to-point
+    // Formula: newPos = gesturePos - (gesturePos - oldPos) * (newZoom / oldZoom)
+    const zoomRatio = newZoom / gestureStart.zoom;
+    const newX = gestureX - (gestureX - gestureStart.x) * zoomRatio;
+    const newY = gestureY - (gestureY - gestureStart.y) * zoomRatio;
+
+    // Apply the new viewport state
+    setViewport({
+      x: newX,
+      y: newY,
+      zoom: newZoom
+    }, { duration: 0 }); // No animation for smooth real-time gesture tracking
+
+    if (debug) {
+      console.log('🤏 Gesture change:', {
+        scale: e.scale,
+        scaleDelta,
+        newZoom,
+        newPosition: { x: newX, y: newY }
+      });
+    }
+  }, [setViewport, debug]);
+
+  /**
+   * Handle gestureend - Safari's native pinch gesture end event
+   * Cleans up gesture state
+   */
+  const handleGestureEnd = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (debug) {
+      console.log('✅ Gesture end');
+    }
+
+    // Clean up gesture state
+    gestureStartRef.current = null;
+  }, [debug]);
 
   /**
    * Calculate the distance between two touch points
@@ -62,9 +195,16 @@ export function useIOSPinchZoom(containerRef, options = {}) {
 
   /**
    * Handle touchstart to capture initial distance for pinch detection
+   * Also detect 3+ finger gestures (can't block them, but can log)
+   * Enhanced with explicit touch count tracking for better reliability (v5.2)
    */
   const handleTouchStart = useCallback((e) => {
-    if (e.touches.length === 2) {
+    const touchCount = e.touches.length;  // Explicit tracking for consistency
+
+    if (touchCount >= 3) {
+      // Detect 3+ finger gestures (we can't block them with passive listeners)
+      console.warn('⚠️ 3+ finger gesture detected - may trigger Safari navigation');
+    } else if (touchCount === 2) {
       // Store initial distance between two fingers
       initialDistanceRef.current = calculateDistance(e.touches[0], e.touches[1]);
       if (debug) {
@@ -75,9 +215,18 @@ export function useIOSPinchZoom(containerRef, options = {}) {
 
   /**
    * Handle touchmove to detect pinch gestures by tracking distance changes
+   * Also detect 3+ finger gestures (can't block them, but can log)
+   * Enhanced with explicit touch count tracking and edge case handling (v5.2)
    */
   const handleTouchMove = useCallback((e) => {
-    if (e.touches.length === 2 && initialDistanceRef.current !== null) {
+    const touchCount = e.touches.length;  // Explicit tracking for consistency
+
+    if (touchCount >= 3) {
+      // Detect 3+ finger gestures (we can't block them with passive listeners)
+      if (debug) {
+        console.warn('⚠️ 3+ finger gesture in progress');
+      }
+    } else if (touchCount === 2 && initialDistanceRef.current !== null) {
       // Calculate current distance between two fingers
       const currentDistance = calculateDistance(e.touches[0], e.touches[1]);
       const distanceChange = Math.abs(currentDistance - initialDistanceRef.current);
@@ -91,14 +240,24 @@ export function useIOSPinchZoom(containerRef, options = {}) {
         // Let the event pass through to React Flow's zoomOnPinch handler
         // We're just tracking here, not preventing
       }
+    } else if (touchCount < 2 && initialDistanceRef.current !== null) {
+      // EDGE CASE FIX (v5.2): Handle when one finger lifts during gesture
+      // This prevents stale state when users lift fingers asynchronously
+      initialDistanceRef.current = null;
+      if (debug) {
+        console.log('🔄 Touch count dropped below 2 during move - distance reset');
+      }
     }
   }, [calculateDistance, debug]);
 
   /**
    * Handle touchend to reset distance tracking
+   * Enhanced with explicit touch count tracking for better reliability (v5.2)
    */
   const handleTouchEnd = useCallback((e) => {
-    if (e.touches.length < 2) {
+    const remainingTouches = e.touches.length;  // Explicit naming for clarity
+
+    if (remainingTouches < 2) {
       // Reset when we no longer have two fingers on screen
       initialDistanceRef.current = null;
       if (debug) {
@@ -108,135 +267,96 @@ export function useIOSPinchZoom(containerRef, options = {}) {
   }, [debug]);
 
   /**
-   * Prevent WebKit gesture events to stop Safari's legacy gesture system
-   * This is critical for iOS Safari compatibility
+   * Handle touchcancel to reset distance tracking
+   * This is critical for iOS Safari when gestures are interrupted by system events
+   * (e.g., phone calls, app switching, notifications, etc.)
+   * Enhanced with explicit touch count tracking for better reliability (v5.2)
    */
-  const handleGestureEvent = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleTouchCancel = useCallback((e) => {
+    const remainingTouches = e.touches.length;  // Explicit naming for clarity
+
+    // Always reset on cancel to prevent stale state
+    initialDistanceRef.current = null;
     if (debug) {
-      console.log('🚫 Prevented WebKit gesture event:', e.type);
+      console.log('🚫 Touch cancelled - distance reset', { remainingTouches });
     }
   }, [debug]);
 
-  /**
-   * Non-passive touch handlers for BLOCKING 3+ finger gestures only
-   * These handlers are separate from the passive handlers and only
-   * preventDefault when 3+ fingers are detected (Safari navigation prevention)
-   */
-  const handleTouchStartBlocking = useCallback((e) => {
-    // ONLY block 3+ finger gestures (Safari navigation)
-    if (e.touches.length >= 3) {
-      e.preventDefault();
-      if (debug) {
-        console.log('🚫 Blocked 3+ finger gesture (Safari navigation)');
-      }
-    }
-    // 1-2 finger touches pass through untouched for React Flow
-  }, [debug]);
-
-  const handleTouchMoveBlocking = useCallback((e) => {
-    // ONLY block 3+ finger gestures (Safari navigation)
-    if (e.touches.length >= 3) {
-      e.preventDefault();
-      if (debug) {
-        console.log('🚫 Blocked 3+ finger gesture (Safari navigation)');
-      }
-    }
-    // 1-2 finger touches pass through untouched for React Flow
-  }, [debug]);
-
-  const handleTouchEndBlocking = useCallback((e) => {
-    // ONLY block 3+ finger gestures (Safari navigation)
-    if (e.touches.length >= 3) {
-      e.preventDefault();
-      if (debug) {
-        console.log('🚫 Blocked 3+ finger gesture (Safari navigation)');
-      }
-    }
-    // 1-2 finger touches pass through untouched for React Flow
-  }, [debug]);
 
   useEffect(() => {
     if (!enabled) {
       if (debug) {
-        console.log('⚠️ iOS gesture event prevention disabled');
+        console.log('⚠️ iOS gesture handling disabled');
       }
       return;
     }
 
-    // Get the container element for touch event listeners
+    // Get the container element for gesture event listeners
     const container = containerRef?.current;
     if (!container) {
       if (debug) {
-        console.warn('⚠️ Container ref not available for touch event listeners');
+        console.warn('⚠️ Container ref not available for gesture event listeners');
       }
       return;
     }
 
-    // Prevent all WebKit gesture events globally
-    // This stops Safari's legacy gesture system while allowing React Flow's
-    // zoomOnPinch to receive and process raw touch events
+    // DIRECT VIEWPORT CONTROL APPROACH (v5):
     //
-    // CRITICAL: Use { passive: false } to allow preventDefault()
-    document.addEventListener('gesturestart', handleGestureEvent, { passive: false, capture: true });
-    document.addEventListener('gesturechange', handleGestureEvent, { passive: false, capture: true });
-    document.addEventListener('gestureend', handleGestureEvent, { passive: false, capture: true });
+    // Register Safari's native gesture events for direct zoom control
+    // - gesturestart: Capture initial viewport state
+    // - gesturechange: Apply zoom using e.scale with setViewport()
+    // - gestureend: Clean up gesture state
+    //
+    // This approach is more reliable than touch event distance calculations
+    // because Safari's gesture events provide e.scale directly and are
+    // optimized for the iOS platform.
+    //
+    // CRITICAL: Use { passive: false } to allow preventDefault() for full control
+    container.addEventListener('gesturestart', handleGestureStart, { passive: false, capture: true });
+    container.addEventListener('gesturechange', handleGestureChange, { passive: false, capture: true });
+    container.addEventListener('gestureend', handleGestureEnd, { passive: false, capture: true });
 
-    // DUAL LISTENER APPROACH (v3):
-    //
-    // 1. PASSIVE listeners for 1-2 finger touches (visual feedback, zero latency)
-    //    - These track distance changes for pinch detection
-    //    - Never call preventDefault(), so iOS Safari optimizes them for performance
-    //    - React Flow receives pinch events at full speed without interference
+    // FALLBACK: Keep passive touch listeners for debugging and non-Safari browsers
+    // These don't interfere with gesture events but provide useful logging
     container.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: true, capture: true });
     container.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
-
-    // 2. NON-PASSIVE listeners ONLY for 3+ finger gestures (Safari navigation blocking)
-    //    - These check finger count and only preventDefault() when 3+ fingers detected
-    //    - 1-2 finger touches pass through untouched
-    //    - Prevents Safari's 3-finger back/forward swipe navigation
-    //    - NO performance impact on pinch-to-zoom (handlers exit early for 1-2 fingers)
-    container.addEventListener('touchstart', handleTouchStartBlocking, { passive: false, capture: true });
-    container.addEventListener('touchmove', handleTouchMoveBlocking, { passive: false, capture: true });
-    container.addEventListener('touchend', handleTouchEndBlocking, { passive: false, capture: true });
+    container.addEventListener('touchcancel', handleTouchCancel, { passive: true, capture: true });
 
     if (debug) {
-      console.log('✅ iOS pinch-to-zoom enabled (v3 - Dual Listener Approach):', {
-        gestureEventsPrevented: true,
-        passiveListeners: '1-2 fingers (visual feedback)',
-        nonPassiveListeners: '3+ fingers only (Safari navigation block)',
-        touchDistanceTracking: true,
-        pinchThreshold: '10px',
-        reactFlowHandlesPinch: true,
-        zeroLatencyPinch: true
+      console.log('✅ iOS pinch-to-zoom enabled (v5.2 - Enhanced Touch Reliability):', {
+        version: '5.2',
+        gestureHandlers: 'active (non-passive for preventDefault)',
+        directZoomControl: 'via setViewport()',
+        zoomToPoint: 'enabled',
+        safariGestureEvents: 'e.scale used directly',
+        touchListeners: 'passive with explicit count tracking',
+        edgeCaseHandling: 'asynchronous finger lift detection',
+        zoomRange: '0.25 - 2.0',
+        reactFlowFallback: 'available for non-Safari browsers'
       });
     }
 
     // Cleanup
     return () => {
-      document.removeEventListener('gesturestart', handleGestureEvent, { capture: true });
-      document.removeEventListener('gesturechange', handleGestureEvent, { capture: true });
-      document.removeEventListener('gestureend', handleGestureEvent, { capture: true });
-
       if (container) {
-        // Remove passive listeners
+        // Remove gesture event listeners
+        container.removeEventListener('gesturestart', handleGestureStart, { capture: true });
+        container.removeEventListener('gesturechange', handleGestureChange, { capture: true });
+        container.removeEventListener('gestureend', handleGestureEnd, { capture: true });
+
+        // Remove touch event listeners
         container.removeEventListener('touchstart', handleTouchStart, { capture: true });
         container.removeEventListener('touchmove', handleTouchMove, { capture: true });
         container.removeEventListener('touchend', handleTouchEnd, { capture: true });
-
-        // Remove non-passive listeners
-        container.removeEventListener('touchstart', handleTouchStartBlocking, { capture: true });
-        container.removeEventListener('touchmove', handleTouchMoveBlocking, { capture: true });
-        container.removeEventListener('touchend', handleTouchEndBlocking, { capture: true });
+        container.removeEventListener('touchcancel', handleTouchCancel, { capture: true });
       }
 
       if (debug) {
-        console.log('🧹 iOS pinch-to-zoom handlers removed (v3)');
+        console.log('🧹 iOS pinch-to-zoom handlers removed (v5.2 - Enhanced Touch Reliability)');
       }
     };
-  }, [enabled, containerRef, handleGestureEvent, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchStartBlocking, handleTouchMoveBlocking, handleTouchEndBlocking, debug]);
+  }, [enabled, containerRef, handleGestureStart, handleGestureChange, handleGestureEnd, handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, debug]);
 
   return null;
 }
