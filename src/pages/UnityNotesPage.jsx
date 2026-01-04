@@ -45,7 +45,6 @@ import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
 import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal, MobileNodeNavigator } from '../components/unity';
 import { useIOSPinchZoom } from '../hooks/useIOSPinchZoom';
 import notificationManager, { NotificationType } from '../utils/notificationManager';
-import { Toaster } from 'react-hot-toast';
 import { showToast } from '../utils/toast';
 
 // Export NodeResizer for use in node components
@@ -6089,9 +6088,6 @@ Example format:
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
-      {/* Toast Notifications */}
-      <Toaster />
-
       {/* Loading Skeleton - shown while initializing */}
       {!isInitialized && <LoadingSkeleton nodeCount={4} />}
 
