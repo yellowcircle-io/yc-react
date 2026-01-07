@@ -86,7 +86,7 @@ const withResizableHandles = (NodeComponent, minWidth = 150, minHeight = 100) =>
 };
 
 // Comment Badge Wrapper - adds comment count badge to any node type
-const withCommentBadge = (_NodeComponent) => {
+const withCommentBadge = (NodeComponent) => {
   return React.memo((props) => {
     const { data } = props;
     const commentCount = data?.commentCount || 0;

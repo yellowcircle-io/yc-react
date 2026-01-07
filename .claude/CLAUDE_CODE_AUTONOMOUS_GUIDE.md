@@ -1,8 +1,8 @@
-# Claude Code Autonomous Operation Guide
+O# Claude Code Autonomous Operation Guide
 
 This document covers running Claude Code in autonomous/headless mode, SSH integration, and Slack connectivity.
 
----
+---O
 
 ## 1. Headless/Autonomous Mode
 

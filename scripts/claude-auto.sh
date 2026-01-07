@@ -44,6 +44,7 @@ echo "Starting Claude Code..."
 claude -p "$TASK" \
     --dangerously-skip-permissions \
     --output-format stream-json \
+    --verbose \
     2>&1 | tee "$LOG_FILE"
 
 EXIT_CODE=${PIPESTATUS[0]}
