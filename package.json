@@ -25,6 +25,7 @@
     "@xyflow/react": "^12.10.0",
     "firebase": "^12.4.0",
     "framer-motion": "^11.18.2",
+    "html2canvas": "^1.4.1",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.539.0",
     "react": "^19.2.1",
