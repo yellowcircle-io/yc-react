@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -34,6 +35,10 @@ from circuit_breaker import (
     SleeplessAgentIntegration,
     get_project_dir,
 )
+
+# Path to sleepless-agent in pipx venv
+PIPX_VENV_PYTHON = Path.home() / ".local" / "pipx" / "venvs" / "sleepless-agent" / "bin" / "python"
+SLE_COMMAND = Path.home() / ".local" / "pipx" / "venvs" / "sleepless-agent" / "bin" / "sle"
 
 
 def check_can_start() -> tuple[bool, str]:
@@ -132,6 +137,12 @@ def run_daemon_with_integration():
         print("  ./scripts/reset-circuit-breaker.sh")
         sys.exit(1)
 
+    # Check if sle command exists
+    if not SLE_COMMAND.exists():
+        print(f"Error: sleepless-agent not found at {SLE_COMMAND}")
+        print("Install with: pipx install sleepless-agent")
+        sys.exit(1)
+
     # Register daemon heartbeat
     hb = AgentHeartbeat()
     daemon_id = f"sleepless-daemon-{os.getpid()}-{int(time.time())}"
@@ -143,13 +154,24 @@ def run_daemon_with_integration():
     print("=" * 60)
     print(f"\nDaemon ID: {daemon_id}")
     print(f"Project Dir: {get_project_dir()}")
+    print(f"SLE Command: {SLE_COMMAND}")
     print("Circuit Breaker: ACTIVE")
     print("Heartbeat: ACTIVE (60s interval)")
     print("\n" + "=" * 60 + "\n")
 
+    # Track the subprocess
+    daemon_process = None
+    cb = CircuitBreaker()
+
     # Signal handler to clean up
     def cleanup_handler(sig, frame):
         print(f"\nReceived signal {sig}, cleaning up...")
+        if daemon_process:
+            daemon_process.terminate()
+            try:
+                daemon_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                daemon_process.kill()
         hb.stop_heartbeat_thread()
         hb.update("stopped")
         hb.remove()
@@ -159,45 +181,64 @@ def run_daemon_with_integration():
     signal.signal(signal.SIGTERM, cleanup_handler)
 
     try:
-        # Import and run the actual daemon
-        from sleepless_agent.core.daemon import SleeplessAgent
+        # Change to project directory
+        project_dir = get_project_dir()
+        os.chdir(project_dir)
 
-        agent = SleeplessAgent()
+        # Start circuit breaker monitoring in background
+        import threading
 
-        # Monkey-patch the task runtime to add circuit breaker integration
-        original_process_tasks = agent._process_tasks
+        stop_monitor = threading.Event()
 
-        async def patched_process_tasks():
-            # Check circuit breaker before processing
-            cb = CircuitBreaker()
-            if cb.is_open():
-                status = cb.get_status()
-                reason = status.get("circuit_opened_reason", "Unknown")
-                print(f"\n[CircuitBreaker] Blocking task processing - circuit is OPEN: {reason}")
-                return
+        def circuit_breaker_monitor():
+            """Monitor circuit breaker and kill daemon if it trips."""
+            while not stop_monitor.is_set():
+                if cb.is_open():
+                    status = cb.get_status()
+                    reason = status.get("circuit_opened_reason", "Unknown")
+                    print(f"\n[CircuitBreaker] TRIPPED - stopping daemon: {reason}")
+                    if daemon_process:
+                        daemon_process.terminate()
+                    break
+                hb.update("running")
+                stop_monitor.wait(30)  # Check every 30 seconds
 
-            # Update heartbeat
-            hb.update("processing_tasks")
+        monitor_thread = threading.Thread(target=circuit_breaker_monitor, daemon=True, name="CircuitBreakerMonitor")
+        monitor_thread.start()
 
-            # Call original
-            await original_process_tasks()
+        # Run the sleepless-agent daemon as subprocess
+        # Ensure claude CLI is in PATH
+        env = os.environ.copy()
+        nvm_bin = Path.home() / ".nvm" / "versions" / "node" / "v20.19.0" / "bin"
+        local_bin = Path.home() / ".local" / "bin"
+        if nvm_bin.exists():
+            env["PATH"] = f"{nvm_bin}:{local_bin}:{env.get('PATH', '')}"
 
-            # Update heartbeat after processing
-            hb.update("idle")
+        print(f"Starting: {SLE_COMMAND} daemon\n")
+        daemon_process = subprocess.Popen(
+            [str(SLE_COMMAND), "daemon"],
+            cwd=str(project_dir),
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            env=env,
+        )
 
-        agent._process_tasks = patched_process_tasks
+        # Wait for daemon to complete
+        exit_code = daemon_process.wait()
 
-        # Run the agent
-        asyncio.run(agent.run())
+        # Stop monitor
+        stop_monitor.set()
 
-    except ImportError as e:
-        print(f"Error: Could not import sleepless_agent: {e}")
+        if exit_code != 0:
+            print(f"\nDaemon exited with code {exit_code}")
+            cb.record_failure("task_failed", f"Daemon exited with code {exit_code}", daemon_id)
+
+    except FileNotFoundError:
+        print(f"Error: Could not find {SLE_COMMAND}")
         print("Make sure sleepless-agent is installed: pipx install sleepless-agent")
         sys.exit(1)
     except Exception as e:
         print(f"Error running daemon: {e}")
-        # Record the failure
-        cb = CircuitBreaker()
         cb.record_failure("task_failed", str(e), daemon_id)
         sys.exit(1)
     finally:
