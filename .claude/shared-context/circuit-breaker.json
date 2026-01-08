@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "last_reset": "2026-01-08T12:00:00Z",
-  "last_updated": "2026-01-08T12:00:00Z",
+  "last_reset": "2026-01-08T18:04:57Z",
+  "last_updated": "2026-01-08T18:04:57Z",
   "failure_counts": {
     "commit_failed": 0,
     "build_failed": 0,
@@ -19,5 +19,11 @@
   "circuit_open": false,
   "circuit_opened_at": null,
   "circuit_opened_reason": null,
-  "notes": "Reset manually via scripts/reset-circuit-breaker.sh or set circuit_open to false"
+  "notes": "Reset manually via scripts/reset-circuit-breaker.sh or set circuit_open to false",
+  "last_failure": {
+    "type": "auth_failed",
+    "time": "2026-01-08T17:57:17Z",
+    "details": "Manual test failure",
+    "agent": "cli-test"
+  }
 }

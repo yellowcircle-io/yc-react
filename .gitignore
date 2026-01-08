@@ -71,3 +71,4 @@ scripts/*-local.js
 *secret*
 *-key.js
 *-keys.js
+scripts/__pycache__/
