@@ -231,7 +231,8 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
 
   // Initialize map
   const initMap = useCallback(() => {
-    if (!mapRef.current || !window.google?.maps) return;
+    // Guard: Check for Map constructor specifically (fixes Mobile Safari race condition)
+    if (!mapRef.current || !window.google?.maps?.Map) return;
 
     const center = baseLocation?.lat && baseLocation?.lng
       ? { lat: baseLocation.lat, lng: baseLocation.lng }
@@ -274,7 +275,7 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
 
   // Update markers when places change
   useEffect(() => {
-    if (mapInstanceRef.current) {
+    if (mapInstanceRef.current && window.google?.maps?.Map) {
       updateMarkers();
     }
   }, [places, baseLocation]);
@@ -282,7 +283,7 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
   // Fix: Re-render map when tab becomes visible again
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && mapInstanceRef.current && activeTab === 'map' && window.google?.maps) {
+      if (!document.hidden && mapInstanceRef.current && activeTab === 'map' && window.google?.maps?.Map) {
         try {
           // Trigger resize to fix rendering issues
           window.google.maps.event.trigger(mapInstanceRef.current, 'resize');
@@ -310,7 +311,7 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
 
   // Re-initialize map when switching back to map tab (container is recreated)
   useEffect(() => {
-    if (activeTab === 'map' && apiKey && window.google?.maps) {
+    if (activeTab === 'map' && apiKey && window.google?.maps?.Map) {
       // Small delay to ensure the DOM element is ready
       const timer = setTimeout(() => {
         if (mapRef.current) {
@@ -323,7 +324,7 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
   }, [activeTab, apiKey, initMap]);
 
   const updateMarkers = useCallback(() => {
-    if (!mapInstanceRef.current || !window.google?.maps) return;
+    if (!mapInstanceRef.current || !window.google?.maps?.Map) return;
 
     const AdvancedMarker = window.google?.maps?.marker?.AdvancedMarkerElement;
     const shouldUseAdvanced = useAdvancedMarkers.current && AdvancedMarker;

@@ -31,19 +31,27 @@ export const loadGoogleMapsAPI = (apiKey) => {
     return Promise.resolve();
   }
 
-  // Helper to wait for Places library
-  const waitForPlacesLibrary = (resolve, reject, maxWait = 5000) => {
+  // Helper to wait for core Maps API (Map constructor + Places library)
+  const waitForMapsReady = (resolve, reject, maxWait = 5000) => {
     const startTime = Date.now();
     const check = () => {
-      if (window.google?.maps?.places?.Autocomplete) {
+      // Must have Map constructor (fixes Mobile Safari race condition)
+      const hasMapConstructor = !!window.google?.maps?.Map;
+      const hasPlacesLibrary = !!window.google?.maps?.places?.Autocomplete;
+
+      if (hasMapConstructor && hasPlacesLibrary) {
         isLoaded = true;
         resolve();
       } else if (Date.now() - startTime > maxWait) {
-        // Timeout - resolve anyway if basic maps is available
-        if (window.google?.maps) {
+        // Timeout - check what's available
+        if (hasMapConstructor) {
           isLoaded = true;
-          console.warn('⚠️ Google Maps Places library took too long, proceeding anyway');
+          console.warn('⚠️ Google Maps Places library took too long, proceeding with Map only');
           resolve();
+        } else if (window.google?.maps) {
+          // Maps object exists but Map constructor not ready - keep waiting a bit longer
+          console.warn('⚠️ Google Maps API partially loaded, waiting for Map constructor...');
+          setTimeout(check, 100);
         } else {
           reject(new Error('Google Maps API failed to initialize'));
         }
@@ -59,15 +67,15 @@ export const loadGoogleMapsAPI = (apiKey) => {
   if (existingScript) {
     // Wait for existing script to load
     loadingPromise = new Promise((resolve, reject) => {
-      if (window.google?.maps?.places?.Autocomplete) {
+      if (window.google?.maps?.Map && window.google?.maps?.places?.Autocomplete) {
         isLoaded = true;
         resolve();
       } else if (window.google?.maps) {
-        // Maps loaded but Places not ready yet
-        waitForPlacesLibrary(resolve, reject);
+        // Maps loaded but not fully ready yet
+        waitForMapsReady(resolve, reject);
       } else {
         existingScript.addEventListener('load', () => {
-          waitForPlacesLibrary(resolve, reject);
+          waitForMapsReady(resolve, reject);
         });
         existingScript.addEventListener('error', () => {
           reject(new Error('Failed to load Google Maps API'));
@@ -75,7 +83,7 @@ export const loadGoogleMapsAPI = (apiKey) => {
         // Timeout in case events were missed
         setTimeout(() => {
           if (window.google?.maps) {
-            waitForPlacesLibrary(resolve, reject);
+            waitForMapsReady(resolve, reject);
           }
         }, 1000);
       }
@@ -92,12 +100,12 @@ export const loadGoogleMapsAPI = (apiKey) => {
     script.id = 'google-maps-script';
 
     script.onload = () => {
-      // Wait for Places library to be fully initialized
+      // Wait for Map constructor + Places library to be fully initialized
       // The onload fires before libraries are ready
-      console.log('📍 Google Maps script loaded, waiting for Places library...');
-      waitForPlacesLibrary(
+      console.log('📍 Google Maps script loaded, waiting for Map constructor + Places library...');
+      waitForMapsReady(
         () => {
-          console.log('✅ Google Maps API + Places loaded (singleton)');
+          console.log('✅ Google Maps API fully loaded (Map + Places ready)');
           resolve();
         },
         reject

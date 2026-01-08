@@ -1,0 +1,159 @@
+Updated .claude/MCP_SERVERS_SETUP.md with 6 additions and 6 removals
+       103    ## Next Steps
+       104    
+       105    1. [x] Install Notion MCP server
+       106 -  2. [x] Install Slack MCP server
+       107 -  3. [x] Install Playwright MCP server
+       108 -  4. [ ] Authenticate Notion (requires user action)
+       109 -  5. [ ] Authenticate Slack (requires user action)
+       110 -  6. [ ] Test Playwright with yellowcircle.io pages
+       111 -  7. [ ] Add GitHub MCP server for PR automation
+       106 +  2. [x] Install Playwright MCP server
+       107 +  3. [x] Authenticate Notion ✓
+       108 +  4. [x] Playwright connected ✓
+       109 +  5. [ ] Test Playwright with yellowcircle.io pages
+       110 +  6. [ ] Add GitHub MCP server for PR automation
+       111 +  7. [ ] (Optional) Add Slack with manual app registration
+
+⏺ Bash(cd "/Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle" && git add
+      .claude/MCP_SERVERS_SETUP.md && git commit -m "Up…)
+  ⎿  [main db390ef] Update: MCP docs - Notion + Playwright connected, Slack removed
+      1 file changed, 14 insertions(+), 30 deletions(-)
+     To https://github.com/yellowcircle-io/yc-react.git
+     … +2 lines (ctrl+o to expand)
+
+⏺ ---
+  Session Complete ✓
+
+  All tasks finished:
+
+  | Task                       | Status                    |
+  |----------------------------|---------------------------|
+  | Bundle Optimization        | ✅ 494KB → 313KB          |
+  | Scope 1: Firestore Cleanup | ✅ /admin/storage-cleanup |
+  | Scope 2: MCP Servers       | ✅ Notion + Playwright    |
+  | Firebase Functions         | ✅ Deployed               |
+  | Hosting                    | ✅ Deployed               |
+
+  MCP Servers Ready:
+  - Notion - Connected (can use @notion for Notion operations)
+  - Playwright - Connected (can use for browser testing)
+
+  Test the Storage Cleanup page - refresh /admin/storage-cleanup and click "Preview Cleanup (Dry Run)" to verify the Firebase functions work.
+  
+  
+  ────────────────────────────────────────────────────────────────────
+> Feedback:
+  *Group Nodes/Notes - should act as containers/artboard that hold other notes/nodes. Meaning the components placed
+  within them are structurally and semantically related/linked. As an examples, if a Group A is created and Note A
+  and Photo A are placed inside of Group A they all move together on the Canvas AND AI can access them as a group
+  such that it is distinct from Group B with other types of notes/nodes within it. Further, Group A could be a
+  campaign and assets; while Group B is a task list with research.
+
+  *UnityNOTES cards still have close actions that float off from the parent element [which makes it harder to delete
+  with keystrokes] ([Image #1]) whereas UnityMAP's nodes have close actions that are accessible and better UX
+  related to it's parent (e.g. Wait Node:[Image #5])
+
+  *Link Card still needs iMessage style multimedia previews
+
+  *To-Do List: lacks adding task function
+
+  *Sticky: should have color options, san-serif font, and pinning options
+
+  *Comment: styling (input field) [Image #2] breaks container. Also, assume it lacks at functions for communicating
+  with collaborators?
+
+  *Color Swatch: Lacks custom color options
+
+  *Custom Code: should have support for more languages that are common besides just Javascript.
+
+  *AI: As I am logged in AND create UnityMAP field
+  
+  ---------------------
+  
+  ⏺ Summary - AI Defaults Updated
+
+  Completed Changes
+
+  Phase 1: Image Generation ✅
+  - Default: Pollinations.ai (FREE, no API key required)
+  - Premium: DALL-E 3 if OpenAI key is available (from Firestore or .env)
+  - Uses Flux model for quality output
+  - Caption shows which model was used: ✨ AI Generated (pollinations-flux) or ✨ AI Generated (dall-e-3)
+
+  Phase 2: Summarize All ✅
+  - Now reads Groq API key from Firestore (via useApiKeyStorage hook)
+  - Falls back to .env if no stored key
+  - Helpful error messages guide users to configure keys
+
+  Key Architecture Changes:
+  - All AI functions now use useApiKeyStorage hook for API keys (Firestore-first)
+  - storedGroqKey - for note generation & summarize
+  - storedOpenaiKey - for DALL-E (premium image generation)
+  - Free defaults work without sign-in or API keys (image generation)
+
+  Phase 3: AI Provider Toggles (Future)
+  - Settings UI to switch between providers
+  - Model selection dropdowns
+  - Can be added in a future session without breaking current functionality
+
+  The system now gracefully degrades: logged-out users get free Pollinations images, while authenticated users with API keys get premium options.
+
+  Todos
+  ☒ Phase 1: Update AI Image Generation with free default (Pollinations)
+  ☒ Phase 2: Update AI Summarize to use stored API keys
+  ☐ Phase 3: Add AI provider toggles/settings UI (future)'
+  
+  
+  
+  
+FEEDBACK:
+*PhotoNode Overlay: Change Opacity to 60% with blur filter. Lightbox UI should reflect the Card update ()
+*Duplication: should have icon/clickable option
+*PhotoNode seems to have lost node connector (GroupNode should also have node connectors)
+*Auto Organize Action should not result in overlayed node. Should recoginize Grouped Nodes vs isolated ones
+*AI Generate Canvas: should also generate image and placeholder video. Popup should be two steps [1. Ask for Prompt OR Quick Start. 2. Related Options]. Popup module should borrow style from PhotoModal rather than default
+*Further test sharing function via Playwrite. Ensure capsule can be accessed publically, collaborators are persistent on page reload, and multiple users can edit/view.
+*Custom Code Node: not seeing preview/iframe (should be toggle/slideout). Should also have copy code option [NOTE: error when running Oops! Something went wrong
+
+Too many re-renders. React limits the number of renders to prevent an infinite loop.
+Error Details
+
+
+_c<@http://localhost:5173/src/components/unity-plus/nodes/CodeBlockNode.jsx?t=1765915555278:165:39
+div@unknown:0:0
+NodeWrapper@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:7943:21
+div@unknown:0:0
+NodeRendererComponent@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:8078:101
+div@unknown:0:0
+Viewport@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:8556:18
+div@unknown:0:0
+Pane@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:7376:14
+div@unknown:0:0
+ZoomPane@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:7252:18
+FlowRendererComponent@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:7856:31
+GraphViewComponent@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:8690:28
+Wrapper@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:9069:17
+div@unknown:0:0
+ReactFlow@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:9083:19
+div@unknown:0:0
+div@unknown:0:0
+div@unknown:0:0
+UnityNotesFlow@http://localhost:5173/src/pages/UnityNotesPage.jsx?t=1765916287479:75:24
+BatchProvider@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:6957:23
+ReactFlowProvider@http://localhost:5173/node_modules/.vite/deps/@xyflow_react.js?v=f8b8c00d:9051:27
+main@unknown:0:0
+div@unknown:0:0
+Layout@http://localhost:5173/src/components/global/Layout.jsx:28:16
+ErrorBoundary@http://localhost:5173/src/components/ui/ErrorBoundary.jsx:8:5
+LeadGate@http://localhost:5173/src/components/shared/LeadGate.jsx:53:18
+UnityNotesPage@http://localhost:5173/src/pages/UnityNotesPage.jsx?t=1765916287479:3743:20
+RenderedRoute@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=dc9ba62b:4091:7
+Routes@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=dc9ba62b:4560:7
+Suspense@unknown:0:0
+Router@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=dc9ba62b:4508:7
+BrowserRouter@http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=dc9ba62b:5251:7
+LayoutProvider@http://localhost:5173/src/contexts/LayoutContext.jsx:29:31
+AuthProvider@http://localhost:5173/src/contexts/AuthContext.jsx:89:29
+RouterApp@unknown:0:0
+ErrorBoundary@http://localhost:5173/src/components/ErrorBoundary.jsx:8:5]

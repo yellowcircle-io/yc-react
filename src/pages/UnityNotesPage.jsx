@@ -3006,7 +3006,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         };
       });
     });
-  }, [isInitialized, nodes.length, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, handleAIExpandNode, getProspectsAtNode, handleToggleNodeStar, starredNodeIds, setNodes]);
+  // Note: handleAIExpandNode is intentionally excluded from deps to avoid TDZ error
+  // (it's defined later in the component but used here - ESLint will warn, but
+  // the effect callback runs after render when the callback is already defined)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized, nodes.length, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, getProspectsAtNode, handleToggleNodeStar, starredNodeIds, setNodes]);
 
   // Save to localStorage with status indicator
   useEffect(() => {

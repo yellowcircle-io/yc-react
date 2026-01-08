@@ -435,17 +435,37 @@ git add . && git commit -m "Update: [description]" && git push
 | Jan 7, 2026 | Validated all Mac Mini recommendations | MacBook Air | All checks passed |
 | Jan 7, 2026 | Consolidated to single sync doc | MacBook Air | Removed duplicate RECOVERY_Q1_2026.md |
 | Jan 7, 2026 | **USER APPROVED** - All actions | User | Assigned to Mac Mini |
+| Jan 7, 2026 | **CRITICAL FIX** - withCommentBadge parameter bug | Mac Mini | `0e7846c` |
+| Jan 7, 2026 | **P0-1** - Fixed cron job CLI flag | Mac Mini | `0e7846c` |
+| Jan 7, 2026 | **P0-2** - Extracted Jan 3 docs from stash | Mac Mini | `0e7846c` |
+| Jan 7, 2026 | Pushed to GitHub | Mac Mini | `0e7846c` |
+| Jan 7, 2026 | **DEPLOYED** to Firebase production | Mac Mini | yellowcircle-app |
 
 ### Actions Pending
 
 | Priority | Action | Assigned | Target Date | Status |
 |----------|--------|----------|-------------|--------|
-| P0-1 | Fix cron job | Mac Mini | Jan 7 | **READY** |
-| P0-2 | Extract stash docs | Mac Mini | Jan 7 | **READY** |
-| P1-1 | Update WIP | Mac Mini | Jan 7-8 | **READY** |
-| P1-2 | Update ACTIVE_SPRINT | Mac Mini | Jan 7-8 | **READY** |
-| P2-2 | Update instance logs | Mac Mini | Jan 7-8 | **READY** |
+| P0-1 | Fix cron job | Mac Mini | Jan 7 | ✅ **DONE** |
+| P0-2 | Extract stash docs | Mac Mini | Jan 7 | ✅ **DONE** |
+| P0-DEPLOY | Deploy to Firebase | Mac Mini | Jan 7 | ✅ **DONE** |
+| P1-1 | Update WIP | Mac Mini | Jan 7-8 | **PENDING** |
+| P1-2 | Update ACTIVE_SPRINT | Mac Mini | Jan 7-8 | **PENDING** |
+| P2-2 | Update instance logs | Mac Mini | Jan 7-8 | **PENDING** |
 | P2-1 | Review optimizations | Mac Mini | Jan 10-14 | Deferred |
+
+### Critical Bug Found & Fixed (Jan 7, 2026)
+
+**Error:** `can't access lexical declaration 'bo' before initialization`
+
+**Root Cause:** In `src/pages/UnityNotesPage.jsx` line 89, the `withCommentBadge` HOC had parameter `_NodeComponent` but used `NodeComponent` on line 96. This caused a TDZ (Temporal Dead Zone) error that Vite minified as `bo`.
+
+**Fix:** Changed `_NodeComponent` to `NodeComponent` in the parameter.
+
+**Deployment:** Firebase requires reauth. Run:
+```bash
+firebase login --reauth
+firebase deploy --only hosting
+```
 
 ---
 
