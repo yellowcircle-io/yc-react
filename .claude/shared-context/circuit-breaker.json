@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "last_reset": "2026-01-08T12:00:00Z",
+  "last_updated": "2026-01-08T12:00:00Z",
+  "failure_counts": {
+    "commit_failed": 0,
+    "build_failed": 0,
+    "deployment_failed": 0,
+    "auth_failed": 0,
+    "task_failed": 0
+  },
+  "thresholds": {
+    "commit_failed": 3,
+    "build_failed": 5,
+    "deployment_failed": 2,
+    "auth_failed": 3,
+    "task_failed": 10
+  },
+  "circuit_open": false,
+  "circuit_opened_at": null,
+  "circuit_opened_reason": null,
+  "notes": "Reset manually via scripts/reset-circuit-breaker.sh or set circuit_open to false"
+}

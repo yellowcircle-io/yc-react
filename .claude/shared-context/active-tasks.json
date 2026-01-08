@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "lock_timeout_seconds": 3600,
+  "tasks": {},
+  "completed_tasks": [],
+  "max_completed_history": 50,
+  "notes": "Tasks auto-unlock after 1 hour if agent dies. Completed tasks kept for deduplication."
+}

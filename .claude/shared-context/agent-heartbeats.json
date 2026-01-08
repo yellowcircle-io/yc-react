@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "stale_threshold_seconds": 300,
+  "dead_threshold_seconds": 600,
+  "agents": {},
+  "notes": "Agents update their entry on start and every 60s. Stale after 5min, dead after 10min."
+}
