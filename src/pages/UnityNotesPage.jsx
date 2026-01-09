@@ -791,6 +791,96 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   }, [setNodes, setEdges]);
 
+  // Phase 2: iOS Safari Visual Viewport & Orientation Change Handling
+  // Prevents canvas jumping during device rotation and address bar show/hide
+  useEffect(() => {
+    // Skip on non-touch devices
+    if (!('ontouchstart' in window)) return;
+
+    let savedViewport = null;
+    let resizeTimeout = null;
+    let isRestoringViewport = false;
+    let isOrientationChanging = false;
+    let currentOrientation = window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape';
+    let lastVisualViewportScale = window.visualViewport?.scale || 1;
+
+    // Use matchMedia for reliable orientation detection
+    const orientationMediaQuery = window.matchMedia('(orientation: portrait)');
+
+    const handleOrientationChange = (e) => {
+      const newOrientation = e.matches ? 'portrait' : 'landscape';
+
+      // Only restore if orientation actually changed
+      if (newOrientation !== currentOrientation && savedViewport) {
+        isOrientationChanging = true;
+        isRestoringViewport = true;
+        console.log(`📱 Orientation changed: ${currentOrientation} → ${newOrientation}`);
+
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+
+        // iOS Safari needs 300ms for orientation animation to complete
+        resizeTimeout = setTimeout(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const currentPageZoom = window.visualViewport?.scale || 1;
+              if (Math.abs(currentPageZoom - lastVisualViewportScale) > 0.01) {
+                console.log(`📱 Page zoom changed: ${lastVisualViewportScale.toFixed(2)} → ${currentPageZoom.toFixed(2)}`);
+              }
+
+              setViewport(savedViewport, { duration: 200 });
+              isRestoringViewport = false;
+              isOrientationChanging = false;
+              currentOrientation = newOrientation;
+              lastVisualViewportScale = currentPageZoom;
+            });
+          });
+        }, 300);
+      } else {
+        currentOrientation = newOrientation;
+      }
+    };
+
+    // Save viewport before orientation change
+    const handleResize = () => {
+      if (!isRestoringViewport && !isOrientationChanging) {
+        savedViewport = getViewport();
+      }
+    };
+
+    // Handle iOS Safari address bar show/hide via Visual Viewport API
+    const handleVisualViewportChange = () => {
+      if (!isRestoringViewport && !isOrientationChanging) {
+        const currentScale = window.visualViewport?.scale || 1;
+        // Only handle address bar changes, not pinch zoom
+        if (Math.abs(currentScale - lastVisualViewportScale) < 0.01) {
+          // Address bar change - save current viewport
+          savedViewport = getViewport();
+        }
+        lastVisualViewportScale = currentScale;
+      }
+    };
+
+    // Add event listeners
+    orientationMediaQuery.addEventListener('change', handleOrientationChange);
+    window.addEventListener('resize', handleResize);
+
+    // Visual Viewport API for iOS Safari 13+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportChange);
+      window.visualViewport.addEventListener('scroll', handleVisualViewportChange);
+    }
+
+    return () => {
+      orientationMediaQuery.removeEventListener('change', handleOrientationChange);
+      window.removeEventListener('resize', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleVisualViewportChange);
+      }
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+    };
+  }, [getViewport, setViewport]);
+
   // Import outreach deployment from UnityMAP Hub
   useEffect(() => {
     if (fromOutreach && isInitialized) {
