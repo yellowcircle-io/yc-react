@@ -4079,12 +4079,156 @@ Example format:
         {/* ReactFlow Canvas - Always render but hide when studio is open */}
         <div style={{ display: currentMode === 'studio' ? 'none' : 'block', height: '100%' }}>
           {/* Override React Flow's default overflow:hidden on nodes to show delete buttons */}
+          {/* Phase 1: CSS Touch Feedback - Enhanced touch targets and visual feedback */}
           <style>{`
             .react-flow__node,
             .react-flow__node > div,
             .react-flow__node-textNode,
             .react-flow__node-photoNode {
               overflow: visible !important;
+            }
+
+            /* Touch optimization for React Flow canvas */
+            .react-flow,
+            .react-flow__renderer,
+            .react-flow__viewport,
+            .react-flow__pane,
+            .react-flow__container {
+              touch-action: none !important;
+              -webkit-user-select: none !important;
+              user-select: none !important;
+            }
+
+            /* Touch-friendly resize handles - Enhanced for mobile */
+            .react-flow__node-photoNode .nodrag,
+            .react-flow__node-textNode .nodrag,
+            .react-flow__node-stickyNode .nodrag,
+            .react-flow__node-todoNode .nodrag,
+            .react-flow__node-commentNode .nodrag,
+            .react-flow__node-colorSwatchNode .nodrag,
+            .react-flow__node-codeBlockNode .nodrag,
+            .react-flow__node-groupNode .nodrag,
+            .react-flow__node-mapNode .nodrag,
+            .react-flow__node-tripPlannerMapNode .nodrag {
+              position: relative;
+              min-width: 12px;
+              min-height: 12px;
+              touch-action: none;
+              -webkit-touch-callout: none;
+              -webkit-tap-highlight-color: transparent;
+              isolation: isolate;
+            }
+
+            /* Invisible touch target around resize handles (80px for iOS) */
+            .react-flow__node-photoNode .nodrag::before,
+            .react-flow__node-textNode .nodrag::before,
+            .react-flow__node-stickyNode .nodrag::before,
+            .react-flow__node-todoNode .nodrag::before,
+            .react-flow__node-commentNode .nodrag::before,
+            .react-flow__node-colorSwatchNode .nodrag::before,
+            .react-flow__node-codeBlockNode .nodrag::before,
+            .react-flow__node-groupNode .nodrag::before,
+            .react-flow__node-mapNode .nodrag::before,
+            .react-flow__node-tripPlannerMapNode .nodrag::before {
+              content: '';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) translate3d(0, 0, 0);
+              width: 80px;
+              height: 80px;
+              background: transparent;
+              border-radius: 50%;
+              pointer-events: auto;
+              z-index: 1;
+              touch-action: none;
+              -webkit-touch-callout: none;
+            }
+
+            /* Active state glow effect for touch targets */
+            .react-flow__node-photoNode .nodrag:active::before,
+            .react-flow__node-textNode .nodrag:active::before,
+            .react-flow__node-stickyNode .nodrag:active::before,
+            .react-flow__node-todoNode .nodrag:active::before,
+            .react-flow__node-commentNode .nodrag:active::before,
+            .react-flow__node-colorSwatchNode .nodrag:active::before,
+            .react-flow__node-codeBlockNode .nodrag:active::before,
+            .react-flow__node-groupNode .nodrag:active::before,
+            .react-flow__node-mapNode .nodrag:active::before,
+            .react-flow__node-tripPlannerMapNode .nodrag:active::before {
+              background: radial-gradient(circle, rgba(238, 207, 0, 0.15) 0%, transparent 70%);
+              transition: background 0.15s ease;
+            }
+
+            /* Mobile touch device optimizations */
+            @media (hover: none) and (pointer: coarse) {
+              .react-flow__node-photoNode .nodrag,
+              .react-flow__node-groupNode .nodrag,
+              .react-flow__node-codeBlockNode .nodrag,
+              .react-flow__node-markdownNode .nodrag,
+              .react-flow__node-tableNode .nodrag,
+              .react-flow__node-kpiTrackerNode .nodrag {
+                width: 20px !important;
+                height: 20px !important;
+                border-width: 3px !important;
+              }
+
+              /* Pulse animation on selected nodes for mobile */
+              .react-flow__node.selected .nodrag {
+                background-color: rgba(238, 207, 0, 0.9) !important;
+                box-shadow: 0 0 0 2px rgba(238, 207, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+                animation: pulse-resize 1.5s ease-in-out infinite;
+              }
+            }
+
+            /* Pulse animation for resize handles */
+            @keyframes pulse-resize {
+              0%, 100% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.15); opacity: 0.85; }
+            }
+
+            /* Desktop hover feedback */
+            @media (hover: hover) and (pointer: fine) {
+              .react-flow__node-photoNode .nodrag:hover,
+              .react-flow__node-groupNode .nodrag:hover,
+              .react-flow__node-codeBlockNode .nodrag:hover,
+              .react-flow__node-markdownNode .nodrag:hover,
+              .react-flow__node-tableNode .nodrag:hover,
+              .react-flow__node-kpiTrackerNode .nodrag:hover {
+                transform: scale(1.3);
+                box-shadow: 0 2px 12px rgba(238, 207, 0, 0.4);
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+              }
+            }
+
+            /* Active state for resize handles */
+            .react-flow__node-photoNode .nodrag:active,
+            .react-flow__node-groupNode .nodrag:active,
+            .react-flow__node-codeBlockNode .nodrag:active,
+            .react-flow__node-markdownNode .nodrag:active,
+            .react-flow__node-tableNode .nodrag:active,
+            .react-flow__node-kpiTrackerNode .nodrag:active {
+              transform: scale(1.2);
+              background-color: rgba(238, 207, 0, 1) !important;
+              box-shadow: 0 0 0 3px rgba(238, 207, 0, 0.3), 0 4px 16px rgba(238, 207, 0, 0.4);
+              transition: all 0.15s ease;
+            }
+
+            /* Ensure resize handles are above other elements */
+            .react-flow__node-photoNode .nodrag,
+            .react-flow__node-groupNode .nodrag,
+            .react-flow__node-codeBlockNode .nodrag,
+            .react-flow__node-markdownNode .nodrag,
+            .react-flow__node-tableNode .nodrag,
+            .react-flow__node-kpiTrackerNode .nodrag {
+              z-index: 25 !important;
+            }
+
+            /* Prevent text selection during resize */
+            .react-flow__node .nodrag * {
+              user-select: none;
+              -webkit-user-select: none;
+              -webkit-touch-callout: none;
             }
           `}</style>
           <ReactFlow
