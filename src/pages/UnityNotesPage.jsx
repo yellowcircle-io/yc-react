@@ -42,9 +42,6 @@ import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
 import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
 import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal, MobileNodeNavigator } from '../components/unity';
-import { useIOSPinchZoom } from '../hooks/useIOSPinchZoom';
-import notificationManager, { NotificationType } from '../utils/notificationManager';
-import { showToast } from '../utils/toast';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -58,9 +55,6 @@ const nodeTypes = {
 const STORAGE_KEY = 'unity-notes-data';
 const FREE_NODE_LIMIT = 10;
 const PRO_NODE_LIMIT = 100;
-
-// Node color presets for customization
-const NODE_COLOR_PRESETS = ['amber', 'blue', 'green', 'purple', 'pink', 'red', 'gray', 'emerald'];
 
 // Card type configuration (same as UnityNotes Plus)
 const CARD_TYPES = {
@@ -112,27 +106,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       node.data?.label?.includes('Follow-up')
     );
   }, [nodes]);
-
-  // Calculate comment counts for each node based on edges from commentNodes
-  const commentCounts = useMemo(() => {
-    const counts = {};
-
-    // Find all comment nodes
-    const commentNodeIds = new Set(
-      nodes
-        .filter(node => node.type === 'commentNode')
-        .map(node => node.id)
-    );
-
-    // Count edges where source is a comment node and target is another node
-    edges.forEach(edge => {
-      if (commentNodeIds.has(edge.source)) {
-        counts[edge.target] = (counts[edge.target] || 0) + 1;
-      }
-    });
-
-    return counts;
-  }, [nodes, edges]);
 
   // Check if coming from Outreach Generator
   const fromOutreach = searchParams.get('from') === 'outreach';
@@ -196,7 +169,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [isGeneratingCanvas, setIsGeneratingCanvas] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true); // Canvas minimap toggle
   const [showOverviewTray, setShowOverviewTray] = useState(false); // Right-side overview panel
-  const [notifications, setNotifications] = useState([]); // In-app notifications
 
   // Collaboration state (v3)
   const [collaborators, setCollaborators] = useState([]);
@@ -248,329 +220,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [_isSavingLocal, setIsSavingLocal] = useState(false);
 
-  // Floating toolbar state for single-node quick actions
-  const [floatingToolbar, setFloatingToolbar] = useState({ visible: false, nodeId: null, position: { x: 0, y: 0 } });
-
-  // Theme state - persisted to localStorage
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('unity-notes-theme') || 'light';
-    } catch {
-      return 'light';
-    }
-  });
-
-  // Theme selector dropdown visibility state
-  const [showThemeSelector, setShowThemeSelector] = useState(false);
-
-  // Background pattern state - persisted to localStorage
-  const [backgroundPattern, setBackgroundPattern] = useState(() => {
-    try {
-      return localStorage.getItem('unity-notes-background-pattern') || 'dots';
-    } catch {
-      return 'dots';
-    }
-  });
-
-  // Background pattern selector dropdown visibility state
-  const [showBackgroundSelector, setShowBackgroundSelector] = useState(false);
-
-  // Custom accent color state - persisted to localStorage (used by future theme system)
-  const [customAccentColor, _setCustomAccentColor] = useState(() => {
-    try {
-      return localStorage.getItem('unity-notes-accent-color') || 'amber';
-    } catch {
-      return 'amber';
-    }
-  });
-
-  // Color picker dropdown visibility state
-  const [showColorPicker, setShowColorPicker] = useState(false);
-
-  // AI Conversation History - persisted per capsule for context-aware interactions
-  // Stores { role: 'user' | 'assistant', content: string, timestamp: number, nodeId?: string }
-  const [aiConversationHistory, setAiConversationHistory] = useState(() => {
-    try {
-      const capsuleKey = `unity-notes-ai-history-${currentCapsuleId || 'default'}`;
-      const saved = localStorage.getItem(capsuleKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Theme configurations
-  const themes = {
-    light: {
-      background: '#ffffff',
-      canvasBg: '#fafafa',
-      text: '#1f2937',
-      textSecondary: '#6b7280',
-      border: '#e5e7eb',
-      cardBg: '#ffffff',
-      dotColor: '#e5e7eb',
-      minimapBg: 'rgba(255, 255, 255, 0.9)',
-      minimapBorder: '#e5e7eb',
-      buttonBg: '#f3f4f6',
-      buttonHover: '#e5e7eb',
-    },
-    dark: {
-      background: '#111827',
-      canvasBg: '#1f2937',
-      text: '#f9fafb',
-      textSecondary: '#9ca3af',
-      border: '#374151',
-      cardBg: '#1f2937',
-      dotColor: '#374151',
-      minimapBg: 'rgba(31, 41, 55, 0.9)',
-      minimapBorder: '#374151',
-      buttonBg: '#374151',
-      buttonHover: '#4b5563',
-    },
-    sunset: {
-      background: '#2d1b3d',
-      canvasBg: '#3d2750',
-      text: '#fef3c7',
-      textSecondary: '#fde68a',
-      border: '#92400e',
-      cardBg: '#4c2f5e',
-      dotColor: '#92400e',
-      minimapBg: 'rgba(61, 39, 80, 0.9)',
-      minimapBorder: '#92400e',
-      buttonBg: '#5b3470',
-      buttonHover: '#6d3f85',
-    },
-  };
-
-  const currentTheme = themes[theme] || themes.light;
-
-  // Accent color palette for custom theming
-  const accentColors = {
-    amber: { name: 'Amber', color: '#f59e0b', hover: '#d97706', bg: 'rgba(251, 191, 36, 0.1)', border: 'rgba(251, 191, 36, 0.4)' },
-    blue: { name: 'Blue', color: '#3b82f6', hover: '#2563eb', bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.4)' },
-    purple: { name: 'Purple', color: '#a855f7', hover: '#9333ea', bg: 'rgba(168, 85, 247, 0.1)', border: 'rgba(168, 85, 247, 0.4)' },
-    green: { name: 'Green', color: '#10b981', hover: '#059669', bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.4)' },
-    pink: { name: 'Pink', color: '#ec4899', hover: '#db2777', bg: 'rgba(236, 72, 153, 0.1)', border: 'rgba(236, 72, 153, 0.4)' },
-    red: { name: 'Red', color: '#ef4444', hover: '#dc2626', bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.4)' },
-  };
-
-  const _currentAccentColor = accentColors[customAccentColor] || accentColors.amber;
-
-  // Persist theme to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('unity-notes-theme', theme);
-    } catch (e) {
-      console.error('Failed to persist theme:', e);
-    }
-  }, [theme]);
-
-  // Persist background pattern to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('unity-notes-background-pattern', backgroundPattern);
-    } catch (e) {
-      console.error('Failed to persist background pattern:', e);
-    }
-  }, [backgroundPattern]);
-
-  // Persist custom accent color to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('unity-notes-accent-color', customAccentColor);
-    } catch (e) {
-      console.error('Failed to persist accent color:', e);
-    }
-  }, [customAccentColor]);
-
-  // Persist AI conversation history to localStorage per capsule
-  useEffect(() => {
-    try {
-      const capsuleKey = `unity-notes-ai-history-${currentCapsuleId || 'default'}`;
-      localStorage.setItem(capsuleKey, JSON.stringify(aiConversationHistory));
-    } catch (error) {
-      console.warn('Failed to persist AI conversation history:', error);
-    }
-  }, [aiConversationHistory, currentCapsuleId]);
-
-  // Subscribe to notification manager updates
-  useEffect(() => {
-    // Initialize with current notifications
-    setNotifications(notificationManager.getAll());
-
-    // Subscribe to updates
-    const unsubscribe = notificationManager.subscribe((updatedNotifications) => {
-      setNotifications(updatedNotifications);
-    });
-
-    // Cleanup subscription on unmount
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  // Click-outside detection for theme selector dropdown
-  useEffect(() => {
-    if (!showThemeSelector) return;
-
-    const handleClickOutside = (event) => {
-      const themeSelector = document.getElementById('theme-selector-dropdown');
-      const themeButton = document.getElementById('theme-selector-button');
-
-      if (themeSelector && themeButton &&
-          !themeSelector.contains(event.target) &&
-          !themeButton.contains(event.target)) {
-        setShowThemeSelector(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showThemeSelector]);
-
-  // Click-outside detection for background pattern selector dropdown
-  useEffect(() => {
-    if (!showBackgroundSelector) return;
-
-    const handleClickOutside = (event) => {
-      const backgroundSelector = document.getElementById('background-selector-dropdown');
-      const backgroundButton = document.getElementById('background-selector-button');
-
-      if (backgroundSelector && backgroundButton &&
-          !backgroundSelector.contains(event.target) &&
-          !backgroundButton.contains(event.target)) {
-        setShowBackgroundSelector(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showBackgroundSelector]);
-
-  // Click-outside detection for color picker dropdown
-  useEffect(() => {
-    if (!showColorPicker) return;
-
-    const handleClickOutside = (event) => {
-      const colorPicker = document.getElementById('color-picker-dropdown');
-      const colorButton = document.getElementById('color-picker-button');
-
-      if (colorPicker && colorButton &&
-          !colorPicker.contains(event.target) &&
-          !colorButton.contains(event.target)) {
-        setShowColorPicker(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showColorPicker]);
-
-  // ========================================================================
-  // AI Conversation History Utilities
-  // ========================================================================
-
-  // Record a conversation exchange in the AI history
-  const recordConversation = useCallback((userPrompt, aiResponse, nodeId = null) => {
-    const timestamp = Date.now();
-    setAiConversationHistory(prev => [
-      ...prev,
-      { role: 'user', content: userPrompt, timestamp, nodeId },
-      { role: 'assistant', content: aiResponse, timestamp, nodeId }
-    ].slice(-100)); // Keep only last 100 messages (50 exchanges) to prevent unbounded growth
-  }, []);
-
-  // Get relevant conversation history for a given node or global context
-  const getRelevantHistory = useCallback((nodeId = null, maxExchanges = 3) => {
-    // Filter history: global messages (no nodeId) + messages for this specific node
-    const relevantMessages = aiConversationHistory.filter(msg =>
-      !msg.nodeId || msg.nodeId === nodeId
-    );
-
-    // Get last N exchanges (N*2 messages)
-    return relevantMessages.slice(-(maxExchanges * 2));
-  }, [aiConversationHistory]);
-
-  // Build a context-aware prompt that includes conversation history
-  const buildContextAwarePrompt = useCallback((prompt, nodeId = null, maxExchanges = 3) => {
-    const history = getRelevantHistory(nodeId, maxExchanges);
-
-    if (history.length === 0) {
-      return prompt;
-    }
-
-    // Format history as a conversation
-    const historyText = history
-      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-      .join('\n\n');
-
-    return `Previous conversation context:\n${historyText}\n\nCurrent request:\n${prompt}`;
-  }, [getRelevantHistory]);
-
-  // Save conversation history to localStorage when it changes
-  useEffect(() => {
-    if (currentCapsuleId && aiConversationHistory.length > 0) {
-      const capsuleKey = `unity-notes-ai-history-${currentCapsuleId}`;
-      try {
-        localStorage.setItem(capsuleKey, JSON.stringify(aiConversationHistory));
-      } catch (err) {
-        console.warn('Failed to save AI conversation history:', err);
-      }
-    }
-  }, [aiConversationHistory, currentCapsuleId]);
-
-  // Clear conversation history when switching capsules
-  useEffect(() => {
-    if (currentCapsuleId) {
-      const capsuleKey = `unity-notes-ai-history-${currentCapsuleId}`;
-      try {
-        const saved = localStorage.getItem(capsuleKey);
-        setAiConversationHistory(saved ? JSON.parse(saved) : []);
-      } catch {
-        setAiConversationHistory([]);
-      }
-    }
-  }, [currentCapsuleId]);
-
   // Handler for opening Studio from AI Chat with conversation context
   const handleOpenStudio = useCallback((context) => {
     setStudioContext(context);
     handleModeChange('studio');
   }, []);
-
-  // AI Conversation History Helper Functions
-  const updateAiConversationHistory = useCallback((role, content, nodeId = null) => {
-    const newMessage = {
-      role, // 'user' or 'assistant'
-      content,
-      timestamp: Date.now(),
-      ...(nodeId && { nodeId }) // Include nodeId if provided
-    };
-
-    setAiConversationHistory(prev => {
-      const updated = [...prev, newMessage];
-      // Keep only last 50 messages to avoid localStorage limits
-      return updated.slice(-50);
-    });
-  }, []);
-
-  const clearAiConversationHistory = useCallback(() => {
-    setAiConversationHistory([]);
-    if (currentCapsuleId) {
-      const capsuleKey = `unity-notes-ai-history-${currentCapsuleId}`;
-      try {
-        localStorage.removeItem(capsuleKey);
-      } catch (err) {
-        console.warn('Failed to clear AI conversation history:', err);
-      }
-    }
-  }, [currentCapsuleId]);
 
   // Auto-migrate localStorage API keys to Firestore when user logs in
   useEffect(() => {
@@ -617,35 +271,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const capsuleLoadedRef = React.useRef(false);
   // Guard flag to prevent auto-save during clear operation (prevents race condition)
   const isClearingRef = useRef(false);
-
-  // Ref for ReactFlow container to enable iOS Safari pinch-to-zoom
-  // This ref is attached to the wrapper div and consumed by useIOSPinchZoom hook
-  // for reliable two-finger pinch gesture detection on iOS devices
-  const reactFlowContainerRef = useRef(null);
-
-  // Track whether a node is currently being dragged to prevent conflicts with canvas panning
-  // This helps distinguish between node-level interactions (dragging nodes) and canvas-level
-  // interactions (panning the viewport), improving touch gesture reliability on mobile devices
-  const isDraggingNodeRef = useRef(false);
-
-  // Track when node drag ends to prevent false clicks immediately after dragging
-  // This debounce mechanism prevents nodes from being selected when user releases after drag
-  const dragEndTimeRef = useRef(0);
-
-  // Track canvas pan gesture state to distinguish from node interactions
-  // This prevents false positives where node clicks/drags are incorrectly flagged as canvas panning
-  // panStartRef stores: { x, y, time, hasMoved, lastX, lastY, lastTime, isTouch } when pan starts
-  // Enhanced with velocity and directional tracking for better touch/mobile pan detection
-  const panStartRef = useRef({ x: 0, y: 0, time: 0, hasMoved: false, lastX: 0, lastY: 0, lastTime: 0, isTouch: false });
-  const [_isPanning, setIsPanning] = useState(false);
-
-  // Visual feedback state for active panning on touch devices
-  // Shows a subtle indicator when panning is detected to help users distinguish between pan and tap gestures
-  const [showPanningIndicator, setShowPanningIndicator] = useState(false);
-
-  // Track previously selected node ID to enable smarter toolbar display
-  // Toolbar will only appear when re-selecting or double-clicking, not on every selection
-  const previouslySelectedNodeRef = useRef(null);
 
   // Load capsule from URL parameter OR localStorage (for editing shared capsules)
   useEffect(() => {
@@ -757,8 +382,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
                         setNodes((nds) => nds.filter((n) => n.id !== nodeId));
                         setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
                       },
-                      onChangeColor: handleChangeNodeColor,
-                      colorPresets: NODE_COLOR_PRESETS,
                     },
                   };
                 }
@@ -864,7 +487,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           // Clear the stored capsule ID if it's invalid
           localStorage.removeItem('unity-notes-current-capsule');
           setCurrentCapsuleId('');
-          showToast('Failed to load the capsule. It may have been deleted or the link is invalid.', 'error');
+          alert('Failed to load the capsule. It may have been deleted or the link is invalid.');
         }
       };
       loadSharedCapsule();
@@ -1088,23 +711,23 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const devToolsActions = {
     clearLocalStorage: () => {
       localStorage.clear();
-      showToast('localStorage cleared. Refresh to see changes.', 'success');
+      alert('localStorage cleared. Refresh to see changes.');
     },
     clearCanvasOnly: () => {
       localStorage.removeItem(STORAGE_KEY);
       setNodes([]);
       setEdges([]);
-      showToast('Canvas cleared.', 'success');
+      alert('Canvas cleared.');
     },
     clearCredits: () => {
       localStorage.removeItem('yc_credits');
       localStorage.removeItem('yc_credits_used');
-      showToast('Credits cleared.', 'success');
+      alert('Credits cleared.');
     },
     clearHubSettings: () => {
       localStorage.removeItem('outreach_business_settings_v4');
       localStorage.removeItem('outreach_business_auth');
-      showToast('Hub settings cleared.', 'success');
+      alert('Hub settings cleared.');
     },
     viewState: () => {
       console.log('=== DEV STATE ===');
@@ -1116,34 +739,34 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       console.log('Journey Status:', journeyStatus);
       console.log('Nodes:', nodes.length);
       console.log('Edges:', edges.length);
-      showToast('State logged to console (F12)', 'info');
+      alert('State logged to console (F12)');
     },
     // Admin functions - only visible when bypass is active
     migrateCapsules: async () => {
       if (!confirm('⚠️ ADMIN: Migrate all v1 capsules to v2?\n\nThis will:\n- Convert subcollections to embedded arrays\n- Delete old subcollection documents\n- Reduce Firestore costs\n\nContinue?')) return;
       try {
         const result = await migrateToV2();
-        showToast(`Migration complete!\n\nMigrated: ${result.migrated}\nAlready v2: ${result.alreadyV2}\nFailed: ${result.failed}`, 'success');
+        alert(`✅ Migration complete!\n\nMigrated: ${result.migrated}\nAlready v2: ${result.alreadyV2}\nFailed: ${result.failed}`);
       } catch (err) {
-        showToast(`Migration failed: ${err.message}`, 'error');
+        alert(`❌ Migration failed: ${err.message}`);
       }
     },
     cleanupCapsules: async () => {
       if (!confirm('⚠️ ADMIN: Cleanup old capsules?\n\nThis will delete capsules:\n- Older than 30 days\n- With less than 5 views\n\nContinue?')) return;
       try {
         const result = await cleanupOldCapsules(30, 5);
-        showToast(`Cleanup complete!\n\nDeleted: ${result.deleted}\nKept: ${result.kept}`, 'success');
+        alert(`✅ Cleanup complete!\n\nDeleted: ${result.deleted}\nKept: ${result.kept}`);
       } catch (err) {
-        showToast(`Cleanup failed: ${err.message}`, 'error');
+        alert(`❌ Cleanup failed: ${err.message}`);
       }
     },
     getCapsuleStats: async () => {
       try {
         const stats = await getCapsuleStats();
-        showToast(`📊 Capsule Stats:\n\nTotal: ${stats.total}\nTotal Views: ${stats.totalViews}\nOld (>30 days): ${stats.oldCapsules}\nLow Views (<5): ${stats.lowViewCapsules}`, 'info');
+        alert(`📊 Capsule Stats:\n\nTotal: ${stats.total}\nTotal Views: ${stats.totalViews}\nOld (>30 days): ${stats.oldCapsules}\nLow Views (<5): ${stats.lowViewCapsules}`);
         console.log('Capsule Stats:', stats);
       } catch (err) {
-        showToast(`Stats failed: ${err.message}`, 'error');
+        alert(`❌ Stats failed: ${err.message}`);
       }
     }
   };
@@ -1290,180 +913,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   }, [fromOutreach, isInitialized, setNodes, setEdges]);
 
-  // ============================================================
-  // UNDO/REDO SYSTEM
-  // ============================================================
-
-  // History state - tracks past and future states for undo/redo
-  const historyRef = useRef({
-    past: [],
-    future: []
-  });
-
-  // Flag to prevent recording history during undo/redo operations
-  const isUndoRedoActionRef = useRef(false);
-
-  // Record current state to history before making changes
-  const recordHistory = useCallback(() => {
-    // Don't record if we're in the middle of an undo/redo operation
-    if (isUndoRedoActionRef.current) {
-      return;
-    }
-
-    // Deep clone current nodes and edges to avoid reference issues
-    const currentState = {
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges))
-    };
-
-    // Add to past array
-    historyRef.current.past.push(currentState);
-
-    // Clear future array (new action invalidates redo history)
-    historyRef.current.future = [];
-
-    // Limit history to 50 entries (remove oldest if exceeded)
-    if (historyRef.current.past.length > 50) {
-      historyRef.current.past.shift();
-    }
-
-    console.log('📝 History recorded:', {
-      past: historyRef.current.past.length,
-      future: historyRef.current.future.length
-    });
-  }, [nodes, edges]);
-
-  // Undo - restore previous state
-  const handleUndo = useCallback(() => {
-    if (historyRef.current.past.length === 0) {
-      console.log('⚠️ No more undo history');
-      return;
-    }
-
-    // Set flag to prevent recording this change
-    isUndoRedoActionRef.current = true;
-
-    // Save current state to future
-    const currentState = {
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges))
-    };
-    historyRef.current.future.push(currentState);
-
-    // Pop last state from past
-    const previousState = historyRef.current.past.pop();
-
-    // Restore the previous state
-    setNodes(previousState.nodes);
-    setEdges(previousState.edges);
-
-    console.log('↶ Undo:', {
-      past: historyRef.current.past.length,
-      future: historyRef.current.future.length
-    });
-
-    // Reset flag after state updates
-    setTimeout(() => {
-      isUndoRedoActionRef.current = false;
-    }, 0);
-  }, [nodes, edges, setNodes, setEdges]);
-
-  // Redo - restore next state
-  const handleRedo = useCallback(() => {
-    if (historyRef.current.future.length === 0) {
-      console.log('⚠️ No more redo history');
-      return;
-    }
-
-    // Set flag to prevent recording this change
-    isUndoRedoActionRef.current = true;
-
-    // Save current state to past
-    const currentState = {
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges))
-    };
-    historyRef.current.past.push(currentState);
-
-    // Pop last state from future
-    const nextState = historyRef.current.future.pop();
-
-    // Restore the next state
-    setNodes(nextState.nodes);
-    setEdges(nextState.edges);
-
-    console.log('↷ Redo:', {
-      past: historyRef.current.past.length,
-      future: historyRef.current.future.length
-    });
-
-    // Reset flag after state updates
-    setTimeout(() => {
-      isUndoRedoActionRef.current = false;
-    }, 0);
-  }, [nodes, edges, setNodes, setEdges]);
-
-  // Keyboard shortcuts for undo/redo
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Cmd+Z (Mac) / Ctrl+Z (Windows) for undo
-      // Cmd+Shift+Z (Mac) / Ctrl+Shift+Z (Windows) for redo
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault();
-
-        if (e.shiftKey) {
-          // Redo
-          handleRedo();
-        } else {
-          // Undo
-          handleUndo();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleUndo, handleRedo]);
-
-  // Wrap onNodesChange to track drag/resize operations for undo/redo
-  // We track when drag/resize starts and record history at that point
-  const nodeOperationStartRef = useRef(false);
-
-  const onNodesChangeWithHistory = useCallback((changes) => {
-    // Detect drag start or resize start
-    const isDragStart = changes.some(change =>
-      change.type === 'position' && change.dragging === true && !nodeOperationStartRef.current
-    );
-    const isResizeStart = changes.some(change =>
-      change.type === 'dimensions' && !nodeOperationStartRef.current
-    );
-
-    // Record history when operation starts (not during or at end)
-    if (isDragStart || isResizeStart) {
-      recordHistory();
-      nodeOperationStartRef.current = true;
-    }
-
-    // Detect drag end or resize end to reset flag
-    const isDragEnd = changes.some(change =>
-      change.type === 'position' && change.dragging === false
-    );
-    const isResizeEnd = changes.some(change =>
-      change.type === 'dimensions'
-    );
-
-    if (isDragEnd || isResizeEnd) {
-      nodeOperationStartRef.current = false;
-    }
-
-    // Call the original onNodesChange
-    onNodesChange(changes);
-  }, [onNodesChange, recordHistory]);
-
-  // ============================================================
-  // END UNDO/REDO SYSTEM
-  // ============================================================
-
   // Handle photo resize
   const handlePhotoResize = useCallback((nodeId, newSize) => {
     setNodes((nds) =>
@@ -1500,9 +949,9 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     const openaiKey = storedOpenaiKey || import.meta.env.VITE_OPENAI_API_KEY;
     if (!aiConfigured && !openaiKey) {
       if (!isAuthenticated) {
-        showToast('AI image analysis requires sign-in.\n\nSign in to use your stored OpenAI API key.', 'warning');
+        alert('🖼️ AI image analysis requires sign-in.\n\nSign in to use your stored OpenAI API key.');
       } else {
-        showToast('No OpenAI API key found.\n\nGo to Hub → Settings to add your OpenAI API key.', 'warning');
+        alert('🖼️ No OpenAI API key found.\n\nGo to Hub → Settings to add your OpenAI API key.');
       }
       return;
     }
@@ -1575,7 +1024,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     } catch (error) {
       console.error('AI Analysis error:', error);
-      showToast(`AI analysis failed: ${error.message}`, 'error');
+      alert(`AI analysis failed: ${error.message}`);
     }
   }, [analyzeImage, aiConfigured, aiError, setNodes, storedOpenaiKey, isAuthenticated]);
 
@@ -1685,22 +1134,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     nodesRef.current = nodes;
     edgesRef.current = edges;
   }, [nodes, edges]);
-
-  // Auto-fit viewport when nodes are added/changed
-  // Uses requestAnimationFrame to ensure nodes are rendered to DOM before fitView calculates positions
-  useEffect(() => {
-    if (!fitView || nodes.length === 0) return;
-
-    // Wait for next render cycle to ensure nodes are in DOM
-    requestAnimationFrame(() => {
-      fitView({
-        padding: 0.2,        // 20% padding around nodes
-        duration: 200,       // Smooth 200ms animation
-        maxZoom: 1.5,        // Don't zoom in too much
-        includeHiddenNodes: false
-      });
-    });
-  }, [nodes, fitView]);
 
   // Handle "Edit in Outreach" - Navigate back to Outreach Generator with context
   const handleEditInOutreach = useCallback((nodeId, _nodeData) => {
@@ -1923,9 +1356,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const handleDeleteNode = useCallback((nodeId) => {
 
     if (confirm('⚠️ Delete this note?\n\nThis cannot be undone.')) {
-      // Record history before deleting
-      recordHistory();
-
       setNodes((nds) => {
         // Find the node being deleted
         const nodeToDelete = nds.find(n => n.id === nodeId);
@@ -1965,7 +1395,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         edge.source !== nodeId && edge.target !== nodeId
       ));
     }
-  }, [setNodes, setEdges, recordHistory]);
+  }, [setNodes, setEdges]);
 
   // Handle node updates (for text nodes)
   const handleNodeUpdate = useCallback((nodeId, updates) => {
@@ -1977,24 +1407,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               data: {
                 ...node.data,
                 ...updates,
-                updatedAt: Date.now(),
-              }
-            }
-          : node
-      )
-    );
-  }, [setNodes]);
-
-  // Handle color change for nodes
-  const handleChangeNodeColor = useCallback((nodeId, newColor) => {
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                color: newColor,
                 updatedAt: Date.now(),
               }
             }
@@ -2026,26 +1438,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     );
   }, [setNodes]);
 
-  // iOS Safari pinch-to-zoom fix - DISABLED (see rationale below)
-  //
-  // RATIONALE: The useIOSPinchZoom hook uses non-passive event listeners in capture phase
-  // which forces iOS Safari to delay gesture recognition while checking if preventDefault()
-  // will be called. This causes the laggy/inconsistent pinch-to-zoom behavior we're trying to fix.
-  //
-  // SOLUTION: React Flow's built-in zoomOnPinch already handles iOS Safari pinch gestures correctly.
-  // By disabling this custom hook and relying solely on React Flow's native gesture handling,
-  // we get smooth, immediate gesture recognition without any JavaScript intervention delays.
-  //
-  // React Flow internally uses passive listeners and optimized touch event handling that works
-  // perfectly with iOS Safari's gesture system. The custom hook was well-intentioned but actually
-  // causes the performance issues it was trying to solve.
-  //
-  // If visual feedback is needed in the future, add ONLY passive event listeners that don't
-  // call preventDefault() and don't interfere with React Flow's gesture handling.
-  useIOSPinchZoom(reactFlowContainerRef, {
-    enabled: false  // Disabled to allow React Flow's native gesture handling
-  });
-
   // Helper function to check if a node is inside a group's bounds
   const isNodeInsideGroup = useCallback((node, groupNode) => {
     if (!groupNode || groupNode.type !== 'groupNode') return false;
@@ -2066,16 +1458,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       nodeY >= groupY + padding &&
       nodeY <= groupY + groupHeight - padding
     );
-  }, []);
-
-  // Handle node drag start - set flag to prevent canvas pan conflicts
-  const _handleNodeDragStart = useCallback((event, node) => {
-    // Don't handle groups dragging
-    if (node.type === 'groupNode') return;
-
-    // Set flag to indicate a node is being dragged
-    // This prevents canvas panning from interfering with node drag operations
-    isDraggingNodeRef.current = true;
   }, []);
 
   // Handle node drag - show drop target indicator on groups
@@ -2101,10 +1483,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const handleNodeDragStop = useCallback((event, node) => {
     // Don't handle groups dragging
     if (node.type === 'groupNode') return;
-
-    // Clear drag flag and record end time to prevent false clicks
-    isDraggingNodeRef.current = false;
-    dragEndTimeRef.current = Date.now();
 
     // Find group this node is over
     const groupNodes = nodes.filter(n => n.type === 'groupNode');
@@ -2217,180 +1595,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     });
   }, [nodes, setNodes, isNodeInsideGroup]);
 
-  // Handle canvas pan start - detect if user is panning canvas vs interacting with nodes
-  // This prevents false positives where node clicks/drags are incorrectly flagged as canvas panning
-  const _handleCanvasPanStart = useCallback((event, viewport) => {
-    // Check if the event target is a node element
-    // If so, skip pan tracking because this is a node interaction, not canvas panning
-    const target = event?.target;
-    if (target && target.closest && target.closest('.react-flow__node')) {
-      // User is interacting with a node - don't track as canvas pan
-      // Keep panStartRef reset so handleCanvasPanMove knows to ignore this gesture
-      panStartRef.current = { x: 0, y: 0, time: 0, hasMoved: false, lastX: 0, lastY: 0, lastTime: 0, isTouch: false };
-      return;
-    }
-
-    // Detect if this is a touch event
-    const isTouch = event?.touches || event?.sourceEvent?.touches;
-    const now = Date.now();
-
-    // This is a genuine canvas pan - track the start position and time
-    panStartRef.current = {
-      x: viewport.x,
-      y: viewport.y,
-      time: now,
-      hasMoved: false,
-      lastX: viewport.x,
-      lastY: viewport.y,
-      lastTime: now,
-      isTouch: !!isTouch
-    };
-  }, []);
-
-  // Handle canvas pan move - detect movement threshold to set isPanning flag
-  // This works in conjunction with handleCanvasPanStart to distinguish canvas panning from node clicks
-  const _handleCanvasPanMove = useCallback((event, viewport) => {
-    // Safety check: ensure panStartRef was properly initialized by handleCanvasPanStart
-    // If time === 0, this means the gesture started on a node (not canvas), so skip
-    if (!panStartRef.current || panStartRef.current.time === 0) {
-      return;
-    }
-
-    // Calculate distance moved since pan started
-    const deltaX = Math.abs(viewport.x - panStartRef.current.x);
-    const deltaY = Math.abs(viewport.y - panStartRef.current.y);
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-    // Enhanced pan gesture detection with timing-based thresholds
-    // This improves distinction between quick taps (for node selection) and intentional panning
-
-    // Base distance threshold for mouse/desktop interactions
-    // Optimized to 8px for better responsiveness while maintaining precision
-    const MOUSE_PAN_THRESHOLD = 8;
-
-    // Base distance threshold for touch interactions (more forgiving due to finger size)
-    const BASE_DISTANCE_THRESHOLD = 20;
-
-    // iOS Safari-specific threshold: slightly more forgiving due to WebKit touch behavior
-    // iOS Safari can have minor touch coordinate jitter, so we use 22px instead of 20px
-    const IOS_SAFARI_THRESHOLD = 22;
-
-    // Quick-tap multiplier: increase threshold for very fast gestures to prevent accidental panning
-    // When a user taps quickly (<150ms), require 2.5x more movement to trigger pan
-    // This ensures quick taps for node selection don't accidentally trigger panning on touch devices
-    const QUICK_TAP_TIME_MS = 150;
-    const QUICK_TAP_MULTIPLIER = 2.5; // Increased from 2x to 2.5x for better tap detection
-
-    // iOS Safari quick-tap multiplier: slightly higher to account for touch jitter
-    const IOS_SAFARI_QUICK_TAP_MULTIPLIER = 2.8;
-
-    // NEW: Velocity-based pan detection constants
-    // Fast swipes (>0.5 px/ms = 500 px/sec) are clearly intentional pans, not accidental touches
-    const MIN_PAN_VELOCITY = 0.5; // pixels per millisecond
-
-    // NEW: Directional bias threshold for detecting intentional directional swipes
-    // A ratio > 2.0 means movement is strongly horizontal or vertical (not diagonal wobble)
-    const DIRECTIONAL_BIAS_THRESHOLD = 2.0;
-
-    // Calculate time elapsed since gesture started
-    const timeElapsed = Date.now() - panStartRef.current.time;
-
-    // Determine if this is a touch or mouse event (use stored value from panStart for consistency)
-    const isTouch = panStartRef.current.isTouch || event?.touches || event?.sourceEvent?.touches;
-
-    // Detect iOS Safari using WebKit-specific properties
-    const isIOSSafari = /iPhone|iPad|iPod/.test(navigator.userAgent) && /WebKit/.test(navigator.userAgent) && !/CriOS|FxiOS/.test(navigator.userAgent);
-
-    // NEW: Calculate instantaneous velocity for velocity-based pan detection
-    const now = Date.now();
-    const timeDelta = now - panStartRef.current.lastTime;
-    let velocity = 0;
-
-    if (timeDelta > 0) {
-      const lastDeltaX = viewport.x - panStartRef.current.lastX;
-      const lastDeltaY = viewport.y - panStartRef.current.lastY;
-      const lastDistance = Math.sqrt(lastDeltaX * lastDeltaX + lastDeltaY * lastDeltaY);
-      velocity = lastDistance / timeDelta; // pixels per millisecond
-
-      // Update tracking for next move event
-      panStartRef.current.lastX = viewport.x;
-      panStartRef.current.lastY = viewport.y;
-      panStartRef.current.lastTime = now;
-    }
-
-    // NEW: Calculate directional bias to detect strong horizontal/vertical swipes
-    const absDeltaX = Math.abs(viewport.x - panStartRef.current.x);
-    const absDeltaY = Math.abs(viewport.y - panStartRef.current.y);
-    const directionalBias = Math.max(absDeltaX, absDeltaY) / (Math.min(absDeltaX, absDeltaY) || 1);
-    const hasStrongDirection = directionalBias > DIRECTIONAL_BIAS_THRESHOLD;
-
-    // NEW: Fast swipe detection - bypass distance checks for obvious intentional pans
-    if (isTouch && velocity > MIN_PAN_VELOCITY && distance > 5) {
-      // Fast swipe detected - immediately recognize as pan gesture
-      setIsPanning(true);
-      setShowPanningIndicator(true);
-      panStartRef.current.hasMoved = true;
-      return;
-    }
-
-    // NEW: Directional bias detection - strong directional movement suggests intentional pan
-    // Only applies to touch and when we have meaningful distance (>10px)
-    if (isTouch && hasStrongDirection && distance > 10) {
-      // Strong directional swipe detected - likely an intentional pan
-      setIsPanning(true);
-      setShowPanningIndicator(true);
-      panStartRef.current.hasMoved = true;
-      return;
-    }
-
-    // EXISTING: Select appropriate base threshold based on input type and browser
-    let threshold = isTouch
-      ? (isIOSSafari ? IOS_SAFARI_THRESHOLD : BASE_DISTANCE_THRESHOLD)
-      : MOUSE_PAN_THRESHOLD;
-
-    // EXISTING: Apply quick-tap multiplier for touch devices on very fast gestures
-    // This makes it much harder to accidentally pan when quickly tapping nodes
-    if (isTouch && timeElapsed < QUICK_TAP_TIME_MS) {
-      const multiplier = isIOSSafari ? IOS_SAFARI_QUICK_TAP_MULTIPLIER : QUICK_TAP_MULTIPLIER;
-      threshold *= multiplier; // e.g., 22px * 2.8 = 61.6px for iOS Safari quick taps
-    }
-
-    // EXISTING: Set isPanning flag only if distance exceeds the calculated threshold
-    if (distance > threshold) {
-      setIsPanning(true);
-      setShowPanningIndicator(true); // Show visual feedback when panning is detected
-      panStartRef.current.hasMoved = true;
-    }
-  }, []);
-
-  // Handle canvas pan end - reset pan tracking state
-  const _handleCanvasPanEnd = useCallback(() => {
-    // Delay resetting isPanning to prevent immediate node selection after pan
-    // This prevents false clicks when user releases after panning
-    setTimeout(() => {
-      setIsPanning(false);
-      // Reset pan tracking including hasMoved flag and velocity tracking after delay
-      // This allows handleSelectionChange to check if a pan just completed
-      panStartRef.current = { x: 0, y: 0, time: 0, hasMoved: false, lastX: 0, lastY: 0, lastTime: 0, isTouch: false };
-    }, 150); // 150ms delay for touch devices
-
-    // Hide panning visual indicator with a fade-out delay
-    // Slightly longer delay (200ms) to ensure smooth visual transition
-    setTimeout(() => {
-      setShowPanningIndicator(false);
-    }, 200);
-  }, []);
-
   // Add new card (non-photo types)
   const handleAddCard = useCallback((type) => {
     // Check node limit (computed later, use closure to access)
     if (nodes.length >= nodeLimit) {
-      showToast(
-        `Node Limit Reached (${nodeLimit} nodes)\n\n` +
+      alert(
+        `⚠️ Node Limit Reached (${nodeLimit} nodes)\n\n` +
         (tier === 'premium' || isAdmin
           ? 'You are at your canvas limit.'
-          : `Free tier allows ${FREE_NODE_LIMIT} nodes.\n\nUpgrade to Pro for ${PRO_NODE_LIMIT} nodes, or use EXPORT to backup and clear your canvas.`),
-        'warning'
+          : `Free tier allows ${FREE_NODE_LIMIT} nodes.\n\nUpgrade to Pro for ${PRO_NODE_LIMIT} nodes, or use EXPORT to backup and clear your canvas.`)
       );
       return;
     }
@@ -2424,8 +1637,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
           onDelete: handleDeleteNode,
-          onChangeColor: handleChangeNodeColor,
-          colorPresets: NODE_COLOR_PRESETS,
         }
       };
     } else if (type === 'link') {
@@ -2445,8 +1656,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
           onDelete: handleDeleteNode,
-          onChangeColor: handleChangeNodeColor,
-          colorPresets: NODE_COLOR_PRESETS,
         }
       };
     } else if (type === 'ai') {
@@ -2466,8 +1675,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           onUpdate: handleNodeUpdate,
           onDelete: handleDeleteNode,
           onOpenStudio: handleOpenStudio,
-          onChangeColor: handleChangeNodeColor,
-          colorPresets: NODE_COLOR_PRESETS,
         }
       };
     } else if (type === 'video') {
@@ -2487,8 +1694,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           createdAt: timestamp,
           onUpdate: handleNodeUpdate,
           onDelete: handleDeleteNode,
-          onChangeColor: handleChangeNodeColor,
-          colorPresets: NODE_COLOR_PRESETS,
         }
       };
     } else if (type === 'sticky') {
@@ -2692,35 +1897,21 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
 
     if (newNode) {
-      // Record history before adding new node
-      recordHistory();
-
       setNodes((nds) => [...nds, newNode]);
-      // Use double requestAnimationFrame to ensure React Flow has fully rendered the new node
-      // before calling fitView. This prevents timing issues where the viewport doesn't update.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Scope fitView to only the new node to avoid jarring viewport jumps
-          fitView({
-            duration: 400,
-            padding: 0.2,
-            nodes: [{ id: newNode.id }],
-            maxZoom: 1
-          });
-        });
-      });
+      setTimeout(() => {
+        fitView({ duration: 400, padding: 0.2 });
+      }, 100);
     }
-  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio, user, userProfile, storedGoogleMapsKey, recordHistory]);
+  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio, user, userProfile, storedGoogleMapsKey]);
 
   // Handle Deploy from ProspectNode - opens prospect modal
   // Uses refs to avoid circular dependency with useEffect that injects callbacks
   const handleDeployFromNode = useCallback(async (nodeId, nodeData) => {
     if (!hasProAccess()) {
-      showToast(
-        'Deploy Campaign - Pro Feature\n\n' +
+      alert(
+        '☁️ Deploy Campaign - Pro Feature\n\n' +
         'Deploying campaigns is available for Pro users.\n\n' +
-        'Contact us for Pro access.',
-        'warning'
+        'Contact us for Pro access.'
       );
       return;
     }
@@ -2732,7 +1923,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     // Check for email nodes connected to this campaign
     const emailNodes = currentNodes.filter(n => n.type === 'emailNode');
     if (emailNodes.length === 0) {
-      showToast('No email nodes in campaign.\n\nAdd at least one email to deploy.', 'warning');
+      alert('⚠️ No email nodes in campaign.\n\nAdd at least one email to deploy.');
       return;
     }
 
@@ -2745,7 +1936,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         });
         setCurrentJourneyId(journeyId);
       } catch (error) {
-        showToast(`Failed to save journey: ${error.message}`, 'error');
+        alert(`❌ Failed to save journey: ${error.message}`);
         return;
       }
     }
@@ -2843,13 +2034,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     setNodes((nds) => {
       // Check if any node needs callback injection (prevents infinite loop)
-      // A node needs injection if it's missing essential callbacks
-      // This is especially important for AI-generated nodes which may have some callbacks but not all
-      const needsInjection = nds.some(n => {
-        if (!n.data) return false;
-        // Check if essential callbacks are missing
-        return !n.data.onUpdate || !n.data.onDelete || !n.data.onToggleStar;
-      });
+      // A node needs injection if it's missing the onToggleStar callback
+      const needsInjection = nds.some(n => n.data && !n.data.onToggleStar);
       if (!needsInjection) return nds; // Return same reference to avoid re-render
 
       return nds.map((node) => {
@@ -2887,8 +2073,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
             onAnalyze: node.type === 'photoNode' ? handleImageAnalyze : undefined,
             // AI Chat -> Studio integration
             onOpenStudio: node.data?.cardType === 'ai' ? handleOpenStudio : undefined,
-            // AI Expand - context-aware content expansion for text nodes
-            onExpandWithAI: node.type === 'textNode' ? handleAIExpandNode : undefined,
             // Prospect count at this node (for visual tracking)
             prospectsAtNode: prospectsAtNode,
             // Starring functionality
@@ -2898,10 +2082,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         };
       });
     });
-  // Note: handleAIExpandNode is intentionally excluded from deps to avoid TDZ error
-  // (it's defined later in the component but used here - ESLint will warn, but
-  // the effect callback runs after render when the callback is already defined)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialized, nodes.length, handlePhotoResize, handleLightbox, handleEdit, handleNodeUpdate, handleDeleteNode, handleEmailPreview, handleInlineEmailEdit, handleInlineWaitEdit, handleInlineConditionEdit, handleEditInOutreach, handleDeployFromNode, handleImageAnalyze, handleOpenStudio, getProspectsAtNode, handleToggleNodeStar, starredNodeIds, setNodes]);
 
   // Save to localStorage with status indicator
@@ -2914,7 +2094,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setLastSavedAt(new Date());
     } catch (error) {
       console.error('❌ localStorage save error:', error);
-      showToast('Unable to save locally. Your notes will be preserved in the current session.\n\nUse EXPORT to save as JSON file, or SHARE to save to cloud.', 'warning');
+      alert('⚠️ Unable to save locally. Your notes will be preserved in the current session.\n\nUse EXPORT to save as JSON file, or SHARE to save to cloud.');
     } finally {
       // Brief delay to show saving indicator
       setTimeout(() => setIsSavingLocal(false), 300);
@@ -2991,163 +2171,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     updateZoom();
   }, [getZoom]);
 
-  // Preserve viewport on orientation change (mobile fix with iOS Safari Visual Viewport API support)
-  //
-  // Problem: When iOS devices rotate, React Flow automatically adjusts the viewport,
-  // causing the canvas to jump to a different position/zoom. Users expect the canvas
-  // to maintain its position and zoom level after rotation. Additionally, iOS Safari's
-  // address bar appearing/disappearing causes viewport changes that should not trigger
-  // canvas position resets.
-  //
-  // Solution Strategy:
-  // 1. Save viewport continuously on resize events (BEFORE orientation change)
-  // 2. Detect actual orientation changes using matchMedia API (not just any resize)
-  // 3. Restore the saved viewport AFTER orientation change completes
-  // 4. Use requestAnimationFrame to ensure DOM layout is complete before restoring
-  // 5. Handle iOS Safari Visual Viewport API for address bar show/hide
-  // 6. Detect and adjust for page-level zoom vs canvas zoom
-  //
-  // Why matchMedia instead of orientationchange event:
-  // - matchMedia is more reliable and modern
-  // - orientationchange is deprecated on some browsers
-  // - matchMedia provides accurate portrait/landscape detection
-  // - Better cross-browser compatibility
-  //
-  // iOS Safari Improvements:
-  // - Increased timeout from 150ms to 300ms for Safari's animation completion
-  // - Visual Viewport API support for address bar changes
-  // - Page zoom detection to prevent conflicts with canvas zoom
-  useEffect(() => {
-    let savedViewport = null;
-    let isRestoringViewport = false;
-    let resizeTimeout = null;
-    let visualViewportTimeout = null;
-    let currentOrientation = window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape';
-    let lastVisualViewportScale = window.visualViewport?.scale || 1;
-    let isOrientationChanging = false;
-
-    // Use matchMedia for reliable orientation detection (more modern than orientationchange event)
-    const orientationMediaQuery = window.matchMedia('(orientation: portrait)');
-
-    const handleOrientationChange = (e) => {
-      const newOrientation = e.matches ? 'portrait' : 'landscape';
-
-      // Only restore if orientation actually changed
-      if (newOrientation !== currentOrientation && savedViewport) {
-        isOrientationChanging = true;
-        isRestoringViewport = true;
-        console.log(`📱 Orientation changed: ${currentOrientation} → ${newOrientation}, restoring viewport:`, savedViewport);
-
-        // Clear any pending timeouts
-        if (resizeTimeout) {
-          clearTimeout(resizeTimeout);
-        }
-        if (visualViewportTimeout) {
-          clearTimeout(visualViewportTimeout);
-        }
-
-        // iOS Safari needs more time (300ms) for orientation animation to complete
-        // Previous 150ms was too short and caused viewport jumping
-        resizeTimeout = setTimeout(() => {
-          // Use double requestAnimationFrame to ensure layout is complete
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              // Check if page zoom changed during rotation
-              const currentPageZoom = window.visualViewport?.scale || 1;
-              if (Math.abs(currentPageZoom - lastVisualViewportScale) > 0.01) {
-                console.log(`📱 Page zoom changed during rotation: ${lastVisualViewportScale.toFixed(2)} → ${currentPageZoom.toFixed(2)}`);
-                // Adjust canvas zoom to compensate for page zoom if needed
-                // This prevents "double zoom" where both page and canvas are zoomed
-              }
-
-              setViewport(savedViewport, { duration: 200 });
-              console.log('✅ Viewport restored:', savedViewport);
-              isRestoringViewport = false;
-              isOrientationChanging = false;
-              currentOrientation = newOrientation;
-              lastVisualViewportScale = currentPageZoom;
-            });
-          });
-        }, 300); // Increased from 150ms to 300ms for iOS Safari
-      } else {
-        currentOrientation = newOrientation;
-      }
-    };
-
-    // Save viewport on resize events (BEFORE orientation change happens)
-    // This captures the user's viewport position before the device rotates
-    const handleResize = () => {
-      // Don't save viewport during orientation change or viewport restoration
-      if (!isRestoringViewport && !isOrientationChanging) {
-        savedViewport = getViewport();
-        // No logging here to avoid spam, but viewport is saved continuously
-      }
-    };
-
-    // iOS Safari Visual Viewport API handler for address bar show/hide
-    // This prevents canvas jumping when the Safari address bar appears/disappears
-    const handleVisualViewportChange = () => {
-      // Only handle if not currently restoring from orientation change
-      if (!isRestoringViewport && !isOrientationChanging && window.visualViewport) {
-        const currentScale = window.visualViewport.scale;
-
-        // Check if this is a zoom change (user pinch-zooming the page)
-        // vs just the address bar appearing/disappearing
-        if (Math.abs(currentScale - lastVisualViewportScale) > 0.01) {
-          console.log(`🔍 Visual viewport scale changed: ${lastVisualViewportScale.toFixed(2)} → ${currentScale.toFixed(2)}`);
-          lastVisualViewportScale = currentScale;
-        } else {
-          // Address bar change without zoom - save viewport but don't trigger restoration
-          // This is what we want - silent handling of address bar changes
-          if (visualViewportTimeout) {
-            clearTimeout(visualViewportTimeout);
-          }
-          visualViewportTimeout = setTimeout(() => {
-            if (!isRestoringViewport && !isOrientationChanging) {
-              savedViewport = getViewport();
-            }
-          }, 100);
-        }
-      }
-    };
-
-    // Listen for orientation changes using matchMedia (modern, reliable approach)
-    orientationMediaQuery.addEventListener('change', handleOrientationChange);
-
-    // Listen for resize to save viewport state preemptively
-    window.addEventListener('resize', handleResize);
-
-    // iOS Safari: Listen for visual viewport changes (address bar show/hide)
-    // Visual Viewport API is supported in iOS Safari 13+
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewportChange);
-      window.visualViewport.addEventListener('scroll', handleVisualViewportChange);
-    }
-
-    // Save initial viewport
-    savedViewport = getViewport();
-
-    return () => {
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-      if (visualViewportTimeout) {
-        clearTimeout(visualViewportTimeout);
-      }
-      orientationMediaQuery.removeEventListener('change', handleOrientationChange);
-      window.removeEventListener('resize', handleResize);
-
-      // Clean up visual viewport listeners
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewportChange);
-        window.visualViewport.removeEventListener('scroll', handleVisualViewportChange);
-      }
-    };
-  }, [getViewport, setViewport]);
-
   // Keyboard shortcuts
-  // Arrow keys use React Flow's viewport API for smooth animations and zoom-aware panning
-  // Pan distance is adjusted by zoom level for consistent movement at any zoom
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
@@ -3159,46 +2183,58 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       switch (event.key) {
         case 'ArrowUp': {
           event.preventDefault();
-          const currentViewport = getViewport();
-          const adjustedPan = panAmount / currentViewport.zoom;
-          setViewport({
-            x: currentViewport.x,
-            y: currentViewport.y + adjustedPan,
-            zoom: currentViewport.zoom
-          }, { duration: 150 });
+          const currentViewportUp = document.querySelector('.react-flow__viewport');
+          if (currentViewportUp) {
+            const transform = currentViewportUp.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]);
+              const y = parseFloat(match[2]) + panAmount;
+              currentViewportUp.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
           break;
         }
         case 'ArrowDown': {
           event.preventDefault();
-          const currentViewport = getViewport();
-          const adjustedPan = panAmount / currentViewport.zoom;
-          setViewport({
-            x: currentViewport.x,
-            y: currentViewport.y - adjustedPan,
-            zoom: currentViewport.zoom
-          }, { duration: 150 });
+          const currentViewportDown = document.querySelector('.react-flow__viewport');
+          if (currentViewportDown) {
+            const transform = currentViewportDown.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]);
+              const y = parseFloat(match[2]) - panAmount;
+              currentViewportDown.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
           break;
         }
         case 'ArrowLeft': {
           event.preventDefault();
-          const currentViewport = getViewport();
-          const adjustedPan = panAmount / currentViewport.zoom;
-          setViewport({
-            x: currentViewport.x + adjustedPan,
-            y: currentViewport.y,
-            zoom: currentViewport.zoom
-          }, { duration: 150 });
+          const currentViewportLeft = document.querySelector('.react-flow__viewport');
+          if (currentViewportLeft) {
+            const transform = currentViewportLeft.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]) + panAmount;
+              const y = parseFloat(match[2]);
+              currentViewportLeft.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
           break;
         }
         case 'ArrowRight': {
           event.preventDefault();
-          const currentViewport = getViewport();
-          const adjustedPan = panAmount / currentViewport.zoom;
-          setViewport({
-            x: currentViewport.x - adjustedPan,
-            y: currentViewport.y,
-            zoom: currentViewport.zoom
-          }, { duration: 150 });
+          const currentViewportRight = document.querySelector('.react-flow__viewport');
+          if (currentViewportRight) {
+            const transform = currentViewportRight.style.transform;
+            const match = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+            if (match) {
+              const x = parseFloat(match[1]) - panAmount;
+              const y = parseFloat(match[2]);
+              currentViewportRight.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            }
+          }
           break;
         }
         case '+':
@@ -3222,10 +2258,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [zoomIn, zoomOut, fitView, getViewport, setViewport]);
-
-  // Note: Viewport preservation on orientation change is handled above (lines 2212-2269)
-  // The previous "viewport reset" handler has been removed to prevent conflicts
+  }, [zoomIn, zoomOut, fitView]);
 
   // Auto-layout function to organize nodes
   const handleAutoLayout = useCallback(() => {
@@ -3375,13 +2408,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
     setNodes(updatedNodes);
 
-    // Use double requestAnimationFrame to ensure React Flow has repositioned all nodes
-    // before calling fitView. This prevents the viewport from calculating incorrect bounds.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fitView({ duration: 400, padding: 0.2 });
-      });
-    });
+    // Fit view after layout
+    setTimeout(() => {
+      fitView({ duration: 400, padding: 0.2 });
+    }, 100);
   }, [nodes, setNodes, fitView]);
 
   const onConnect = useCallback(
@@ -3392,7 +2422,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   // Export layout as JSON file
   const handleExportJSON = () => {
     if (nodes.length === 0) {
-      showToast('No notes to export. Add some notes first!', 'warning');
+      alert('⚠️ No notes to export. Add some notes first!');
       return;
     }
 
@@ -3460,10 +2490,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
         setNodes(importData.nodes);
         setEdges(importData.edges || []);
-        showToast(`Successfully imported ${importData.nodes.length} ${importData.nodes.length === 1 ? 'note' : 'notes'}!`, 'success');
+        alert(`✅ Successfully imported ${importData.nodes.length} ${importData.nodes.length === 1 ? 'note' : 'notes'}!`);
       } catch (error) {
         console.error('Import failed:', error);
-        showToast(`Import failed: ${error.message}\n\nPlease check that the file is a valid UnityNotes export.`, 'error');
+        alert(`❌ Import failed: ${error.message}\n\nPlease check that the file is a valid UnityNotes export.`);
       }
     };
     input.click();
@@ -3484,7 +2514,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
 
     if (nodes.length === 0) {
-      showToast('Please add at least one note before sharing', 'warning');
+      alert('⚠️ Please add at least one note before sharing');
       return;
     }
 
@@ -3726,7 +2756,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       }
 
       if (imageUrls.length === 0) {
-        showToast('No images were processed. Please try again.', 'warning');
+        alert('No images were processed. Please try again.');
         return;
       }
 
@@ -3761,16 +2791,12 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       setNodes(prev => [...prev, ...newNodes]);
       setIsUploadModalOpen(false);
 
-      // Use double requestAnimationFrame to ensure React Flow has fully rendered all uploaded nodes
-      // before calling fitView. This ensures proper viewport calculation for multiple nodes.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          fitView({ duration: 600, padding: 0.2 });
-        });
-      });
+      setTimeout(() => {
+        fitView({ duration: 600, padding: 0.2 });
+      }, 100);
     } catch (error) {
       console.error('❌ Upload failed:', error);
-      showToast(`Upload failed: ${error.message}`, 'error');
+      alert(`Upload failed: ${error.message}`);
     }
   };
 
@@ -3818,10 +2844,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       const response = await llm.generate(customPrompt, generateOptions);
 
       // Update the existing node with new content
-      // Force React Flow to detect changes by:
-      // 1. Creating new object references for ALL nodes
-      // 2. Adding renderKey to force component re-render
-      const timestamp = Date.now();
       setNodes(nds => nds.map(n => {
         if (n.id === nodeId) {
           return {
@@ -3830,24 +2852,18 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               ...n.data,
               content: response,
               aiPrompt: customPrompt,
-              regeneratedAt: timestamp,
-              renderKey: timestamp, // Force re-render
-              onUpdate: handleNodeUpdate,
-              onDelete: handleDeleteNode,
-              onRegenerate: handleRegenerateNote,
-            },
-            position: { ...n.position }, // Force position reference update
+              regeneratedAt: Date.now(),
+            }
           };
         }
-        // Return new reference for all nodes to ensure React Flow detects change
-        return { ...n };
+        return n;
       }));
 
     } catch (error) {
       console.error('AI Regenerate Note failed:', error);
-      showToast(`Regeneration failed: ${error.message}`, 'error');
+      alert(`❌ Regeneration failed: ${error.message}`);
     }
-  }, [storedGroqKey, setNodes, handleNodeUpdate, handleDeleteNode]);
+  }, [storedGroqKey, setNodes]);
 
   const handleRegenerateImage = useCallback(async (nodeId, customPrompt) => {
     try {
@@ -3900,10 +2916,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       }
 
       // Update the existing node with new image
-      // Force React Flow to detect changes by:
-      // 1. Creating new object references for ALL nodes
-      // 2. Adding renderKey to force component re-render
-      const timestamp = Date.now();
       setNodes(nds => nds.map(n => {
         if (n.id === nodeId) {
           return {
@@ -3914,464 +2926,27 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
               thumbnail: imageUrl,
               caption: `✨ AI Generated (${modelUsed})`,
               aiPrompt: customPrompt,
-              regeneratedAt: timestamp,
-              renderKey: timestamp, // Force re-render
-              onUpdate: handleNodeUpdate,
-              onDelete: handleDeleteNode,
-              onRegenerate: handleRegenerateImage,
-            },
-            position: { ...n.position }, // Force position reference update
+              regeneratedAt: Date.now(),
+            }
           };
         }
-        // Return new reference for all nodes to ensure React Flow detects change
-        return { ...n };
+        return n;
       }));
 
     } catch (error) {
       console.error('AI Regenerate Image failed:', error);
-      showToast(`Regeneration failed: ${error.message}`, 'error');
+      alert(`❌ Regeneration failed: ${error.message}`);
     }
-  }, [storedOpenaiKey, setNodes, handleNodeUpdate, handleDeleteNode]);
+  }, [storedOpenaiKey, setNodes]);
 
-  // ========================================================================
-  // OPTIMISTIC UI UPDATE UTILITIES
-  // ========================================================================
-  // These utilities provide immediate visual feedback during AI operations
-  // by creating placeholder nodes that are later replaced with actual content
-
-  /**
-   * Creates a loading placeholder node for optimistic UI updates
-   * @param {Object} options - Placeholder configuration
-   * @param {string} options.type - Node type (textNode, photoNode, etc.)
-   * @param {string} options.title - Placeholder title
-   * @param {string} options.message - Loading message to display
-   * @param {number} options.x - X position
-   * @param {number} options.y - Y position
-   * @returns {Object} Placeholder node with loading state
-   */
-  const createPlaceholderNode = useCallback((options) => {
-    const {
-      type = 'textNode',
-      title = '⏳ Loading...',
-      message = 'Generating AI content...',
-      x = 300,
-      y = 100,
-      color = 'rgb(148, 163, 184)' // Slate gray for loading state
-    } = options;
-
-    const placeholderId = `placeholder-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    return {
-      id: placeholderId,
-      type,
-      position: { x, y },
-      data: {
-        title,
-        content: message,
-        cardType: type === 'textNode' ? 'note' : undefined,
-        color,
-        isPlaceholder: true, // Flag to identify placeholder nodes
-        createdAt: Date.now(),
-        // Minimal handlers to prevent errors
-        onUpdate: () => {},
-        onDelete: () => {},
-      },
-      style: {
-        opacity: 0.7,
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      }
-    };
-  }, []);
-
-  /**
-   * Removes a placeholder node from the canvas
-   * @param {string} placeholderId - ID of the placeholder to remove
-   */
-  const removePlaceholder = useCallback((placeholderId) => {
-    setNodes(nds => nds.filter(n => n.id !== placeholderId));
-  }, [setNodes]);
-
-  /**
-   * Replaces a placeholder node with actual content
-   * @param {string} placeholderId - ID of the placeholder to replace
-   * @param {Object} realNode - The actual node to insert
-   */
-  const replacePlaceholder = useCallback((placeholderId, realNode) => {
-    // Force React Flow to detect changes by:
-    // 1. Creating new object references for ALL nodes
-    // 2. Ensuring the realNode has new object references for nested properties
-    // This ensures React Flow's change detection works properly
-    const timestamp = Date.now();
-    setNodes(nds => nds.map(n => {
-      if (n.id === placeholderId) {
-        // Replace with realNode, ensuring all nested objects have new references
-        return {
-          ...realNode,
-          data: {
-            ...realNode.data,
-            renderKey: timestamp, // Force re-render
-          },
-          position: { ...realNode.position }, // Force position reference update
-        };
-      }
-      // Return new reference for all nodes to ensure React Flow detects change
-      return { ...n };
-    }));
-  }, [setNodes]);
-
-  /**
-   * Calculates grid position for new nodes
-   * @param {number} totalNodes - Current number of nodes
-   * @returns {Object} {x, y} position
-   */
-  const calculateGridPosition = useCallback((totalNodes) => {
-    const gridX = totalNodes % 8;
-    const gridY = Math.floor(totalNodes / 8);
-    return {
-      x: 300 + gridX * 350,
-      y: 100 + gridY * 300
-    };
-  }, []);
-
-  /**
-   * Extracts semantic context from a node based on its type
-   * Returns a formatted string with type markers for better AI understanding
-   * @param {Object} node - The node to extract context from
-   * @returns {string} Formatted context string or empty string if no content
-   */
-  const getNodeContextString = useCallback((node) => {
-    if (!node || !node.data) return '';
-
-    const nodeType = node.type;
-    const d = node.data;
-    const parts = [];
-    const MAX_CONTENT_LENGTH = 200; // Truncate long content for context
-
-    // Helper to truncate long text
-    const truncate = (text, maxLen = MAX_CONTENT_LENGTH) => {
-      if (!text) return '';
-      const cleaned = text.trim();
-      return cleaned.length > maxLen
-        ? cleaned.substring(0, maxLen) + '...'
-        : cleaned;
-    };
-
-    // Skip placeholder nodes
-    if (d.isPlaceholder) return '';
-
-    // Todo List nodes - format with checkbox markers
-    if (nodeType === 'todoNode') {
-      if (d.title) parts.push(`[TODO LIST] ${d.title}`);
-      if (d.items?.length > 0) {
-        const todoItems = d.items
-          .slice(0, 5) // Limit to first 5 items for context
-          .map(item => `- [${item.completed ? 'x' : ' '}] ${truncate(item.text, 100)}`)
-          .join('\n');
-        parts.push(todoItems);
-        if (d.items.length > 5) {
-          parts.push(`... and ${d.items.length - 5} more items`);
-        }
-      }
-      return parts.filter(Boolean).join('\n');
-    }
-
-    // Sticky notes - mark as quick highlights
-    if (nodeType === 'stickyNode') {
-      const text = d.text || d.content;
-      if (text) return `[STICKY NOTE] ${truncate(text, 150)}`;
-      return '';
-    }
-
-    // Photo nodes - include location and caption context
-    if (nodeType === 'photoNode') {
-      const photoLabel = d.location || d.title || 'Photo';
-      parts.push(`[PHOTO: ${photoLabel}]`);
-      if (d.caption) parts.push(truncate(d.caption, 100));
-      if (d.description) parts.push(truncate(d.description, 100));
-      if (d.date) parts.push(`Date: ${d.date}`);
-      return parts.filter(Boolean).join(' - ');
-    }
-
-    // Group nodes - identify grouped content
-    if (nodeType === 'groupNode') {
-      const label = d.label || 'Group';
-      return `[GROUP: ${label}]`;
-    }
-
-    // Comment nodes
-    if (nodeType === 'commentNode') {
-      if (d.content) {
-        const author = d.author ? ` (by ${d.author})` : '';
-        return `[COMMENT${author}] ${truncate(d.content, 150)}`;
-      }
-      return '';
-    }
-
-    // Code nodes - include language
-    if (nodeType === 'codeNode' && d.code) {
-      const lang = d.language || 'code';
-      const preview = truncate(d.code, 150);
-      return `[CODE: ${lang}] ${preview}`;
-    }
-
-    // Link cards - include URL context
-    if (d.cardType === 'link' && d.url) {
-      parts.push(`[LINK] ${d.title || 'Untitled'}`);
-      if (d.linkPreview?.description) {
-        parts.push(truncate(d.linkPreview.description, 120));
-      }
-      parts.push(`URL: ${d.url}`);
-      return parts.filter(Boolean).join(' - ');
-    }
-
-    // Default text nodes - standard notes
-    if (d.title || d.content) {
-      const title = d.title ? `[NOTE: ${truncate(d.title, 80)}]` : '[NOTE]';
-      const content = truncate(d.content || '', MAX_CONTENT_LENGTH);
-      return [title, content].filter(Boolean).join('\n');
-    }
-
-    return '';
-  }, []);
-
-  /**
-   * Build a general canvas context overview (for AI Generate Note, summarize, etc.)
-   * @param {number} maxNodes - Maximum nodes to include in context
-   * @returns {string} Formatted canvas overview
-   */
-  const buildGeneralCanvasContext = useCallback((maxNodes = 10) => {
-    const contextParts = [];
-    const now = Date.now();
-    const RECENT_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-
-    // Filter out placeholders
-    const validNodes = nodes.filter(n => !n.data?.isPlaceholder);
-
-    // Recent activity
-    const recentNodes = validNodes.filter(n => {
-      const createdAt = n.data?.createdAt || 0;
-      const updatedAt = n.data?.updatedAt || 0;
-      const expandedAt = n.data?.expandedAt || 0;
-      const mostRecent = Math.max(createdAt, updatedAt, expandedAt);
-      return (now - mostRecent) < RECENT_THRESHOLD;
-    });
-
-    if (recentNodes.length > 0) {
-      contextParts.push('🆕 RECENT ACTIVITY:');
-      recentNodes.slice(0, 3).forEach(n => {
-        const isNew = (now - (n.data?.createdAt || 0)) < RECENT_THRESHOLD;
-        const marker = isNew ? '🆕 New' : '✏️ Recently edited';
-        const contextStr = getNodeContextString(n);
-        if (contextStr) {
-          contextParts.push(`${marker}: ${contextStr}`);
-        }
-      });
-      contextParts.push('');
-    }
-
-    // Connected ideas (nodes with edges)
-    if (edges.length > 0) {
-      contextParts.push('🔗 CONNECTED IDEAS:');
-      const connectedNodeIds = new Set();
-      edges.forEach(e => {
-        connectedNodeIds.add(e.source);
-        connectedNodeIds.add(e.target);
-      });
-      Array.from(connectedNodeIds).slice(0, 5).forEach(id => {
-        const node = nodes.find(n => n.id === id);
-        if (node && !node.data?.isPlaceholder) {
-          const contextStr = getNodeContextString(node);
-          if (contextStr) contextParts.push(contextStr);
-        }
-      });
-      contextParts.push('');
-    }
-
-    // Other canvas notes
-    const otherNodes = validNodes
-      .filter(n => !recentNodes.includes(n))
-      .slice(0, Math.max(0, maxNodes - recentNodes.length));
-
-    if (otherNodes.length > 0) {
-      contextParts.push('📋 OTHER CANVAS NOTES:');
-      otherNodes.forEach(n => {
-        const contextStr = getNodeContextString(n);
-        if (contextStr) contextParts.push(contextStr);
-      });
-    }
-
-    return contextParts.filter(Boolean).join('\n');
-  }, [nodes, edges, getNodeContextString]);
-
-  // Enhanced context builder - includes relationships, recent activity, and spatial clustering
-  const buildEnhancedContext = useCallback((targetNodeId, maxNodes = 10) => {
-    const contextParts = [];
-    const now = Date.now();
-    const RECENT_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-    const PROXIMITY_THRESHOLD = 300; // pixels
-
-    // Filter out target node and placeholders
-    const contextNodes = nodes.filter(n =>
-      n.id !== targetNodeId && !n.data?.isPlaceholder
-    );
-
-    // 1. RECENT ACTIVITY - nodes created or updated in last 5 minutes
-    const recentNodes = contextNodes.filter(n => {
-      const createdAt = n.data?.createdAt || 0;
-      const updatedAt = n.data?.updatedAt || 0;
-      const expandedAt = n.data?.expandedAt || 0;
-      const mostRecent = Math.max(createdAt, updatedAt, expandedAt);
-      return (now - mostRecent) < RECENT_THRESHOLD;
-    });
-
-    if (recentNodes.length > 0) {
-      contextParts.push('🆕 RECENT ACTIVITY:');
-      recentNodes.slice(0, 3).forEach(n => {
-        const isNew = (now - (n.data?.createdAt || 0)) < RECENT_THRESHOLD;
-        const marker = isNew ? '🆕 New' : '✏️ Recently edited';
-        const contextStr = getNodeContextString(n);
-        if (contextStr) {
-          contextParts.push(`${marker}: ${contextStr}`);
-        }
-      });
-      contextParts.push('');
-    }
-
-    // 2. PARENT GROUP CONTEXT - group membership and siblings
-    const targetNode = nodes.find(n => n.id === targetNodeId);
-    if (targetNode?.parentId) {
-      const parentGroup = nodes.find(n => n.id === targetNode.parentId);
-      if (parentGroup && parentGroup.type === 'groupNode') {
-        const groupLabel = parentGroup.data?.label || 'Unnamed Group';
-        contextParts.push(`📦 GROUP: "${groupLabel}"`);
-
-        // Find other nodes in the same group for thematic context
-        const siblingNodesInGroup = nodes
-          .filter(n => n.parentId === targetNode.parentId && n.id !== targetNodeId && !n.data?.isPlaceholder)
-          .slice(0, 3); // Limit to 3 siblings
-
-        if (siblingNodesInGroup.length > 0) {
-          contextParts.push('   Group members:');
-          siblingNodesInGroup.forEach(sibling => {
-            const contextStr = getNodeContextString(sibling);
-            if (contextStr) {
-              contextParts.push(`   • ${contextStr}`);
-            }
-          });
-        }
-        contextParts.push('');
-      }
-    }
-
-    // 3. RELATIONSHIP TRACKING - connected nodes
-    if (targetNode && edges.length > 0) {
-      const connectedEdges = edges.filter(e =>
-        e.source === targetNodeId || e.target === targetNodeId
-      );
-
-      if (connectedEdges.length > 0) {
-        contextParts.push('🔗 RELATED NODES:');
-        connectedEdges.slice(0, 5).forEach(edge => {
-          const relatedNodeId = edge.source === targetNodeId ? edge.target : edge.source;
-          const relatedNode = nodes.find(n => n.id === relatedNodeId);
-
-          if (relatedNode && !relatedNode.data?.isPlaceholder) {
-            const direction = edge.source === targetNodeId ? '→' : '←';
-            const label = edge.label ? ` (${edge.label})` : '';
-            const contextStr = getNodeContextString(relatedNode);
-            if (contextStr) {
-              contextParts.push(`${direction}${label} ${contextStr}`);
-            }
-          }
-        });
-        contextParts.push('');
-      }
-    }
-
-    // 4. SPATIAL CLUSTERING - nearby nodes
-    if (targetNode?.position) {
-      const nearbyNodes = contextNodes.filter(n => {
-        if (!n.position) return false;
-        const dx = n.position.x - targetNode.position.x;
-        const dy = n.position.y - targetNode.position.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance < PROXIMITY_THRESHOLD;
-      });
-
-      if (nearbyNodes.length > 0) {
-        contextParts.push('📍 NEARBY NOTES:');
-        nearbyNodes.slice(0, 4).forEach(n => {
-          const contextStr = getNodeContextString(n);
-          if (contextStr) {
-            contextParts.push(contextStr);
-          }
-        });
-        contextParts.push('');
-      }
-    }
-
-    // 5. OTHER CANVAS CONTEXT - remaining nodes
-    const alreadyIncluded = new Set([
-      targetNodeId,
-      ...recentNodes.map(n => n.id),
-      ...edges.filter(e => e.source === targetNodeId || e.target === targetNodeId)
-        .map(e => e.source === targetNodeId ? e.target : e.source),
-      ...(targetNode?.position ? contextNodes.filter(n => {
-        if (!n.position) return false;
-        const dx = n.position.x - targetNode.position.x;
-        const dy = n.position.y - targetNode.position.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance < PROXIMITY_THRESHOLD;
-      }).map(n => n.id) : [])
-    ]);
-
-    const otherNodes = contextNodes
-      .filter(n => !alreadyIncluded.has(n.id))
-      .slice(0, Math.max(0, maxNodes - alreadyIncluded.size));
-
-    if (otherNodes.length > 0) {
-      contextParts.push('📋 OTHER CANVAS NOTES:');
-      otherNodes.forEach(n => {
-        const contextStr = getNodeContextString(n);
-        if (contextStr) {
-          contextParts.push(contextStr);
-        }
-      });
-    }
-
-    return contextParts.filter(Boolean).join('\n');
-  }, [nodes, edges, getNodeContextString]);
-
-  // ========================================================================
-  // AI Canvas Actions (with Optimistic Updates)
-  // ========================================================================
+  // AI Canvas Actions
   const handleAIGenerateNote = useCallback(async () => {
-    // STEP 1: Create placeholder immediately for instant feedback
-    const position = calculateGridPosition(nodes.length);
-    const placeholder = createPlaceholderNode({
-      type: 'textNode',
-      title: '⏳ Generating Note...',
-      message: 'AI is creating a thoughtful note for your canvas...',
-      x: position.x,
-      y: position.y,
-      color: 'rgb(147, 51, 234)' // Purple tint for AI
-    });
-
-    // Add placeholder to canvas immediately
-    setNodes(nds => [...nds, placeholder]);
-
-    // Focus on the placeholder
-    requestAnimationFrame(() => {
-      fitView({
-        duration: 800,
-        padding: 0.2,
-        nodes: [{ id: placeholder.id }]
-      });
-    });
-
     try {
-      // STEP 2: Collect enhanced canvas context (relationships, recent activity)
-      const existingContent = buildGeneralCanvasContext(10);
+      // Collect context from existing nodes
+      const existingContent = nodes
+        .filter(n => n.data?.content || n.data?.title)
+        .map(n => n.data?.content || n.data?.title)
+        .join('\n');
 
       const { getLLMAdapterByName } = await import('../adapters/llm');
 
@@ -4379,7 +2954,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       const llm = await getLLMAdapterByName('groq');
 
       const prompt = existingContent
-        ? `Based on these existing notes and their relationships:\n\n${existingContent}\n\nGenerate a thoughtful new note that builds on or relates to these ideas. Consider the recent activity and connected concepts. Keep it concise (2-3 sentences).`
+        ? `Based on these existing notes:\n\n${existingContent}\n\nGenerate a thoughtful new note that builds on or relates to these ideas. Keep it concise (2-3 sentences).`
         : 'Generate a thoughtful brainstorming prompt or creative idea for a visual planning canvas. Keep it concise (2-3 sentences).';
 
       // Use API key from useApiKeyStorage hook (stored in Firestore)
@@ -4388,15 +2963,21 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         generateOptions.apiKey = storedGroqKey;
       }
 
-      // STEP 3: Generate AI content
       const response = await llm.generate(prompt, generateOptions);
 
-      // STEP 4: Create the actual node with AI content
+      // Create new note node with AI content
       const timestamp = Date.now();
+      const totalNodes = nodes.length;
+      const gridX = totalNodes % 8;
+      const gridY = Math.floor(totalNodes / 8);
+
       const newNode = {
         id: `ai-note-${timestamp}`,
         type: 'textNode',
-        position: placeholder.position, // Use same position as placeholder
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
         data: {
           title: '✨ AI Generated',
           content: response,
@@ -4411,24 +2992,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         }
       };
 
-      // STEP 5: Replace placeholder with actual node
-      replacePlaceholder(placeholder.id, newNode);
-
-      // Focus on the new node
-      requestAnimationFrame(() => {
-        fitView({
-          duration: 800,
-          padding: 0.2,
-          nodes: [{ id: newNode.id }]
-        });
-      });
+      setNodes(nds => [...nds, newNode]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
 
     } catch (error) {
       console.error('AI Generate Note failed:', error);
-
-      // STEP 6: Remove placeholder on error
-      removePlaceholder(placeholder.id);
-
       // Provide a more helpful error message
       const isKeyError = error.message?.includes('API key') || error.message?.includes('not configured');
       if (isKeyError) {
@@ -4443,54 +3011,20 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         alert(`❌ AI Generation failed: ${error.message}`);
       }
     }
-  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey, isAuthenticated, handleRegenerateNote, createPlaceholderNode, calculateGridPosition, replacePlaceholder, removePlaceholder]);
+  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey, isAuthenticated, handleRegenerateNote]);
 
   const handleAIGenerateImage = useCallback(async () => {
-    // STEP 1: Create placeholder immediately for instant feedback
-    const position = calculateGridPosition(nodes.length);
-    const placeholder = createPlaceholderNode({
-      type: 'textNode', // Use textNode for placeholder (photoNode needs imageUrl)
-      title: '🎨 Generating Image...',
-      message: 'AI is creating a beautiful image for your canvas...\n\nThis may take 10-30 seconds.',
-      x: position.x,
-      y: position.y,
-      color: 'rgb(251, 191, 36)' // Amber/yellow tint for images
-    });
-
-    // Add placeholder to canvas immediately
-    setNodes(nds => [...nds, placeholder]);
-
-    // Focus on the placeholder
-    requestAnimationFrame(() => {
-      fitView({
-        duration: 800,
-        padding: 0.2,
-        nodes: [{ id: placeholder.id }]
-      });
-    });
-
     try {
-      // STEP 2: Get enhanced context from canvas (exclude placeholders)
-      const relevantNodes = nodes
-        .filter(n => !n.data?.isPlaceholder && !n.parentId && n.type !== 'groupNode')
-        .slice(-8); // Get up to 8 most recent nodes for context
+      // Get context from canvas
+      const existingContent = nodes
+        .filter(n => n.data?.content || n.data?.title)
+        .map(n => n.data?.content || n.data?.title)
+        .slice(0, 3)
+        .join(', ');
 
-      let contextTheme = '';
-      if (relevantNodes.length > 0) {
-        // Extract themes from node titles and content
-        const themes = relevantNodes.map(n => {
-          const title = n.data?.title || n.data?.label || '';
-          const content = n.data?.content || '';
-          // Get key terms (prioritize titles for theme detection)
-          return `${title} ${content}`.substring(0, 80);
-        }).filter(t => t.length > 0);
-
-        contextTheme = themes.slice(0, 5).join(', ');
-      }
-
-      const imagePrompt = contextTheme
-        ? `Create an abstract, colorful illustration representing these themes: ${contextTheme}. Modern, minimalist style with geometric shapes and vibrant colors. Make it visually engaging and inspiring.`
-        : 'Create an abstract, colorful brainstorming illustration. Modern, minimalist style with geometric shapes and vibrant colors.';
+      const imagePrompt = existingContent
+        ? `Create an abstract, colorful illustration representing: ${existingContent}. Modern, minimalist style.`
+        : 'Create an abstract, colorful brainstorming illustration. Modern, minimalist style with geometric shapes.';
 
       let imageUrl;
       let modelUsed = 'pollinations'; // Track which model was used
@@ -4498,7 +3032,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       // Check for OpenAI key (from Firestore or .env)
       const openaiKey = storedOpenaiKey || import.meta.env.VITE_OPENAI_API_KEY;
 
-      // STEP 3: Use DALL-E if OpenAI key is available, otherwise use Pollinations (free)
+      // Use DALL-E if OpenAI key is available, otherwise use Pollinations (free)
       if (openaiKey) {
         // DALL-E 3 (Premium option)
         console.log('🎨 Using DALL-E 3 for image generation');
@@ -4548,12 +3082,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         modelUsed = 'pollinations-flux';
       }
 
-      // STEP 4: Create photo node with generated image
+      // Create photo node with generated image
       const timestamp = Date.now();
+      const totalNodes = nodes.length;
+      const gridX = totalNodes % 8;
+      const gridY = Math.floor(totalNodes / 8);
+
       const newNode = {
         id: `ai-image-${timestamp}`,
         type: 'photoNode',
-        position: placeholder.position, // Use same position as placeholder
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
         data: {
           imageUrl,
           thumbnail: imageUrl,
@@ -4566,80 +3107,99 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         }
       };
 
-      // STEP 5: Replace placeholder with actual image node
-      replacePlaceholder(placeholder.id, newNode);
-
-      // Focus on the new image
-      requestAnimationFrame(() => {
-        fitView({
-          duration: 800,
-          padding: 0.2,
-          nodes: [{ id: newNode.id }]
-        });
-      });
+      setNodes(nds => [...nds, newNode]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
 
     } catch (error) {
       console.error('AI Generate Image failed:', error);
-
-      // STEP 6: Remove placeholder on error
-      removePlaceholder(placeholder.id);
-
       alert(`❌ Image Generation failed: ${error.message}`);
     }
-  }, [nodes, handleDeleteNode, setNodes, fitView, storedOpenaiKey, handleRegenerateImage, createPlaceholderNode, calculateGridPosition, replacePlaceholder, removePlaceholder]);
+  }, [nodes, handleDeleteNode, setNodes, fitView, storedOpenaiKey, handleRegenerateImage]);
 
   const handleAISummarize = useCallback(async () => {
-    // STEP 1: Pre-validate content and API key before showing placeholder
-    // (Avoid showing placeholder if operation will fail immediately)
-
-    // Collect all content from nodes with enhanced type-aware context
-    const allContent = nodes
-      .map(n => getNodeContextString(n))
-      .filter(Boolean)
-      .join('\n\n---\n\n');
-
-    if (!allContent) {
-      alert('📋 Nothing to summarize.\n\nAdd some notes or content first!');
-      return;
-    }
-
-    // Check for API key (from Firestore or .env)
-    const groqKey = storedGroqKey || import.meta.env.VITE_GROQ_API_KEY;
-
-    if (!groqKey) {
-      if (!isAuthenticated) {
-        alert('📋 Summarize requires an LLM API key.\n\nSign in to use your stored Groq API key, or add VITE_GROQ_API_KEY to .env');
-      } else {
-        alert('📋 No Groq API key found.\n\nTo configure:\n1. Go to Hub → Settings\n2. Add your Groq API key (free at console.groq.com)\n\nOr add VITE_GROQ_API_KEY to .env');
-      }
-      return;
-    }
-
-    // STEP 2: Create placeholder after validation passes
-    const position = calculateGridPosition(nodes.length);
-    const placeholder = createPlaceholderNode({
-      type: 'textNode',
-      title: '📋 Summarizing Canvas...',
-      message: 'AI is analyzing your canvas and creating a summary...',
-      x: position.x,
-      y: position.y,
-      color: 'rgb(34, 197, 94)' // Green tint for summary
-    });
-
-    // Add placeholder to canvas immediately
-    setNodes(nds => [...nds, placeholder]);
-
-    // Focus on the placeholder
-    requestAnimationFrame(() => {
-      fitView({
-        duration: 800,
-        padding: 0.2,
-        nodes: [{ id: placeholder.id }]
-      });
-    });
-
     try {
-      // STEP 3: Generate summary
+      // Collect all content from nodes - enhanced to capture all node types
+      const allContent = nodes
+        .map(n => {
+          const nodeType = n.type;
+          const d = n.data || {};
+          const parts = [];
+
+          // Common fields
+          if (d.title) parts.push(`Title: ${d.title}`);
+          if (d.content) parts.push(`Content: ${d.content}`);
+
+          // Photo nodes
+          if (nodeType === 'photoNode') {
+            if (d.location) parts.push(`Location: ${d.location}`);
+            if (d.date) parts.push(`Date: ${d.date}`);
+            if (d.description) parts.push(`Description: ${d.description}`);
+            if (d.caption) parts.push(`Caption: ${d.caption}`);
+          }
+
+          // Link cards (textNode with cardType 'link')
+          if (d.cardType === 'link' && d.url) {
+            parts.push(`Link URL: ${d.url}`);
+            if (d.linkPreview?.title) parts.push(`Link Title: ${d.linkPreview.title}`);
+            if (d.linkPreview?.description) parts.push(`Link Description: ${d.linkPreview.description}`);
+          }
+
+          // Todo nodes
+          if (nodeType === 'todoNode' && d.items?.length > 0) {
+            const todoItems = d.items.map(item =>
+              `- [${item.completed ? 'x' : ' '}] ${item.text}`
+            ).join('\n');
+            parts.push(`To-Do Items:\n${todoItems}`);
+          }
+
+          // Sticky notes
+          if (nodeType === 'stickyNode') {
+            if (d.text) parts.push(`Sticky Note: ${d.text}`);
+          }
+
+          // Comment nodes
+          if (nodeType === 'commentNode') {
+            if (d.content) parts.push(`Comment: ${d.content}`);
+            if (d.author) parts.push(`Author: ${d.author}`);
+          }
+
+          // Code blocks
+          if (nodeType === 'codeNode' && d.code) {
+            parts.push(`Code (${d.language || 'unknown'}): ${d.code.substring(0, 200)}${d.code.length > 200 ? '...' : ''}`);
+          }
+
+          // Group nodes
+          if (nodeType === 'groupNode' && d.label) {
+            parts.push(`Group: ${d.label}`);
+          }
+
+          // Reminder nodes
+          if (d.reminder || d.isReminder) {
+            parts.push(`Reminder: ${d.content || d.text || 'No details'}`);
+          }
+
+          return parts.length > 0 ? `[${nodeType || 'note'}]\n${parts.join('\n')}` : null;
+        })
+        .filter(Boolean)
+        .join('\n\n---\n\n');
+
+      if (!allContent) {
+        alert('📋 Nothing to summarize.\n\nAdd some notes or content first!');
+        return;
+      }
+
+      // Check for API key (from Firestore or .env)
+      const groqKey = storedGroqKey || import.meta.env.VITE_GROQ_API_KEY;
+
+      if (!groqKey) {
+        if (!isAuthenticated) {
+          alert('📋 Summarize requires an LLM API key.\n\nSign in to use your stored Groq API key, or add VITE_GROQ_API_KEY to .env');
+        } else {
+          alert('📋 No Groq API key found.\n\nTo configure:\n1. Go to Hub → Settings\n2. Add your Groq API key (free at console.groq.com)\n\nOr add VITE_GROQ_API_KEY to .env');
+        }
+        return;
+      }
+
       const { getLLMAdapter } = await import('../adapters/llm');
       const llm = await getLLMAdapter();
 
@@ -4648,12 +3208,19 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       // Pass stored API key to the LLM adapter
       const response = await llm.generate(prompt, { maxTokens: 500, apiKey: groqKey });
 
-      // STEP 4: Create summary note
+      // Create summary note
       const timestamp = Date.now();
+      const totalNodes = nodes.length;
+      const gridX = totalNodes % 8;
+      const gridY = Math.floor(totalNodes / 8);
+
       const newNode = {
         id: `summary-${timestamp}`,
         type: 'textNode',
-        position: placeholder.position, // Use same position as placeholder
+        position: {
+          x: 300 + gridX * 350,
+          y: 100 + gridY * 300
+        },
         data: {
           title: '📋 Canvas Summary',
           content: response,
@@ -4665,143 +3232,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         }
       };
 
-      // STEP 5: Replace placeholder with actual summary
-      replacePlaceholder(placeholder.id, newNode);
-
-      // Focus on the summary
-      requestAnimationFrame(() => {
-        fitView({ duration: 400, padding: 0.2 });
-      });
+      setNodes(nds => [...nds, newNode]);
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
 
     } catch (error) {
       console.error('AI Summarize failed:', error);
-
-      // STEP 6: Remove placeholder on error
-      removePlaceholder(placeholder.id);
-
       alert(`❌ Summarize failed: ${error.message}`);
     }
-  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey, isAuthenticated, createPlaceholderNode, calculateGridPosition, replacePlaceholder, removePlaceholder]);
-
-  // AI Expand Node - Expands a specific node's content using canvas context
-  const handleAIExpandNode = useCallback(async (nodeId) => {
-    // STEP 1: Find the target node
-    const targetNode = nodes.find(n => n.id === nodeId);
-    if (!targetNode) {
-      console.error('Target node not found:', nodeId);
-      return;
-    }
-
-    // Extract current content
-    const currentContent = targetNode.data?.content || targetNode.data?.title || '';
-    if (!currentContent) {
-      alert('⚠️ This note is empty.\n\nAdd some content first before expanding!');
-      return;
-    }
-
-    // Check for API key (from Firestore or .env)
-    const groqKey = storedGroqKey || import.meta.env.VITE_GROQ_API_KEY;
-    if (!groqKey) {
-      if (!isAuthenticated) {
-        alert('🔑 Expand with AI requires an LLM API key.\n\nSign in to use your stored Groq API key, or add VITE_GROQ_API_KEY to .env');
-      } else {
-        alert('🔑 No Groq API key found.\n\nTo configure:\n1. Go to Hub → Settings\n2. Add your Groq API key (free at console.groq.com)\n\nOr add VITE_GROQ_API_KEY to .env');
-      }
-      return;
-    }
-
-    // STEP 2: Collect enhanced canvas context (relationships, recent activity, spatial clustering)
-    const canvasContext = buildEnhancedContext(nodeId, 10);
-
-    try {
-      // STEP 3: Update node to show loading state
-      setNodes(nds => nds.map(n => {
-        if (n.id === nodeId) {
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              isExpanding: true, // Flag for UI to show loading
-            }
-          };
-        }
-        return n;
-      }));
-
-      // STEP 4: Generate expanded content with context
-      const { getLLMAdapterByName } = await import('../adapters/llm');
-      const llm = await getLLMAdapterByName('groq');
-
-      // Build context-aware prompt
-      const prompt = canvasContext
-        ? `You are helping expand a note on a visual planning canvas. Here is the context from other visible notes on the canvas:
-
-${canvasContext}
-
----
-
-Now expand this note to be more detailed and comprehensive:
-
-"${currentContent}"
-
-Consider the context above and make the expansion relevant to the surrounding notes. Add 2-3 sentences that provide more depth, examples, or actionable details. Keep the expansion focused and concise.`
-        : `Expand this note to be more detailed and comprehensive:
-
-"${currentContent}"
-
-Add 2-3 sentences that provide more depth, examples, or actionable details. Keep it focused and concise.`;
-
-      // Generate expansion
-      const expandedContent = await llm.generate(prompt, {
-        maxTokens: 300,
-        apiKey: groqKey
-      });
-
-      // STEP 5: Update node with expanded content
-      setNodes(nds => nds.map(n => {
-        if (n.id === nodeId) {
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              content: expandedContent,
-              isExpanding: false,
-              expandedAt: Date.now(), // Track when it was expanded
-              previousContent: currentContent, // Store original for potential undo
-            }
-          };
-        }
-        return n;
-      }));
-
-      // STEP 6: Focus on the expanded node
-      requestAnimationFrame(() => {
-        setCenter(targetNode.position.x, targetNode.position.y, {
-          duration: 400,
-          zoom: 1.2,
-        });
-      });
-
-    } catch (error) {
-      console.error('AI Expand Node failed:', error);
-
-      // Remove loading state on error
-      setNodes(nds => nds.map(n => {
-        if (n.id === nodeId) {
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              isExpanding: false,
-            }
-          };
-        }
-        return n;
-      }));
-
-      alert(`❌ Expand failed: ${error.message}`);
-    }
-  }, [nodes, edges, setNodes, setCenter, storedGroqKey, isAuthenticated, buildEnhancedContext]);
+  }, [nodes, handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey, isAuthenticated]);
 
   // AI Generate Canvas - Opens the modal
   const handleAIGenerateCanvas = useCallback(() => {
@@ -4832,159 +3270,7 @@ Add 2-3 sentences that provide more depth, examples, or actionable details. Keep
       // Fixed card count - no range to prevent generating too many
       const targetCards = Math.min(cardCount, 6); // Cap at 6 cards max
 
-      // ========================================================================
-      // ENHANCED CANVAS CONTEXT EXTRACTION
-      // ========================================================================
-      // This section builds a comprehensive context summary of the existing canvas
-      // to provide the AI with awareness of what's already present. This enables:
-      // 1. Context-aware generation that complements (not duplicates) existing content
-      // 2. Better thematic coherence with existing nodes
-      // 3. Balanced variety in node types and colors
-      // 4. Meaningful connections to existing canvas elements
-      //
-      // The context includes:
-      // - Node count, types, and distribution
-      // - Connection/relationship metadata (incoming/outgoing edges)
-      // - Color usage patterns
-      // - Detailed content previews of each existing node
-      // - Canvas state (empty/minimal/populated)
-      //
-      // This is formatted as a structured prompt section that guides the AI to
-      // generate content that naturally extends the existing canvas ecosystem.
-      // ========================================================================
-      let canvasContext = '';
-      try {
-        // Get existing non-group, non-outreach nodes for context (limit to 15 most recent)
-        const existingNodes = nodes
-          .filter(n => !n.parentId && n.type !== 'groupNode' &&
-                       n.type !== 'emailNode' && n.type !== 'waitNode' && n.type !== 'conditionNode')
-          .slice(-15); // Get up to 15 most recent nodes for better context
-
-        if (existingNodes.length > 0) {
-          // Build enhanced context with node types, relationships, and metadata
-          const nodeTypeCounts = {};
-          const colorCounts = {};
-          const contextItems = existingNodes
-            .map(node => {
-              const title = node.data?.title || node.data?.label || 'Untitled';
-              const nodeType = node.type || 'textNode';
-              const nodeColor = node.data?.color || 'default';
-
-              // Track node type distribution
-              nodeTypeCounts[nodeType] = (nodeTypeCounts[nodeType] || 0) + 1;
-
-              // Track color usage for better AI context
-              if (nodeColor !== 'default') {
-                colorCounts[nodeColor] = (colorCounts[nodeColor] || 0) + 1;
-              }
-
-              // Extract content based on node type
-              let content = '';
-              if (node.type === 'todoNode') {
-                const items = node.data?.items || [];
-                const completedCount = items.filter(i => i.done).length;
-                const pendingCount = items.length - completedCount;
-                content = `${items.length} tasks (${completedCount} done, ${pendingCount} pending)`;
-                if (items.length > 0) {
-                  const topTasks = items.slice(0, 3).map(i => `"${i.text}"`).join(', ');
-                  content += ` - includes: ${topTasks}${items.length > 3 ? ', ...' : ''}`;
-                }
-              } else if (node.type === 'stickyNode') {
-                content = node.data?.content || '';
-                content = `STICKY: ${content}`;
-              } else if (node.type === 'photoNode') {
-                const caption = node.data?.caption || node.data?.title || 'Image';
-                content = `IMAGE: ${caption}`;
-              } else if (node.type === 'videoNode') {
-                content = `VIDEO: ${node.data?.url || 'Embedded video'}`;
-              } else {
-                content = node.data?.content || node.data?.description || '';
-              }
-
-              const truncatedContent = content.length > 150 ? content.slice(0, 150) + '...' : content;
-
-              // Check for connections to this node
-              const outgoing = edges.filter(e => e.source === node.id);
-              const incoming = edges.filter(e => e.target === node.id);
-              let connectionInfo = '';
-              if (outgoing.length > 0 || incoming.length > 0) {
-                connectionInfo = ` [↗${outgoing.length} ↙${incoming.length}]`;
-              }
-
-              return `  • [${nodeType}] "${title}"${connectionInfo}\n    ${truncatedContent}`;
-            })
-            .filter(item => item.length > 10) // Filter out empty items
-            .join('\n');
-
-          if (contextItems) {
-            // Build metadata summary
-            const totalNodes = existingNodes.length;
-            const typesSummary = Object.entries(nodeTypeCounts)
-              .map(([type, count]) => `${count} ${type.replace('Node', '')}${count > 1 ? 's' : ''}`)
-              .join(', ');
-            const connectionCount = edges.filter(e => {
-              const sourceNode = existingNodes.find(n => n.id === e.source);
-              const targetNode = existingNodes.find(n => n.id === e.target);
-              return sourceNode && targetNode;
-            }).length;
-
-            // Build color summary if colors are used
-            const colorSummary = Object.keys(colorCounts).length > 0
-              ? ` | Colors used: ${Object.keys(colorCounts).join(', ')}`
-              : '';
-
-            // Detect if canvas is empty or has minimal content
-            const canvasState = totalNodes === 0 ? 'empty' : totalNodes < 3 ? 'minimal' : 'populated';
-
-            canvasContext = `
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 CURRENT CANVAS CONTEXT (Canvas is ${canvasState} with ${totalNodes} existing nodes)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📊 CANVAS OVERVIEW:
-  • Total nodes: ${totalNodes}
-  • Node types: ${typesSummary}
-  • Connections: ${connectionCount} relationship${connectionCount !== 1 ? 's' : ''}${colorSummary}
-
-📝 EXISTING CONTENT:
-${contextItems}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⚠️ CRITICAL INSTRUCTIONS FOR AI:
-1. Generate content that COMPLEMENTS and EXTENDS the existing nodes above
-2. DO NOT duplicate or repeat existing content, titles, or themes
-3. Build upon the relationships and themes present in the canvas
-4. Consider the existing node types and create a balanced variety
-5. Use different colors than those already heavily used
-6. Create content that could meaningfully connect to existing nodes
-
-Generate new content that fits naturally into this existing canvas ecosystem.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
-          }
-        } else {
-          // Canvas is empty - inform the AI
-          canvasContext = `
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 CURRENT CANVAS CONTEXT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This is a BLANK CANVAS with no existing content.
-You are creating the foundation for a new canvas from scratch.
-Make it comprehensive, well-structured, and immediately useful.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
-        }
-      } catch (err) {
-        console.warn('⚠️ Failed to extract canvas context:', err);
-        // Continue without context if extraction fails
-      }
-
-      const basePrompt = `Generate a visual planning canvas for: "${canvasTopic}"${canvasContext}
+      const prompt = `Generate a visual planning canvas for: "${canvasTopic}"
 
 Create a JSON array of EXACTLY ${targetCards} cards for this canvas. Each card should have:
 - type: "note" | "sticky" | "todo"${includeImages ? ' | "photo"' : ''}${includeVideoPlaceholder ? ' | "video"' : ''}
@@ -5005,9 +3291,6 @@ Example format:
   {"type": "sticky", "title": "Key Insight", "content": "Important highlight", "color": "pink"},
   {"type": "todo", "title": "Next Steps", "content": "Task 1; Task 2", "color": "green"}
 ]`;
-
-      // Build context-aware prompt that includes conversation history
-      const prompt = buildContextAwarePrompt(basePrompt, null, 3);
 
       const response = await llm.generate(prompt, { maxTokens: 1500, apiKey: groqKey });
 
@@ -5157,21 +3440,8 @@ Example format:
           createdAt: timestamp,
           aiGenerated: true,
           aiTopic: canvasTopic,
-          // Inject callbacks for text/sticky nodes
-          groqApiKey: storedGroqKey, // Required for AI functionality in textNode
-          onUpdate: (nodeId, updates) => {
-            setNodes((nds) =>
-              nds.map((n) =>
-                n.id === nodeId
-                  ? { ...n, data: { ...n.data, ...updates, updatedAt: Date.now() } }
-                  : n
-              )
-            );
-          },
-          onDelete: (nodeId) => {
-            setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-            setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
-          },
+          onUpdate: handleNodeUpdate,
+          onDelete: handleDeleteNode,
         };
 
         // Only "sticky" type becomes stickyNode (one per canvas)
@@ -5190,27 +3460,6 @@ Example format:
           }));
           nodeData.items = todoItems;
           nodeData.content = '';
-          // TodoNode needs special callbacks
-          nodeData.onUpdateItems = (nodeId, newItems) => {
-            setNodes((nds) =>
-              nds.map((n) =>
-                n.id === nodeId
-                  ? { ...n, data: { ...n.data, items: newItems } }
-                  : n
-              )
-            );
-          };
-          nodeData.onTitleChange = (nodeId, newTitle) => {
-            setNodes((nds) =>
-              nds.map((n) =>
-                n.id === nodeId
-                  ? { ...n, data: { ...n.data, title: newTitle } }
-                  : n
-              )
-            );
-          };
-          // Override onUpdate and onDelete for todoNode (they use different signatures)
-          delete nodeData.onUpdate; // TodoNode doesn't use onUpdate
         }
 
         // For video type - use textNode with video cardType (placeholder for embed)
@@ -5261,28 +3510,7 @@ Example format:
 
       // Add group first, then children
       setNodes(nds => [...nds, groupNode, ...childNodes]);
-
-      // Use double requestAnimationFrame to ensure React Flow has fully rendered the new nodes
-      // before calling fitView. This fixes the issue where nodes don't appear properly after AI generation.
-      // IMPORTANT: fitView must be called AFTER setNodes completes, not inside the callback
-      // First RAF: Waits for React's state update to commit
-      // Second RAF: Waits for browser's paint/layout cycle to complete
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          fitView({
-            duration: 800,
-            padding: 0.2,
-            nodes: [groupNode, ...childNodes].map(n => ({ id: n.id }))
-          });
-        });
-      });
-
-      // Record this conversation in history for context-aware future interactions
-      recordConversation(
-        `Generate a visual planning canvas for: "${canvasTopic}"`,
-        `Generated ${limitedCards.length} cards: ${limitedCards.map(c => c.title).join(', ')}`,
-        null // Global conversation, not tied to specific node
-      );
+      setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 100);
 
       console.log(`✅ Generated canvas with ${limitedCards.length} cards in group "${groupLabel}" for: "${canvasTopic}"`);
       setShowAICanvasModal(false);
@@ -5293,7 +3521,7 @@ Example format:
       alert(`❌ Canvas generation failed: ${error.message}`);
       setIsGeneratingCanvas(false);
     }
-  }, [nodes, setNodes, setEdges, fitView, storedGroqKey, handleRegenerateImage, handleDeleteNode, buildContextAwarePrompt, recordConversation, edges]);
+  }, [handleNodeUpdate, handleDeleteNode, setNodes, fitView, storedGroqKey]);
 
   // Save UnityMAP journey to cloud (Pro feature)
   const handleSaveJourney = async () => {
@@ -5391,7 +3619,7 @@ Example format:
         });
         setCurrentJourneyId(journeyId);
       } catch (error) {
-        showToast(`Failed to save journey: ${error.message}`, 'error');
+        alert(`❌ Failed to save journey: ${error.message}`);
         return;
       }
     }
@@ -5523,7 +3751,7 @@ Example format:
       } catch (error) {
         setIsSendingEmails(false);
         console.error('Save journey failed:', error);
-        showToast(`Failed to save journey: ${error.message}`, 'error');
+        alert(`❌ Failed to save journey: ${error.message}`);
         return;
       }
     }
@@ -5721,18 +3949,14 @@ Example format:
       // Create a deep copy of the node data
       const newData = { ...node.data };
 
-      // Preserve all callbacks from original node
+      // Preserve callbacks from original
       if (node.data.onUpdate) newData.onUpdate = handleNodeUpdate;
       if (node.data.onDelete) newData.onDelete = handleDeleteNode;
       if (node.data.onResize) newData.onResize = handlePhotoResize;
-      if (node.data.onOpenStudio) newData.onOpenStudio = handleOpenStudio;
-      if (node.data.onExpandWithAI) newData.onExpandWithAI = handleAIExpandNode;
-
-      const newNodeId = `${node.type}-dup-${timestamp}-${index}`;
 
       return {
         ...node,
-        id: newNodeId,
+        id: `${node.type}-dup-${timestamp}-${index}`,
         position: {
           x: node.position.x + offset,
           y: node.position.y + offset,
@@ -5741,203 +3965,12 @@ Example format:
           ...newData,
           createdAt: timestamp,
         },
-        selected: true, // Auto-select duplicated nodes for immediate visual feedback
+        selected: false,
       };
     });
 
-    // Deselect original nodes and add duplicates
-    setNodes((nds) => [
-      ...nds.map(n => n.selected ? { ...n, selected: false } : n),
-      ...newNodes
-    ]);
-
-    // Use double requestAnimationFrame to ensure React Flow has fully rendered the new nodes
-    // before calling fitView. This provides smooth auto-pan to show duplicated nodes.
-    const newNodeIds = newNodes.map(n => n.id);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fitView({
-          nodes: newNodeIds.map(id => ({ id })),
-          duration: 400,
-          padding: 0.2
-        });
-      });
-    });
-  }, [nodes, setNodes, handleNodeUpdate, handleDeleteNode, handlePhotoResize, handleOpenStudio, handleAIExpandNode, fitView]);
-
-  // Floating Toolbar Quick Actions - for single-node selections
-  const _handleQuickDuplicate = useCallback(() => {
-    if (!floatingToolbar.nodeId) return;
-    const node = nodes.find(n => n.id === floatingToolbar.nodeId);
-    if (!node) return;
-
-    const timestamp = Date.now();
-    const offset = 50;
-    const newData = { ...node.data };
-
-    // Preserve callbacks
-    if (node.data.onUpdate) newData.onUpdate = handleNodeUpdate;
-    if (node.data.onDelete) newData.onDelete = handleDeleteNode;
-    if (node.data.onResize) newData.onResize = handlePhotoResize;
-    if (node.data.onOpenStudio) newData.onOpenStudio = handleOpenStudio;
-    if (node.data.onExpandWithAI) newData.onExpandWithAI = handleAIExpandNode;
-
-    const newNodeId = `${node.type}-dup-${timestamp}`;
-    const newNode = {
-      ...node,
-      id: newNodeId,
-      position: { x: node.position.x + offset, y: node.position.y + offset },
-      data: { ...newData, createdAt: timestamp },
-      selected: true,
-    };
-
-    setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
-    setFloatingToolbar({ visible: false, nodeId: null, position: { x: 0, y: 0 } });
-
-    // Auto-pan to show duplicated node
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fitView({ nodes: [{ id: newNodeId }], duration: 400, padding: 0.2 });
-      });
-    });
-  }, [floatingToolbar.nodeId, nodes, setNodes, handleNodeUpdate, handleDeleteNode, handlePhotoResize, handleOpenStudio, handleAIExpandNode, fitView]);
-
-  const _handleQuickDelete = useCallback(() => {
-    if (!floatingToolbar.nodeId) return;
-    handleDeleteNode(floatingToolbar.nodeId);
-    setFloatingToolbar({ visible: false, nodeId: null, position: { x: 0, y: 0 } });
-  }, [floatingToolbar.nodeId, handleDeleteNode]);
-
-  const _handleQuickColorCycle = useCallback(() => {
-    if (!floatingToolbar.nodeId) return;
-    const colorPalette = ['#FFE5E5', '#E5F3FF', '#E8F5E9', '#FFF9E6', '#F3E5F5', '#FCE4EC'];
-
-    setNodes((nds) => nds.map(n => {
-      if (n.id === floatingToolbar.nodeId) {
-        const currentColor = n.data.color || colorPalette[0];
-        const currentIndex = colorPalette.indexOf(currentColor);
-        const nextIndex = (currentIndex + 1) % colorPalette.length;
-        return { ...n, data: { ...n.data, color: colorPalette[nextIndex] } };
-      }
-      return n;
-    }));
-  }, [floatingToolbar.nodeId, setNodes]);
-
-  const _handleQuickComment = useCallback(() => {
-    if (!floatingToolbar.nodeId) return;
-    const node = nodes.find(n => n.id === floatingToolbar.nodeId);
-    if (!node) return;
-
-    const timestamp = Date.now();
-    const commentNodeId = `comment-${timestamp}`;
-    const commentNode = {
-      id: commentNodeId,
-      type: 'commentNode',
-      position: { x: node.position.x + 300, y: node.position.y },
-      data: {
-        content: '',
-        author: user?.displayName || userProfile?.name || 'User',
-        timestamp: new Date().toISOString(),
-        createdAt: timestamp,
-        onContentChange: (id, content) => {
-          setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, content } } : n));
-        },
-        onDelete: handleDeleteNode,
-      }
-    };
-
-    setNodes((nds) => [...nds, commentNode]);
-
-    // Create edge connecting comment to parent node
-    const newEdge = {
-      id: `edge-comment-${timestamp}`,
-      source: node.id,
-      target: commentNodeId,
-      type: 'default',
-      animated: false,
-      style: { stroke: '#9ca3af', strokeWidth: 1.5 }
-    };
-    setEdges(eds => [...eds, newEdge]);
-
-    // Update commentCount on the parent node
-    setNodes(nds => nds.map(n => {
-      if (n.id === node.id) {
-        const currentCount = n.data?.commentCount || 0;
-        return {
-          ...n,
-          data: {
-            ...n.data,
-            commentCount: currentCount + 1
-          }
-        };
-      }
-      return n;
-    }));
-
-    setFloatingToolbar({ visible: false, nodeId: null, position: { x: 0, y: 0 } });
-
-    // Add notification for comment creation
-    const nodeName = node.data?.label || node.data?.content || 'a node';
-    const authorName = user?.displayName || userProfile?.name || 'Someone';
-    notificationManager.addNotification(
-      NotificationType.COMMENT,
-      `${authorName} added a comment`,
-      {
-        nodeId: node.id,
-        nodeName: nodeName,
-        commentId: commentNode.id,
-        author: authorName,
-        timestamp: timestamp
-      }
-    );
-  }, [floatingToolbar.nodeId, nodes, setNodes, setEdges, handleDeleteNode, user, userProfile]);
-
-  // Handle selection changes to show/hide floating toolbar
-  // Improved UX: Toolbar only appears when re-selecting an already selected node, not on initial selection
-  // This reduces visual clutter and makes the toolbar feel more intentional
-  const handleSelectionChange = useCallback(({ nodes: selectedNodes }) => {
-    if (selectedNodes.length === 1) {
-      const selectedNode = selectedNodes[0];
-      const isReselecting = previouslySelectedNodeRef.current === selectedNode.id;
-
-      // Only show toolbar if user is re-selecting the same node (intentional action)
-      if (isReselecting) {
-        // Position toolbar above the selected node
-        const toolbarX = selectedNode.position.x + (selectedNode.width || 200) / 2;
-        const toolbarY = selectedNode.position.y - 60; // 60px above node
-        setFloatingToolbar({
-          visible: true,
-          nodeId: selectedNode.id,
-          position: { x: toolbarX, y: toolbarY }
-        });
-      } else {
-        // First selection - hide toolbar but track this node for future re-selection
-        setFloatingToolbar({ visible: false, nodeId: null, position: { x: 0, y: 0 } });
-      }
-
-      // Track this as the previously selected node
-      previouslySelectedNodeRef.current = selectedNode.id;
-    } else {
-      // No selection or multiple selection - hide toolbar and reset tracking
-      setFloatingToolbar({ visible: false, nodeId: null, position: { x: 0, y: 0 } });
-      previouslySelectedNodeRef.current = null;
-    }
-  }, []);
-
-  // Handle node double-click to show floating toolbar
-  // Alternative interaction method for showing the toolbar (in addition to re-selection)
-  const _handleNodeDoubleClick = useCallback((event, node) => {
-    // Position toolbar above the double-clicked node
-    const toolbarX = node.position.x + (node.width || 200) / 2;
-    const toolbarY = node.position.y - 60; // 60px above node
-    setFloatingToolbar({
-      visible: true,
-      nodeId: node.id,
-      position: { x: toolbarX, y: toolbarY }
-    });
-    // Track as previously selected so clicking elsewhere and back will also work
-    previouslySelectedNodeRef.current = node.id;
-  }, []);
+    setNodes((nds) => [...nds, ...newNodes]);
+  }, [nodes, setNodes, handleNodeUpdate, handleDeleteNode, handlePhotoResize]);
 
   // Smart save handler - saves journey if MAP nodes exist, otherwise saves capsule
   const handleSmartSave = useCallback(async () => {
@@ -5964,8 +3997,6 @@ Example format:
     onDuplicate: handleDuplicateSelected,
     onDeselect: handleDeselect,
     onPan: handlePan,
-    onUndo: handleUndo,
-    onRedo: handleRedo,
     enabled: currentMode === 'notes', // Only enable in notes mode
   });
 
@@ -6046,16 +4077,7 @@ Example format:
           />
         )}
         {/* ReactFlow Canvas - Always render but hide when studio is open */}
-        <div
-          ref={reactFlowContainerRef}
-          style={{
-            display: currentMode === 'studio' ? 'none' : 'block',
-            height: '100%',
-            touchAction: 'pan-x pan-y pinch-zoom',  // Explicitly enable pan and pinch-zoom for iOS Safari
-            WebkitTouchCallout: 'none',             // No iOS context menu on long-press
-            WebkitUserSelect: 'none',               // No iOS text selection during gestures
-          }}
-        >
+        <div style={{ display: currentMode === 'studio' ? 'none' : 'block', height: '100%' }}>
           {/* Override React Flow's default overflow:hidden on nodes to show delete buttons */}
           <style>{`
             .react-flow__node,
@@ -6064,282 +4086,38 @@ Example format:
             .react-flow__node-photoNode {
               overflow: visible !important;
             }
-
-            /* CRITICAL iOS Safari Pinch-to-Zoom Fix */
-            /* Apply touch-action to all React Flow elements to prevent iOS Safari from intercepting */
-            /* 2-finger gestures before React Flow can process them. This ensures consistent pinch-to-zoom */
-            /* behavior across all iOS Safari versions by explicitly telling the browser at every DOM level */
-            /* that React Flow should handle all touch interactions, not the browser's default handlers. */
-            .react-flow,
-            .react-flow__renderer,
-            .react-flow__viewport,
-            .react-flow__pane,
-            .react-flow__container {
-              touch-action: none !important;
-              -webkit-user-select: none !important;
-              user-select: none !important;
-            }
-
-            /* Touch-friendly resize handles - Enhanced for mobile */
-            /* Applied to all 10 resizable node types for consistent UX */
-            /* position: relative creates stacking context for ::before pseudo-element */
-            /* Default handle size for desktop - mobile sizes override in media query below */
-            .react-flow__node-photoNode .nodrag,
-            .react-flow__node-textNode .nodrag,
-            .react-flow__node-stickyNode .nodrag,
-            .react-flow__node-todoNode .nodrag,
-            .react-flow__node-commentNode .nodrag,
-            .react-flow__node-colorSwatchNode .nodrag,
-            .react-flow__node-codeBlockNode .nodrag,
-            .react-flow__node-groupNode .nodrag,
-            .react-flow__node-mapNode .nodrag,
-            .react-flow__node-tripPlannerMapNode .nodrag {
-              position: relative;
-              min-width: 12px;
-              min-height: 12px;
-              /* iOS Safari touch optimizations */
-              touch-action: none;
-              -webkit-touch-callout: none;
-              -webkit-tap-highlight-color: transparent;
-              isolation: isolate;
-            }
-
-            /* Add larger invisible touch target around resize handles */
-            /* 80px optimal touch target for iOS Safari (Apple HIG recommends 44pt minimum, but 80px improves reliability) */
-            /* The ::before pseudo-element creates an enlarged touch area centered on the handle */
-            /* z-index: 1 ensures the touch area is above the handle to receive pointer events */
-            .react-flow__node-photoNode .nodrag::before,
-            .react-flow__node-textNode .nodrag::before,
-            .react-flow__node-stickyNode .nodrag::before,
-            .react-flow__node-todoNode .nodrag::before,
-            .react-flow__node-commentNode .nodrag::before,
-            .react-flow__node-colorSwatchNode .nodrag::before,
-            .react-flow__node-codeBlockNode .nodrag::before,
-            .react-flow__node-groupNode .nodrag::before,
-            .react-flow__node-mapNode .nodrag::before,
-            .react-flow__node-tripPlannerMapNode .nodrag::before {
-              content: '';
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%) translate3d(0, 0, 0);
-              width: 80px;
-              height: 80px;
-              background: transparent;
-              border-radius: 50%;
-              pointer-events: auto;
-              z-index: 1; /* Changed from -1 to 1 to ensure touch area receives events */
-              /* iOS Safari touch optimizations */
-              touch-action: none;
-              -webkit-touch-callout: none;
-            }
-
-            /* Active state glow effect for touch targets - provides radial feedback */
-            .react-flow__node-photoNode .nodrag:active::before,
-            .react-flow__node-textNode .nodrag:active::before,
-            .react-flow__node-stickyNode .nodrag:active::before,
-            .react-flow__node-todoNode .nodrag:active::before,
-            .react-flow__node-commentNode .nodrag:active::before,
-            .react-flow__node-colorSwatchNode .nodrag:active::before,
-            .react-flow__node-codeBlockNode .nodrag:active::before,
-            .react-flow__node-groupNode .nodrag:active::before,
-            .react-flow__node-mapNode .nodrag:active::before,
-            .react-flow__node-tripPlannerMapNode .nodrag:active::before,
-            .react-flow__node-photoNode .nodrag.active::before,
-            .react-flow__node-textNode .nodrag.active::before,
-            .react-flow__node-stickyNode .nodrag.active::before,
-            .react-flow__node-todoNode .nodrag.active::before,
-            .react-flow__node-commentNode .nodrag.active::before,
-            .react-flow__node-colorSwatchNode .nodrag.active::before,
-            .react-flow__node-codeBlockNode .nodrag.active::before,
-            .react-flow__node-groupNode .nodrag.active::before,
-            .react-flow__node-mapNode .nodrag.active::before,
-            .react-flow__node-tripPlannerMapNode .nodrag.active::before {
-              background: radial-gradient(circle, rgba(238, 207, 0, 0.15) 0%, transparent 70%);
-              transition: background 0.15s ease;
-            }
-
-            /* DEBUG MODE: Uncomment to visualize touch-friendly hit areas */
-            /* Useful for testing and verifying touch target sizes during development */
-            /*
-            .react-flow__node-photoNode .nodrag::before,
-            .react-flow__node-textNode .nodrag::before,
-            .react-flow__node-stickyNode .nodrag::before,
-            .react-flow__node-todoNode .nodrag::before,
-            .react-flow__node-commentNode .nodrag::before,
-            .react-flow__node-colorSwatchNode .nodrag::before,
-            .react-flow__node-codeBlockNode .nodrag::before,
-            .react-flow__node-groupNode .nodrag::before,
-            .react-flow__node-mapNode .nodrag::before,
-            .react-flow__node-tripPlannerMapNode .nodrag::before {
-              background: rgba(255, 0, 0, 0.2) !important;
-              border: 2px dashed rgba(255, 0, 0, 0.5) !important;
-            }
-            */
-
-            /* Make resize handles more visible and larger on mobile/touch devices */
-            @media (hover: none) and (pointer: coarse) {
-              .react-flow__node-photoNode .nodrag,
-              .react-flow__node-groupNode .nodrag,
-              .react-flow__node-codeBlockNode .nodrag,
-              .react-flow__node-markdownNode .nodrag,
-              .react-flow__node-tableNode .nodrag,
-              .react-flow__node-kpiTrackerNode .nodrag {
-                width: 20px !important;
-                height: 20px !important;
-                border-width: 3px !important;
-              }
-
-              /* Larger touch targets on mobile (80px optimized for iOS Safari) */
-              .react-flow__node-photoNode .nodrag::before,
-              .react-flow__node-groupNode .nodrag::before,
-              .react-flow__node-codeBlockNode .nodrag::before,
-              .react-flow__node-markdownNode .nodrag::before,
-              .react-flow__node-tableNode .nodrag::before,
-              .react-flow__node-kpiTrackerNode .nodrag::before {
-                width: 80px;
-                height: 80px;
-                /* iOS Safari hardware acceleration */
-                -webkit-transform: translate(-50%, -50%) translate3d(0, 0, 0);
-                transform: translate(-50%, -50%) translate3d(0, 0, 0);
-              }
-
-              /* Show handles more prominently on selected nodes with yellow highlight */
-              .react-flow__node.selected .nodrag {
-                background-color: rgba(238, 207, 0, 0.9) !important;
-                box-shadow: 0 0 0 2px rgba(238, 207, 0, 0.3),
-                            0 2px 8px rgba(0, 0, 0, 0.2);
-                animation: pulse-resize 1.5s ease-in-out infinite;
-              }
-            }
-
-            /* Pulse animation for resize handles on mobile - draws attention to resizability */
-            @keyframes pulse-resize {
-              0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-              }
-              50% {
-                transform: scale(1.15);
-                opacity: 0.85;
-              }
-            }
-
-            /* Hover state for desktop - visual feedback on mouse hover */
-            @media (hover: hover) and (pointer: fine) {
-              .react-flow__node-photoNode .nodrag:hover,
-              .react-flow__node-groupNode .nodrag:hover,
-              .react-flow__node-codeBlockNode .nodrag:hover,
-              .react-flow__node-markdownNode .nodrag:hover,
-              .react-flow__node-tableNode .nodrag:hover,
-              .react-flow__node-kpiTrackerNode .nodrag:hover {
-                transform: scale(1.3);
-                box-shadow: 0 2px 12px rgba(238, 207, 0, 0.4);
-                transition: transform 0.15s ease, box-shadow 0.15s ease;
-              }
-            }
-
-            /* Active state for resize handles - visual feedback during resize */
-            .react-flow__node-photoNode .nodrag:active,
-            .react-flow__node-groupNode .nodrag:active,
-            .react-flow__node-codeBlockNode .nodrag:active,
-            .react-flow__node-markdownNode .nodrag:active,
-            .react-flow__node-tableNode .nodrag:active,
-            .react-flow__node-kpiTrackerNode .nodrag:active,
-            .react-flow__node-photoNode .nodrag.active,
-            .react-flow__node-groupNode .nodrag.active,
-            .react-flow__node-codeBlockNode .nodrag.active,
-            .react-flow__node-markdownNode .nodrag.active,
-            .react-flow__node-tableNode .nodrag.active,
-            .react-flow__node-kpiTrackerNode .nodrag.active {
-              transform: scale(1.2);
-              background-color: rgba(238, 207, 0, 1) !important;
-              box-shadow: 0 0 0 3px rgba(238, 207, 0, 0.3),
-                          0 4px 16px rgba(238, 207, 0, 0.4);
-              transition: all 0.15s ease;
-            }
-
-            /* Ensure resize handles are above other elements */
-            .react-flow__node-photoNode .nodrag,
-            .react-flow__node-groupNode .nodrag,
-            .react-flow__node-codeBlockNode .nodrag,
-            .react-flow__node-markdownNode .nodrag,
-            .react-flow__node-tableNode .nodrag,
-            .react-flow__node-kpiTrackerNode .nodrag {
-              z-index: 25 !important;
-            }
-
-            /* Prevent accidental text selection during resize operations */
-            .react-flow__node-photoNode .nodrag *,
-            .react-flow__node-groupNode .nodrag *,
-            .react-flow__node-codeBlockNode .nodrag *,
-            .react-flow__node-markdownNode .nodrag *,
-            .react-flow__node-tableNode .nodrag *,
-            .react-flow__node-kpiTrackerNode .nodrag * {
-              user-select: none;
-              -webkit-user-select: none;
-              -webkit-touch-callout: none;
-            }
           `}</style>
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChangeWithHistory}
+            onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeDragStart={_handleNodeDragStart}
             onNodeDrag={handleNodeDrag}
             onNodeDragStop={handleNodeDragStop}
-            onSelectionChange={handleSelectionChange}
-            onMove={(event, viewport) => {
-              // Only update zoom level during single-touch pan to avoid unnecessary state updates
-              // during pinch-to-zoom. The useEffect hook (lines 2892-2898) will handle zoom updates.
-              const touchCount = event?.sourceEvent?.touches?.length || event?.touches?.length || 0;
-              if (touchCount < 2) {
-                setZoomLevel(viewport.zoom);
-              }
-            }}
+            onMove={(_, viewport) => setZoomLevel(viewport.zoom)}
             nodeTypes={nodeTypes}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-            // Pan gesture configuration for desktop and mobile
-            // panOnDrag=[1, 2] enables 1-finger and 2-finger panning for optimal iOS Safari compatibility
-            // This eliminates gesture disambiguation delays by allowing React Flow to immediately
-            // delegate 2-finger gestures to the pinch-zoom handler without checking if they're pan gestures
-            // Prevents race conditions on iOS Safari between 2-finger pan and pinch gestures
             panOnDrag={[1, 2]}
-            selectionOnDrag={true}
-            // Prevent accidental node selection during pan gestures on mobile
-            // This fixes the conflict between panning and node selection on touch devices
-            selectNodesOnDrag={false}
-            // iOS Safari Touch Gesture Configuration (Updated Dec 2025)
-            // panOnScroll=false prevents scroll conflicts with pinch-to-zoom gestures
-            // panOnDrag=[1, 2] enables optimized panning for iOS Safari (see above for details)
-            panOnScroll={false}
+            selectionOnDrag={false}
+            panOnScroll={true}
             zoomOnScroll={false}
-            // zoomOnPinch enabled - React Flow handles pinch gestures natively on ALL platforms
-            // IMPORTANT: React Flow uses optimized passive event listeners internally for iOS Safari
-            // This provides smooth, immediate gesture recognition without JavaScript delays
-            // The useIOSPinchZoom hook is now DISABLED as it was causing performance issues
             zoomOnPinch={true}
             zoomOnDoubleClick={false}
-            // preventScrolling=false allows iOS Safari to properly deliver touch events for pinch gestures
-            // React Flow's internal gesture handling works perfectly without custom intervention
             preventScrolling={false}
-            minZoom={0.25}
-            maxZoom={2.0}
+            minZoom={0.1}
+            maxZoom={4}
             nodesDraggable={true}
             nodesConnectable={true}
             elementsSelectable={true}
           >
-            {backgroundPattern !== 'none' && (
-              <Background
-                variant={backgroundPattern}
-                gap={24}
-                size={2}
-                color={currentTheme.dotColor}
-                style={{ opacity: 0.3 }}
-              />
-            )}
+            <Background
+              variant="dots"
+              gap={24}
+              size={2}
+              color="#aaa"
+              style={{ opacity: 0.3 }}
+            />
             {/* Canvas Minimap - toggleable navigation overview (smaller, more transparent) */}
             {showMinimap && (
               <MiniMap
@@ -6370,8 +4148,8 @@ Example format:
                 style={{
                   width: 140,
                   height: 90,
-                  backgroundColor: currentTheme.minimapBg,
-                  border: `1px solid ${currentTheme.minimapBorder}`,
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  border: '1px solid rgba(229, 231, 235, 0.6)',
                   borderRadius: '6px',
                   boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
                 }}
@@ -6387,136 +4165,6 @@ Example format:
 
       {/* Mobile Node Navigator - Jump between canvas areas */}
       <MobileNodeNavigator nodes={nodes} />
-
-      {/* Panning Visual Indicator - Touch gesture feedback for mobile devices */}
-      {showPanningIndicator && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'rgba(59, 130, 246, 0.15)', // Blue tint with transparency
-            backdropFilter: 'blur(2px)',
-            WebkitBackdropFilter: 'blur(2px)', // Safari support
-            border: '2px solid rgba(59, 130, 246, 0.4)',
-            borderRadius: '16px',
-            padding: '12px 20px',
-            zIndex: 9999,
-            pointerEvents: 'none', // Don't interfere with touch events
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-            animation: 'fadeIn 0.15s ease-out',
-          }}
-        >
-          <style>{`
-            @keyframes fadeIn {
-              from {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.95);
-              }
-              to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-              }
-            }
-
-            @keyframes zoomFlash {
-              0% {
-                transform: translateX(-100%);
-                opacity: 0.4;
-              }
-              50% {
-                opacity: 0.8;
-              }
-              100% {
-                transform: translateX(200%);
-                opacity: 0;
-              }
-            }
-
-            @keyframes zoomPulse {
-              0%, 100% {
-                transform: scale(1);
-              }
-              50% {
-                transform: scale(1.08);
-              }
-            }
-          `}</style>
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="rgba(59, 130, 246, 0.9)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3" />
-          </svg>
-          <span
-            style={{
-              fontSize: '13px',
-              fontWeight: '600',
-              color: 'rgba(59, 130, 246, 0.95)',
-              letterSpacing: '0.3px',
-              textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
-            }}
-          >
-            Panning
-          </span>
-        </div>
-      )}
-
-      {/* Comment Count Badges - Show how many comments are attached to each node */}
-      {Object.entries(commentCounts).map(([nodeId, count]) => {
-        const node = nodes.find(n => n.id === nodeId);
-        if (!node || count === 0) return null;
-
-        const viewport = getViewport();
-
-        // Calculate the position of the badge in screen coordinates
-        const x = node.position.x * viewport.zoom + viewport.x;
-        const y = node.position.y * viewport.zoom + viewport.y;
-
-        // Position badge at top-right corner of node
-        const nodeWidth = node.width || 200; // default width if not set
-        const badgeX = x + (nodeWidth * viewport.zoom) - 10;
-        const badgeY = y - 10;
-
-        return (
-          <div
-            key={`badge-${nodeId}`}
-            style={{
-              position: 'absolute',
-              left: `${badgeX}px`,
-              top: `${badgeY}px`,
-              zIndex: 1000,
-              backgroundColor: '#f59e0b', // amber-500
-              color: 'white',
-              borderRadius: '12px',
-              padding: '2px 8px',
-              fontSize: '11px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '3px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-              border: '2px solid white',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <span>💬</span>
-            <span>{count}</span>
-          </div>
-        );
-      })}
 
       {/* Zoom Controls - Right Rail with Mode Tab Slideout */}
       <div style={{
@@ -6765,25 +4413,6 @@ Example format:
           </svg>
         </button>
 
-        {/* Convert to Todo Button - TODO: Implement handleConvertSelectedGroupToTodo
-        {(() => {
-          const selectedNode = nodes.find(n => n.selected);
-          if (selectedNode?.type === 'groupNode') {
-            return (
-              <button
-                onClick={() => {
-                  handleConvertSelectedGroupToTodo();
-                }}
-                title="Convert group to todo checklist"
-                style={{...}}
-              >
-                <span style={{ fontSize: '16px' }}>✅</span>
-              </button>
-            );
-          }
-          return null;
-        })()} */}
-
         {/* Bookmark/Star Button */}
         <button
           onClick={handleToggleBookmark}
@@ -6880,6 +4509,9 @@ Example format:
           </svg>
         </button>
 
+        {/* Divider */}
+        <div style={{ width: '24px', height: '1px', backgroundColor: '#e5e7eb', margin: '4px 0' }} />
+
         {/* Mode Toggle Button */}
         <button
           onClick={() => setShowModePanel(!showModePanel)}
@@ -6951,11 +4583,6 @@ Example format:
         nodeLimit={nodeLimit}
         lastSavedAt={lastSavedAt}
         onShortcutsClick={() => setShowShortcutsHelp(true)}
-        // Theme/appearance props
-        theme={theme}
-        onThemeChange={setTheme}
-        backgroundPattern={backgroundPattern}
-        onBackgroundChange={setBackgroundPattern}
       />
 
       {/* Empty State - Centered above CircleNav with chevron */}
@@ -7049,9 +4676,6 @@ Example format:
         }}
         onGenerate={handleAICanvasGenerate}
         isGenerating={isGeneratingCanvas}
-        conversationHistory={aiConversationHistory}
-        onUpdateHistory={updateAiConversationHistory}
-        onClearHistory={clearAiConversationHistory}
       />
 
       {/* Overview Tray - Right-side panel */}
@@ -7061,7 +4685,7 @@ Example format:
         nodes={nodes}
         starredNodes={starredNodes}
         bookmarkedCapsules={bookmarkedCapsules}
-        notifications={notifications}
+        notifications={[]} // TODO: Wire up notifications
         onNodeClick={(node) => {
           // Focus on the clicked node
           const { x, y } = node.position;
