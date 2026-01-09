@@ -175,10 +175,34 @@ const OptionsMenu = ({
   onAddCondition,
   emailCount = 0,
   emailLimit = 3,
+  // Theme/appearance props
+  theme = 'light',
+  onThemeChange,
+  backgroundPattern = 'dots',
+  onBackgroundChange,
 }) => {
   if (!isOpen) return null;
 
   const canAddEmail = emailCount < emailLimit;
+
+  // Theme options
+  const themeOptions = [
+    { value: 'light', label: '☀️ Light', icon: '☀️' },
+    { value: 'dark', label: '🌙 Dark', icon: '🌙' },
+    { value: 'sunset', label: '🌅 Sunset', icon: '🌅' },
+  ];
+
+  // Background pattern options
+  const backgroundOptions = [
+    { value: 'dots', label: '⚫ Dots' },
+    { value: 'lines', label: '▬ Lines' },
+    { value: 'cross', label: '✚ Cross' },
+    { value: 'none', label: '⬜ None' },
+  ];
+
+  // Get current theme/background labels
+  const currentThemeLabel = themeOptions.find(t => t.value === theme)?.icon || '☀️';
+  const currentBgLabel = backgroundOptions.find(b => b.value === backgroundPattern)?.label?.split(' ')[0] || '⚫';
 
   // Different menu items based on mode - Brand colors (yellow/gold gradient, black accents)
   const notesMenuItems = [
@@ -201,7 +225,34 @@ const OptionsMenu = ({
       textColor: 'white',
       hoverColor: '#1f2937'
     },
-    { label: 'FOOTER', action: onFooter, color: '#4b5563', textColor: 'white', hoverColor: '#374151' }
+    { label: 'FOOTER', action: onFooter, color: '#4b5563', textColor: 'white', hoverColor: '#374151' },
+    // Theme selector - cycles through themes
+    {
+      label: `THEME: ${currentThemeLabel}`,
+      action: () => {
+        const themeOrder = ['light', 'dark', 'sunset'];
+        const currentIndex = themeOrder.indexOf(theme);
+        const nextTheme = themeOrder[(currentIndex + 1) % themeOrder.length];
+        if (onThemeChange) onThemeChange(nextTheme);
+      },
+      color: '#6b7280',
+      textColor: 'white',
+      hoverColor: '#4b5563',
+      separator: true
+    },
+    // Background pattern selector - cycles through patterns
+    {
+      label: `BACKGROUND: ${currentBgLabel}`,
+      action: () => {
+        const bgOrder = ['dots', 'lines', 'cross', 'none'];
+        const currentIndex = bgOrder.indexOf(backgroundPattern);
+        const nextBg = bgOrder[(currentIndex + 1) % bgOrder.length];
+        if (onBackgroundChange) onBackgroundChange(nextBg);
+      },
+      color: '#9ca3af',
+      textColor: 'white',
+      hoverColor: '#6b7280'
+    },
   ];
 
   const mapMenuItems = [
@@ -475,6 +526,11 @@ function UnityCircleNav({
   nodeLimit = 999,
   lastSavedAt = null,
   onShortcutsClick,
+  // Theme/appearance props
+  theme = 'light',
+  onThemeChange,
+  backgroundPattern = 'dots',
+  onBackgroundChange,
 }) {
   const { footerOpen } = useLayout();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -721,6 +777,10 @@ function UnityCircleNav({
         onAddCondition={onAddCondition}
         emailCount={emailCount}
         emailLimit={emailLimit}
+        theme={theme}
+        onThemeChange={onThemeChange}
+        backgroundPattern={backgroundPattern}
+        onBackgroundChange={onBackgroundChange}
       />
 
       {/* AI Menu */}
