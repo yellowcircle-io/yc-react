@@ -6,6 +6,8 @@
  * - Cmd/Ctrl + E: Export JSON
  * - Cmd/Ctrl + N: Add new card
  * - Cmd/Ctrl + D: Duplicate selected node(s)
+ * - Cmd/Ctrl + Z: Undo
+ * - Cmd/Ctrl + Shift + Z / Cmd/Ctrl + Y: Redo
  * - Cmd/Ctrl + /: Show shortcuts help
  * - Escape: Deselect all nodes
  * - Delete/Backspace: Delete selected node(s)
@@ -22,6 +24,8 @@ export function useKeyboardShortcuts({
   onDuplicate,
   onDeselect,
   onPan,
+  onUndo,
+  onRedo,
   enabled = true,
 }) {
   const [showHelp, setShowHelp] = useState(false);
@@ -61,6 +65,20 @@ export function useKeyboardShortcuts({
     if (isMod && e.key === 'd') {
       e.preventDefault();
       onDuplicate?.();
+      return;
+    }
+
+    // Cmd/Ctrl + Z: Undo (without Shift)
+    if (isMod && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      onUndo?.();
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + Z OR Cmd/Ctrl + Y: Redo
+    if ((isMod && e.key === 'z' && e.shiftKey) || (isMod && e.key === 'y')) {
+      e.preventDefault();
+      onRedo?.();
       return;
     }
 
@@ -109,7 +127,7 @@ export function useKeyboardShortcuts({
         onPan?.({ x: -panAmount, y: 0 });
         break;
     }
-  }, [enabled, onSave, onExport, onAddCard, onDelete, onDuplicate, onDeselect, onPan]);
+  }, [enabled, onSave, onExport, onAddCard, onDelete, onDuplicate, onDeselect, onPan, onUndo, onRedo]);
 
   useEffect(() => {
     if (!enabled) return;

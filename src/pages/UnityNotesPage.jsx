@@ -272,6 +272,15 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   // Guard flag to prevent auto-save during clear operation (prevents race condition)
   const isClearingRef = useRef(false);
 
+  // Phase 3: Undo/Redo History System
+  // Stores past and future states for undo/redo functionality
+  const historyRef = useRef({
+    past: [],    // Stack of previous states
+    future: [],  // Stack of undone states (for redo)
+  });
+  const HISTORY_LIMIT = 50; // Maximum number of undo steps
+  const isUndoingRef = useRef(false); // Prevent recording history during undo/redo
+
   // Load capsule from URL parameter OR localStorage (for editing shared capsules)
   useEffect(() => {
     const capsuleParam = searchParams.get('capsule');
@@ -4016,6 +4025,124 @@ Example format:
     setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
   }, [setNodes]);
 
+  // Phase 3: Record current state to history (call before making changes)
+  const recordHistory = useCallback(() => {
+    // Skip recording if we're in the middle of undo/redo
+    if (isUndoingRef.current) return;
+
+    const currentState = {
+      nodes: nodes.map(n => ({
+        ...n,
+        // Strip callbacks for serialization
+        data: { ...n.data, onUpdate: undefined, onDelete: undefined, onResize: undefined }
+      })),
+      edges: [...edges],
+      timestamp: Date.now()
+    };
+
+    historyRef.current.past.push(currentState);
+
+    // Limit history size
+    if (historyRef.current.past.length > HISTORY_LIMIT) {
+      historyRef.current.past.shift();
+    }
+
+    // Clear future on new action (can't redo after new change)
+    historyRef.current.future = [];
+  }, [nodes, edges]);
+
+  // Phase 3: Undo handler
+  const handleUndo = useCallback(() => {
+    const { past, future } = historyRef.current;
+
+    if (past.length === 0) {
+      console.log('⏮️ Nothing to undo');
+      return;
+    }
+
+    isUndoingRef.current = true;
+
+    // Save current state to future (for redo)
+    const currentState = {
+      nodes: nodes.map(n => ({
+        ...n,
+        data: { ...n.data, onUpdate: undefined, onDelete: undefined, onResize: undefined }
+      })),
+      edges: [...edges],
+      timestamp: Date.now()
+    };
+    future.push(currentState);
+
+    // Restore previous state
+    const previousState = past.pop();
+    console.log('⏮️ Undo: Restoring state from', new Date(previousState.timestamp).toLocaleTimeString());
+
+    // Restore nodes with callbacks
+    const restoredNodes = previousState.nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        onUpdate: handleNodeUpdate,
+        onDelete: handleDeleteNode,
+        onResize: handlePhotoResize,
+      }
+    }));
+
+    setNodes(restoredNodes);
+    setEdges(previousState.edges);
+
+    // Allow recording again after state is restored
+    setTimeout(() => {
+      isUndoingRef.current = false;
+    }, 100);
+  }, [nodes, edges, setNodes, setEdges, handleNodeUpdate, handleDeleteNode, handlePhotoResize]);
+
+  // Phase 3: Redo handler
+  const handleRedo = useCallback(() => {
+    const { past, future } = historyRef.current;
+
+    if (future.length === 0) {
+      console.log('⏭️ Nothing to redo');
+      return;
+    }
+
+    isUndoingRef.current = true;
+
+    // Save current state to past (for undo)
+    const currentState = {
+      nodes: nodes.map(n => ({
+        ...n,
+        data: { ...n.data, onUpdate: undefined, onDelete: undefined, onResize: undefined }
+      })),
+      edges: [...edges],
+      timestamp: Date.now()
+    };
+    past.push(currentState);
+
+    // Restore next state
+    const nextState = future.pop();
+    console.log('⏭️ Redo: Restoring state from', new Date(nextState.timestamp).toLocaleTimeString());
+
+    // Restore nodes with callbacks
+    const restoredNodes = nextState.nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        onUpdate: handleNodeUpdate,
+        onDelete: handleDeleteNode,
+        onResize: handlePhotoResize,
+      }
+    }));
+
+    setNodes(restoredNodes);
+    setEdges(nextState.edges);
+
+    // Allow recording again after state is restored
+    setTimeout(() => {
+      isUndoingRef.current = false;
+    }, 100);
+  }, [nodes, edges, setNodes, setEdges, handleNodeUpdate, handleDeleteNode, handlePhotoResize]);
+
   // Delete selected nodes
   const handleDeleteSelected = useCallback(() => {
     const selectedNodes = nodes.filter((n) => n.selected);
@@ -4082,11 +4209,13 @@ Example format:
   const { showHelp: showShortcutsHelp, setShowHelp: setShowShortcutsHelp } = useKeyboardShortcuts({
     onSave: handleSmartSave,
     onExport: handleExportJSON,
-    onAddCard: () => handleAddCard('note'),
-    onDelete: handleDeleteSelected,
-    onDuplicate: handleDuplicateSelected,
+    onAddCard: () => { recordHistory(); handleAddCard('note'); },
+    onDelete: () => { recordHistory(); handleDeleteSelected(); },
+    onDuplicate: () => { recordHistory(); handleDuplicateSelected(); },
     onDeselect: handleDeselect,
     onPan: handlePan,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
     enabled: currentMode === 'notes', // Only enable in notes mode
   });
 
