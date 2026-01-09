@@ -8,8 +8,7 @@ import {
   useEdgesState,
   addEdge,
   ReactFlowProvider,
-  useReactFlow,
-  NodeResizer
+  useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -47,112 +46,13 @@ import { useIOSPinchZoom } from '../hooks/useIOSPinchZoom';
 import notificationManager, { NotificationType } from '../utils/notificationManager';
 import { showToast } from '../utils/toast';
 
-// Export NodeResizer for use in node components
-export { NodeResizer };
-
-// Touch-Friendly Resizable Node Wrapper - adds NodeResizer with enhanced mobile support
-const withResizableHandles = (NodeComponent, minWidth = 150, minHeight = 100) => {
-  return React.memo((props) => {
-    const { id, selected, data } = props;
-
-    return (
-      <>
-        <NodeResizer
-          nodeId={id}
-          isVisible={selected}
-          minWidth={minWidth}
-          minHeight={minHeight}
-          color="#f59e0b"
-          handleClassName="nodrag"
-          handleStyle={{
-            width: 32,
-            height: 32,
-            borderRadius: 6,
-            backgroundColor: 'rgba(254, 243, 199, 0.95)',
-            border: '3.5px solid #f59e0b',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-          }}
-          onResizeEnd={(event, params) => {
-            // Call the onResize callback if provided in node data
-            if (data?.onResize) {
-              data.onResize(id, { width: params.width, height: params.height });
-            }
-          }}
-        />
-        <NodeComponent {...props} />
-      </>
-    );
-  });
-};
-
-// Comment Badge Wrapper - adds comment count badge to any node type
-// eslint-disable-next-line no-unused-vars
-const withCommentBadge = (NodeComponent) => {
-  return React.memo((props) => {
-    const { data } = props;
-    const commentCount = data?.commentCount || 0;
-
-    return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <NodeComponent {...props} />
-        {commentCount > 0 && (
-          <div className="comment-count-badge">
-            {commentCount}
-          </div>
-        )}
-      </div>
-    );
-  });
-};
-
-// Compose both wrappers - resizable + comment badge
-const withAllEnhancements = (NodeComponent, minWidth, minHeight) => {
-  const ResizableNode = withResizableHandles(NodeComponent, minWidth, minHeight);
-  return withCommentBadge(ResizableNode);
-};
-
-// Haptic feedback utility for mobile touch interactions
-// Provides tactile feedback on supported devices (iOS Safari 13+, Android Chrome 87+)
-const triggerHaptic = (type = 'light') => {
-  // Check if Vibration API is supported
-  if (!navigator.vibrate) return;
-
-  // Respect user's reduced motion preferences
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  // Vibration patterns in milliseconds [vibrate, pause, vibrate, ...]
-  const patterns = {
-    light: [10],              // Quick tap feedback for buttons
-    medium: [20],             // Standard action feedback (node drag, create)
-    heavy: [30],              // Important action (delete, major change)
-    success: [10, 50, 10],    // Success pattern (save, completion)
-    error: [50, 100, 50],     // Error/warning pattern
-    double: [10, 100, 10]     // Double-tap detection
-  };
-
-  try {
-    navigator.vibrate(patterns[type] || patterns.light);
-  } catch (e) {
-    // Silently fail if vibration not supported
-    console.debug('Haptic feedback not available:', e.message);
-  }
-};
-
 const nodeTypes = {
-  photoNode: withAllEnhancements(DraggablePhotoNode, 200, 200),
-  textNode: withAllEnhancements(TextNoteNode, 150, 100),
-  // UnityMAP journey node types - wrap each with all enhancements
-  ...Object.fromEntries(
-    Object.entries(mapNodeTypes).map(([key, Component]) => [
-      key, withAllEnhancements(Component, 180, 120)
-    ])
-  ),
-  // Premium Unity+ node types - wrap each with all enhancements
-  ...Object.fromEntries(
-    Object.entries(premiumNodeTypes).map(([key, Component]) => [
-      key, withAllEnhancements(Component, 150, 100)
-    ])
-  )
+  photoNode: DraggablePhotoNode,
+  textNode: TextNoteNode,
+  // UnityMAP journey node types
+  ...mapNodeTypes,
+  // Premium Unity+ node types
+  ...premiumNodeTypes
 };
 
 const STORAGE_KEY = 'unity-notes-data';
@@ -2023,9 +1923,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const handleDeleteNode = useCallback((nodeId) => {
 
     if (confirm('⚠️ Delete this note?\n\nThis cannot be undone.')) {
-      // Haptic feedback for node deletion
-      triggerHaptic('heavy');
-
       // Record history before deleting
       recordHistory();
 
@@ -2175,9 +2072,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const _handleNodeDragStart = useCallback((event, node) => {
     // Don't handle groups dragging
     if (node.type === 'groupNode') return;
-
-    // Haptic feedback for drag start
-    triggerHaptic('light');
 
     // Set flag to indicate a node is being dragged
     // This prevents canvas panning from interfering with node drag operations
@@ -2800,9 +2694,6 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     if (newNode) {
       // Record history before adding new node
       recordHistory();
-
-      // Haptic feedback for node creation
-      triggerHaptic('medium');
 
       setNodes((nds) => [...nds, newNode]);
       // Use double requestAnimationFrame to ensure React Flow has fully rendered the new node
