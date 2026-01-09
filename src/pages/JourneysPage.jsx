@@ -12,6 +12,14 @@ import { navigationItems } from '../config/navigationItems';
 function JourneysPage() {
   const navigate = useNavigate();
   const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  // Track viewport size for responsive layout
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Inject stagger animation
   React.useEffect(() => {
@@ -40,6 +48,19 @@ function JourneysPage() {
     navigate('/');
   };
 
+  // Quick Start destinations - randomly navigate to one
+  const quickStartDestinations = [
+    '/',
+    '/unity-notes',
+    '/assessment',
+    '/works'
+  ];
+
+  const handleQuickStart = () => {
+    const randomIndex = Math.floor(Math.random() * quickStartDestinations.length);
+    navigate(quickStartDestinations[randomIndex]);
+  };
+
   const journeys = [
     {
       title: 'GTM HEALTH ASSESSMENT',
@@ -62,6 +83,13 @@ function JourneysPage() {
       tags: ['Productivity', 'Notes', 'PWA'],
       path: '/unity-notes',
       icon: '📝'
+    },
+    {
+      title: 'STORIES',
+      description: 'Deep dives into client partnerships and projects. See how growth infrastructure transforms real businesses.',
+      tags: ['Case Studies', 'Clients', 'Results'],
+      path: '/works',
+      icon: '📖'
     }
   ];
 
@@ -76,15 +104,15 @@ function JourneysPage() {
       {/* Scrollable content area */}
       <div style={{
         position: 'fixed',
-        top: '100px',
+        top: isMobile ? '80px' : '100px',
         bottom: footerOpen ? '400px' : '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        right: '100px',
+        left: isMobile ? '85px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
+        right: isMobile ? '16px' : 'max(40px, 4vw)',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
-        transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
-        paddingRight: '20px'
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out, right 0.3s ease-out',
+        paddingRight: isMobile ? '0' : '20px'
       }}>
         <div style={{
           ...TYPOGRAPHY.container,
@@ -97,29 +125,72 @@ function JourneysPage() {
             ...EFFECTS.blurLight,
             display: 'inline-block',
             marginBottom: '10px',
+            fontSize: isMobile ? 'clamp(32px, 10vw, 48px)' : undefined,
             animation: 'fadeInUp 0.6s ease-in-out 0.2s both'
           }}>
             JOURNEYS
           </h1>
 
-          <p style={{
-            ...TYPOGRAPHY.h2,
-            color: COLORS.black,
-            backgroundColor: COLORS.backgroundLight,
-            ...EFFECTS.blur,
-            display: 'inline-block',
-            padding: '2px 6px',
-            marginBottom: '40px',
+          <div style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            gap: isMobile ? '16px' : '24px',
+            marginBottom: '32px',
             animation: 'fadeInUp 0.6s ease-in-out 0.4s both'
           }}>
-            Interactive tools &amp; guided experiences
-          </p>
+            <p style={{
+              ...TYPOGRAPHY.h2,
+              color: COLORS.black,
+              backgroundColor: COLORS.backgroundLight,
+              ...EFFECTS.blur,
+              display: 'inline-block',
+              padding: '2px 6px',
+              margin: 0,
+              fontSize: isMobile ? '14px' : undefined
+            }}>
+              Interactive tools &amp; guided experiences
+            </p>
+
+            {/* Quick Start Button */}
+            <button
+              onClick={handleQuickStart}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: isMobile ? '10px 16px' : '8px 16px',
+                fontSize: '12px',
+                fontWeight: '700',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'white',
+                backgroundColor: COLORS.yellow,
+                border: 'none',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(251, 191, 36, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.3)';
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>🎲</span>
+              Quick Start
+            </button>
+          </div>
 
           {/* Journey Cards - Grid Layout */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '20px',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: isMobile ? '16px' : '20px',
             paddingBottom: '40px'
           }}>
             {journeys.map((journey, index) => (
