@@ -1400,8 +1400,9 @@ Return ONLY a JSON object with this exact format:
                 ...secondaryButtonStyle,
                 padding: '10px 16px',
                 fontSize: '13px',
-                backgroundColor: demoMode ? 'rgba(251, 191, 36, 0.15)' : undefined,
-                borderColor: demoMode ? COLORS.yellow : undefined,
+                backgroundColor: demoMode ? 'rgba(251, 191, 36, 0.15)' : 'transparent',
+                borderColor: demoMode ? COLORS.yellow : '#d1d5db',
+                color: demoMode ? '#92400e' : '#6b7280',
               }}
               title="Demo mode uses template emails instead of AI generation (no API key needed)"
             >
