@@ -61,6 +61,70 @@ const DEFAULT_PROSPECT = {
   triggerDetails: 'Series B funding announced last week, expanding GTM team'
 };
 
+// Demo email templates - used when no API key is available
+// These show the structure and quality without making API calls
+const DEMO_EMAILS = {
+  prospect: {
+    initial: {
+      subject: "Quick question about {company}'s GTM infrastructure",
+      body: "{firstName}, I noticed {company} recently {triggerDetails}. Congrats on the momentum.\n\nWhen scaling GTM operations, many {industry} teams hit friction points around lead routing, data hygiene, and campaign orchestration.\n\nI've helped teams at similar stages build infrastructure that actually supports growth (not just more dashboards).\n\nWorth a 15-minute chat to see if there's alignment?\n\n— Chris"
+    },
+    followup1: {
+      subject: "Following up - {company}",
+      body: "{firstName}, wanted to follow up on my previous note.\n\nOne question that often surfaces at this stage: How long does it take your team to get a new campaign from idea to execution?\n\nIf it's more than a day, there might be infrastructure friction worth discussing.\n\n— Chris"
+    },
+    followup2: {
+      subject: "Last note - resource for {company}",
+      body: "{firstName}, I'll keep this brief — I know inboxes are full.\n\nI wrote a diagnostic on common GTM infrastructure gaps. Might be useful for your team regardless of whether we connect: yellowcircle.io/assessment\n\nDoor's open if timing changes.\n\n— Chris"
+    },
+    single: {
+      subject: "GTM infrastructure for {company}",
+      body: "{firstName}, I noticed {company} is in an exciting growth phase.\n\nI help {industry} teams build GTM infrastructure that scales — proper lead routing, clean data, automated workflows.\n\nWorth a quick chat to see if there's fit?\n\n— Chris"
+    }
+  },
+  marcom: {
+    initial: {
+      subject: "Introducing smarter GTM operations for {company}",
+      body: "Hi {firstName},\n\nAs {title} at {company}, you're likely focused on driving efficient growth in a competitive {industry} landscape.\n\nAt yellowCircle, we help marketing leaders like you build GTM infrastructure that actually scales — from lead management to campaign orchestration.\n\nI'd love to share some insights specific to {industry}. Would you be open to a brief conversation?\n\nBest,\nChris"
+    },
+    followup1: {
+      subject: "3 GTM trends we're seeing in {industry}",
+      body: "Hi {firstName},\n\nI wanted to share some trends we're seeing across {industry} companies:\n\n1. Teams are consolidating their tech stacks (fewer tools, deeper integrations)\n2. Lead scoring is moving from manual to AI-assisted\n3. Campaign-to-revenue attribution is becoming table stakes\n\nHappy to discuss how these might apply to {company}.\n\nBest,\nChris"
+    },
+    followup2: {
+      subject: "Free GTM health assessment for {company}",
+      body: "Hi {firstName},\n\nI wanted to extend an offer for a complimentary GTM Health Assessment for {company}.\n\nIt takes 10 minutes and provides actionable insights on your infrastructure maturity.\n\nTry it here: yellowcircle.io/assessment\n\nNo strings attached — happy to discuss results if helpful.\n\nBest,\nChris"
+    },
+    single: {
+      subject: "Better GTM infrastructure for {company}",
+      body: "Hi {firstName},\n\nStrong GTM infrastructure is the difference between teams that scale and teams that stall.\n\nAt yellowCircle, we help {industry} companies like {company} build systems that grow with you — clean data, smart routing, seamless campaign execution.\n\nInterested in learning more?\n\nBest,\nChris"
+    }
+  }
+};
+
+// Helper to populate demo email with prospect data
+const populateDemoEmail = (template, prospect) => {
+  let subject = template.subject;
+  let body = template.body;
+
+  const replacements = {
+    '{company}': prospect.company || 'your company',
+    '{firstName}': prospect.firstName || 'there',
+    '{lastName}': prospect.lastName || '',
+    '{title}': prospect.title || 'your role',
+    '{industry}': prospect.industry || 'your industry',
+    '{triggerDetails}': prospect.triggerDetails || 'announced exciting news',
+    '{trigger}': prospect.trigger || 'growth',
+  };
+
+  Object.entries(replacements).forEach(([key, value]) => {
+    subject = subject.replace(new RegExp(key, 'g'), value);
+    body = body.replace(new RegExp(key, 'g'), value);
+  });
+
+  return { subject, body };
+};
+
 // Generate system prompt based on user's brand config and send mode
 const generateSystemPrompt = (brand, sendMode = SEND_MODES.PROSPECT) => {
   const isProspect = sendMode === SEND_MODES.PROSPECT;
@@ -160,6 +224,9 @@ function OutreachGeneratorPage() {
   const [sendSuccess, setSendSuccess] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewEmail, setPreviewEmail] = useState(null);
+
+  // Demo mode - generates using templates instead of LLM API
+  const [demoMode, setDemoMode] = useState(false);
 
   // Send mode: prospect (cold) vs marcom (marketing communications)
   const [sendMode, setSendMode] = useState(SEND_MODES.PROSPECT);
@@ -577,6 +644,39 @@ Return ONLY a JSON object with this exact format:
   }, [brand, sendMode, resendApiKey]);
 
   const handleGenerate = async () => {
+    // Demo mode - use templates instead of LLM
+    if (demoMode) {
+      setIsGenerating(true);
+      setError(null);
+      setSendSuccess(null);
+
+      // Simulate a brief loading time for UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      try {
+        const modeKey = sendMode === SEND_MODES.PROSPECT ? 'prospect' : 'marcom';
+        let emails;
+
+        if (pathway === PATHWAYS.ONE_OFF) {
+          emails = { single: populateDemoEmail(DEMO_EMAILS[modeKey].single, formData) };
+        } else {
+          emails = {
+            initial: populateDemoEmail(DEMO_EMAILS[modeKey].initial, formData),
+            followup1: populateDemoEmail(DEMO_EMAILS[modeKey].followup1, formData),
+            followup2: populateDemoEmail(DEMO_EMAILS[modeKey].followup2, formData)
+          };
+        }
+
+        setGeneratedEmails(emails);
+        setCurrentStep(3);
+      } catch (err) {
+        setError('Demo mode error: ' + err.message);
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
+
     // Check if user can generate
     if (!canGenerate) {
       setShowApiKeyInput(true);
@@ -1220,6 +1320,18 @@ Return ONLY a JSON object with this exact format:
               }}>
                 {isAdmin ? 'Admin Access' : 'Premium'} — Unlimited
               </div>
+            ) : demoMode ? (
+              <div style={{
+                padding: '8px 14px',
+                backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                border: '1px solid rgba(251, 191, 36, 0.4)',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: 'rgb(251, 191, 36)'
+              }}>
+                🎭 Demo Mode — No API needed
+              </div>
             ) : apiKey ? (
               <div style={{
                 padding: '8px 14px',
@@ -1280,6 +1392,20 @@ Return ONLY a JSON object with this exact format:
               title="Load yellowCircle test data for quick testing"
             >
               🧪 Load Test Data
+            </button>
+            {/* Demo Mode Toggle - works without API key */}
+            <button
+              onClick={() => setDemoMode(!demoMode)}
+              style={{
+                ...secondaryButtonStyle,
+                padding: '10px 16px',
+                fontSize: '13px',
+                backgroundColor: demoMode ? 'rgba(251, 191, 36, 0.15)' : undefined,
+                borderColor: demoMode ? COLORS.yellow : undefined,
+              }}
+              title="Demo mode uses template emails instead of AI generation (no API key needed)"
+            >
+              {demoMode ? '🎭 Demo ON' : '🎭 Demo Mode'}
             </button>
             {/* Start Over - visible after step 1 or with generated emails */}
             {(currentStep > 1 || generatedEmails) && (

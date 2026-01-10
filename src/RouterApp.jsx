@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -95,11 +96,12 @@ const PageLoader = () => (
 
 function RouterApp() {
   return (
-    <AuthProvider>
-      <LayoutProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <LayoutProvider>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/home-17" element={<Home17Page />} />
 
@@ -185,11 +187,12 @@ function RouterApp() {
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-        </Router>
-      </LayoutProvider>
-    </AuthProvider>
+              </Routes>
+            </Suspense>
+          </Router>
+        </LayoutProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

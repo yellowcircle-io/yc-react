@@ -107,6 +107,10 @@ export const sendToSlack = async (data) => {
 /**
  * Dual-send to both Web3Forms (for email backup) and n8n (for automation)
  * Use this in form submit handlers
+ *
+ * Pipeline with automatic fallback:
+ * 1. Try n8n webhook (Airtable + Slack + AI drafts)
+ * 2. If n8n fails, fall back to direct Slack notification
  */
 export const sendLeadCapture = async (formData, source, leadType) => {
   const cleanSource = (source || '').trim();
@@ -130,8 +134,22 @@ export const sendLeadCapture = async (formData, source, leadType) => {
     score: formData.score || null,
   };
 
-  // Fire and forget to n8n (don't block form submission)
-  sendToN8N(leadData).catch(() => {});
+  // Try n8n first, fall back to direct Slack if it fails
+  sendToN8N(leadData).then(result => {
+    if (!result.success) {
+      console.log('[Integrations] n8n failed, falling back to direct Slack');
+      sendToSlack(leadData).then(slackResult => {
+        if (slackResult.success) {
+          console.log('[Integrations] Lead sent to Slack (fallback) successfully');
+        } else {
+          console.warn('[Integrations] Both n8n and Slack failed:', slackResult.reason);
+        }
+      });
+    }
+  }).catch(() => {
+    // Also try Slack if n8n throws
+    sendToSlack(leadData).catch(() => {});
+  });
 
   return leadData;
 };

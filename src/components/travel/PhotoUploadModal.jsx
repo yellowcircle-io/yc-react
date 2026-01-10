@@ -278,7 +278,8 @@ const PhotoUploadModal = ({
                 <div style={{
                   minWidth: '100%',
                   padding: '32px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  pointerEvents: currentPage === 0 ? 'auto' : 'none'
                 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <p style={{
@@ -493,7 +494,8 @@ const PhotoUploadModal = ({
                   <div style={{
                     minWidth: '100%',
                     padding: '32px',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    pointerEvents: currentPage === 1 ? 'auto' : 'none'
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       {/* Back Button - Hide in MAP mode since we skip page 0 */}
@@ -847,7 +849,8 @@ const PhotoUploadModal = ({
                   <div style={{
                     minWidth: '100%',
                     padding: '32px',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    pointerEvents: currentPage === 2 ? 'auto' : 'none'
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       {/* Back Button */}

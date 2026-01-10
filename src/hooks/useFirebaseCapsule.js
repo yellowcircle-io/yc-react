@@ -16,11 +16,57 @@ import {
 import { db } from '../config/firebase';
 
 // Rate limiting configuration
+// UPDATED Jan 9, 2026: Reduced minIntervalMs from 30s to 10s to prevent data loss
+// The 30s interval was too aggressive - users making rapid changes would have
+// saves rejected and lose data if they refreshed before the cooldown expired
 const RATE_LIMIT_CONFIG = {
-  minIntervalMs: 30000,      // Minimum 30 seconds between saves
-  maxSavesPerHour: 60,       // Maximum 60 saves per hour
-  cooldownAfterBurstMs: 300000  // 5 minute cooldown after hitting limit
+  minIntervalMs: 10000,      // Minimum 10 seconds between saves (was 30s)
+  maxSavesPerHour: 120,      // Maximum 120 saves per hour (was 60)
+  cooldownAfterBurstMs: 180000  // 3 minute cooldown after hitting limit (was 5 min)
 };
+
+// Pending save queue - stores saves that were rate-limited for retry
+let pendingSaveQueue = [];
+let pendingSaveTimer = null;
+
+/**
+ * Add a save to the pending queue (called when rate limited)
+ */
+const queuePendingSave = (saveCallback) => {
+  pendingSaveQueue.push(saveCallback);
+
+  // Start retry timer if not already running
+  if (!pendingSaveTimer) {
+    pendingSaveTimer = setTimeout(processPendingQueue, RATE_LIMIT_CONFIG.minIntervalMs + 1000);
+  }
+};
+
+/**
+ * Process pending saves in queue
+ */
+const processPendingQueue = async () => {
+  pendingSaveTimer = null;
+
+  if (pendingSaveQueue.length === 0) return;
+
+  // Get the most recent save (discard older ones as they're stale)
+  const latestSave = pendingSaveQueue.pop();
+  pendingSaveQueue = []; // Clear the queue
+
+  try {
+    await latestSave();
+    console.log('✅ Pending save processed successfully');
+  } catch (err) {
+    console.warn('⚠️ Pending save retry failed:', err.message);
+    // If still rate limited, re-queue
+    if (err.message.includes('wait') || err.message.includes('Rate limit')) {
+      queuePendingSave(latestSave);
+    }
+  }
+};
+
+// Export queue function for external use
+export { queuePendingSave };
 
 /**
  * Check if save is allowed based on rate limits

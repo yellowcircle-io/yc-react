@@ -3083,3 +3083,60 @@ Then say: "Continue drafting 'Why Your GTM Sucks' article outline"
 ## 🎯 NOVEMBER 19, 2025 - MOBILE COMMAND SYSTEM COMPLETE - 5:10 PM PST
 
 [Previous content remains...]
+
+---
+
+## 🔄 JANUARY 10, 2026 SESSION - Mac Mini
+
+**Updated:** January 10, 2026 at session time
+**Machine:** Mac Mini
+**Status:** 🔄 Slack/n8n Discrepancy Investigated + Sync to MacBook Air
+
+### Tasks Completed:
+
+1. **Demo Mode Added to Unity Generator** (`OutreachGeneratorPage.jsx`)
+   - Template-based email generation without API calls
+   - Toggle button in UI with visual indicator
+   - Works for both Prospect and MarCom modes
+
+2. **Groq API Key Stored** (`.env` line 32)
+   - `VITE_GROQ_API_KEY` configured securely
+
+3. **n8n Fallback Implemented** (`src/config/integrations.js`)
+   - Pipeline now auto-falls back to direct Slack when n8n returns 404
+   - Added `VITE_SLACK_WEBHOOK` placeholder to `.env`
+
+4. **Slack/n8n Discrepancy Investigated**
+   - See: `.claude/SLACK_N8N_DISCREPANCY_JAN10.md`
+   - **Finding:** Two separate systems - n8n (web app) vs SLACK_BOT_TOKEN (sleepless agent)
+   - **Issue:** SLACK_BOT_TOKEN missing from current .env (was working Dec 24)
+   - n8n restarted by user
+
+### Pending - User Action Required:
+
+1. **Add SLACK_BOT_TOKEN to .env** for sleepless agent notifications:
+   ```
+   SLACK_BOT_TOKEN=[YOUR-BOT-TOKEN]
+   SLACK_APP_TOKEN=[YOUR-APP-TOKEN]
+   SLACK_CHANNEL=U0A2J4EK753
+   ```
+
+2. **Optional: Add VITE_SLACK_WEBHOOK** for web app fallback
+
+### Files Modified This Session:
+- `src/pages/experiments/OutreachGeneratorPage.jsx` - Demo mode
+- `src/config/integrations.js` - n8n fallback to Slack
+- `.env` - Groq key + Slack webhook placeholder
+- `.claude/SLACK_N8N_DISCREPANCY_JAN10.md` - Investigation report
+
+### Commits Since Dec 30:
+- 5ce02cb - Fix: JourneysPage mobile responsive
+- f9e0df9 - Phase 3: Add Undo/Redo system
+- ea80982 - Phase 2: iOS Safari Visual Viewport
+- 69a1072 - Phase 1: CSS touch feedback
+- 0bc455c - Revert: UnityNotesPage pre-Dec 30
+- c90f030 - Fix: Remove touch resize handle issues
+- abb7e7a - Sync 250+ sleepless agent optimizations
+- And more...
+
+---

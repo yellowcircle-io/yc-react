@@ -62,6 +62,33 @@ const createMarkerContent = (color, label = null, scale = 24) => {
   return container;
 };
 
+// Custom comparison for memo - ensure places/baseLocation changes trigger re-render
+const arePropsEqual = (prevProps, nextProps) => {
+  // Always re-render if these change
+  if (prevProps.selected !== nextProps.selected) return false;
+  if (prevProps.id !== nextProps.id) return false;
+
+  // Deep check critical data properties
+  const prevData = prevProps.data;
+  const nextData = nextProps.data;
+
+  if (prevData.places?.length !== nextData.places?.length) return false;
+  if (prevData.baseLocation?.name !== nextData.baseLocation?.name) return false;
+  if (prevData.title !== nextData.title) return false;
+  if (prevData.proximityGroups?.length !== nextData.proximityGroups?.length) return false;
+  if (prevData.aiSuggestion !== nextData.aiSuggestion) return false;
+
+  // Check if any place was modified
+  if (prevData.places && nextData.places) {
+    for (let i = 0; i < prevData.places.length; i++) {
+      if (prevData.places[i]?.assignedDay !== nextData.places[i]?.assignedDay) return false;
+      if (prevData.places[i]?.id !== nextData.places[i]?.id) return false;
+    }
+  }
+
+  return true;
+};
+
 const TripPlannerMapNode = memo(({ id, data, selected }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -1221,7 +1248,7 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
       <Handle type="source" position={Position.Bottom} style={{ width: '8px', height: '8px', backgroundColor: '#22c55e', border: '2px solid #fff' }} />
     </div>
   );
-});
+}, arePropsEqual);
 
 TripPlannerMapNode.displayName = 'TripPlannerMapNode';
 

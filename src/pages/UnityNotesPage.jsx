@@ -8,13 +8,15 @@ import {
   useEdgesState,
   addEdge,
   ReactFlowProvider,
-  useReactFlow
+  useReactFlow,
+  SelectionMode
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import Layout from '../components/global/Layout';
 import LeadGate from '../components/shared/LeadGate';
 import { useLayout } from '../contexts/LayoutContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { navigationItems } from '../config/navigationItems';
 import { useAuth } from '../contexts/AuthContext';
 import { useApiKeyStorage } from '../hooks/useApiKeyStorage';
@@ -37,7 +39,7 @@ import ConditionEditModal from '../components/unity/map/ConditionEditModal';
 import ProspectInputModal from '../components/unity/map/ProspectInputModal';
 import { uploadMultipleToCloudinary } from '../utils/cloudinaryUpload';
 import { prepareNodesForRendering } from '../utils/nodeUtils';
-import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
+import { useFirebaseCapsule, queuePendingSave } from '../hooks/useFirebaseCapsule';
 import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
 import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
@@ -68,6 +70,7 @@ const CARD_TYPES = {
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showParallax, setShowParallax }) => {
   const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport, setCenter } = useReactFlow();
   const { sidebarOpen } = useLayout();
+  const { theme, themeConfig, accentConfig: _accentConfig, isDarkMode: _isDarkMode, setTheme } = useTheme();  
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -168,6 +171,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [showAICanvasModal, setShowAICanvasModal] = useState(false);
   const [isGeneratingCanvas, setIsGeneratingCanvas] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true); // Canvas minimap toggle
+  const [backgroundPattern, setBackgroundPattern] = useState(() => {
+    try {
+      const saved = localStorage.getItem('unity-notes-background-pattern');
+      return saved || 'dots';
+    } catch {
+      return 'dots';
+    }
+  }); // Canvas background pattern: dots, lines, cross, none
   const [showOverviewTray, setShowOverviewTray] = useState(false); // Right-side overview panel
 
   // Collaboration state (v3)
@@ -2249,7 +2260,29 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         console.log('✅ Auto-saved capsule:', currentCapsuleId);
       } catch (error) {
         console.error('❌ Auto-save to Firestore failed:', error);
-        // Don't show alert - localStorage save is the fallback
+
+        // If rate limited, queue the save for retry instead of losing data
+        if (error.message && (error.message.includes('wait') || error.message.includes('Rate limit'))) {
+          console.log('📋 Queueing save for retry after rate limit expires...');
+          // Re-serialize nodes/edges at retry time (they may have changed)
+          queuePendingSave(async () => {
+            const retryNodes = nodes.map(node => {
+              const retryData = {};
+              if (node.data) {
+                Object.keys(node.data).forEach(key => {
+                  if (typeof node.data[key] !== 'function') {
+                    retryData[key] = node.data[key];
+                  }
+                });
+              }
+              return { id: node.id, type: node.type, position: { x: node.position.x, y: node.position.y }, ...(node.parentId && { parentId: node.parentId }), data: retryData };
+            });
+            const retryEdges = edges.map(edge => ({ id: edge.id, source: edge.source, target: edge.target, type: edge.type || 'default' }));
+            await updateCapsule(currentCapsuleId, retryNodes, retryEdges);
+            console.log('✅ Queued save completed:', currentCapsuleId);
+          });
+        }
+        // localStorage save is the immediate fallback (already saved above)
       }
     }, 2000); // 2 second debounce
 
@@ -4232,6 +4265,16 @@ Example format:
     });
   }, [setShowParallax]);
 
+  // Background pattern change handler
+  const handleBackgroundChange = useCallback((newPattern) => {
+    setBackgroundPattern(newPattern);
+    try {
+      localStorage.setItem('unity-notes-background-pattern', newPattern);
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 20 }}>
       {/* Loading Skeleton - shown while initializing */}
@@ -4318,6 +4361,11 @@ Example format:
               user-select: none !important;
             }
 
+            /* Theme-aware canvas background */
+            .react-flow {
+              background-color: var(--theme-canvas-bg) !important;
+            }
+
             /* Touch-friendly resize handles - Enhanced for mobile */
             .react-flow__node-photoNode .nodrag,
             .react-flow__node-textNode .nodrag,
@@ -4338,7 +4386,7 @@ Example format:
               isolation: isolate;
             }
 
-            /* Invisible touch target around resize handles (80px for iOS) */
+            /* Invisible touch target around resize handles (44px - Apple minimum) */
             .react-flow__node-photoNode .nodrag::before,
             .react-flow__node-textNode .nodrag::before,
             .react-flow__node-stickyNode .nodrag::before,
@@ -4354,8 +4402,8 @@ Example format:
               top: 50%;
               left: 50%;
               transform: translate(-50%, -50%) translate3d(0, 0, 0);
-              width: 80px;
-              height: 80px;
+              width: 44px;
+              height: 44px;
               background: transparent;
               border-radius: 50%;
               pointer-events: auto;
@@ -4462,7 +4510,10 @@ Example format:
             nodeTypes={nodeTypes}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             panOnDrag={[1, 2]}
-            selectionOnDrag={false}
+            selectionOnDrag={true}
+            selectionMode={SelectionMode.Partial}
+            selectionKeyCode={null}
+            multiSelectionKeyCode="Shift"
             panOnScroll={true}
             zoomOnScroll={false}
             zoomOnPinch={true}
@@ -4474,13 +4525,15 @@ Example format:
             nodesConnectable={true}
             elementsSelectable={true}
           >
-            <Background
-              variant="dots"
-              gap={24}
-              size={2}
-              color="#aaa"
-              style={{ opacity: 0.3 }}
-            />
+            {backgroundPattern !== 'none' && (
+              <Background
+                variant={backgroundPattern}
+                gap={24}
+                size={2}
+                color={themeConfig.dotColor}
+                style={{ opacity: 0.3 }}
+              />
+            )}
             {/* Canvas Minimap - toggleable navigation overview (smaller, more transparent) */}
             {showMinimap && (
               <MiniMap
@@ -4511,10 +4564,10 @@ Example format:
                 style={{
                   width: 140,
                   height: 90,
-                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                  border: '1px solid rgba(229, 231, 235, 0.6)',
+                  backgroundColor: 'var(--theme-minimap-bg)',
+                  border: '1px solid var(--theme-minimap-border)',
                   borderRadius: '6px',
-                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+                  boxShadow: `0 1px 4px var(--theme-shadow-color)`,
                 }}
                 pannable
                 zoomable
@@ -4546,11 +4599,11 @@ Example format:
           display: 'flex',
           flexDirection: 'column',
           gap: '6px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: 'var(--theme-minimap-bg)',
           backdropFilter: 'blur(8px)',
           padding: showModePanel ? '10px' : '0',
           borderRadius: '8px 0 0 8px',
-          boxShadow: showModePanel ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+          boxShadow: showModePanel ? `0 4px 12px var(--theme-shadow-color)` : 'none',
           overflow: 'hidden',
           maxWidth: showModePanel ? '120px' : '0',
           opacity: showModePanel ? 1 : 0,
@@ -4597,38 +4650,29 @@ Example format:
           flexDirection: 'column',
           alignItems: 'center',
           gap: '6px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backgroundColor: 'var(--theme-minimap-bg)',
           backdropFilter: 'blur(8px)',
           padding: '8px 6px',
           borderRadius: showModePanel ? '0 6px 6px 0' : '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)'
+          boxShadow: `0 2px 8px var(--theme-shadow-color)`
         }}>
         {/* Zoom In Button */}
         <button
           onClick={() => zoomIn({ duration: 200 })}
+          className="btn-accent"
           style={{
             width: '32px',
             height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgb(251, 191, 36)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            transition: 'background-color 0.2s, transform 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#f5b000';
-            e.currentTarget.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Zoom In"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
@@ -4637,7 +4681,7 @@ Example format:
         <div style={{
           fontSize: '9px',
           fontWeight: '600',
-          color: 'rgba(0, 0, 0, 0.6)',
+          color: 'var(--theme-text-secondary)',
           letterSpacing: '0.02em',
           textAlign: 'center',
           minWidth: '32px'
@@ -4648,29 +4692,20 @@ Example format:
         {/* Zoom Out Button */}
         <button
           onClick={() => zoomOut({ duration: 200 })}
+          className="btn-accent"
           style={{
             width: '32px',
             height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgb(251, 191, 36)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            transition: 'background-color 0.2s, transform 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#f5b000';
-            e.currentTarget.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Zoom Out"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text)" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
             <path d="M5 12h14" />
           </svg>
         </button>
@@ -4678,31 +4713,20 @@ Example format:
         {/* Center/Fit View Button */}
         <button
           onClick={() => fitView({ duration: 400, padding: 0.2 })}
+          className="btn-theme-secondary"
           style={{
             width: '32px',
             height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.04)',
-            border: '1px solid rgba(0, 0, 0, 0.12)',
             borderRadius: '4px',
             cursor: 'pointer',
-            color: 'black',
-            transition: 'background-color 0.2s, transform 0.2s',
             marginTop: '2px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
-            e.currentTarget.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Center View"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
             <circle cx="12" cy="12" r="3" />
             <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
           </svg>
@@ -4711,30 +4735,19 @@ Example format:
         {/* Auto-Layout Button */}
         <button
           onClick={handleAutoLayout}
+          className="btn-theme-secondary"
           style={{
             width: '32px',
             height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.04)',
-            border: '1px solid rgba(0, 0, 0, 0.12)',
             borderRadius: '4px',
             cursor: 'pointer',
-            color: 'black',
-            transition: 'background-color 0.2s, transform 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
-            e.currentTarget.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.04)';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Auto-Organize Nodes"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-secondary)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, minWidth: 14, minHeight: 14 }}>
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -4873,7 +4886,7 @@ Example format:
         </button>
 
         {/* Divider */}
-        <div style={{ width: '24px', height: '1px', backgroundColor: '#e5e7eb', margin: '4px 0' }} />
+        <div style={{ width: '24px', height: '1px', backgroundColor: 'var(--theme-border)', margin: '4px 0' }} />
 
         {/* Mode Toggle Button */}
         <button
@@ -4946,6 +4959,11 @@ Example format:
         nodeLimit={nodeLimit}
         lastSavedAt={lastSavedAt}
         onShortcutsClick={() => setShowShortcutsHelp(true)}
+        // Theme/appearance props
+        theme={theme}
+        onThemeChange={setTheme}
+        backgroundPattern={backgroundPattern}
+        onBackgroundChange={handleBackgroundChange}
       />
 
       {/* Empty State - Centered above CircleNav with chevron */}
@@ -4957,10 +4975,10 @@ Example format:
           transform: 'translateX(-50%)',
           textAlign: 'center',
           padding: '12px 16px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: 'var(--theme-minimap-bg)',
           backdropFilter: 'blur(8px)',
           borderRadius: '8px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+          boxShadow: `0 4px 16px var(--theme-shadow-color)`,
           maxWidth: '240px',
           pointerEvents: 'none',
           zIndex: 85
@@ -4968,7 +4986,7 @@ Example format:
           <h2 style={{
             fontSize: '14px',
             fontWeight: '700',
-            color: '#000',
+            color: 'var(--theme-text)',
             marginBottom: '6px',
             textAlign: 'center',
           }}>
@@ -4976,11 +4994,11 @@ Example format:
           </h2>
           <p style={{
             fontSize: '12px',
-            color: 'rgba(0, 0, 0, 0.6)',
+            color: 'var(--theme-text-secondary)',
             lineHeight: '1.4',
             textAlign: 'center',
           }}>
-            Click the <span style={{ color: 'rgb(251, 191, 36)', fontWeight: '700' }}>+</span> below to get started.
+            Click the <span style={{ color: 'var(--accent-color)', fontWeight: '700' }}>+</span> below to get started.
           </p>
           {/* Chevron pointing down */}
           <div style={{
@@ -4992,7 +5010,7 @@ Example format:
             height: 0,
             borderLeft: '8px solid transparent',
             borderRight: '8px solid transparent',
-            borderTop: '8px solid rgba(255, 255, 255, 0.95)',
+            borderTop: '8px solid var(--theme-minimap-bg)',
           }} />
         </div>
       )}
