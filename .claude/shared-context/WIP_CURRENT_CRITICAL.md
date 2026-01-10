@@ -2,9 +2,42 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** December 24, 2025 at 4:45 PM EST
-**Machine:** Mac Mini → MacBook Air
-**Status:** 🔄 Sleepless Agent Thread Support - Needs Slack Config
+**Updated:** January 10, 2026 at 11:45 AM EST
+**Machine:** Mac Mini
+**Status:** ✅ Demo Mode Testing Complete - Staging Deployed
+
+---
+
+## ✅ DEMO MODE & STAGING DEPLOYMENT (Jan 10, 2026) - Mac Mini
+
+### What Was Done:
+1. **ThemeContext CI Fix** - Fixed build error, committed missing ThemeContext.jsx
+2. **Demo Mode Testing on Staging** - Full end-to-end test passed:
+   - Demo Mode toggle works ("🎭 Demo ON" state indicator)
+   - 3-email sequence generates without API key
+   - Personalization working (Company, Contact, Industry fields)
+   - Export options: .md, .doc, .json
+   - Copy buttons functional
+   - Deploy to UnityMAP button present
+3. **Slack Integration Fixed** - Found tokens in sleepless agent config, copied to .env
+4. **n8n Fallback** - Added automatic fallback to direct Slack webhook
+
+### Staging URL:
+https://yellowcircle-app--staging-djr44qvi.web.app
+
+### Files Committed Today:
+- `src/contexts/ThemeContext.jsx` - Theme context for UnityNotes
+- `src/config/integrations.js` - n8n → Slack fallback
+
+### Slack Tokens Status:
+- `SLACK_BOT_TOKEN` ✅ Added to .env
+- `SLACK_APP_TOKEN` ✅ Added to .env
+- `SLACK_CHANNEL` ✅ Added to .env
+- Source: sleepless agent's bundled config.yaml
+
+---
+
+## 📋 PREVIOUS SESSION (Dec 24, 2025)
 
 ---
 
