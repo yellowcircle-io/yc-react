@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
   "last_reset": null,
-  "last_updated": null,
+  "last_updated": "2026-01-15T07:00:18Z",
   "failure_counts": {
     "commit_failed": 0,
     "build_failed": 0,
     "deployment_failed": 0,
     "auth_failed": 0,
-    "task_failed": 0
+    "task_failed": 5
   },
   "thresholds": {
     "commit_failed": 3,
@@ -20,5 +20,10 @@
   "circuit_opened_at": null,
   "circuit_opened_reason": null,
   "notes": "Reset manually via scripts/reset-circuit-breaker.sh or set circuit_open to false",
-  "last_failure": null
+  "last_failure": {
+    "type": "task_failed",
+    "time": "2026-01-15T07:00:18Z",
+    "details": "Exit code: 1, Task: Review functions/index.js for potential issues, security concerns, and code quality. Summarize findings.",
+    "agent": null
+  }
 }

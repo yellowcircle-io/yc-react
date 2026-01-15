@@ -116,14 +116,24 @@ echo "Done! If GitHub shows issues, ensure GITHUB_TOKEN is set."
 
 ## Machine Status
 
-| Machine | Playwright | GitHub | Notion | Brevo | Last Verified |
+| Machine | Playwright | GitHub | Notion | Figma | Last Verified |
 |---------|------------|--------|--------|-------|---------------|
-| Mac Mini | ✅ | ✅ | ⚠️ | ❓ | Dec 19, 2025 |
-| MacBook Air | ✅ | ⚠️ | ✅ | ❓ | Dec 20, 2025 |
+| Mac Mini | ✅ | ✅ | ⚠️ Needs OAuth | ⚠️ Needs OAuth | Jan 15, 2026 |
+| MacBook Air | ✅ | ⚠️ | ⚠️ Needs OAuth | ⚠️ Needs OAuth | Dec 20, 2025 |
+
+**Configuration (Jan 15, 2026):**
+- `playwright` - **DEFAULT**: Chrome with persistent profile (for auth sessions)
+- `playwright-safari` - WebKit for iOS compatibility testing
+- `playwright-firefox` - Firefox/Gecko for cross-browser testing
+- `playwright-comet` - **EDGE CASE ONLY**: Comet agentic browser (SSO redirects to default browser)
+- `github` - stdio-based, working
+- `notion` - HTTP-based, requires browser OAuth (restart Claude after auth)
+- `figma` - HTTP-based, requires browser OAuth (restart Claude after auth)
 
 **Notes:**
-- MacBook Air Notion: Using `@notionhq/notion-mcp-server` with API key authentication
-- MacBook Air GitHub: Needs `GITHUB_TOKEN` environment variable set
+- Notion/Figma use HTTP-based MCP which requires browser OAuth authentication
+- OAuth sessions expire - re-authenticate via browser when "Unauthorized" errors occur
+- Comet should only be used by explicit request due to SSO limitations
 
 ---
 

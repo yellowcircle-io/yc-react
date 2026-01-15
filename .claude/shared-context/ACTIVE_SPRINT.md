@@ -1,6 +1,54 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** December 21, 2025
+**Updated:** January 15, 2026
 **Purpose:** Concise, accurate status tracking (replaces verbose WIP)
+
+---
+
+## 🔴 JANUARY 2026 STATUS (NEW)
+
+### Q1 Recovery Complete (Jan 7, 2026)
+| Action | Status | Commit |
+|--------|--------|--------|
+| P0-1: Fix cron job CLI flag | ✅ Done | `0e7846c` |
+| P0-2: Extract Jan 3 docs from stash | ✅ Done | `0e7846c` |
+| withCommentBadge TDZ bug fix | ✅ Done | `0e7846c` |
+| Deploy to Firebase production | ✅ Done | Jan 7 |
+
+### Demo Mode & Staging (Jan 10, 2026)
+| Item | Status |
+|------|--------|
+| ThemeContext CI fix | ✅ Committed |
+| Demo Mode toggle | ✅ Working |
+| 3-email sequence (no API) | ✅ Working |
+| Slack tokens configured | ✅ In .env |
+| Staging URL | https://yellowcircle-app--staging-djr44qvi.web.app |
+
+### Valentine's Campaign Testing (Jan 15, 2026)
+| Test | Status | Notes |
+|------|--------|-------|
+| 3-email sequence | ✅ Pass | Welcome, Follow-up #1, Final Nurture |
+| LinkedIn Ads | ✅ Pass | AI generated via STUDIO |
+| Meta (FB/IG) Ads | ✅ Pass | AI generated via STUDIO |
+| Campaign Quickstart | ✅ Pass | 6 platforms generated |
+
+### Current P1 Tasks
+| Task | Status | Notes |
+|------|--------|-------|
+| Ad Platform Tokens | ⚠️ User Action | LinkedIn OAuth, Meta Verification |
+| Launch Outbound Campaign | ⏳ Blocked | Waiting on ad tokens |
+| Update instance logs | ⏳ Pending | MacMini + MacBook Air |
+
+### Current P2 Tasks
+| Task | Status | Est. Time |
+|------|--------|-----------|
+| Review workspace optimizations | ⏳ Deferred | 2-4 hrs |
+| Theme System (ThemeContext) | 📋 Planned | 2-3 sessions |
+| Claude Bot Relay | 📋 Scoped | Needs ANTHROPIC_API_KEY |
+
+### Git Status (Current)
+- Branch: main
+- Last commit: `1fc89ed` (Jan 15, 2026) - "Fix: Move React hooks before early returns"
+- All changes pushed to GitHub
 
 ---
 
@@ -229,12 +277,25 @@ curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnr
 
 ### Git Status
 - Branch: main
-- Last commit: `c827392` (Dec 20, 2025) - "Docs: Add MCP server configuration to shared context"
+- Last commit: `1fc89ed` (Jan 15, 2026) - "Fix: Move React hooks before early returns"
 - All changes pushed to GitHub
+- **See January 2026 section above for current status**
 
 ---
 
-## RECENT COMMITS (Dec 16-20)
+## RECENT COMMITS (Jan 2026)
+
+| Hash | Date | Description |
+|------|------|-------------|
+| `1fc89ed` | Jan 15 | Fix: Move React hooks before early returns (Rules of Hooks) |
+| `1d79d43` | Jan 15 | Revert: Restore working UnityNotesPage (fix runtime error) |
+| `8f8751d` | Jan 15 | Fix: Add html2canvas to dependencies for CI build |
+| `abb7e7a` | Jan 15 | Sync 250+ sleepless agent optimizations to production |
+| `aefefc6` | Jan 14 | fix: Sleepless agent wrapper uses subprocess |
+| `0e7846c` | Jan 7 | Recovery: Q1 2026 MSF restoration - cron fix, docs update |
+| `43c653f` | Jan 3 | Fix: Remove react-hot-toast import |
+
+## ARCHIVED COMMITS (Dec 16-20, 2025)
 
 | Hash | Date | Description |
 |------|------|-------------|
