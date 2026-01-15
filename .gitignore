@@ -72,3 +72,17 @@ scripts/*-local.js
 *-key.js
 *-keys.js
 scripts/__pycache__/
+
+# Playwright MCP screenshots and browser data
+.playwright-mcp/
+
+# MCP local configuration
+.mcp.json
+
+# Backup files (various naming patterns)
+*.backup-*
+*.broken-*
+
+# Temporary/WIP page backups
+src/pages/*.backup-*
+src/pages/*.broken-*
