@@ -2,9 +2,102 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 15, 2026 at 3:30 PM EST
-**Machine:** Mac Mini
-**Status:** ✅ Valentine's Campaign Testing Complete - MSF Documentation Updated
+**Updated:** January 15, 2026 at 4:30 PM EST
+**Machine:** MacBook Air
+**Status:** ✅ Disk Cleanup (+35 GB) - GitHub Repo Now PRIVATE - Security Hardened
+
+---
+
+## ✅ MACBOOK AIR CLEANUP & GITHUB SECURITY (Jan 15, 2026 Afternoon) - MacBook Air
+
+### What Was Done:
+1. **MacBook Air Disk Cleanup (Full Execution)**
+   - External drive: ORICO (477 GB)
+   - Reclaimed: **+35 GB** (10 GB → 46 GB available)
+   - Phase 1: Cache cleanup (~8 GB) - Chrome, Firefox, npm, Playwright, Steam
+   - Phase 2: Archived 6 Chrome profiles (~8 GB) to ORICO
+   - Phase 3: Archived Airmail (11 GB), Adobe (4.8 GB), Firefox (2.7 GB), Microsoft (1.7 GB)
+   - Phase 5: Backed up yellowcircle-redesign, Photos, Notion (copies only)
+
+2. **Chrome Profile Restored**
+   - Restored Profile 9 (yellowcircle.io) from ORICO backup
+   - Account: christopher@yellowcircle.io
+
+3. **GitHub Security Hardening**
+   - ✅ **Repo made PRIVATE** (yellowcircle-io/yc-react)
+   - ✅ Removed `.env` from git tracking (was exposing API keys)
+   - ✅ Removed `.playwright-mcp/` screenshots from tracking
+   - ✅ Removed `.mcp.json` local config from tracking
+   - ✅ Updated `.gitignore` with new exclusions
+   - ✅ Verified commit 4b3adf6 - admin token was already rotated
+   - ✅ Firebase deploy verified working with private repo
+
+4. **Documentation Created**
+   - `CROSS_MACHINE_DISK_MAINTENANCE.md` - Replicable cleanup guide for all machines
+   - `REPO_REORGANIZATION_PLAN.md` - Future public branch strategy (deferred)
+
+### Archives Created (on ORICO):
+- Chrome-Profile-Backups/ (6 profiles archived, Profile 9 restored)
+- Application-Data/ (Airmail, Adobe, Firefox, Microsoft, etc.)
+- Backups-Keep-Original/ (yellowcircle-redesign, Photos, Notion)
+
+### Security Notes:
+- GitHub repo is now **PRIVATE** - no public access
+- `.env` file still exists locally but untracked
+- Public portfolio branch deferred (not needed now)
+
+### Next Steps (for Mac Mini):
+- Verify `git pull` to get security updates
+- Review workspace optimizations (250+ useMemo/useCallback)
+- Theme System implementation (plan exists)
+- User action on ad platform tokens
+
+---
+
+## 📋 PREVIOUS SESSION (Jan 15, 2026 Evening) - Mac Mini
+
+## ✅ DISK CLEANUP & ROADMAP CONTINUATION (Jan 15, 2026 Evening) - Mac Mini
+
+### What Was Done:
+1. **Mac Mini Disk Cleanup (Full Execution)**
+   - External drive: maxone (931 GB available)
+   - Reclaimed: **+26 GB** (17 GB → 43 GB available, 47% → 27% capacity)
+   - Phase 1: Cache cleanup (~12 GB) - Chrome, Firefox, Playwright, npm, Adobe
+   - Phase 2: Archived 7 Chrome profiles (~10 GB) to maxone
+   - Phase 3: Archived Airmail (12 GB), Steam (1 GB), Amazon Luna (590 MB)
+   - Deleted: Wallpaper cache (1 GB, auto-rebuilds)
+
+2. **Documentation Updates**
+   - Updated `CROSS_MACHINE_DISK_MAINTENANCE.md` with Mac Mini configuration
+   - Mac Mini external drive now set to "maxone" (was "[TO BE CONFIGURED]")
+   - Added cleanup history entry
+
+3. **ACTIVE_SPRINT.md Enhancement**
+   - Added workspace optimizations note with sleepless agent context
+   - Changed status from "Deferred" to "Pending"
+
+4. **Trimurti Notion Page Enhanced**
+   - Added Feature Overview Table (based on archived database schema)
+   - Columns: Feature, Category, Status, Priority, Est. Hours, Due Date
+   - Added Category Distribution and Status Legend
+
+5. **Instance Log Updated**
+   - Added full session details to INSTANCE_LOG_MacMini.md
+
+### Archives Created (on maxone):
+- Chrome-Profile-Backups/ (7 profiles, 3.5 GB compressed)
+- Application-Data/Airmail_2E337YPCZY_2026-01-15.tar.gz (4.0 GB)
+- Application-Data/Steam_2026-01-15.tar.gz (649 MB)
+- Application-Data/AmazonLuna_2026-01-15.tar.gz (8.7 MB)
+
+### Next Steps:
+- Review workspace optimizations (250+ useMemo/useCallback from sleepless agent)
+- Theme System implementation (plan file exists)
+- User action on ad platform tokens (LinkedIn OAuth, Meta verification)
+
+---
+
+## 📋 PREVIOUS SESSION (Jan 15, 2026 Afternoon)
 
 ---
 
