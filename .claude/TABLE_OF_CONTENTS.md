@@ -1,7 +1,7 @@
 # yellowCircle MultiSystem Framework (yC-MSF) - Table of Contents
 
-**Last Updated:** December 17, 2025
-**Framework Version:** 2.4
+**Last Updated:** January 15, 2026
+**Framework Version:** 2.5
 **Purpose:** Central directory of all yC-MSF documentation and tools
 
 > **Note:** yC-MSF is the unified name for the complete yellowCircle infrastructure system, previously called "Multi-Machine Framework (MMF)". It encompasses Dropbox sync, GitHub version control, Notion integration, Firebase deployment, WIP tracking, roadmaps, and automation.
@@ -120,21 +120,33 @@
 
 ### 🔧 Maintenance & Operations
 
-#### Disk Maintenance (Mac Mini Only)
+#### Disk Maintenance (All Machines)
 | Document | Purpose | When to Use | Priority |
 |----------|---------|-------------|----------|
-| [MAC_MINI_DISK_MAINTENANCE.md](MAC_MINI_DISK_MAINTENANCE.md) | Maintenance system guide | Monthly cleanup schedule | 🔴 Critical |
+| [CROSS_MACHINE_DISK_MAINTENANCE.md](CROSS_MACHINE_DISK_MAINTENANCE.md) | **Cross-machine cleanup & archival guide** | Any machine cleanup | 🔴 Critical |
+| [MAC_MINI_DISK_MAINTENANCE.md](MAC_MINI_DISK_MAINTENANCE.md) | Mac Mini specific scripts | Mac Mini monthly cleanup | 🟡 Reference |
 | [maintenance/CLEANUP_README.md](maintenance/CLEANUP_README.md) | Full cleanup documentation | Reference for cleanup tasks | 🟢 Reference |
 | [maintenance/QUICKSTART_CLEANUP.txt](maintenance/QUICKSTART_CLEANUP.txt) | Quick cleanup commands | Fast cleanup reference | 🟢 Reference |
 
 **Maintenance Scripts:**
-- `maintenance/cleanup_disk_space.sh` - Interactive cleanup (run monthly)
+- `maintenance/cleanup_disk_space.sh` - Interactive cache cleanup (run monthly)
 - `maintenance/cleanup_preview.sh` - Dry-run preview (run first)
 
+**Full Cleanup Process (CROSS_MACHINE_DISK_MAINTENANCE.md):**
+- **Phase 1:** Cache cleanup (~10-20 GB)
+- **Phase 2:** Chrome profile management (~5-15 GB)
+- **Phase 3:** Application data archival to external drive (~10-30 GB)
+- **Phase 4:** Document archival (~5-10 GB)
+- **Phase 5:** Backup critical data (copies, keep originals)
+
+**External Drive Configuration:**
+- **MacBook Air:** ORICO drive (`/Volumes/ORICO`)
+- **Mac Mini:** `[To be configured]`
+
 **Maintenance Schedule:**
-- **Monthly** (1st of month): Browser, npm, updater caches (~10-15 GB)
-- **Quarterly**: Full cleanup including Adobe (~15-25 GB)
-- **As needed**: Desktop installers after app installs
+- **Monthly** (1st of month): Phase 1 cache cleanup (~10-15 GB)
+- **Quarterly**: Full cleanup including archival (~25-50 GB)
+- **As needed**: When available space < 20 GB
 
 ---
 

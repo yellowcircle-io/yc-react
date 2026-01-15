@@ -691,6 +691,88 @@ Report: `dev-context/GOOGLE_DRIVE_RECONCILIATION_REPORT.md`
 
 ---
 
+### Session: Major Disk Cleanup & Archival (Jan 15, 2026)
+**Date:** January 15, 2026
+**Machine:** MacBook Air
+**Context:** System storage critically low - comprehensive cleanup and archival process
+
+**Initial State:**
+- Available disk space: 10-11 GB (70% capacity)
+- ~/Library: 68 GB
+- Caches accumulated from months of development
+
+**Actions Performed:**
+
+1. **Phase 1: Cache Cleanup (2.7 GB)**
+   - Deleted CreativeCloud logs (1.7 GB)
+   - Deleted Adobe logs (930 MB)
+   - Deleted Zoom logs (59 MB)
+
+2. **Phase 1b: Quick Cache Cleanup (7 GB)**
+   - Cleared Firefox cache (2.5 GB)
+   - Cleared Chrome cache (547 MB)
+   - Cleared npm cache (1.6 GB)
+   - Cleared Playwright browsers (744 MB)
+   - Cleared email-dev node_modules (809 MB)
+   - Cleared Adobe cache (391 MB)
+   - Cleared updater caches (528 MB)
+   - Deleted Steam (1.0 GB)
+
+3. **Phase 2: Chrome Profile Archival (8.3 GB)**
+   - Identified all profiles with friendly names and accounts
+   - Active profiles retained: Default, Profile 1, Profile 2, Profile 10
+   - Archived to ORICO:
+     - Profile 3 (DoorDash) - 2.1 GB
+     - Profile 5 (Archive) - 48 MB
+     - Profile 6 (Estee Lauder) - 3.4 GB
+     - Profile 7 (Rho old) - 254 MB
+     - Profile 8 (Rho) - 1.5 GB
+     - Profile 9 (yellowcircle.io) - 1.0 GB
+
+4. **Phase 3: Application Data Archival (~22 GB)**
+   - Archived to ORICO and deleted originals:
+     - Airmail data (11 GB) → 4.0 GB compressed
+     - Adobe Support (4.8 GB) → 2.9 GB compressed
+     - Firefox data (2.7 GB) → 1.7 GB compressed
+     - Microsoft data (1.7 GB) → 761 MB compressed
+     - Wallpaper cache (1.0 GB) → 1.0 GB compressed
+     - Amazon Luna (590 MB) → 8.7 MB compressed
+
+5. **Phase 4: Document Archival (~5 GB)**
+   - Moved Dropbox backup (4.2 GB)
+   - Moved Dash_mixdown.wav (880 MB)
+   - Archived Documents folder
+
+6. **Phase 5: Backup Copies (originals kept)**
+   - yellowcircle-redesign (1.8 GB) → 1.2 GB compressed
+   - Photos Library (2.4 GB) → 1.7 GB compressed
+   - Notion data (2.3 GB) → 1.3 GB compressed
+
+**Final State:**
+- Available disk space: **46 GB (34% capacity)**
+- Space reclaimed: **+35 GB**
+- External drive used: ORICO (477 GB)
+
+**Archives Created on ORICO:**
+```
+/Volumes/ORICO/
+├── Chrome-Profile-Backups/ (~2.8 GB)
+└── Mac-Archives/ (~24 GB)
+    ├── Application-Data/
+    ├── Documents/
+    └── Backups-Keep-Original/
+```
+
+**Documentation Created:**
+- `.claude/CROSS_MACHINE_DISK_MAINTENANCE.md` - Comprehensive cross-machine cleanup guide
+
+**Notes:**
+- Process fully documented for replication on Mac Mini
+- Mac Mini will use different external drive (to be configured)
+- Restore commands included in documentation
+
+---
+
 **End of Log**
-**Machine Status:** ✅ Operational and synchronized
+**Machine Status:** ✅ Operational and synchronized (46 GB free)
 **Next Update:** After next significant work session
