@@ -2476,15 +2476,14 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     const CHILD_PADDING = 50;  // Increased padding inside groups
     const CHILD_GAP = 40;      // Increased gap between children
 
-    // Separate nodes into categories
-    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
-    const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
+    // Separate nodes into categories (using Phase 1 MAP_NODE_TYPES constant)
+    const mapNodes = nodes.filter(n => MAP_NODE_TYPES.has(n.type));
     const groupNodes = nodes.filter(n => n.type === 'groupNode');
     const childNodes = nodes.filter(n => n.parentId);
     const orphanNodes = nodes.filter(n =>
       !n.parentId &&
       n.type !== 'groupNode' &&
-      !mapNodeTypes.includes(n.type)
+      !MAP_NODE_TYPES.has(n.type)
     );
 
     // Build parent-child map
@@ -3739,9 +3738,8 @@ Example format:
       return;
     }
 
-    // Check for MAP nodes
-    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
-    const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
+    // Check for MAP nodes (using Phase 1 MAP_NODE_TYPES constant)
+    const mapNodes = nodes.filter(n => MAP_NODE_TYPES.has(n.type));
 
     if (mapNodes.length === 0) {
       alert('⚠️ No MAP nodes to save.\n\nCreate a journey in Outreach Generator first.');
@@ -3797,9 +3795,8 @@ Example format:
       return;
     }
 
-    // Check for MAP nodes
-    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
-    const mapNodes = nodes.filter(n => mapNodeTypes.includes(n.type));
+    // Check for MAP nodes (using Phase 1 MAP_NODE_TYPES constant)
+    const mapNodes = nodes.filter(n => MAP_NODE_TYPES.has(n.type));
 
     if (mapNodes.length === 0) {
       alert('⚠️ No MAP nodes to publish.\n\nCreate a journey in Outreach Generator first.');
@@ -4294,8 +4291,8 @@ Example format:
 
   // Smart save handler - saves journey if MAP nodes exist, otherwise saves capsule
   const handleSmartSave = useCallback(async () => {
-    const mapNodeTypes = ['prospectNode', 'emailNode', 'waitNode', 'conditionNode', 'exitNode'];
-    const hasMapNodes = nodes.some(n => mapNodeTypes.includes(n.type));
+    // Using Phase 1 MAP_NODE_TYPES constant for O(1) lookup
+    const hasMapNodes = nodes.some(n => MAP_NODE_TYPES.has(n.type));
 
     if (hasMapNodes) {
       // Has MAP nodes - save as journey
