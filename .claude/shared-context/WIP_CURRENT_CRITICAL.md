@@ -2,11 +2,87 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 15, 2026 at 4:30 PM EST
-**Machine:** MacBook Air
-**Status:** ✅ Disk Cleanup (+35 GB) - GitHub Repo Now PRIVATE - Security Hardened
+**Updated:** January 16, 2026 at 2:00 AM EST
+**Machine:** Mac Mini
+**Status:** ✅ Phase 1 Sleepless Agent Optimizations Complete - Static Constants Added
 
 ---
+
+## ✅ PHASE 1 SLEEPLESS AGENT OPTIMIZATIONS (Jan 16, 2026) - Mac Mini
+
+### What Was Done:
+1. **Comprehensive Technical Evaluation**
+   - Analyzed 1,171 sleepless agent tasks and 250+ optimizations
+   - Identified root cause of production crash: TDZ errors from 590 useCallback hooks
+   - Classified optimizations: Safe (static constants, Map lookups) vs Unsafe (excessive hooks)
+
+2. **Phase 1 Static Constants Implementation**
+   - Added 70 lines to `UnityNotesPage.jsx` (lines 70-139)
+   - `MAP_NODE_TYPES` Set - O(1) journey node checking
+   - `SIMPLE_NODE_TYPES` Set - base node classification
+   - `PREMIUM_NODE_TYPES` Set - Unity+ node identification
+   - `NODE_SIZE_MAP` Object - O(1) node dimension lookup
+   - 3 helper functions: `getNodeSize()`, `isMapNode()`, `isPremiumNode()`
+
+3. **Build Verification**
+   - Dev server: 166ms startup (no syntax errors)
+   - Production build: 2m 27s (3189 modules, UnityNotesPage 428.88 kB)
+
+### Optimization Metrics:
+| Metric | Before | After Phase 1 |
+|--------|--------|---------------|
+| Hook Count | 59 hooks | 59 hooks (unchanged) |
+| Lines Added | N/A | +70 lines |
+| Static Constants | N/A | 4 Sets/Objects + 3 helpers |
+
+### Next Steps (Phase 2-3):
+- [ ] Replace inline node type checks with Set lookups
+- [ ] Replace nodes.find() with Map-based lookups
+- [ ] Add data-attribute pattern for event handlers
+
+---
+
+## ✅ TRIMURTI DATABASE ENHANCEMENT (Jan 15-16, 2026) - Mac Mini
+
+### What Was Done:
+1. **Database Schema Enhancement**
+   - Added 4 new properties: Scope, Recurrent, Sleepless Related, Completion Date
+   - Added 4 new Category options: Platform Enhancement, Admin Interface, Marketing, Branding
+
+2. **Added 7 New Tasks**
+   - Global Theme System Enhancement (P2)
+   - Admin Dashboard Widget Implementation (P1)
+   - Progressive Web App Development (P2)
+   - yellowCircle Social Media Presence (P1)
+   - Update Email Favicon (P3)
+   - UnityNOTES TravelLog Node (P3)
+   - Link Archiver Integration (P1)
+
+3. **Updated All 32 Database Items**
+   - Added Scope documentation (numbered action steps) for all items
+   - Set Completion Dates for all completed tasks
+   - Set Due Dates for all items (priority-based)
+   - Flagged recurrent tasks (MSF docs, instance logs)
+   - Flagged sleepless-related tasks
+
+4. **Updated Trimurti Quick Stats (Jan 16)**
+   - 32 total tasks, 11 completed (34%), 5 in progress (16%), 3 blocked (9%), 13 planned (41%)
+
+5. **Instance Log Updated**
+   - Full session details in INSTANCE_LOG_MacMini.md
+
+### Database URLs:
+- Trimurti Page: https://www.notion.so/2e915c1b110d8107a131cfe856013d42
+- Database: https://www.notion.so/18aa447307f846c6a646f58e87372a47
+
+### Next Steps:
+- Review workspace optimizations (250+ useMemo from sleepless agent)
+- Theme System implementation (plan file exists)
+- User action on ad platform tokens
+
+---
+
+## 📋 PREVIOUS SESSION (Jan 15, 2026 Afternoon)
 
 ## ✅ MACBOOK AIR CLEANUP & GITHUB SECURITY (Jan 15, 2026 Afternoon) - MacBook Air
 

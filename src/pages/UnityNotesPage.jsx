@@ -67,6 +67,76 @@ const CARD_TYPES = {
   video: { label: 'Video', icon: '📹', color: '#f59e0b' },
 };
 
+// ============================================================================
+// PHASE 1: Static Constants (Sleepless Agent Safe Optimizations)
+// These are module-level constants that avoid runtime allocation overhead.
+// See: workspace/shared/TASK_HISTORY.md for optimization rationale
+// ============================================================================
+
+// UnityMAP journey node types - O(1) type checking via Set
+const MAP_NODE_TYPES = new Set([
+  'prospectNode',
+  'emailNode',
+  'conditionNode',
+  'waitNode',
+  'exitNode'
+]);
+
+// Simple/base node types (non-premium, non-MAP)
+const SIMPLE_NODE_TYPES = new Set([
+  'photoNode',
+  'textNode'
+]);
+
+// Premium Unity+ node types
+const PREMIUM_NODE_TYPES = new Set([
+  'stickyNode',
+  'todoNode',
+  'commentNode',
+  'colorSwatchNode',
+  'codeBlockNode',
+  'groupNode',
+  'mapNode',
+  'tripPlannerMapNode'
+]);
+
+// Default node sizes by type (Object-based lookup, O(1))
+// Used for positioning calculations and layout
+const NODE_SIZE_MAP = {
+  // Base nodes
+  photoNode: { width: 200, height: 200 },
+  textNode: { width: 280, height: 180 },
+  // MAP nodes
+  prospectNode: { width: 200, height: 100 },
+  emailNode: { width: 200, height: 120 },
+  conditionNode: { width: 180, height: 80 },
+  waitNode: { width: 160, height: 60 },
+  exitNode: { width: 120, height: 60 },
+  // Premium nodes
+  stickyNode: { width: 150, height: 150 },
+  todoNode: { width: 250, height: 200 },
+  commentNode: { width: 200, height: 100 },
+  colorSwatchNode: { width: 180, height: 120 },
+  codeBlockNode: { width: 300, height: 200 },
+  groupNode: { width: 400, height: 300 },
+  mapNode: { width: 400, height: 300 },
+  tripPlannerMapNode: { width: 500, height: 400 },
+  // Default fallback
+  default: { width: 200, height: 150 }
+};
+
+// Helper functions: Pure functions for O(1) node type operations
+// eslint-disable-next-line no-unused-vars -- Phase 2: Will replace inline size lookups
+const getNodeSize = (nodeType) => NODE_SIZE_MAP[nodeType] || NODE_SIZE_MAP.default;
+// eslint-disable-next-line no-unused-vars -- Phase 2: Will replace nodeType === checks
+const isMapNode = (nodeType) => MAP_NODE_TYPES.has(nodeType);
+// eslint-disable-next-line no-unused-vars -- Phase 2: Will replace premium node checks
+const isPremiumNode = (nodeType) => PREMIUM_NODE_TYPES.has(nodeType);
+
+// ============================================================================
+// END PHASE 1 Static Constants
+// ============================================================================
+
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showParallax, setShowParallax }) => {
   const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport, setCenter } = useReactFlow();
   const { sidebarOpen } = useLayout();

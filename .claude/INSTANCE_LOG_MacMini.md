@@ -3,7 +3,7 @@
 **Machine:** Mac Mini
 **Instance ID:** mac-mini-primary
 **Created:** November 2, 2025
-**Last Updated:** January 15, 2026
+**Last Updated:** January 16, 2026
 
 ---
 
@@ -26,6 +26,167 @@
 ---
 
 ## Session History
+
+### Session: Phase 1 Sleepless Agent Safe Optimizations
+**Date:** January 16, 2026 (Early AM EST)
+**Context:** Implementing safe subset of sleepless agent optimizations after comprehensive review
+
+**Tasks Completed:**
+
+1. **Comprehensive Technical Evaluation** ✅
+   - Analyzed 1,171 sleepless agent tasks and 250+ optimizations
+   - Identified root cause of production crash: TDZ errors from 590 useCallback hooks
+   - Classified optimizations into Safe (static constants, Map lookups) vs Unsafe (excessive hooks)
+   - Created detailed evaluation report with role assessment (Product Architect focus)
+
+2. **Phase 1 Static Constants Implementation** ✅
+   - Added 70 lines of static constants to `UnityNotesPage.jsx` (lines 70-139)
+   - Created `MAP_NODE_TYPES` Set for O(1) journey node type checking
+   - Created `SIMPLE_NODE_TYPES` Set for base node classification
+   - Created `PREMIUM_NODE_TYPES` Set for Unity+ node identification
+   - Created `NODE_SIZE_MAP` Object for O(1) node dimension lookup
+   - Added 3 helper functions: `getNodeSize()`, `isMapNode()`, `isPremiumNode()`
+
+3. **Build Verification** ✅
+   - Dev server started in 166ms (no syntax errors)
+   - Production build completed in 2m 27s (3189 modules)
+   - UnityNotesPage.jsx bundled successfully (428.88 kB)
+
+**Optimization Metrics:**
+| Metric | Before | After Phase 1 |
+|--------|--------|---------------|
+| Hook Count | 59 hooks (healthy) | 59 hooks (unchanged) |
+| Lines Added | N/A | +70 lines |
+| New Constants | N/A | 4 Sets/Objects + 3 helpers |
+
+**Next Steps (Phase 2-3):**
+- [ ] Replace inline node type checks with Set lookups
+- [ ] Replace nodes.find() with Map-based lookups
+- [ ] Add data-attribute pattern for event handlers
+
+---
+
+### Session: Trimurti Database Enhancement & MSF Update
+**Date:** January 15-16, 2026 (Evening to Early AM EST)
+**Context:** Comprehensive Notion database enhancement, schema updates, task documentation
+
+**Tasks Completed:**
+
+1. **Trimurti Database Schema Enhancement** ✅
+   - Added 4 new properties via `notion-update-database`:
+     - `Scope` (rich_text) - Documentation outline for each task
+     - `Recurrent` (checkbox) - Flag for recurring tasks
+     - `Sleepless Related` (checkbox) - Flag for sleepless agent tasks
+     - `Completion Date` (date) - Actual completion date
+   - Added 4 new Category options: Platform Enhancement, Admin Interface, Marketing, Branding
+
+2. **Added 7 New Tasks to Database** ✅
+   - Global Theme System Enhancement (P2) - Dark mode, accessibility
+   - Admin Dashboard Widget Implementation (P1) - Weather, News, Alerts, Focus timer
+   - Progressive Web App Development (P2) - PWA conversion
+   - yellowCircle Social Media Presence (P1) - Instagram, Facebook, Reddit, YouTube, LinkedIn
+   - Update Email Favicon (P3) - Branded favicon
+   - UnityNOTES TravelLog Node (P3) - Location tracking (Visited App inspired)
+   - Link Archiver Integration (P1) - Pocket alternative (ArchiveBox/Wallabag)
+
+3. **Updated All 32 Database Items** ✅
+   - Added Scope documentation with numbered action steps for all items
+   - Set Completion Dates for all completed tasks
+   - Set Due Dates for all items:
+     - P1 Blocked: 2026-01-31
+     - P1 Pending: 2026-01-22
+     - P2: 2026-02-15
+     - P3: 2026-02-28 to 2026-03-31
+     - Completed: Due Date = Completion Date
+   - Flagged recurrent tasks (MSF Documentation, Instance Logs)
+   - Flagged sleepless-related tasks (workspace optimizations)
+
+4. **Updated Trimurti Quick Stats** ✅
+   - Updated date: Jan 15 → Jan 16, 2026
+   - New counts: 32 total, 11 completed (34%), 5 in progress (16%), 3 blocked (9%), 13 planned (41%)
+
+5. **Imported Content to Notion** ✅ (Previous session)
+   - Created Trimurti: P0-P3 Action Items Dashboard page
+   - Created Case Study: Building yellowCircle page
+   - Both under yellowCircle Roadmap
+
+**Database Statistics (Final):**
+| Metric | Count |
+|--------|-------|
+| Total Tasks | 32 |
+| Completed | 11 (34%) |
+| In Progress/Pending | 5 (16%) |
+| Blocked | 3 (9%) |
+| Planned/Not Started | 13 (41%) |
+
+**Notion URLs:**
+- Trimurti Page: https://www.notion.so/2e915c1b110d8107a131cfe856013d42
+- Database: https://www.notion.so/18aa447307f846c6a646f58e87372a47
+- Data Source: `collection://ea93c3e0-948a-403e-96fc-f9cea0cd1124`
+
+**MCP Tools Used:**
+- `notion-update-database` - Schema changes
+- `notion-create-pages` - New task creation
+- `notion-update-page` - Property updates
+- `notion-search` - Database queries
+- `notion-fetch` - Verification
+
+**Plan File Created:**
+- `/Users/christophercooper_1/.claude/plans/distributed-munching-panda.md` - Trimurti Database Enhancement Plan
+
+---
+
+### Session: Disk Cleanup, Trimurti Enhancement, Roadmap Continuation
+**Date:** January 15, 2026 (5:00 PM - 7:00 PM EST)
+**Context:** System maintenance, Notion enhancement, resume roadmap work
+
+**Tasks Completed:**
+
+1. **Mac Mini Disk Cleanup (Full Execution)**
+   - External drive: maxone (931 GB)
+   - Before: 17 GB available (47% capacity)
+   - After: 43 GB available (27% capacity)
+   - **Reclaimed: +26 GB**
+
+   **Phase 1 - Cache Cleanup (~12 GB):**
+   - Chrome/Firefox/Playwright/Adobe caches
+   - npm/Yarn/updater caches
+
+   **Phase 2 - Chrome Profiles (~10 GB):**
+   - Archived 7 inactive profiles (Default, 3, 5, 6, 7, 8, 11)
+   - Kept: Profile 1, 2, 9 (active), 10
+
+   **Phase 3 - Application Data:**
+   - Archived: Airmail (12 GB), Steam (1 GB), Amazon Luna (590 MB)
+   - Deleted: Wallpaper cache (1 GB, auto-rebuilds)
+
+   **Total archived to maxone: 8.1 GB compressed**
+
+2. **Documentation Updates**
+   - Updated `CROSS_MACHINE_DISK_MAINTENANCE.md` with Mac Mini configuration
+   - Mac Mini now fully configured (was "[TO BE CONFIGURED]")
+   - Added cleanup history entry for Jan 15, 2026
+
+3. **ACTIVE_SPRINT.md Update**
+   - Added workspace optimizations note (sleepless agent context)
+   - Changed status from "Deferred" to "Pending"
+
+4. **Trimurti Notion Enhancement**
+   - Added Feature Overview Table based on archived database schema
+   - Columns: Feature, Category, Status, Priority, Est. Hours, Due Date
+   - Added Category Distribution summary table
+   - Added Status Legend
+
+**Archives Created (on maxone):**
+- Chrome-Profile-Backups/ (7 profiles, 3.5 GB compressed)
+- Application-Data/Airmail_2E337YPCZY_2026-01-15.tar.gz (4.0 GB)
+- Application-Data/Steam_2026-01-15.tar.gz (649 MB)
+- Application-Data/AmazonLuna_2026-01-15.tar.gz (8.7 MB)
+
+**Notion Page Updated:**
+- https://www.notion.so/2e915c1b110d8107a131cfe856013d42 (Trimurti - added overview table)
+
+---
 
 ### Session: MSF Audit, MCP Fix, Notion Import
 **Date:** January 15, 2026 (12:00 PM - 5:00 PM EST)
