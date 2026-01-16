@@ -3,7 +3,7 @@
 **Created:** 2026-01-15
 **Purpose:** Unified disk cleanup and archival process for all machines
 **Machines:** MacBook Air, Mac Mini
-**Last Verified:** MacBook Air (Jan 15, 2026)
+**Last Verified:** Mac Mini (Jan 15, 2026)
 
 ---
 
@@ -35,11 +35,11 @@ This document provides a **replicable process** for disk cleanup and data archiv
 | Setting | Value |
 |---------|-------|
 | **Hostname** | Christophers-Mac-mini |
-| **Primary External Drive** | `[TO BE CONFIGURED]` |
-| **Mount Path** | `/Volumes/[DRIVE_NAME]` |
-| **Archive Directory** | `/Volumes/[DRIVE_NAME]/Mac-Archives/` |
-| **Last Cleanup** | 2025-11-21 (cache only) |
-| **Result** | 11 GB → 35 GB available |
+| **Primary External Drive** | maxone (931 GB) |
+| **Mount Path** | `/Volumes/maxone` |
+| **Archive Directory** | `/Volumes/maxone/Mac-Archives/` |
+| **Last Cleanup** | 2026-01-15 |
+| **Result** | 17 GB → 43 GB available (+26 GB) |
 
 ---
 
@@ -209,10 +209,14 @@ mkdir -p "$EXTERNAL_DRIVE/Mac-Archives/Backups-Keep-Original"
 
 ### Step 3.3: Common Archive Candidates
 
+**⚠️ BROWSER PROFILES REQUIRE EXPLICIT APPROVAL**
+Firefox, Safari, and other browser profiles contain bookmarks, passwords, history, and extensions.
+Always confirm with user before archiving ANY browser data - treat same as Chrome profiles (Phase 2).
+
 | Application | Typical Size | Safe to Archive? | Notes |
 |-------------|--------------|------------------|-------|
 | Adobe Support | 3-5 GB | Yes, if not using Adobe | Preferences preserved |
-| Firefox Data | 2-3 GB | Yes, if Chrome is primary | Will need reinstall |
+| Firefox Data | 2-3 GB | **⚠️ ASK FIRST** | Browser profile - has passwords/bookmarks |
 | Airmail Data | 5-15 GB | Yes, if not using Airmail | Email client cache |
 | Microsoft Data | 1-2 GB | Yes, if not using Office | Office app data |
 | Amazon Luna | 500 MB | Yes, if not gaming | Cloud gaming data |
@@ -419,6 +423,29 @@ tar -xzf "/Volumes/[DRIVE]/Mac-Archives/Documents/Documents_Archive_[DATE].tar.g
   - Phase 4: Archived Documents and media (~5 GB)
   - Phase 5: Backed up yellowcircle-redesign, Photos, Notion (copies only)
 
+### Mac Mini - 2026-01-15
+- **Before:** 17 GB available (47% capacity)
+- **After:** 43 GB available (27% capacity)
+- **Reclaimed:** 26 GB
+- **External Drive:** maxone
+- **Actions:**
+  - Phase 1: Cache cleanup (Chrome, Firefox, npm, Playwright, Adobe, updaters) ~12 GB
+  - Phase 2: Archived 7 Chrome profiles (Default, 3, 5, 6, 7, 8, 11) ~10 GB
+  - Phase 3: Archived Airmail (12 GB), Steam (1 GB), Amazon Luna (590 MB)
+  - Deleted: Wallpaper cache (1 GB, rebuilds automatically)
+- **Archived to maxone (8.1 GB compressed):**
+  - Chrome-Profile-Backups/Default_Verifly_2026-01-15.tar.gz (548 MB)
+  - Chrome-Profile-Backups/Profile_3_DoorDash_2026-01-15.tar.gz (770 MB)
+  - Chrome-Profile-Backups/Profile_5_Archive_2026-01-15.tar.gz (16 MB)
+  - Chrome-Profile-Backups/Profile_6_EsteeLauder_2026-01-15.tar.gz (1.1 GB)
+  - Chrome-Profile-Backups/Profile_7_2026-01-15.tar.gz (38 MB)
+  - Chrome-Profile-Backups/Profile_8_2026-01-15.tar.gz (248 MB)
+  - Chrome-Profile-Backups/Profile_11_Rho_2026-01-15.tar.gz (785 MB)
+  - Application-Data/Airmail_2E337YPCZY_2026-01-15.tar.gz (4.0 GB)
+  - Application-Data/Steam_2026-01-15.tar.gz (649 MB)
+  - Application-Data/AmazonLuna_2026-01-15.tar.gz (8.7 MB)
+- **Kept Chrome Profiles:** 1, 2, 9 (active yellowCircle), 10
+
 ### Mac Mini - 2025-11-21
 - **Before:** 11 GB available
 - **After:** 35 GB available
@@ -430,14 +457,16 @@ tar -xzf "/Volumes/[DRIVE]/Mac-Archives/Documents/Documents_Archive_[DATE].tar.g
 
 ## Next Steps for Mac Mini
 
-When running cleanup on Mac Mini:
+✅ **Mac Mini fully configured (Jan 15, 2026)**
 
-1. **Identify external drive** - Name and mount path
-2. **Update this document** - Fill in Mac Mini configuration section
-3. **Run Phase 1** - Cache cleanup (immediate space)
-4. **Evaluate Phase 2-5** - Based on disk analysis
-5. **Update instance log** - Document results
-6. **Sync to Dropbox** - Wait 30 seconds for sync
+For future cleanups:
+1. **Connect external drive** - maxone
+2. **Verify mount:** `ls /Volumes/maxone`
+3. **Run preview assessment** - Check cache sizes and identify targets
+4. **Run Phase 1** - Cache cleanup (immediate space)
+5. **Evaluate Phase 2-3** - Archive inactive Chrome profiles and apps
+6. **Update instance log** - Document results
+7. **Sync to Dropbox** - Wait 30 seconds for sync
 
 ---
 
