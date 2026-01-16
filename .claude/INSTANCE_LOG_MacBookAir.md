@@ -773,6 +773,57 @@ Report: `dev-context/GOOGLE_DRIVE_RECONCILIATION_REPORT.md`
 
 ---
 
+### Session: GitHub Security Hardening & Profile Restore (Jan 15, 2026 Afternoon)
+**Date:** January 15, 2026 at 4:30 PM EST
+**Machine:** MacBook Air
+**Context:** Secure GitHub repo, fix credential exposure, restore Chrome profile
+
+**Security Actions:**
+1. **Credential Audit**
+   - Verified commit 4b3adf6 - `VITE_ADMIN_TOKEN` was previously exposed but already rotated
+   - Confirmed no other sensitive data in commit history
+
+2. **Repository Made PRIVATE**
+   - Changed yellowcircle-io/yc-react from public to private
+   - Verified no forks existed (0 stars, 0 watchers)
+   - Confirmed GitHub Actions continue working with private repo
+
+3. **Files Removed from Git Tracking**
+   - `.env` - Contains API keys (file kept locally, untracked)
+   - `.playwright-mcp/` - 68 screenshot files removed
+   - `.mcp.json` - Local MCP configuration
+
+4. **Updated .gitignore**
+   - Added `.playwright-mcp/` directory
+   - Added `.mcp.json` file
+   - Added `*.backup-*` and `*.broken-*` patterns
+
+5. **Firebase Deploy Verified**
+   - Triggered test deploy after making repo private
+   - Confirmed GitHub Actions + Firebase hosting work correctly
+   - Cleaned up test commit
+
+**Chrome Profile Restored:**
+- Restored Profile 9 (yellowcircle.io) from ORICO backup
+- Account: christopher@yellowcircle.io
+- Size: 1.0 GB
+
+**Documentation Created:**
+- `.claude/REPO_REORGANIZATION_PLAN.md` - Strategy for future public branch (deferred)
+
+**Commits Pushed:**
+- `be040bf` - Security: Remove sensitive files from tracking
+- `da41f31` - Docs: Add repository reorganization plan
+- `6076155` - Cleanup: Remove deploy test comment
+- `229c9e2` - WIP: MacBook Air session complete
+
+**Public Branch Decision:**
+- Deferred creating public-portfolio branch
+- Not needed currently - live site serves as portfolio
+- Plan documented for future if needed
+
+---
+
 **End of Log**
-**Machine Status:** ✅ Operational and synchronized (46 GB free)
+**Machine Status:** ✅ Operational - Repo PRIVATE - 46 GB free
 **Next Update:** After next significant work session
