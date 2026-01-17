@@ -366,15 +366,18 @@ const styles = {
 // ============================================================
 // Stat Card Component
 // ============================================================
-const StatCard = ({ icon: IconComponent, value, label, color }) => (
-  <div style={styles.statCard}>
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-      <IconComponent size={24} color={color || COLORS.primary} />
-    </div>
+const StatCard = ({ icon: Icon, value, label, color }) => {
+  const IconComp = Icon;
+  return (
+    <div style={styles.statCard}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+        <IconComp size={24} color={color || COLORS.primary} />
+      </div>
     <div style={styles.statValue}>{value}</div>
     <div style={styles.statLabel}>{label}</div>
   </div>
-);
+  );
+};
 
 // ============================================================
 // Link Card Component

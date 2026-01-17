@@ -23,7 +23,7 @@ const APP_URLS = [
 let currentTab = null;
 let tags = [];
 let folders = [];
-let authToken = null;
+let _authToken = null; // Reserved for future use
 
 // DOM Elements
 const statusEl = document.getElementById('status');
@@ -50,7 +50,7 @@ async function init() {
   // Check authentication
   const stored = await chrome.storage.local.get(['authToken', 'userId']);
   if (stored.authToken && stored.userId) {
-    authToken = stored.authToken;
+    _authToken = stored.authToken;
     showSaveSection();
     loadFolders();
   } else {
@@ -75,7 +75,7 @@ function showStatus(message, type = 'loading') {
   statusEl.className = `status ${type}`;
 }
 
-function hideStatus() {
+function _hideStatus() {
   statusEl.className = 'status';
 }
 
@@ -150,7 +150,7 @@ async function saveLink() {
       if (response) {
         pageData = { ...pageData, ...response };
       }
-    } catch (e) {
+    } catch (_e) {
       console.log('Could not get page data from content script');
     }
 
@@ -177,7 +177,7 @@ async function saveLink() {
       throw new Error('Failed to save link');
     }
 
-    const result = await response.json();
+    const _result = await response.json(); // Response data available for future use
     showStatus('Link saved!', 'success');
 
     // Close popup after short delay

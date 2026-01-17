@@ -51,5 +51,28 @@ export default defineConfig([
         process: 'readonly'
       }
     }
+  },
+  {
+    // Browser extension files (Chrome MV3)
+    files: ['public/extension/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2021,
+      globals: {
+        ...globals.browser,
+        ...globals.webextensions,
+        chrome: 'readonly'
+      },
+      sourceType: 'script'
+    },
+    rules: {
+      'no-unused-vars': ['warn', {
+        varsIgnorePattern: '^_',
+        argsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
+      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/exhaustive-deps': 'off',
+      'react-refresh/only-export-components': 'off'
+    }
   }
 ])

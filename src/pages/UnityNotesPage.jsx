@@ -129,8 +129,9 @@ const NODE_SIZE_MAP = {
 
 // Helper functions: Pure functions for O(1) node type operations
 const getNodeSize = (nodeType) => NODE_SIZE_MAP[nodeType] || NODE_SIZE_MAP.default;
-const isMapNode = (nodeType) => MAP_NODE_TYPES.has(nodeType);
-const isPremiumNode = (nodeType) => PREMIUM_NODE_TYPES.has(nodeType);
+// Available for future refactoring - currently using MAP_NODE_TYPES.has() directly
+const _isMapNode = (nodeType) => MAP_NODE_TYPES.has(nodeType);
+const _isPremiumNode = (nodeType) => PREMIUM_NODE_TYPES.has(nodeType);
 
 // ============================================================================
 // END PHASE 1 Static Constants

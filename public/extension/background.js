@@ -79,7 +79,7 @@ async function saveLink(url, title, tabId, note = null) {
       if (response) {
         pageData = { ...pageData, ...response };
       }
-    } catch (e) {
+    } catch (_e) {
       console.log('Could not get page data from content script');
     }
 
