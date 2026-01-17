@@ -247,10 +247,10 @@ def create_app():
 
             try:
                 # Send message to channel mentioning @claude (native Anthropic integration)
-                # Note: This assumes @claude user ID - you may need to look this up
+                # @claude user ID: U09TPRV5ZQB (verified via users.list API)
                 client.chat_postMessage(
                     channel=channel_id,
-                    text=f"*Sleepless → @claude relay:*\n<@D3JP2JE3G> {relay_text}"
+                    text=f"*Sleepless → @claude relay:*\n<@U09TPRV5ZQB> {relay_text}"
                 )
                 respond({
                     "response_type": "ephemeral",
