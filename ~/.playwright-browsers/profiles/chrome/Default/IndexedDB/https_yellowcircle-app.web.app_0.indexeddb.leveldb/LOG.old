@@ -1,0 +1,14 @@
+2026/01/09-01:20:55.495 17752b Reusing MANIFEST /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/IndexedDB/https_yellowcircle-app.web.app_0.indexeddb.leveldb/MANIFEST-000001
+2026/01/09-01:20:55.495 17752b Recovering log #60
+2026/01/09-01:20:55.496 17752b Reusing old log /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/IndexedDB/https_yellowcircle-app.web.app_0.indexeddb.leveldb/000060.log 
+2026/01/09-01:20:55.496 17752b Delete type=2 #58
+2026/01/09-01:20:55.505 177528 Level-0 table #65: started
+2026/01/09-01:20:55.507 177528 Level-0 table #65: 2309 bytes OK
+2026/01/09-01:20:55.508 177528 Delete type=0 #60
+2026/01/09-01:20:55.509 177518 Manual compaction at level-0 from '\x00\x19\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x1a\x00\x00\x00' @ 0 : 0; will stop at '\x00\x19\x00\x00\x05' @ 1349 : 1
+2026/01/09-01:20:55.509 177518 Compacting 1@0 + 1@1 files
+2026/01/09-01:20:55.510 177518 Generated table #66@0: 294 keys, 4364 bytes
+2026/01/09-01:20:55.510 177518 Compacted 1@0 + 1@1 files => 4364 bytes
+2026/01/09-01:20:55.511 177518 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/01/09-01:20:55.511 177518 Delete type=2 #65
+2026/01/09-01:20:55.512 177518 Manual compaction at level-0 from '\x00\x19\x00\x00\x05' @ 1349 : 1 .. '\x00\x1a\x00\x00\x00' @ 0 : 0; will stop at (end)

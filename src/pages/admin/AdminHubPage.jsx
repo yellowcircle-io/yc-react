@@ -23,7 +23,8 @@ import {
   Map,
   Brain,
   Mail,
-  Trash2
+  Trash2,
+  Bookmark
 } from 'lucide-react';
 
 // ============================================================
@@ -115,6 +116,15 @@ const ADMIN_TOOLS = [
     route: '/admin/storage-cleanup',
     color: '#ef4444',
     bgColor: '#fee2e2'
+  },
+  {
+    id: 'link-archiver',
+    title: 'Link Archiver',
+    description: 'Save and organize links - Pocket alternative with AI summaries',
+    icon: Bookmark,
+    route: '/admin/links',
+    color: '#f97316',
+    bgColor: '#ffedd5'
   }
 ];
 

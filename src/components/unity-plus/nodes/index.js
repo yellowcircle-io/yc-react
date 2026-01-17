@@ -20,6 +20,7 @@ import CodeBlockNode from './CodeBlockNode';
 import GroupNode from './GroupNode';
 import MapNode from './MapNode';
 import TripPlannerMapNode from './TripPlannerMapNode';
+import LinkNode from './LinkNode';
 
 // Node type registry for ReactFlow
 export const premiumNodeTypes = {
@@ -31,6 +32,7 @@ export const premiumNodeTypes = {
   groupNode: GroupNode,
   mapNode: MapNode,
   tripPlannerMapNode: TripPlannerMapNode,
+  linkNode: LinkNode,
 };
 
 // Individual exports for direct imports
@@ -43,6 +45,7 @@ export {
   GroupNode,
   MapNode,
   TripPlannerMapNode,
+  LinkNode,
 };
 
 // Premium card type configuration (for Add Note dialog)
@@ -146,6 +149,25 @@ export const PREMIUM_CARD_TYPES = {
       code: '// Your code here',
       language: 'javascript',
       filename: '',
+    },
+  },
+  link: {
+    label: 'Saved Link',
+    icon: '🔗',
+    color: '#f97316',
+    description: 'Link from Link Archiver',
+    nodeType: 'linkNode',
+    defaultData: {
+      url: '',
+      title: 'Saved Link',
+      domain: '',
+      favicon: null,
+      image: null,
+      excerpt: '',
+      tags: [],
+      starred: false,
+      readProgress: 0,
+      aiSummary: null,
     },
   },
 };

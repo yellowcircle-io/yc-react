@@ -1,0 +1,9 @@
+{
+  "daemon": "sleepless",
+  "machine": "Christophers-Mac-mini.local",
+  "status": "stopped",
+  "timestamp": 1768669277.761188,
+  "iso_time": "2026-01-17T12:01:17.761189",
+  "pid": 65068,
+  "tier": 1
+}

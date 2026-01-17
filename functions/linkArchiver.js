@@ -732,6 +732,417 @@ exports.getLinkStats = functions.https.onRequest(async (request, response) => {
   }
 });
 
+/**
+ * Generate AI summary for a link
+ * POST /api/links/:id/summarize
+ *
+ * Uses Gemini API (with Ollama fallback for local development)
+ * to generate a concise summary and auto-tags for the link.
+ */
+exports.summarizeLink = functions
+  .runWith({ timeoutSeconds: 60, memory: "256MB" })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    if (request.method !== "POST") {
+      response.status(405).json({ error: "Method not allowed" });
+      return;
+    }
+
+    const auth = await verifyUserAuth(request);
+    if (!auth.success) {
+      response.status(401).json({ error: auth.error });
+      return;
+    }
+
+    try {
+      const { id } = request.body;
+
+      if (!id) {
+        response.status(400).json({ error: "Link ID required" });
+        return;
+      }
+
+      // Get the link
+      const linkRef = db.collection(LINKS_COLLECTION).doc(id);
+      const linkDoc = await linkRef.get();
+
+      if (!linkDoc.exists) {
+        response.status(404).json({ error: "Link not found" });
+        return;
+      }
+
+      const linkData = linkDoc.data();
+
+      if (linkData.userId !== auth.uid) {
+        response.status(403).json({ error: "Access denied" });
+        return;
+      }
+
+      // Skip if already has AI summary
+      if (linkData.aiSummary) {
+        response.json({
+          success: true,
+          summary: linkData.aiSummary,
+          tags: linkData.aiTags || [],
+          cached: true
+        });
+        return;
+      }
+
+      // Prepare content for summarization
+      const contentToSummarize = linkData.content || linkData.excerpt || linkData.title;
+
+      if (!contentToSummarize || contentToSummarize.length < 50) {
+        response.status(400).json({ error: "Insufficient content to summarize" });
+        return;
+      }
+
+      // Generate summary using Gemini API
+      const summary = await generateAISummary(
+        contentToSummarize.slice(0, 5000),
+        linkData.title
+      );
+
+      // Generate auto-tags
+      const aiTags = await generateAITags(
+        contentToSummarize.slice(0, 2000),
+        linkData.title
+      );
+
+      // Update the link
+      await linkRef.update({
+        aiSummary: summary,
+        aiTags: aiTags,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      console.log(`🤖 AI summary generated for: ${linkData.title}`);
+
+      response.json({
+        success: true,
+        summary,
+        tags: aiTags,
+        cached: false
+      });
+
+    } catch (error) {
+      console.error("summarizeLink error:", error);
+      response.status(500).json({ error: "Failed to generate summary" });
+    }
+  });
+
+/**
+ * Generate AI summary using Gemini API
+ * Falls back to a simple extraction if API fails
+ */
+async function generateAISummary(content, title) {
+  const GEMINI_API_KEY = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY;
+
+  if (!GEMINI_API_KEY) {
+    console.warn("No Gemini API key configured, using fallback summary");
+    return generateFallbackSummary(content);
+  }
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Summarize the following article in 2-3 concise sentences. Focus on the main points and key takeaways. Title: "${title}"\n\nContent:\n${content}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 150
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const summary = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!summary) {
+      throw new Error("No summary generated");
+    }
+
+    return summary.trim();
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    return generateFallbackSummary(content);
+  }
+}
+
+/**
+ * Generate AI tags using Gemini API
+ */
+async function generateAITags(content, title) {
+  const GEMINI_API_KEY = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY;
+
+  if (!GEMINI_API_KEY) {
+    return extractFallbackTags(content, title);
+  }
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Extract 3-5 relevant topic tags from this article. Return only the tags as a comma-separated list, lowercase, no hashtags. Title: "${title}"\n\nContent:\n${content}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 50
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const tagsText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!tagsText) {
+      throw new Error("No tags generated");
+    }
+
+    return tagsText
+      .split(",")
+      .map(tag => tag.trim().toLowerCase())
+      .filter(tag => tag.length > 0 && tag.length < 30)
+      .slice(0, 5);
+  } catch (error) {
+    console.error("Gemini tags error:", error);
+    return extractFallbackTags(content, title);
+  }
+}
+
+/**
+ * Fallback summary extraction (no AI)
+ */
+function generateFallbackSummary(content) {
+  // Extract first meaningful paragraph
+  const sentences = content
+    .replace(/\s+/g, " ")
+    .split(/[.!?]+/)
+    .filter(s => s.trim().length > 30)
+    .slice(0, 3);
+
+  if (sentences.length === 0) {
+    return content.slice(0, 200).trim() + "...";
+  }
+
+  return sentences.join(". ").trim() + ".";
+}
+
+/**
+ * Fallback tag extraction (no AI)
+ */
+function extractFallbackTags(content, title) {
+  const combined = `${title} ${content}`.toLowerCase();
+
+  // Common topic keywords
+  const topicPatterns = [
+    "technology", "programming", "javascript", "python", "ai", "machine learning",
+    "design", "ux", "startup", "business", "marketing", "productivity",
+    "health", "science", "research", "tutorial", "guide", "news",
+    "finance", "crypto", "web3", "mobile", "security", "data"
+  ];
+
+  const foundTags = topicPatterns.filter(topic =>
+    combined.includes(topic)
+  );
+
+  // Also extract potential tags from title words
+  const titleWords = title
+    .toLowerCase()
+    .split(/\W+/)
+    .filter(word => word.length > 4 && !["about", "which", "where", "there", "their", "would", "could", "should"].includes(word))
+    .slice(0, 3);
+
+  return [...new Set([...foundTags, ...titleWords])].slice(0, 5);
+}
+
+/**
+ * Archive a link (create permanent snapshot)
+ * POST /api/links/:id/archive
+ */
+exports.archiveSnapshot = functions
+  .runWith({ timeoutSeconds: 120, memory: "512MB" })
+  .https.onRequest(async (request, response) => {
+    setCors(response);
+
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    if (request.method !== "POST") {
+      response.status(405).json({ error: "Method not allowed" });
+      return;
+    }
+
+    const auth = await verifyUserAuth(request);
+    if (!auth.success) {
+      response.status(401).json({ error: auth.error });
+      return;
+    }
+
+    try {
+      const { id } = request.body;
+
+      if (!id) {
+        response.status(400).json({ error: "Link ID required" });
+        return;
+      }
+
+      const linkRef = db.collection(LINKS_COLLECTION).doc(id);
+      const linkDoc = await linkRef.get();
+
+      if (!linkDoc.exists) {
+        response.status(404).json({ error: "Link not found" });
+        return;
+      }
+
+      const linkData = linkDoc.data();
+
+      if (linkData.userId !== auth.uid) {
+        response.status(403).json({ error: "Access denied" });
+        return;
+      }
+
+      // Skip if already archived
+      if (linkData.archiveUrl) {
+        response.json({
+          success: true,
+          archiveUrl: linkData.archiveUrl,
+          archiveTimestamp: linkData.archiveTimestamp,
+          cached: true
+        });
+        return;
+      }
+
+      // Fetch the page content
+      const pageContent = await fetchFullPageContent(linkData.url);
+
+      if (!pageContent) {
+        response.status(400).json({ error: "Could not archive page content" });
+        return;
+      }
+
+      // Store in Firebase Storage
+      const bucket = admin.storage().bucket();
+      const filename = `archives/${auth.uid}/${id}.html`;
+      const file = bucket.file(filename);
+
+      await file.save(pageContent, {
+        contentType: "text/html",
+        metadata: {
+          originalUrl: linkData.url,
+          archivedAt: new Date().toISOString(),
+          linkId: id
+        }
+      });
+
+      // Make file publicly accessible (or use signed URLs)
+      await file.makePublic();
+      const archiveUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+      // Update link with archive info
+      await linkRef.update({
+        archiveUrl,
+        archiveTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      console.log(`📦 Archive created for: ${linkData.title}`);
+
+      response.json({
+        success: true,
+        archiveUrl,
+        archiveTimestamp: new Date().toISOString(),
+        cached: false
+      });
+
+    } catch (error) {
+      console.error("archiveSnapshot error:", error);
+      response.status(500).json({ error: "Failed to create archive" });
+    }
+  });
+
+/**
+ * Fetch full page content for archiving
+ */
+async function fetchFullPageContent(url) {
+  return new Promise((resolve) => {
+    const protocol = url.startsWith("https") ? https : http;
+
+    const request = protocol.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; yellowCircle LinkArchiver/1.0)",
+        "Accept": "text/html,application/xhtml+xml"
+      },
+      timeout: 30000
+    }, (response) => {
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        return fetchFullPageContent(response.headers.location).then(resolve);
+      }
+
+      if (response.statusCode !== 200) {
+        resolve(null);
+        return;
+      }
+
+      let html = "";
+      response.on("data", chunk => html += chunk);
+      response.on("end", () => {
+        // Add archive notice to the HTML
+        const archiveNotice = `
+          <div style="position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#171717;padding:10px;text-align:center;z-index:99999;font-family:sans-serif;">
+            📦 This is an archived snapshot from <a href="${url}" target="_blank">${url}</a>
+            - Saved by yellowCircle Link Archiver
+          </div>
+          <div style="height:50px;"></div>
+        `;
+
+        const modifiedHtml = html.replace(/<body[^>]*>/i, (match) => {
+          return match + archiveNotice;
+        });
+
+        resolve(modifiedHtml);
+      });
+    });
+
+    request.on("error", () => resolve(null));
+    request.on("timeout", () => {
+      request.destroy();
+      resolve(null);
+    });
+  });
+}
+
 // Export all functions
 module.exports = {
   saveLink: exports.saveLink,
@@ -739,5 +1150,7 @@ module.exports = {
   updateLink: exports.updateLink,
   deleteLink: exports.deleteLink,
   importLinks: exports.importLinks,
-  getLinkStats: exports.getLinkStats
+  getLinkStats: exports.getLinkStats,
+  summarizeLink: exports.summarizeLink,
+  archiveSnapshot: exports.archiveSnapshot
 };

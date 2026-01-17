@@ -41,9 +41,11 @@
 ### Current P2 Tasks
 | Task | Status | Est. Time |
 |------|--------|-----------|
-| Review workspace optimizations | ⏳ Deferred | 2-4 hrs |
+| Review workspace optimizations (sleepless agent) | ⏳ Pending | 2-4 hrs |
 | Theme System (ThemeContext) | 📋 Planned | 2-3 sessions |
 | Claude Bot Relay | 📋 Scoped | Needs ANTHROPIC_API_KEY |
+
+**Workspace Optimizations Note (Jan 15):** Sleepless agent synced 250+ optimizations to production (commit `abb7e7a`). Review needed to validate changes, identify improvements to retain, and document patterns for future automation.
 
 ### Git Status (Current)
 - Branch: main

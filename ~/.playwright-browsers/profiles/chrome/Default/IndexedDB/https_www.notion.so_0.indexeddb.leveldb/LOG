@@ -1,0 +1,6 @@
+2026/01/15-11:18:13.545 238189 Creating DB /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/IndexedDB/https_www.notion.so_0.indexeddb.leveldb since it was missing.
+2026/01/15-11:18:13.549 238189 Reusing MANIFEST /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/IndexedDB/https_www.notion.so_0.indexeddb.leveldb/MANIFEST-000001
+2026/01/15-11:18:14.113 238178 Level-0 table #5: started
+2026/01/15-11:18:14.114 238178 Level-0 table #5: 2641 bytes OK
+2026/01/15-11:18:14.116 238178 Delete type=0 #3
+2026/01/15-11:18:14.116 238178 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)

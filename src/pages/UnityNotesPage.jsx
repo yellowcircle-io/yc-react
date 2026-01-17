@@ -102,35 +102,34 @@ const PREMIUM_NODE_TYPES = new Set([
 
 // Default node sizes by type (Object-based lookup, O(1))
 // Used for positioning calculations and layout
+// Values aligned with actual rendered node dimensions (verified Jan 2026)
 const NODE_SIZE_MAP = {
   // Base nodes
-  photoNode: { width: 200, height: 200 },
+  photoNode: { width: 280, height: 200 },
   textNode: { width: 280, height: 180 },
-  // MAP nodes
-  prospectNode: { width: 200, height: 100 },
-  emailNode: { width: 200, height: 120 },
-  conditionNode: { width: 180, height: 80 },
-  waitNode: { width: 160, height: 60 },
-  exitNode: { width: 120, height: 60 },
+  textNote: { width: 280, height: 180 },  // Alias for textNode
+  // MAP nodes (journey builder)
+  prospectNode: { width: 320, height: 200 },
+  emailNode: { width: 280, height: 180 },
+  conditionNode: { width: 240, height: 120 },
+  waitNode: { width: 260, height: 180 },
+  exitNode: { width: 160, height: 80 },
   // Premium nodes
-  stickyNode: { width: 150, height: 150 },
-  todoNode: { width: 250, height: 200 },
-  commentNode: { width: 200, height: 100 },
-  colorSwatchNode: { width: 180, height: 120 },
+  stickyNode: { width: 200, height: 200 },
+  todoNode: { width: 220, height: 250 },
+  commentNode: { width: 260, height: 140 },
+  colorSwatchNode: { width: 200, height: 140 },
   codeBlockNode: { width: 300, height: 200 },
   groupNode: { width: 400, height: 300 },
   mapNode: { width: 400, height: 300 },
   tripPlannerMapNode: { width: 500, height: 400 },
   // Default fallback
-  default: { width: 200, height: 150 }
+  default: { width: 280, height: 180 }
 };
 
 // Helper functions: Pure functions for O(1) node type operations
-// eslint-disable-next-line no-unused-vars -- Phase 2: Will replace inline size lookups
 const getNodeSize = (nodeType) => NODE_SIZE_MAP[nodeType] || NODE_SIZE_MAP.default;
-// eslint-disable-next-line no-unused-vars -- Phase 2: Will replace nodeType === checks
 const isMapNode = (nodeType) => MAP_NODE_TYPES.has(nodeType);
-// eslint-disable-next-line no-unused-vars -- Phase 2: Will replace premium node checks
 const isPremiumNode = (nodeType) => PREMIUM_NODE_TYPES.has(nodeType);
 
 // ============================================================================
@@ -1730,22 +1729,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         const children = updatedNodes.filter(c => c.parentId === n.id);
         if (children.length === 0) return n;
 
-        // Estimate node sizes based on type
-        const getNodeSize = (nodeType) => {
-          const sizes = {
-            textNote: { width: 280, height: 180 },
-            stickyNode: { width: 200, height: 200 },
-            commentNode: { width: 260, height: 140 },
-            todoNode: { width: 220, height: 250 },
-            photoNode: { width: 280, height: 200 },
-            prospectNode: { width: 320, height: 200 },
-            colorSwatchNode: { width: 200, height: 140 },
-            waitNode: { width: 260, height: 180 },
-          };
-          return sizes[nodeType] || { width: 200, height: 150 };
-        };
-
-        // Calculate bounding box of all children
+        // Calculate bounding box of all children (uses global getNodeSize from NODE_SIZE_MAP)
         let maxRight = 0;
         let maxBottom = 0;
         const padding = 40; // Padding around children
@@ -2466,8 +2450,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const handleAutoLayout = useCallback(() => {
     if (nodes.length === 0) return;
 
-    const NODE_WIDTH = 250;
-    const NODE_HEIGHT = 150;
+    // Layout constants (gaps and starting positions)
     const VERTICAL_GAP = 60;
     const HORIZONTAL_GAP = 80;
     const START_X = 100;
@@ -2498,19 +2481,22 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     let updatedNodes = [];
     let currentY = START_Y;
 
-    // 1. Layout MAP nodes in vertical flow (left side)
+    // 1. Layout MAP nodes in vertical flow (left side) - use actual node heights
     if (mapNodes.length > 0) {
       const sortedMapNodes = [...mapNodes].sort((a, b) => a.position.y - b.position.y);
       const centerX = 400;
+      let mapY = START_Y;
 
-      sortedMapNodes.forEach((node, index) => {
+      sortedMapNodes.forEach((node) => {
+        const nodeSize = getNodeSize(node.type);
         updatedNodes.push({
           ...node,
           position: {
             x: centerX,
-            y: START_Y + (index * (NODE_HEIGHT + VERTICAL_GAP))
+            y: mapY
           }
         });
+        mapY += nodeSize.height + VERTICAL_GAP;
       });
     }
 
@@ -2540,9 +2526,20 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       // Layout children inside group (relative positions)
       // Use 2 columns for better readability, but allow 3 for many children
       const childCols = children.length > 6 ? 3 : 2;
-      // Node sizes - match actual rendered dimensions
-      const childWidth = 280;   // Actual nodes are ~250px wide + margin
-      const childHeight = 220;  // Taller to fit todo lists, text nodes, photos
+
+      // Calculate max dimensions per column/row based on actual node sizes
+      const getMaxDimensions = () => {
+        let maxWidth = 0;
+        let maxHeight = 0;
+        children.forEach(child => {
+          const size = getNodeSize(child.type);
+          maxWidth = Math.max(maxWidth, size.width);
+          maxHeight = Math.max(maxHeight, size.height);
+        });
+        return { maxWidth, maxHeight };
+      };
+      const { maxWidth: childWidth, maxHeight: childHeight } = getMaxDimensions();
+
       const updatedChildren = children.map((child, i) => {
         const col = i % childCols;
         const row = Math.floor(i / childCols);
@@ -2590,9 +2587,18 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
       currentY += rowMaxHeight + GROUP_GAP;
     }
 
-    // 3. Layout orphan nodes in grid below groups
+    // 3. Layout orphan nodes in grid below groups - use max node dimensions for grid
     if (orphanNodes.length > 0) {
       const COLS = Math.ceil(Math.sqrt(orphanNodes.length));
+
+      // Calculate max dimensions for consistent grid
+      let maxOrphanWidth = 0;
+      let maxOrphanHeight = 0;
+      orphanNodes.forEach(node => {
+        const size = getNodeSize(node.type);
+        maxOrphanWidth = Math.max(maxOrphanWidth, size.width);
+        maxOrphanHeight = Math.max(maxOrphanHeight, size.height);
+      });
 
       orphanNodes.forEach((node, index) => {
         const row = Math.floor(index / COLS);
@@ -2600,8 +2606,8 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         updatedNodes.push({
           ...node,
           position: {
-            x: contentStartX + (col * (NODE_WIDTH + HORIZONTAL_GAP)),
-            y: currentY + (row * (NODE_HEIGHT + VERTICAL_GAP))
+            x: contentStartX + (col * (maxOrphanWidth + HORIZONTAL_GAP)),
+            y: currentY + (row * (maxOrphanHeight + VERTICAL_GAP))
           }
         });
       });

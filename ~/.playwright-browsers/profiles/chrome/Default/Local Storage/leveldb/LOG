@@ -1,0 +1,27 @@
+2026/01/09-17:37:51.574 2381c3 Reusing MANIFEST /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/09-17:37:51.581 2381c3 Recovering log #91
+2026/01/09-17:37:51.582 2381c3 Reusing old log /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/Local Storage/leveldb/000091.log 
+2026/01/09-17:39:52.582 2381c7 Level-0 table #95: started
+2026/01/09-17:39:52.589 2381c7 Level-0 table #95: 20853 bytes OK
+2026/01/09-17:39:52.592 2381c7 Delete type=0 #91
+2026/01/15-11:17:26.593 2381c7 Level-0 table #97: started
+2026/01/15-11:17:26.610 2381c7 Level-0 table #97: 295053 bytes OK
+2026/01/15-11:17:26.614 2381c7 Delete type=0 #94
+2026/01/15-11:39:57.604 2381c7 Level-0 table #99: started
+2026/01/15-11:39:57.675 2381c7 Level-0 table #99: 893942 bytes OK
+2026/01/15-11:39:57.680 2381c7 Delete type=0 #96
+2026/01/15-11:39:57.685 2381c7 Compacting 4@0 + 1@1 files
+2026/01/15-11:39:57.700 2381c7 Generated table #100@0: 311 keys, 1201741 bytes
+2026/01/15-11:39:57.700 2381c7 Compacted 4@0 + 1@1 files => 1201741 bytes
+2026/01/15-11:39:57.701 2381c7 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/01/15-11:39:57.702 2381c7 Delete type=2 #89
+2026/01/15-11:39:57.702 2381c7 Delete type=2 #99
+2026/01/15-11:39:57.702 2381c7 Delete type=2 #95
+2026/01/15-11:39:57.702 2381c7 Delete type=2 #97
+2026/01/15-11:39:57.702 2381c7 Delete type=2 #92
+2026/01/15-12:00:37.689 2381c7 Level-0 table #102: started
+2026/01/15-12:00:37.700 2381c7 Level-0 table #102: 19839 bytes OK
+2026/01/15-12:00:37.706 2381c7 Delete type=0 #98
+2026/01/15-12:23:22.048 2381c7 Level-0 table #104: started
+2026/01/15-12:23:22.054 2381c7 Level-0 table #104: 18990 bytes OK
+2026/01/15-12:23:22.061 2381c7 Delete type=0 #101

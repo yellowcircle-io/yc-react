@@ -1,0 +1,6 @@
+2026/01/09-15:51:09.137 224a4f Reusing MANIFEST /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/09-15:51:09.155 224a4f Recovering log #87
+2026/01/09-15:51:09.156 224a4f Reusing old log /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/Local Storage/leveldb/000087.log 
+2026/01/09-15:55:35.697 224a4f Level-0 table #92: started
+2026/01/09-15:55:35.701 224a4f Level-0 table #92: 23647 bytes OK
+2026/01/09-15:55:35.706 224a4f Delete type=0 #87

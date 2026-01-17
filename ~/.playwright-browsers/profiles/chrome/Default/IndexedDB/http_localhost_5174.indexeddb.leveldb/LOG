@@ -1,0 +1,7 @@
+2026/01/09-14:48:15.392 215611 Reusing MANIFEST /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/IndexedDB/http_localhost_5174.indexeddb.leveldb/MANIFEST-000001
+2026/01/09-14:48:15.393 215611 Recovering log #4
+2026/01/09-14:48:15.395 215611 Reusing old log /Users/christophercooper_1/Library/CloudStorage/Dropbox/CC Projects/yellowcircle/yellow-circle/~/.playwright-browsers/profiles/chrome/Default/IndexedDB/http_localhost_5174.indexeddb.leveldb/000004.log 
+2026/01/09-14:48:15.422 215621 Level-0 table #8: started
+2026/01/09-14:48:15.423 215621 Level-0 table #8: 8807 bytes OK
+2026/01/09-14:48:15.425 215621 Delete type=0 #4
+2026/01/09-14:48:15.427 21560f Manual compaction at level-0 from '\x00\x05\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x06\x00\x00\x00' @ 0 : 0; will stop at (end)
