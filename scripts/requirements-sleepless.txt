@@ -1,0 +1,6 @@
+# Requirements for Sleepless Daemon
+# Install with: pip install -r scripts/requirements-sleepless.txt
+
+slack-bolt>=1.27.0
+watchdog>=6.0.0
+requests>=2.32.0

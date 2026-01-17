@@ -5,6 +5,7 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -12737,3 +12738,186 @@ exports.geocodePlacesWithDistances = functions.https.onRequest(async (request, r
     response.status(500).json({ error: error.message });
   }
 });
+
+// ============================================================
+// Sleepless Agent - Slack Webhook Fallback (Tier 2/3)
+// ============================================================
+
+/**
+ * Sleepless Webhook - Handles /sleepless commands when Socket Mode daemon is down
+ *
+ * This is the Tier 2/3 fallback for the Sleepless Agent system.
+ * When the local Socket Mode daemon is unavailable, Slack can route
+ * slash commands to this Firebase function instead.
+ *
+ * Flow:
+ * 1. Receive slash command from Slack
+ * 2. Verify Slack request signature
+ * 3. Queue command in Firestore for async processing
+ * 4. Return immediate acknowledgment to Slack
+ * 5. Background: File watcher or scheduled function processes queue
+ *
+ * Configuration:
+ * - SLACK_SIGNING_SECRET in Firebase config
+ * - Slack App Request URL: https://yellowcircle-app.web.app/api/sleepless
+ */
+
+/**
+ * Verify Slack request signature
+ * @param {Object} request - Express request object
+ * @param {string} signingSecret - Slack signing secret
+ * @returns {boolean} - True if signature is valid
+ */
+const verifySlackSignature = (request, signingSecret) => {
+  const timestamp = request.headers['x-slack-request-timestamp'];
+  const signature = request.headers['x-slack-signature'];
+
+  if (!timestamp || !signature) {
+    console.warn('Missing Slack signature headers');
+    return false;
+  }
+
+  // Check timestamp is within 5 minutes to prevent replay attacks
+  const currentTime = Math.floor(Date.now() / 1000);
+  if (Math.abs(currentTime - parseInt(timestamp)) > 300) {
+    console.warn('Slack request timestamp too old');
+    return false;
+  }
+
+  // Reconstruct the signature base string
+  const rawBody = request.rawBody || JSON.stringify(request.body);
+  const sigBasestring = `v0:${timestamp}:${rawBody}`;
+
+  // Calculate expected signature
+  const mySignature = 'v0=' + crypto
+    .createHmac('sha256', signingSecret)
+    .update(sigBasestring, 'utf8')
+    .digest('hex');
+
+  // Constant-time comparison
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(mySignature, 'utf8'),
+      Buffer.from(signature, 'utf8')
+    );
+  } catch (e) {
+    return false;
+  }
+};
+
+exports.sleepless = functions
+  .runWith({ memory: '256MB', timeoutSeconds: 30 })
+  .https.onRequest(async (request, response) => {
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      setCors(response);
+      response.status(200).end();
+      return;
+    }
+
+    // Only accept POST
+    if (request.method !== 'POST') {
+      response.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+
+    try {
+      // Get Slack signing secret from Firebase config
+      const signingSecret = functions.config().slack?.signing_secret;
+
+      // Verify Slack signature (skip in development if not configured)
+      if (signingSecret) {
+        if (!verifySlackSignature(request, signingSecret)) {
+          console.warn('❌ Sleepless: Invalid Slack signature');
+          response.status(401).json({ error: 'Invalid signature' });
+          return;
+        }
+      } else {
+        console.warn('⚠️ Sleepless: SLACK_SIGNING_SECRET not configured, skipping verification');
+      }
+
+      // Parse Slack slash command payload
+      const {
+        command,
+        text,
+        user_id,
+        user_name,
+        channel_id,
+        channel_name,
+        team_id,
+        response_url,
+        trigger_id
+      } = request.body;
+
+      console.log(`📥 Sleepless: Received ${command} from @${user_name}: ${text?.substring(0, 100)}`);
+
+      // Validate command
+      if (command !== '/sleepless') {
+        response.status(400).json({ error: 'Invalid command' });
+        return;
+      }
+
+      // Handle empty command
+      if (!text?.trim()) {
+        response.json({
+          response_type: 'ephemeral',
+          text: '*Usage:* `/sleepless [your prompt or question]`\n\n' +
+                '*Note:* The Sleepless daemon is currently offline. ' +
+                'Your request will be queued and processed when the daemon comes back online.\n\n' +
+                '*Examples:*\n' +
+                '• `/sleepless summarize recent commits`\n' +
+                '• `/sleepless what files handle authentication?`\n' +
+                '• `/sleepless status`'
+        });
+        return;
+      }
+
+      // Handle status command
+      if (text.trim().toLowerCase() === 'status') {
+        response.json({
+          response_type: 'ephemeral',
+          text: '*Sleepless Agent Status:*\n' +
+                '• Tier: 2/3 (Firebase Fallback)\n' +
+                '• Socket Mode Daemon: *Offline*\n' +
+                '• Mode: Queue for async processing\n\n' +
+                '_Commands are queued and will be processed when the daemon comes online._'
+        });
+        return;
+      }
+
+      // Queue command in Firestore for async processing
+      const commandDoc = {
+        command: command,
+        text: text.trim(),
+        user_id: user_id,
+        user_name: user_name,
+        channel_id: channel_id,
+        channel_name: channel_name || 'unknown',
+        team_id: team_id,
+        response_url: response_url,
+        trigger_id: trigger_id,
+        status: 'pending',
+        tier: 2,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        source: 'firebase_webhook'
+      };
+
+      const docRef = await db.collection('sleepless_queue').add(commandDoc);
+      console.log(`✅ Sleepless: Queued command ${docRef.id}`);
+
+      // Immediate acknowledgment to Slack
+      response.json({
+        response_type: 'in_channel',
+        text: `*Sleepless Agent:* ⏳ Command queued (Tier 2 fallback)\n` +
+              `_The daemon is currently offline. Your request has been queued and will be processed shortly._\n\n` +
+              `> ${text.trim().substring(0, 100)}${text.length > 100 ? '...' : ''}`
+      });
+
+    } catch (error) {
+      console.error('❌ Sleepless webhook error:', error);
+      response.status(500).json({
+        response_type: 'ephemeral',
+        text: `*Error:* ${error.message}`
+      });
+    }
+  });

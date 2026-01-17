@@ -29,6 +29,10 @@
         "function": "health"
       },
       {
+        "source": "/api/sleepless",
+        "function": "sleepless"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
