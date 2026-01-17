@@ -91,7 +91,7 @@ LLM_TIERS = [
     },
     {
         'name': 'groq',
-        'model': 'llama-3.1-70b-versatile',
+        'model': 'llama-3.3-70b-versatile',
         'endpoint': 'https://api.groq.com/openai/v1/chat/completions',
         'timeout': 30,
         'enabled': True,
