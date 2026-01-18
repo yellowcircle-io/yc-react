@@ -86,7 +86,11 @@ const COLORS = {
 // ============================================================
 const styles = {
   container: {
-    padding: '100px 24px 40px 120px',
+    minHeight: '100vh',
+    backgroundColor: COLORS.white,
+    padding: '100px 40px 40px 120px'
+  },
+  innerContainer: {
     maxWidth: '1400px',
     margin: '0 auto'
   },
@@ -980,9 +984,21 @@ const LinkArchiverPage = () => {
         navigationItems={adminNavigationItems}
         onHomeClick={handleHomeClick}
       >
-        <div style={{ ...styles.container, textAlign: 'center', paddingTop: '100px' }}>
-          <RefreshCw size={40} color={COLORS.primary} className="animate-spin" />
-          <p style={{ marginTop: '16px', color: COLORS.textMuted }}>Loading...</p>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          backgroundColor: COLORS.white,
+          paddingTop: '80px',
+          paddingLeft: '100px'
+        }}>
+          <div style={{
+            textAlign: 'center'
+          }}>
+            <RefreshCw size={40} color={COLORS.primary} className="animate-spin" />
+            <p style={{ marginTop: '16px', color: COLORS.textMuted }}>Loading...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -999,6 +1015,7 @@ const LinkArchiverPage = () => {
       onHomeClick={handleHomeClick}
     >
       <div style={styles.container}>
+        <div style={styles.innerContainer}>
         {/* Header */}
         <div style={styles.header}>
           <h1 style={styles.title}>
@@ -1206,6 +1223,7 @@ const LinkArchiverPage = () => {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
 
