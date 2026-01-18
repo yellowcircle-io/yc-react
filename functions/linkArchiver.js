@@ -17,7 +17,8 @@ const http = require("http");
 const { JSDOM } = require("jsdom");
 
 // Note: admin.initializeApp() should be called in main index.js
-const db = admin.firestore();
+// Lazy initialization - getDb() called inside functions, not at module load
+const getDb = () => admin.firestore();
 
 // ============================================
 // Configuration
@@ -235,7 +236,7 @@ exports.saveLink = functions.https.onRequest(async (request, response) => {
     }
 
     // Check for duplicate
-    const existingQuery = await db.collection(LINKS_COLLECTION)
+    const existingQuery = await getDb().collection(LINKS_COLLECTION)
       .where("userId", "==", auth.uid)
       .where("url", "==", url)
       .limit(1)
@@ -264,7 +265,7 @@ exports.saveLink = functions.https.onRequest(async (request, response) => {
     const domain = extractDomain(url);
 
     // Create link document
-    const linkRef = db.collection(LINKS_COLLECTION).doc();
+    const linkRef = getDb().collection(LINKS_COLLECTION).doc();
     const link = {
       id: linkRef.id,
       userId: auth.uid,
@@ -361,7 +362,7 @@ exports.getLinks = functions.https.onRequest(async (request, response) => {
       startAfter
     } = request.query;
 
-    let query = db.collection(LINKS_COLLECTION)
+    let query = getDb().collection(LINKS_COLLECTION)
       .where("userId", "==", auth.uid)
       .where("archived", "==", archived === "true");
 
@@ -380,7 +381,7 @@ exports.getLinks = functions.https.onRequest(async (request, response) => {
     query = query.orderBy("savedAt", "desc").limit(parseInt(pageLimit));
 
     if (startAfter) {
-      const startDoc = await db.collection(LINKS_COLLECTION).doc(startAfter).get();
+      const startDoc = await getDb().collection(LINKS_COLLECTION).doc(startAfter).get();
       if (startDoc.exists) {
         query = query.startAfter(startDoc);
       }
@@ -433,7 +434,7 @@ exports.updateLink = functions.https.onRequest(async (request, response) => {
       return;
     }
 
-    const linkRef = db.collection(LINKS_COLLECTION).doc(id);
+    const linkRef = getDb().collection(LINKS_COLLECTION).doc(id);
     const linkDoc = await linkRef.get();
 
     if (!linkDoc.exists) {
@@ -500,7 +501,7 @@ exports.deleteLink = functions.https.onRequest(async (request, response) => {
       return;
     }
 
-    const linkRef = db.collection(LINKS_COLLECTION).doc(id);
+    const linkRef = getDb().collection(LINKS_COLLECTION).doc(id);
     const linkDoc = await linkRef.get();
 
     if (!linkDoc.exists) {
@@ -566,11 +567,11 @@ exports.importLinks = functions
       let skipped = 0;
       let errors = 0;
 
-      const batch = db.batch();
+      const batch = getDb().batch();
       const existingUrls = new Set();
 
       // Get existing URLs
-      const existingQuery = await db.collection(LINKS_COLLECTION)
+      const existingQuery = await getDb().collection(LINKS_COLLECTION)
         .where("userId", "==", auth.uid)
         .select("url")
         .get();
@@ -587,7 +588,7 @@ exports.importLinks = functions
 
         try {
           const domain = extractDomain(url);
-          const linkRef = db.collection(LINKS_COLLECTION).doc();
+          const linkRef = getDb().collection(LINKS_COLLECTION).doc();
 
           batch.set(linkRef, {
             id: linkRef.id,
@@ -670,7 +671,7 @@ exports.getLinkStats = functions.https.onRequest(async (request, response) => {
   }
 
   try {
-    const snapshot = await db.collection(LINKS_COLLECTION)
+    const snapshot = await getDb().collection(LINKS_COLLECTION)
       .where("userId", "==", auth.uid)
       .get();
 
@@ -769,7 +770,7 @@ exports.summarizeLink = functions
       }
 
       // Get the link
-      const linkRef = db.collection(LINKS_COLLECTION).doc(id);
+      const linkRef = getDb().collection(LINKS_COLLECTION).doc(id);
       const linkDoc = await linkRef.get();
 
       if (!linkDoc.exists) {
@@ -1018,7 +1019,7 @@ exports.archiveSnapshot = functions
         return;
       }
 
-      const linkRef = db.collection(LINKS_COLLECTION).doc(id);
+      const linkRef = getDb().collection(LINKS_COLLECTION).doc(id);
       const linkDoc = await linkRef.get();
 
       if (!linkDoc.exists) {
@@ -1143,14 +1144,5 @@ async function fetchFullPageContent(url) {
   });
 }
 
-// Export all functions
-module.exports = {
-  saveLink: exports.saveLink,
-  getLinks: exports.getLinks,
-  updateLink: exports.updateLink,
-  deleteLink: exports.deleteLink,
-  importLinks: exports.importLinks,
-  getLinkStats: exports.getLinkStats,
-  summarizeLink: exports.summarizeLink,
-  archiveSnapshot: exports.archiveSnapshot
-};
+// Functions are already exported via exports.xxx = functions.https.onRequest(...)
+// No module.exports needed - require('./linkArchiver') will use the exports object

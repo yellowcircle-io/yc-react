@@ -12336,6 +12336,58 @@ exports.slackWebhook = functions.https.onRequest(async (request, response) => {
       await db.collection('slack_messages').add(slackMessage);
       console.log("✅ Slack message queued:", slackMessage.text?.substring(0, 50));
 
+      // Handle link saving commands (!savelink or !save)
+      if (slackMessage.isCommand && (slackMessage.command === 'savelink' || slackMessage.command === 'save')) {
+        const urlMatch = (event.text || '').match(/https?:\/\/[^\s>]+/);
+        if (urlMatch) {
+          const linkUrl = urlMatch[0];
+          console.log("📎 Saving link from Slack:", linkUrl);
+
+          // Get the admin user ID for saving links (uses shared admin account)
+          const adminUserId = 'slack-bot-user'; // Or use a configured admin UID
+
+          // Save the link using the linkArchiver
+          try {
+            const linkRef = db.collection('links').doc();
+            await linkRef.set({
+              url: linkUrl,
+              title: `Link from Slack`,
+              excerpt: `Saved via Slack command by user ${event.user}`,
+              content: '',
+              tags: ['slack', 'quick-save'],
+              folderId: null,
+              userId: adminUserId,
+              starred: false,
+              archived: false,
+              readingProgress: 0,
+              readLater: true,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            console.log("✅ Link saved from Slack:", linkUrl);
+
+            // Send confirmation back to Slack
+            const slackWebhook = functions.config().slack?.webhook;
+            if (slackWebhook) {
+              await fetch(slackWebhook, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  text: `✅ Link saved: ${linkUrl}`,
+                  thread_ts: event.ts
+                })
+              });
+            }
+          } catch (saveError) {
+            console.error("❌ Error saving link from Slack:", saveError);
+          }
+        } else {
+          console.log("⚠️ No URL found in !savelink command");
+        }
+        return response.status(200).json({ ok: true, action: 'link_saved' });
+      }
+
       // If it's a command, create a task for Claude
       if (slackMessage.isCommand) {
         await db.collection('claude_tasks').add({
@@ -12921,3 +12973,19 @@ exports.sleepless = functions
       });
     }
   });
+
+// ============================================
+// Link Archiver Functions (Pocket Alternative)
+// ============================================
+const linkArchiver = require('./linkArchiver');
+
+// Re-export all linkArchiver functions
+// Note: Using underscores to avoid Firebase's module-function name interpretation
+exports.linkArchiverSaveLink = linkArchiver.saveLink;
+exports.linkArchiverGetLinks = linkArchiver.getLinks;
+exports.linkArchiverUpdateLink = linkArchiver.updateLink;
+exports.linkArchiverDeleteLink = linkArchiver.deleteLink;
+exports.linkArchiverImportLinks = linkArchiver.importLinks;
+exports.linkArchiverGetLinkStats = linkArchiver.getLinkStats;
+exports.linkArchiverSummarizeLink = linkArchiver.summarizeLink;
+exports.linkArchiverArchiveSnapshot = linkArchiver.archiveSnapshot;

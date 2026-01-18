@@ -64,6 +64,7 @@ const ArticleEditorPage = lazy(() => import('./pages/admin/ArticleEditorPage'));
 const BlockEditorPage = lazy(() => import('./pages/admin/BlockEditorPage'));
 const StorageCleanupPage = lazy(() => import('./pages/admin/StorageCleanupPage'));
 const LinkArchiverPage = lazy(() => import('./pages/admin/LinkArchiverPage'));
+const SaveLinkPage = lazy(() => import('./pages/SaveLinkPage'));
 
 // Loading spinner for lazy loaded components
 const PageLoader = () => (
@@ -186,6 +187,7 @@ function RouterApp() {
             <Route path="/admin/blocks/:articleId" element={<BlockEditorPage />} />
             <Route path="/admin/storage-cleanup" element={<StorageCleanupPage />} />
             <Route path="/admin/links" element={<LinkArchiverPage />} />
+            <Route path="/save" element={<SaveLinkPage />} />
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />

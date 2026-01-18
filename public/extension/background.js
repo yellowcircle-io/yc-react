@@ -85,7 +85,7 @@ async function saveLink(url, title, tabId, note = null) {
 
     // Call API
     const apiUrl = 'https://us-central1-yellowcircle-app.cloudfunctions.net';
-    const response = await fetch(`${apiUrl}/linkArchiver-saveLink`, {
+    const response = await fetch(`${apiUrl}/linkArchiverSaveLink`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

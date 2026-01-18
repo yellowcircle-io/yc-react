@@ -13,7 +13,7 @@ const API_BASE_URLS = [
   'http://localhost:5001/yellowcircle-app/us-central1' // Development
 ];
 
-const APP_URLS = [
+const _APP_URLS = [
   'https://yellowcircle.io',
   'https://yellowcircle-app.web.app',
   'http://localhost:5173'
@@ -156,7 +156,7 @@ async function saveLink() {
 
     // Call API to save link
     const apiUrl = API_BASE_URLS[0]; // Use production URL
-    const response = await fetch(`${apiUrl}/linkArchiver-saveLink`, {
+    const response = await fetch(`${apiUrl}/linkArchiverSaveLink`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
