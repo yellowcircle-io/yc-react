@@ -13,7 +13,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/global/Layout';
+import { useLayout } from '../../contexts/LayoutContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { adminNavigationItems } from '../../config/adminNavigationItems';
 import {
   getLinks,
   getFolders,
@@ -84,7 +86,7 @@ const COLORS = {
 // ============================================================
 const styles = {
   container: {
-    padding: '24px',
+    padding: '100px 24px 40px 120px',
     maxWidth: '1400px',
     margin: '0 auto'
   },
@@ -813,6 +815,7 @@ const LinkDetailModal = ({ link, isOpen, onClose, onUpdate }) => {
 // ============================================================
 const LinkArchiverPage = () => {
   const navigate = useNavigate();
+  useLayout(); // Context subscription for sidebar
   const { user, isAdmin, loading: authLoading } = useAuth();
 
   // State
@@ -969,8 +972,12 @@ const LinkArchiverPage = () => {
   if (authLoading || loading) {
     return (
       <Layout
-        title="Link Archiver"
-        pageTitle="Link Archiver"
+        hideParallaxCircle={true}
+        hideCircleNav={true}
+        sidebarVariant="standard"
+        allowScroll={true}
+        pageLabel="LINKS"
+        navigationItems={adminNavigationItems}
         onHomeClick={handleHomeClick}
       >
         <div style={{ ...styles.container, textAlign: 'center', paddingTop: '100px' }}>
@@ -983,8 +990,12 @@ const LinkArchiverPage = () => {
 
   return (
     <Layout
-      title="Link Archiver"
-      pageTitle="Link Archiver"
+      hideParallaxCircle={true}
+      hideCircleNav={true}
+      sidebarVariant="standard"
+      allowScroll={true}
+      pageLabel="LINKS"
+      navigationItems={adminNavigationItems}
       onHomeClick={handleHomeClick}
     >
       <div style={styles.container}>

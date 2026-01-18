@@ -32,6 +32,12 @@ export const adminNavigationItems = [
     icon: null,
     route: '/admin/trigger-rules'
   },
+  {
+    itemKey: 'admin-links',
+    label: 'Link Archiver',
+    icon: null,
+    route: '/admin/links'
+  },
   { isSectionLabel: true, label: 'TOOLS', itemKey: 'tools-section' },
   {
     itemKey: 'tool-unity-notes',
