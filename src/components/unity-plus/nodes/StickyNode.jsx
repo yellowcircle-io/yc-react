@@ -271,20 +271,20 @@ const StickyNode = memo(({ id, data, selected }) => {
         {/* Color picker dropdown */}
         {showColorPicker && (
           <div
-            className="nodrag nopan"
-            onClick={(e) => e.stopPropagation()}
+            className="nodrag"
             style={{
               position: 'absolute',
-              top: '28px',
-              right: '-4px',
+              top: '24px',
+              right: '0',
               backgroundColor: '#fff',
               borderRadius: '8px',
-              padding: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '6px',
-              zIndex: 100,
+              padding: '6px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              display: 'flex',
+              gap: '4px',
+              flexWrap: 'wrap',
+              width: '80px',
+              zIndex: 20,
             }}
           >
             {Object.entries(STICKY_COLORS).map(([colorKey, colors]) => (
@@ -292,22 +292,17 @@ const StickyNode = memo(({ id, data, selected }) => {
                 key={colorKey}
                 onClick={(e) => {
                   e.stopPropagation();
-                  e.preventDefault();
                   handleColorChange(colorKey);
                 }}
-                className="nodrag nopan"
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '4px',
                   backgroundColor: colors.bg,
-                  border: currentColor === colorKey ? `3px solid ${colors.border}` : '2px solid #e5e7eb',
+                  border: currentColor === colorKey ? `2px solid ${colors.border}` : '1px solid #e5e7eb',
                   cursor: 'pointer',
                   padding: 0,
-                  transition: 'transform 0.1s ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                 title={colorKey.charAt(0).toUpperCase() + colorKey.slice(1)}
               />
             ))}

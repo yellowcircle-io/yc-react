@@ -1,5 +1,5 @@
-import React, { memo, useState, useRef } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import React, { memo, useState } from 'react';
+import { NodeResizer, Handle, Position } from '@xyflow/react';
 
 /**
  * GroupNode - Container for grouping nodes
@@ -28,67 +28,12 @@ const GroupNode = memo(({ id, data, selected }) => {
   const [label, setLabel] = useState(data.label || 'Group');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [currentColor, setCurrentColor] = useState(data.color || 'gray');
-  const [_isResizing, setIsResizing] = useState(false);  
-  const resizeStartRef = useRef({ width: 0, height: 0, x: 0, y: 0 });
 
   const colorScheme = GROUP_COLORS[currentColor] || GROUP_COLORS.gray;
   const width = data.width || 300;
   const height = data.height || 200;
   const isDropTarget = data.isDropTarget || false;
   const childCount = data.childCount || 0;
-
-  // Custom resize handler for corner handles
-  const handleResizeStart = (e, corner) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setIsResizing(true);
-
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    resizeStartRef.current = { width, height, x: clientX, y: clientY, corner };
-
-    const handleMove = (moveEvent) => {
-      moveEvent.stopPropagation();
-      moveEvent.preventDefault();
-
-      const moveX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const moveY = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY;
-
-      const deltaX = moveX - resizeStartRef.current.x;
-      const deltaY = moveY - resizeStartRef.current.y;
-
-      let newWidth = resizeStartRef.current.width;
-      let newHeight = resizeStartRef.current.height;
-
-      // Adjust based on corner being dragged
-      if (corner.includes('r')) newWidth += deltaX;
-      if (corner.includes('l')) newWidth -= deltaX;
-      if (corner.includes('b')) newHeight += deltaY;
-      if (corner.includes('t')) newHeight -= deltaY;
-
-      // Clamp to minimum size
-      newWidth = Math.max(150, newWidth);
-      newHeight = Math.max(100, newHeight);
-
-      if (data.onResize) {
-        data.onResize(id, newWidth, newHeight);
-      }
-    };
-
-    const handleEnd = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-  };
 
   const handleColorChange = (colorKey) => {
     setCurrentColor(colorKey);
@@ -139,91 +84,31 @@ const GroupNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Custom circular resize handles - positioned INSIDE the node corners */}
-      {(selected || isHovered) && (
-        <>
-          {/* Top-left corner */}
-          <div
-            onMouseDown={(e) => handleResizeStart(e, 'tl')}
-            onTouchStart={(e) => handleResizeStart(e, 'tl')}
-            className="nodrag"
-            style={{
-              position: 'absolute',
-              top: '8px',
-              left: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              cursor: 'nwse-resize',
-              zIndex: 10,
-              touchAction: 'none',
-            }}
-          />
-          {/* Top-right corner */}
-          <div
-            onMouseDown={(e) => handleResizeStart(e, 'tr')}
-            onTouchStart={(e) => handleResizeStart(e, 'tr')}
-            className="nodrag"
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              cursor: 'nesw-resize',
-              zIndex: 10,
-              touchAction: 'none',
-            }}
-          />
-          {/* Bottom-left corner */}
-          <div
-            onMouseDown={(e) => handleResizeStart(e, 'bl')}
-            onTouchStart={(e) => handleResizeStart(e, 'bl')}
-            className="nodrag"
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              left: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              cursor: 'nesw-resize',
-              zIndex: 10,
-              touchAction: 'none',
-            }}
-          />
-          {/* Bottom-right corner */}
-          <div
-            onMouseDown={(e) => handleResizeStart(e, 'br')}
-            onTouchStart={(e) => handleResizeStart(e, 'br')}
-            className="nodrag"
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              right: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              cursor: 'nwse-resize',
-              zIndex: 10,
-              touchAction: 'none',
-            }}
-          />
-        </>
-      )}
+      {/* Resizer - needs high zIndex to be clickable above other nodes */}
+      <NodeResizer
+        minWidth={150}
+        minHeight={100}
+        isVisible={selected || isHovered}
+        lineStyle={{
+          borderColor: colorScheme.border,
+          borderWidth: 2,
+          zIndex: 1000,
+        }}
+        handleStyle={{
+          backgroundColor: colorScheme.border,
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          zIndex: 1000,
+        }}
+        onResize={(_, params) => {
+          if (data.onResize) {
+            data.onResize(id, params.width, params.height);
+          }
+        }}
+      />
 
       {/* Delete button - positioned directly on node like WaitNode */}
       {(isHovered || selected) && data.onDelete && (

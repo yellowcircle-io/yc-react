@@ -368,30 +368,13 @@ const TextNoteNode = memo(({ data, id, selected }) => {
     e.stopPropagation();
   }, [saveAndClose]);
 
-  // Extract video embed info - supports multiple platforms
+  // Extract video embed info
   const getVideoEmbed = useCallback((videoUrl) => {
     if (!videoUrl) return null;
-
-    // YouTube (watch, shorts, embed, youtu.be)
-    const youtubeMatch = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const youtubeMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
     if (youtubeMatch) return { type: 'youtube', id: youtubeMatch[1] };
-
-    // Vimeo
     const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
     if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
-
-    // Loom
-    const loomMatch = videoUrl.match(/loom\.com\/(?:share|embed)\/([a-f0-9]+)/);
-    if (loomMatch) return { type: 'loom', id: loomMatch[1] };
-
-    // Dailymotion
-    const dailymotionMatch = videoUrl.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
-    if (dailymotionMatch) return { type: 'dailymotion', id: dailymotionMatch[1] };
-
-    // Wistia
-    const wistiaMatch = videoUrl.match(/(?:wistia\.com|wi\.st)\/(?:medias|embed)\/([a-zA-Z0-9]+)/);
-    if (wistiaMatch) return { type: 'wistia', id: wistiaMatch[1] };
-
     return null;
   }, []);
 
@@ -799,18 +782,18 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
       <div style={{ overflow: 'hidden', borderRadius: '6px' }}>
 
       {/* Header accent */}
-      <div style={{ height: '3px', backgroundColor: accentColor }} />
+      <div style={{ height: '6px', backgroundColor: accentColor }} />
 
       {/* Card type label */}
-      <div style={{ padding: '4px 8px 1px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ fontSize: '10px' }}>{config.icon}</span>
-        <span style={{ fontSize: '8px', fontWeight: '700', letterSpacing: '0.1em', color: accentColor, textTransform: 'uppercase' }}>
+      <div style={{ padding: '8px 12px 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '12px' }}>{config.icon}</span>
+        <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: accentColor, textTransform: 'uppercase' }}>
           {config.label}
         </span>
       </div>
 
       {/* Title - Always editable inline */}
-      <div style={{ padding: '0 8px 2px' }}>
+      <div style={{ padding: '0 12px 8px' }}>
         <input
           type="text"
           value={localTitle}
@@ -820,13 +803,13 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
           className="nodrag nopan"
           style={{
             width: '100%',
-            fontSize: '14px',
+            fontSize: '15px',
             fontWeight: '700',
             color: baseStyles.color,
             backgroundColor: 'transparent',
             border: 'none',
             outline: 'none',
-            padding: '2px 0',
+            padding: '4px 0',
             cursor: 'text',
           }}
         />
@@ -834,13 +817,13 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
 
       {/* LINK: URL Input + Preview */}
       {cardType === 'link' && (
-        <div style={{ padding: '0 8px 4px' }}>
+        <div style={{ padding: '0 12px 8px' }}>
           {/* URL Input */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            padding: '6px 8px',
+            gap: '8px',
+            padding: '8px',
             backgroundColor: isDarkTheme ? '#111827' : '#eff6ff',
             borderRadius: '4px',
             border: `1px solid ${isDarkTheme ? '#374151' : '#bfdbfe'}`,
@@ -1330,7 +1313,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               onChange={(e) => setLocalUrl(e.target.value)}
               onBlur={saveAndClose}
               onKeyDown={handleKeyDown}
-              placeholder="YouTube, Vimeo, Loom, Dailymotion URL"
+              placeholder="YouTube or Vimeo URL"
               className="nodrag nopan"
               style={{
                 width: '100%',
@@ -1342,36 +1325,30 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               }}
             />
           </div>
-          {getVideoEmbed(localUrl) && (() => {
-            const embed = getVideoEmbed(localUrl);
-            const embedUrls = {
-              youtube: `https://www.youtube.com/embed/${embed.id}`,
-              vimeo: `https://player.vimeo.com/video/${embed.id}`,
-              loom: `https://www.loom.com/embed/${embed.id}`,
-              dailymotion: `https://www.dailymotion.com/embed/video/${embed.id}`,
-              wistia: `https://fast.wistia.net/embed/iframe/${embed.id}`,
-            };
-            return (
-              <div style={{
-                position: 'relative',
-                width: '100%',
-                paddingBottom: '56.25%',
-                backgroundColor: '#000',
-                borderRadius: '4px',
-                overflow: 'hidden',
-              }}>
-                <iframe
-                  src={embedUrls[embed.type]}
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            );
-          })()}
+          {getVideoEmbed(localUrl) && (
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              paddingBottom: '56.25%',
+              backgroundColor: '#000',
+              borderRadius: '4px',
+              overflow: 'hidden',
+            }}>
+              <iframe
+                src={
+                  getVideoEmbed(localUrl).type === 'youtube'
+                    ? `https://www.youtube.com/embed/${getVideoEmbed(localUrl).id}`
+                    : `https://player.vimeo.com/video/${getVideoEmbed(localUrl).id}`
+                }
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
           {localUrl && !getVideoEmbed(localUrl) && (
             <div style={{ fontSize: '11px', color: '#dc2626', padding: '8px' }}>
-              Unsupported URL. Try YouTube, Vimeo, Loom, or Dailymotion.
+              Invalid URL. Use YouTube or Vimeo links.
             </div>
           )}
         </div>
@@ -1623,7 +1600,7 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
 
       {/* Content area - For non-AI cards only */}
       {cardType !== 'ai' && (
-        <div style={{ padding: '0 8px 4px' }}>
+        <div style={{ padding: '0 12px 12px' }}>
           {/* Edit mode: Show textarea */}
           {isEditing ? (
             <textarea
@@ -1643,14 +1620,14 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               className="nodrag nopan"
               style={{
                 width: '100%',
-                minHeight: '36px',
-                fontSize: '12px',
-                lineHeight: '1.4',
+                minHeight: '80px',
+                fontSize: '13px',
+                lineHeight: '1.5',
                 color: isDarkTheme ? '#d1d5db' : '#4b5563',
                 backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
                 border: `1px solid ${isDarkTheme ? '#374151' : '#e5e7eb'}`,
                 borderRadius: '4px',
-                padding: '4px 6px',
+                padding: '8px',
                 resize: 'vertical',
                 outline: 'none',
                 fontFamily: 'inherit',
@@ -1663,9 +1640,9 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
               className="nodrag nopan"
               onClick={startEditing}
               style={{
-                minHeight: '16px',
-                padding: '4px 6px',
-                fontSize: '12px',
+                minHeight: '40px',
+                padding: '8px',
+                fontSize: '13px',
                 lineHeight: '1.5',
                 color: localContent ? (isDarkTheme ? '#d1d5db' : '#4b5563') : (isDarkTheme ? '#6b7280' : '#9ca3af'),
                 backgroundColor: isDarkTheme ? '#111827' : '#f9fafb',
