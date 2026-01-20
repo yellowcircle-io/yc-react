@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { UserSettingsProvider } from './contexts/UserSettingsContext';
 
 // Eagerly loaded pages (critical for initial render)
 import HomePage from './pages/HomePage';
@@ -65,6 +66,10 @@ const BlockEditorPage = lazy(() => import('./pages/admin/BlockEditorPage'));
 const StorageCleanupPage = lazy(() => import('./pages/admin/StorageCleanupPage'));
 const LinkArchiverPage = lazy(() => import('./pages/admin/LinkArchiverPage'));
 const SaveLinkPage = lazy(() => import('./pages/SaveLinkPage'));
+const LinkSaverExtensionPage = lazy(() => import('./pages/LinkSaverExtensionPage'));
+
+// Account pages (user settings - distinct from admin)
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 
 // Loading spinner for lazy loaded components
 const PageLoader = () => (
@@ -100,7 +105,8 @@ function RouterApp() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <LayoutProvider>
+        <UserSettingsProvider>
+          <LayoutProvider>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Suspense fallback={<PageLoader />}>
               <Routes>
@@ -178,6 +184,15 @@ function RouterApp() {
             <Route path="/approve-access" element={<ApproveAccessPage />} />
             <Route path="/deny-access" element={<DenyAccessPage />} />
 
+            {/* Account Routes (User Settings - distinct from Admin) */}
+            <Route path="/account/settings" element={<AccountSettingsPage />} />
+
+            {/* Link Saver (User Tool - not admin-gated) */}
+            <Route path="/links" element={<LinkArchiverPage />} />
+            <Route path="/links/extension" element={<LinkSaverExtensionPage />} />
+            <Route path="/link-archiver/extension" element={<LinkSaverExtensionPage />} /> {/* Legacy */}
+            <Route path="/save" element={<SaveLinkPage />} />
+
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminHubPage />} />
             <Route path="/admin/trigger-rules" element={<TriggerRulesPage />} />
@@ -186,15 +201,15 @@ function RouterApp() {
             <Route path="/admin/articles/:articleId" element={<ArticleEditorPage />} />
             <Route path="/admin/blocks/:articleId" element={<BlockEditorPage />} />
             <Route path="/admin/storage-cleanup" element={<StorageCleanupPage />} />
-            <Route path="/admin/links" element={<LinkArchiverPage />} />
-            <Route path="/save" element={<SaveLinkPage />} />
+            <Route path="/admin/links" element={<LinkArchiverPage />} /> {/* Legacy alias */}
 
             {/* 404 - Catch all unmatched routes */}
             <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </Router>
-        </LayoutProvider>
+          </LayoutProvider>
+        </UserSettingsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

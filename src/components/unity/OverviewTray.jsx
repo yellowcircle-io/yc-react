@@ -2,6 +2,7 @@ import React, { useState, memo } from 'react';
 import BookmarksTab from './tray/BookmarksTab';
 import NodesTab from './tray/NodesTab';
 import NotificationsTab from './tray/NotificationsTab';
+import LinksTab from './tray/LinksTab';
 
 /**
  * OverviewTray - Right-side slide-out panel for Unity Notes
@@ -27,6 +28,11 @@ const TabIcons = {
       <rect x="14" y="14" width="7" height="7" rx="1" />
     </svg>
   ),
+  links: (active) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#22c55e' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
   notifications: (active) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? '#3b82f6' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -36,9 +42,10 @@ const TabIcons = {
 };
 
 const TABS = [
-  { id: 'bookmarks', label: 'Saved' },
-  { id: 'nodes', label: 'Nodes' },
-  { id: 'notifications', label: 'Activity' },
+  { id: 'bookmarks', label: 'Saved', showLabel: true },
+  { id: 'nodes', label: 'Nodes', showLabel: true },
+  { id: 'links', label: 'Links', showLabel: true },
+  { id: 'notifications', label: 'Activity', showLabel: false }, // Icon only
 ];
 
 const OverviewTray = memo(({
@@ -48,12 +55,14 @@ const OverviewTray = memo(({
   starredNodes = [],
   bookmarkedCapsules = [],
   notifications = [],
+  canvasId = null,
   onNodeClick,
   onCapsuleLoad,
   onNotificationClick,
   onUnstar,
   onUnstarNode,
   onRenameCapsule,
+  onAddLinkNode,
 }) => {
   const [activeTab, setActiveTab] = useState('nodes');
 
@@ -76,13 +85,13 @@ const OverviewTray = memo(({
         />
       )}
 
-      {/* Tray Panel - 80% viewport height, offset from top */}
+      {/* Tray Panel - 65% viewport height, offset from top and right */}
       <div
         style={{
           position: 'fixed',
-          right: isOpen ? 12 : -320,
-          top: '10vh', // 10% from top to avoid hamburger menu
-          height: '80vh', // 80% viewport height
+          right: isOpen ? 80 : -320, // Moved left to avoid zoom panel obstruction
+          top: '20vh', // 20% from top to avoid hamburger menu
+          height: '65vh', // Reduced height
           width: 300,
           backgroundColor: '#ffffff',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
@@ -139,11 +148,11 @@ const OverviewTray = memo(({
           </button>
         </div>
 
-        {/* Tab Bar - Compact pill style */}
+        {/* Tab Bar - Equalized buttons with icon-only Activity */}
         <div
           style={{
             display: 'flex',
-            gap: '4px',
+            gap: '6px',
             padding: '8px 12px',
             backgroundColor: '#f9fafb',
             borderBottom: '1px solid #f3f4f6',
@@ -151,17 +160,18 @@ const OverviewTray = memo(({
         >
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
+            const isIconOnly = !tab.showLabel;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  flex: 1,
-                  padding: '8px 6px',
+                  flex: isIconOnly ? '0 0 40px' : 1, // Icon-only tabs fixed width
+                  padding: isIconOnly ? '8px' : '8px 10px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   backgroundColor: isActive ? '#ffffff' : 'transparent',
                   border: 'none',
                   borderRadius: '8px',
@@ -170,25 +180,28 @@ const OverviewTray = memo(({
                   boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
                   position: 'relative',
                 }}
+                title={tab.label}
               >
                 {TabIcons[tab.id](isActive)}
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: isActive ? '600' : '500',
-                    color: isActive ? '#111827' : '#6b7280',
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  {tab.label}
-                </span>
+                {tab.showLabel && (
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: isActive ? '600' : '500',
+                      color: isActive ? '#111827' : '#6b7280',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {tab.label}
+                  </span>
+                )}
                 {/* Notification badge */}
                 {tab.id === 'notifications' && unreadCount > 0 && (
                   <span
                     style={{
                       position: 'absolute',
-                      top: '4px',
-                      right: '8px',
+                      top: '2px',
+                      right: '2px',
                       minWidth: '14px',
                       height: '14px',
                       backgroundColor: '#ef4444',
@@ -228,6 +241,9 @@ const OverviewTray = memo(({
               nodes={nodes}
               onNodeClick={onNodeClick}
             />
+          )}
+          {activeTab === 'links' && (
+            <LinksTab onAddLinkNode={onAddLinkNode} canvasId={canvasId} />
           )}
           {activeTab === 'notifications' && (
             <NotificationsTab

@@ -63,8 +63,8 @@ export const saveLink = async (userId, linkData) => {
     // Organization
     tags: linkData.tags || [],
     folderId: linkData.folderId || null,
-    starred: false,
-    archived: false,
+    starred: linkData.starred ?? false,
+    archived: linkData.archived ?? false,
 
     // Reading progress
     readProgress: 0,
@@ -341,6 +341,62 @@ export const deleteFolder = async (folderId) => {
   await deleteDoc(folderRef);
 };
 
+/**
+ * Bulk move links to a folder
+ * @param {string} userId - Firebase user ID
+ * @param {string[]} linkIds - Array of link IDs to move
+ * @param {string|null} targetFolderId - Folder ID to move to (null for unfiled)
+ * @returns {Promise<{ moved: number, errors: number }>}
+ */
+export const bulkMoveLinks = async (userId, linkIds, targetFolderId) => {
+  let moved = 0;
+  let errors = 0;
+
+  for (const linkId of linkIds) {
+    try {
+      const linkRef = doc(db, LINKS_COLLECTION, linkId);
+      await updateDoc(linkRef, { folderId: targetFolderId });
+      moved++;
+    } catch (err) {
+      console.error(`Error moving link ${linkId}:`, err);
+      errors++;
+    }
+  }
+
+  return { moved, errors };
+};
+
+/**
+ * Move all links with a specific tag to a folder
+ * @param {string} userId - Firebase user ID
+ * @param {string} tag - Tag to filter by
+ * @param {string|null} targetFolderId - Folder ID to move to
+ * @returns {Promise<{ moved: number, errors: number }>}
+ */
+export const moveTaggedLinksToFolder = async (userId, tag, targetFolderId) => {
+  const q = query(
+    collection(db, LINKS_COLLECTION),
+    where('userId', '==', userId),
+    where('tags', 'array-contains', tag.toLowerCase())
+  );
+
+  const snapshot = await getDocs(q);
+  let moved = 0;
+  let errors = 0;
+
+  for (const docSnap of snapshot.docs) {
+    try {
+      await updateDoc(docSnap.ref, { folderId: targetFolderId });
+      moved++;
+    } catch (err) {
+      console.error(`Error moving link ${docSnap.id}:`, err);
+      errors++;
+    }
+  }
+
+  return { moved, errors };
+};
+
 // ============================================================
 // Tag Operations
 // ============================================================
@@ -387,6 +443,33 @@ export const getTagCounts = async (userId) => {
     tags.forEach(tag => {
       counts[tag] = (counts[tag] || 0) + 1;
     });
+  });
+
+  return counts;
+};
+
+/**
+ * Get link count by folder
+ * @param {string} userId - Firebase user ID
+ * @returns {Promise<Object>} Folder counts
+ */
+export const getFolderCounts = async (userId) => {
+  const q = query(
+    collection(db, LINKS_COLLECTION),
+    where('userId', '==', userId),
+    where('archived', '==', false)
+  );
+
+  const snapshot = await getDocs(q);
+  const counts = { unfiled: 0 };
+
+  snapshot.docs.forEach(doc => {
+    const folderId = doc.data().folderId;
+    if (folderId) {
+      counts[folderId] = (counts[folderId] || 0) + 1;
+    } else {
+      counts.unfiled++;
+    }
   });
 
   return counts;
@@ -505,6 +588,360 @@ export const exportLinks = async (userId) => {
 };
 
 // ============================================================
+// Sharing Operations
+// ============================================================
+
+/**
+ * Share a link with a user by email
+ * @param {string} linkId - Link ID to share
+ * @param {string} ownerId - Owner's user ID (for validation)
+ * @param {string} targetEmail - Email of user to share with
+ * @param {string} targetUserId - User ID of target user (optional, resolved from email)
+ * @returns {Promise<Object>} Share result
+ */
+export const shareLink = async (linkId, ownerId, targetEmail, targetUserId = null) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+
+  // Verify ownership
+  if (link.userId !== ownerId) {
+    throw new Error('Only the owner can share this link');
+  }
+
+  // Check if already shared with this email/user
+  const sharedWith = link.sharedWith || [];
+  const alreadyShared = sharedWith.some(
+    share => share.targetEmail === targetEmail || (targetUserId && share.targetId === targetUserId)
+  );
+
+  if (alreadyShared) {
+    throw new Error('Link is already shared with this user');
+  }
+
+  // Create share entry
+  const shareEntry = {
+    type: 'user',
+    targetId: targetUserId || null,
+    targetEmail: targetEmail.toLowerCase(),
+    sharedAt: new Date().toISOString(),
+    sharedBy: ownerId
+  };
+
+  // Update arrays
+  const sharedWithUserIds = link.sharedWithUserIds || [];
+  const updatedSharedWith = [...sharedWith, shareEntry];
+  const updatedSharedWithUserIds = targetUserId
+    ? [...new Set([...sharedWithUserIds, targetUserId])]
+    : sharedWithUserIds;
+
+  console.log('[shareLink] Updating link:', linkId);
+  console.log('[shareLink] targetUserId:', targetUserId);
+  console.log('[shareLink] updatedSharedWithUserIds:', updatedSharedWithUserIds);
+  console.log('[shareLink] shareEntry:', shareEntry);
+
+  await updateDoc(linkRef, {
+    sharedWith: updatedSharedWith,
+    sharedWithUserIds: updatedSharedWithUserIds,
+    updatedAt: serverTimestamp()
+  });
+
+  console.log('[shareLink] Successfully updated link');
+
+  return { success: true, shareEntry };
+};
+
+/**
+ * Unshare a link from a user
+ * @param {string} linkId - Link ID
+ * @param {string} ownerId - Owner's user ID
+ * @param {string} targetId - User ID or email to unshare from
+ * @returns {Promise<void>}
+ */
+export const unshareLink = async (linkId, ownerId, targetId) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+
+  // Verify ownership
+  if (link.userId !== ownerId) {
+    throw new Error('Only the owner can unshare this link');
+  }
+
+  const sharedWith = link.sharedWith || [];
+  const sharedWithUserIds = link.sharedWithUserIds || [];
+
+  // Find and remove the share
+  const updatedSharedWith = sharedWith.filter(
+    share => share.targetId !== targetId && share.targetEmail !== targetId
+  );
+
+  // Update user IDs array
+  const removedShare = sharedWith.find(
+    share => share.targetId === targetId || share.targetEmail === targetId
+  );
+  const updatedSharedWithUserIds = removedShare?.targetId
+    ? sharedWithUserIds.filter(id => id !== removedShare.targetId)
+    : sharedWithUserIds;
+
+  await updateDoc(linkRef, {
+    sharedWith: updatedSharedWith,
+    sharedWithUserIds: updatedSharedWithUserIds,
+    updatedAt: serverTimestamp()
+  });
+};
+
+/**
+ * Share a link to a canvas (capsule)
+ * @param {string} linkId - Link ID
+ * @param {string} ownerId - Owner's user ID
+ * @param {string} capsuleId - Canvas/Capsule ID
+ * @returns {Promise<Object>} Share result
+ */
+export const shareLinkToCanvas = async (linkId, ownerId, capsuleId) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+
+  // Verify ownership
+  if (link.userId !== ownerId) {
+    throw new Error('Only the owner can share this link');
+  }
+
+  // Check if already shared with this canvas
+  const sharedWith = link.sharedWith || [];
+  const alreadyShared = sharedWith.some(
+    share => share.type === 'canvas' && share.targetId === capsuleId
+  );
+
+  if (alreadyShared) {
+    throw new Error('Link is already shared with this canvas');
+  }
+
+  // Create share entry
+  const shareEntry = {
+    type: 'canvas',
+    targetId: capsuleId,
+    sharedAt: new Date().toISOString(),
+    sharedBy: ownerId
+  };
+
+  // Update arrays
+  const sharedWithCanvasIds = link.sharedWithCanvasIds || [];
+  const updatedSharedWith = [...sharedWith, shareEntry];
+  const updatedSharedWithCanvasIds = [...new Set([...sharedWithCanvasIds, capsuleId])];
+
+  await updateDoc(linkRef, {
+    sharedWith: updatedSharedWith,
+    sharedWithCanvasIds: updatedSharedWithCanvasIds,
+    updatedAt: serverTimestamp()
+  });
+
+  return { success: true, shareEntry };
+};
+
+/**
+ * Unshare a link from a canvas
+ * @param {string} linkId - Link ID
+ * @param {string} ownerId - Owner's user ID
+ * @param {string} capsuleId - Canvas ID to unshare from
+ * @returns {Promise<void>}
+ */
+export const unshareLinkFromCanvas = async (linkId, ownerId, capsuleId) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+
+  // Verify ownership
+  if (link.userId !== ownerId) {
+    throw new Error('Only the owner can unshare this link');
+  }
+
+  const sharedWith = link.sharedWith || [];
+  const sharedWithCanvasIds = link.sharedWithCanvasIds || [];
+
+  // Remove canvas share
+  const updatedSharedWith = sharedWith.filter(
+    share => !(share.type === 'canvas' && share.targetId === capsuleId)
+  );
+  const updatedSharedWithCanvasIds = sharedWithCanvasIds.filter(id => id !== capsuleId);
+
+  await updateDoc(linkRef, {
+    sharedWith: updatedSharedWith,
+    sharedWithCanvasIds: updatedSharedWithCanvasIds,
+    updatedAt: serverTimestamp()
+  });
+};
+
+/**
+ * Get links shared with a user
+ * @param {string} userId - User ID to get shared links for
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} Links and pagination info
+ */
+export const getSharedWithMeLinks = async (userId, options = {}) => {
+  const {
+    archived = false,
+    sortBy = 'savedAt',
+    sortOrder = 'desc',
+    pageSize = 20,
+    lastDoc = null
+  } = options;
+
+  console.log('[getSharedWithMeLinks] Querying for userId:', userId, 'archived:', archived);
+
+  let q = query(
+    collection(db, LINKS_COLLECTION),
+    where('sharedWithUserIds', 'array-contains', userId),
+    where('archived', '==', archived),
+    orderBy(sortBy, sortOrder),
+    limit(pageSize)
+  );
+
+  if (lastDoc) {
+    q = query(q, startAfter(lastDoc));
+  }
+
+  const snapshot = await getDocs(q);
+  const links = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  console.log('[getSharedWithMeLinks] Found', links.length, 'links');
+
+  return {
+    links,
+    lastDoc: snapshot.docs[snapshot.docs.length - 1] || null,
+    hasMore: snapshot.docs.length === pageSize
+  };
+};
+
+/**
+ * Get links shared to a canvas
+ * @param {string} capsuleId - Canvas/Capsule ID
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} Links and pagination info
+ */
+export const getCanvasSharedLinks = async (capsuleId, options = {}) => {
+  const {
+    archived = false,
+    sortBy = 'savedAt',
+    sortOrder = 'desc',
+    pageSize = 20,
+    lastDoc = null
+  } = options;
+
+  let q = query(
+    collection(db, LINKS_COLLECTION),
+    where('sharedWithCanvasIds', 'array-contains', capsuleId),
+    where('archived', '==', archived),
+    orderBy(sortBy, sortOrder),
+    limit(pageSize)
+  );
+
+  if (lastDoc) {
+    q = query(q, startAfter(lastDoc));
+  }
+
+  const snapshot = await getDocs(q);
+  const links = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  return {
+    links,
+    lastDoc: snapshot.docs[snapshot.docs.length - 1] || null,
+    hasMore: snapshot.docs.length === pageSize
+  };
+};
+
+/**
+ * Get sharing info for a link
+ * @param {string} linkId - Link ID
+ * @returns {Promise<Object>} Sharing information
+ */
+export const getLinkSharingInfo = async (linkId) => {
+  const link = await getLink(linkId);
+  if (!link) {
+    throw new Error('Link not found');
+  }
+
+  return {
+    sharedWith: link.sharedWith || [],
+    sharedWithUserIds: link.sharedWithUserIds || [],
+    sharedWithCanvasIds: link.sharedWithCanvasIds || [],
+    isShared: (link.sharedWith || []).length > 0
+  };
+};
+
+/**
+ * Fix existing shares that are missing userId
+ * This handles shares that were made before the userId resolution fix
+ * @param {string} linkId - Link ID to fix
+ * @param {Function} lookupUserByEmail - Async function that takes email and returns userId or null
+ * @returns {Promise<Object>} Result with fixed count
+ */
+export const fixMissingUserIds = async (linkId, lookupUserByEmail) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+  const sharedWith = link.sharedWith || [];
+  let sharedWithUserIds = link.sharedWithUserIds || [];
+  let fixedCount = 0;
+
+  // Find shares with email but no targetId
+  const updatedSharedWith = await Promise.all(
+    sharedWith.map(async (share) => {
+      if (share.type === 'user' && share.targetEmail && !share.targetId) {
+        try {
+          const userId = await lookupUserByEmail(share.targetEmail);
+          if (userId) {
+            fixedCount++;
+            sharedWithUserIds = [...new Set([...sharedWithUserIds, userId])];
+            return { ...share, targetId: userId };
+          }
+        } catch (err) {
+          console.warn(`[fixMissingUserIds] Could not resolve ${share.targetEmail}:`, err.message);
+        }
+      }
+      return share;
+    })
+  );
+
+  if (fixedCount > 0) {
+    await updateDoc(linkRef, {
+      sharedWith: updatedSharedWith,
+      sharedWithUserIds: sharedWithUserIds,
+      updatedAt: serverTimestamp()
+    });
+    console.log(`[fixMissingUserIds] Fixed ${fixedCount} shares for link ${linkId}`);
+  }
+
+  return { fixedCount, sharedWithUserIds };
+};
+
+// ============================================================
 // Helper Functions
 // ============================================================
 
@@ -561,5 +998,15 @@ export default {
 
   // Import/Export
   importFromPocket,
-  exportLinks
+  exportLinks,
+
+  // Sharing
+  shareLink,
+  unshareLink,
+  shareLinkToCanvas,
+  unshareLinkFromCanvas,
+  getSharedWithMeLinks,
+  getCanvasSharedLinks,
+  getLinkSharingInfo,
+  fixMissingUserIds
 };

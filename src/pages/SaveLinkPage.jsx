@@ -6,7 +6,7 @@
  * - Web Share Target API (PWA sharing)
  * - Direct link input
  *
- * Part of Link Archiver feature (Pocket Alternative)
+ * Part of Link Saver feature (Pocket Alternative)
  *
  * @created 2026-01-17
  * @author Sleepless Agent
@@ -39,7 +39,7 @@ const API_BASE = 'https://us-central1-yellowcircle-app.cloudfunctions.net';
 const SaveLinkPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { currentUser, getIdToken } = useAuth();
+  const { user } = useAuth();
 
   // Form state
   const [url, setUrl] = useState('');
@@ -66,12 +66,17 @@ const SaveLinkPage = () => {
     }
   }, [searchParams]);
 
-  // Auto-save if param is set
+  // Auto-save if param is set (using ref to avoid stale closure)
   useEffect(() => {
-    if (autoSave && url && currentUser && status === 'idle') {
-      handleSave();
+    if (autoSave && url && user && status === 'idle') {
+      // Small delay to ensure state is settled
+      const timer = setTimeout(() => {
+        handleSave();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [autoSave, url, currentUser, status]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSave, url, user, status]);
 
   // Extract URL from text (handles share target text)
   const extractUrl = (text) => {
@@ -87,7 +92,7 @@ const SaveLinkPage = () => {
       return;
     }
 
-    if (!currentUser) {
+    if (!user) {
       setStatus('error');
       setMessage('Please sign in to save links');
       return;
@@ -97,7 +102,18 @@ const SaveLinkPage = () => {
     setMessage('Saving link...');
 
     try {
-      const token = await getIdToken();
+      let token;
+      try {
+        token = await user.getIdToken();
+      } catch (authError) {
+        console.error('Auth token error:', authError);
+        throw new Error('Authentication failed - please sign in again');
+      }
+
+      if (!token) {
+        throw new Error('No auth token - please sign in again');
+      }
+
       const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
 
       const response = await fetch(`${API_BASE}/linkArchiverSaveLink`, {
@@ -125,13 +141,22 @@ const SaveLinkPage = () => {
 
       // Redirect after short delay
       setTimeout(() => {
-        navigate('/admin/links');
+        navigate('/links');
       }, 1500);
 
     } catch (error) {
       console.error('Save error:', error);
       setStatus('error');
-      setMessage(error.message || 'Failed to save link');
+      // Provide more helpful error messages
+      let errorMessage = error.message || 'Failed to save link';
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Network error - please check your connection';
+      } else if (error.message?.includes('401') || error.message?.includes('auth')) {
+        errorMessage = 'Session expired - please sign in again';
+      } else if (error.message?.includes('403')) {
+        errorMessage = 'Access denied - please try signing in again';
+      }
+      setMessage(errorMessage);
     }
   };
 
@@ -258,7 +283,7 @@ const SaveLinkPage = () => {
   };
 
   // Not signed in
-  if (!currentUser) {
+  if (!user) {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
@@ -268,7 +293,7 @@ const SaveLinkPage = () => {
             </div>
             <div>
               <h1 style={styles.title}>Save Link</h1>
-              <p style={styles.subtitle}>yellowCircle Link Archiver</p>
+              <p style={styles.subtitle}>yellowCircle Link Saver</p>
             </div>
           </div>
 
@@ -300,7 +325,7 @@ const SaveLinkPage = () => {
           </div>
           <div>
             <h1 style={styles.title}>Save Link</h1>
-            <p style={styles.subtitle}>yellowCircle Link Archiver</p>
+            <p style={styles.subtitle}>yellowCircle Link Saver</p>
           </div>
         </div>
 

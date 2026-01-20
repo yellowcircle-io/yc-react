@@ -12989,3 +12989,17 @@ exports.linkArchiverImportLinks = linkArchiver.importLinks;
 exports.linkArchiverGetLinkStats = linkArchiver.getLinkStats;
 exports.linkArchiverSummarizeLink = linkArchiver.summarizeLink;
 exports.linkArchiverArchiveSnapshot = linkArchiver.archiveSnapshot;
+
+// Pocket Import Function (bulk import)
+const pocketImport = require('./importPocketHttp');
+exports.importPocketLinks = pocketImport.importPocketLinks;
+
+
+// Update Link User IDs (fix import)
+const linkUserIdUpdate = require('./updateLinkUserIds');
+exports.updateLinkUserIds = linkUserIdUpdate.updateLinkUserIds;
+
+
+// Get User Info (debug)
+const userInfo = require('./getUserInfo');
+exports.getUserInfo = userInfo.getUserInfo;

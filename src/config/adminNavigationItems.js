@@ -34,9 +34,9 @@ export const adminNavigationItems = [
   },
   {
     itemKey: 'admin-links',
-    label: 'Link Archiver',
+    label: 'Link Saver',
     icon: null,
-    route: '/admin/links'
+    route: '/links'
   },
   { isSectionLabel: true, label: 'TOOLS', itemKey: 'tools-section' },
   {

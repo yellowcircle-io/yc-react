@@ -7,11 +7,14 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import AuthModal from './AuthModal';
+import { Settings, Bookmark } from 'lucide-react';
 
 const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
+  const navigate = useNavigate();
   const { user, userProfile, isAuthenticated, signOut } = useAuth();
   const { creditsRemaining, tier } = useCredits();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -212,6 +215,62 @@ const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
                   {tier}
                 </span>
               </div>
+            </div>
+
+            {/* Navigation Links */}
+            <div style={{ padding: '8px', borderBottom: '1px solid #f3f4f6' }}>
+              <button
+                onClick={() => {
+                  navigate('/links');
+                  setShowDropdown(false);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  color: '#374151',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'background-color 0.15s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <Bookmark size={16} color="#6b7280" />
+                Link Saver
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/account/settings');
+                  setShowDropdown(false);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  color: '#374151',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'background-color 0.15s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <Settings size={16} color="#6b7280" />
+                Settings
+              </button>
             </div>
 
             {/* Actions */}

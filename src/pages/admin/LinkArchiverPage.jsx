@@ -1,5 +1,5 @@
 /**
- * Link Archiver Admin Page (Pocket Alternative)
+ * Link Saver Page (Pocket Alternative)
  *
  * Admin interface to view and manage saved links with tagging,
  * folders, reading progress, and AI summarization.
@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/global/Layout';
 import { useLayout } from '../../contexts/LayoutContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { adminNavigationItems } from '../../config/adminNavigationItems';
+import { navigationItems } from '../../config/navigationItems';
 import {
   getLinks,
   getFolders,
@@ -26,9 +26,19 @@ import {
   archiveLink,
   getUserTags,
   getTagCounts,
+  getFolderCounts,
   getReadingStats,
-  importFromPocket
+  importFromPocket,
+  moveTaggedLinksToFolder,
+  shareLink,
+  unshareLink,
+  shareLinkToCanvas,
+  unshareLinkFromCanvas,
+  getLinkSharingInfo,
+  fixMissingUserIds
 } from '../../utils/firestoreLinks';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import {
   Link2,
   Folder,
@@ -60,7 +70,11 @@ import {
   Globe,
   Calendar,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Users,
+  Mail,
+  Layout as LayoutIcon
 } from 'lucide-react';
 
 // ============================================================
@@ -388,8 +402,9 @@ const StatCard = ({ icon: Icon, value, label, color }) => {
 // ============================================================
 // Link Card Component
 // ============================================================
-const LinkCard = ({ link, onStar, onArchive, onDelete, onClick }) => {
+const LinkCard = ({ link, onStar, onArchive, onDelete, onClick, onShare }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const isShared = (link.sharedWith?.length || 0) > 0;
 
   return (
     <div
@@ -470,6 +485,17 @@ const LinkCard = ({ link, onStar, onArchive, onDelete, onClick }) => {
         </button>
 
         <button
+          style={{
+            ...styles.actionButton,
+            color: isShared ? COLORS.primary : COLORS.textMuted
+          }}
+          onClick={(e) => { e.stopPropagation(); onShare(link); }}
+          title={isShared ? `Shared with ${link.sharedWith.length} user(s)` : 'Share link'}
+        >
+          <Share2 size={18} />
+        </button>
+
+        <button
           style={styles.actionButton}
           onClick={(e) => { e.stopPropagation(); onDelete(link); }}
           title="Delete"
@@ -495,22 +521,179 @@ const LinkCard = ({ link, onStar, onArchive, onDelete, onClick }) => {
 // ============================================================
 // Import Modal Component
 // ============================================================
+
+// Parse CSV data into link objects
+const parseCSV = (csvText) => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  // Parse header row
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+
+  // Map common header names to our format
+  const headerMap = {
+    'url': 'url',
+    'link': 'url',
+    'href': 'url',
+    'title': 'title',
+    'name': 'title',
+    'tags': 'tags',
+    'tag': 'tags',
+    'labels': 'tags',
+    'date': 'savedAt',
+    'saved': 'savedAt',
+    'created': 'savedAt',
+    'time_added': 'savedAt',
+    'excerpt': 'excerpt',
+    'description': 'excerpt',
+    'summary': 'excerpt'
+  };
+
+  // Find which columns we can use
+  const urlIndex = headers.findIndex(h => headerMap[h] === 'url' || h.includes('url'));
+  const titleIndex = headers.findIndex(h => headerMap[h] === 'title' || h.includes('title'));
+  const tagsIndex = headers.findIndex(h => headerMap[h] === 'tags' || h.includes('tag'));
+  const dateIndex = headers.findIndex(h => headerMap[h] === 'savedAt' || h.includes('date') || h.includes('time'));
+  const excerptIndex = headers.findIndex(h => headerMap[h] === 'excerpt' || h.includes('excerpt') || h.includes('description'));
+
+  if (urlIndex === -1) {
+    throw new Error('CSV must have a URL column');
+  }
+
+  // Parse data rows
+  const links = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Parse CSV values (handle quoted values)
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+
+    const url = values[urlIndex];
+    if (!url || !url.startsWith('http')) continue;
+
+    const link = {
+      given_url: url,
+      resolved_title: titleIndex >= 0 ? values[titleIndex] : '',
+      excerpt: excerptIndex >= 0 ? values[excerptIndex] : '',
+      tags: {}
+    };
+
+    // Parse tags
+    if (tagsIndex >= 0 && values[tagsIndex]) {
+      const tagList = values[tagsIndex].split(/[;|]/).map(t => t.trim()).filter(Boolean);
+      tagList.forEach(tag => {
+        link.tags[tag] = { item_id: '', tag };
+      });
+    }
+
+    // Parse date
+    if (dateIndex >= 0 && values[dateIndex]) {
+      const timestamp = Date.parse(values[dateIndex]);
+      if (!isNaN(timestamp)) {
+        link.time_added = Math.floor(timestamp / 1000);
+      }
+    }
+
+    links.push(link);
+  }
+
+  return links;
+};
+
 const ImportModal = ({ isOpen, onClose, onImport }) => {
   const [importData, setImportData] = useState('');
+  const [importFormat, setImportFormat] = useState('auto'); // 'auto', 'json', 'csv'
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState(null);
+  const [progress, setProgress] = useState(null);
+  const [fileName, setFileName] = useState('');
+  const fileInputRef = React.useRef(null);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+
+    // Auto-detect format from extension
+    const ext = file.name.toLowerCase().split('.').pop();
+    if (ext === 'csv') {
+      setImportFormat('csv');
+    } else if (ext === 'json') {
+      setImportFormat('json');
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImportData(event.target.result);
+      setResult(null);
+    };
+    reader.onerror = () => {
+      setResult({ error: 'Failed to read file' });
+    };
+    reader.readAsText(file);
+  };
 
   const handleImport = async () => {
     try {
       setIsImporting(true);
-      const data = JSON.parse(importData);
-      const links = Array.isArray(data) ? data : data.list || [];
-      const importResult = await onImport(links);
-      setResult(importResult);
+      setProgress(null);
+
+      let links = [];
+
+      // Determine format
+      const format = importFormat === 'auto'
+        ? (importData.trim().startsWith('{') || importData.trim().startsWith('[') ? 'json' : 'csv')
+        : importFormat;
+
+      if (format === 'csv') {
+        links = parseCSV(importData);
+      } else {
+        const data = JSON.parse(importData);
+        links = Array.isArray(data) ? data : data.list || [];
+      }
+
+      // For large imports, process in batches with progress
+      if (links.length > 100) {
+        const BATCH_SIZE = 100;
+        let totalImported = 0;
+        let totalSkipped = 0;
+        let totalErrors = 0;
+
+        for (let i = 0; i < links.length; i += BATCH_SIZE) {
+          const batch = links.slice(i, i + BATCH_SIZE);
+          setProgress({ current: Math.min(i + BATCH_SIZE, links.length), total: links.length });
+          const batchResult = await onImport(batch);
+          totalImported += batchResult.imported || 0;
+          totalSkipped += batchResult.skipped || 0;
+          totalErrors += batchResult.errors || 0;
+        }
+
+        setResult({ imported: totalImported, skipped: totalSkipped, errors: totalErrors });
+      } else {
+        const importResult = await onImport(links);
+        setResult(importResult);
+      }
     } catch (err) {
       setResult({ error: err.message });
     } finally {
       setIsImporting(false);
+      setProgress(null);
     }
   };
 
@@ -520,7 +703,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
     <div style={styles.modal} onClick={onClose}>
       <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
         <div style={styles.modalTitle}>
-          <span>Import from Pocket</span>
+          <span>Import Links</span>
           <button
             style={{ ...styles.actionButton, padding: '4px' }}
             onClick={onClose}
@@ -530,19 +713,127 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
         </div>
 
         <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px' }}>
-          Export your Pocket data (Settings → Export → Export HTML), then paste
-          the JSON export data below.
+          Import links from Pocket (JSON) or any CSV file with a URL column.
         </p>
+
+        {/* Format Selector */}
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '12px', color: COLORS.textMuted, display: 'block', marginBottom: '8px' }}>
+            File Format
+          </label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {[
+              { id: 'auto', label: 'Auto-detect' },
+              { id: 'json', label: 'JSON (Pocket)' },
+              { id: 'csv', label: 'CSV' }
+            ].map(f => (
+              <button
+                key={f.id}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  border: `1px solid ${importFormat === f.id ? COLORS.primary : COLORS.border}`,
+                  backgroundColor: importFormat === f.id ? COLORS.primary : COLORS.white,
+                  color: COLORS.text,
+                  fontSize: '13px',
+                  fontWeight: importFormat === f.id ? '600' : '400',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setImportFormat(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".json,.csv"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <button
+            style={{ ...styles.button, ...styles.secondaryButton, flex: 1 }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={16} /> {fileName ? fileName : 'Choose File (JSON or CSV)'}
+          </button>
+          {importData && (
+            <button
+              style={{ ...styles.button, ...styles.secondaryButton }}
+              onClick={() => { setImportData(''); setResult(null); setFileName(''); }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
         <textarea
           style={styles.textarea}
-          placeholder="Paste your Pocket export JSON here..."
+          placeholder={importFormat === 'csv'
+            ? "Paste your CSV data here (with headers: url, title, tags, etc.)..."
+            : "Paste your Pocket export JSON or CSV data here..."
+          }
           value={importData}
           onChange={e => setImportData(e.target.value)}
-          rows={8}
+          rows={6}
         />
 
-        {result && (
+        {importData && (
+          <p style={{ fontSize: '12px', color: COLORS.textMuted, marginTop: '8px' }}>
+            {(() => {
+              try {
+                // Determine format for preview
+                const format = importFormat === 'auto'
+                  ? (importData.trim().startsWith('{') || importData.trim().startsWith('[') ? 'json' : 'csv')
+                  : importFormat;
+
+                if (format === 'csv') {
+                  const links = parseCSV(importData);
+                  return `${links.length.toLocaleString()} links ready to import (CSV)`;
+                } else {
+                  const data = JSON.parse(importData);
+                  const count = Array.isArray(data) ? data.length : Object.keys(data.list || {}).length;
+                  return `${count.toLocaleString()} links ready to import (JSON)`;
+                }
+              } catch (err) {
+                return `Error: ${err.message}`;
+              }
+            })()}
+          </p>
+        )}
+
+        {progress && (
+          <div style={{
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            backgroundColor: '#e0f2fe',
+            color: '#0369a1'
+          }}>
+            <div style={{ marginBottom: '8px' }}>
+              Importing: {progress.current.toLocaleString()} / {progress.total.toLocaleString()} links
+            </div>
+            <div style={{
+              height: '6px',
+              backgroundColor: '#bae6fd',
+              borderRadius: '3px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                height: '100%',
+                backgroundColor: '#0ea5e9',
+                width: `${(progress.current / progress.total) * 100}%`,
+                transition: 'width 0.3s ease'
+              }} />
+            </div>
+          </div>
+        )}
+
+        {result && !progress && (
           <div style={{
             padding: '12px',
             borderRadius: '8px',
@@ -554,7 +845,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
               <span>Error: {result.error}</span>
             ) : (
               <span>
-                Imported {result.imported} links. Skipped {result.skipped} duplicates.
+                Imported {result.imported?.toLocaleString()} links. Skipped {result.skipped?.toLocaleString()} duplicates.
                 {result.errors > 0 && ` ${result.errors} errors.`}
               </span>
             )}
@@ -565,6 +856,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
           <button
             style={{ ...styles.button, ...styles.secondaryButton }}
             onClick={onClose}
+            disabled={isImporting}
           >
             Cancel
           </button>
@@ -574,7 +866,7 @@ const ImportModal = ({ isOpen, onClose, onImport }) => {
             disabled={isImporting || !importData.trim()}
           >
             {isImporting ? (
-              <><RefreshCw size={16} className="animate-spin" /> Importing...</>
+              <><RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> {progress ? `${Math.round((progress.current / progress.total) * 100)}%` : 'Importing...'}</>
             ) : (
               <><Upload size={16} /> Import</>
             )}
@@ -657,6 +949,248 @@ const AddFolderModal = ({ isOpen, onClose, onAdd }) => {
             disabled={!name.trim()}
           >
             <FolderPlus size={16} /> Create Folder
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
+// Bulk Folder Management Modal
+// ============================================================
+const BulkFolderModal = ({ isOpen, onClose, folders, tags, onMoveTags, onRefresh }) => {
+  const [selectedTag, setSelectedTag] = useState('');
+  const [targetFolderId, setTargetFolderId] = useState('');
+  const [isMoving, setIsMoving] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleMove = async () => {
+    if (!selectedTag) return;
+
+    setIsMoving(true);
+    setResult(null);
+
+    try {
+      const moveResult = await onMoveTags(selectedTag, targetFolderId || null);
+      setResult(moveResult);
+      if (moveResult.moved > 0) {
+        onRefresh();
+      }
+    } catch (err) {
+      setResult({ error: err.message });
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={styles.modal} onClick={onClose}>
+      <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalTitle}>
+          <span>Bulk Folder Management</span>
+          <button
+            style={{ ...styles.actionButton, padding: '4px' }}
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px' }}>
+          Move all links with a specific tag to a folder. Great for organizing imported links.
+        </p>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '14px', color: COLORS.textMuted, display: 'block', marginBottom: '6px' }}>
+            Select Tag
+          </label>
+          <select
+            style={{
+              ...styles.input,
+              cursor: 'pointer'
+            }}
+            value={selectedTag}
+            onChange={e => setSelectedTag(e.target.value)}
+          >
+            <option value="">Select a tag...</option>
+            {tags.map(tag => (
+              <option key={tag} value={tag}>{tag}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '14px', color: COLORS.textMuted, display: 'block', marginBottom: '6px' }}>
+            Move to Folder
+          </label>
+          <select
+            style={{
+              ...styles.input,
+              cursor: 'pointer'
+            }}
+            value={targetFolderId}
+            onChange={e => setTargetFolderId(e.target.value)}
+          >
+            <option value="">Unfiled (no folder)</option>
+            {folders.map(folder => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {result && (
+          <div style={{
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            backgroundColor: result.error ? '#fee2e2' : '#d1fae5',
+            color: result.error ? COLORS.danger : COLORS.success
+          }}>
+            {result.error ? (
+              <span>Error: {result.error}</span>
+            ) : (
+              <span>
+                Moved {result.moved} links to folder.
+                {result.errors > 0 && ` ${result.errors} errors.`}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button
+            style={{ ...styles.button, ...styles.secondaryButton }}
+            onClick={onClose}
+            disabled={isMoving}
+          >
+            Cancel
+          </button>
+          <button
+            style={{ ...styles.button, ...styles.primaryButton }}
+            onClick={handleMove}
+            disabled={isMoving || !selectedTag}
+          >
+            {isMoving ? (
+              <><RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> Moving...</>
+            ) : (
+              <><Folder size={16} /> Move Links</>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
+// Add Link Modal Component
+// ============================================================
+const AddLinkModal = ({
+  isOpen,
+  onClose,
+  url, setUrl,
+  title, setTitle,
+  tags, setTags,
+  loading, error,
+  onSubmit
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={styles.modal} onClick={onClose}>
+      <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalTitle}>
+          <span>Add Link</span>
+          <button
+            style={{ ...styles.actionButton, padding: '4px' }}
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '14px', color: COLORS.textMuted, display: 'block', marginBottom: '6px' }}>
+            URL *
+          </label>
+          <input
+            style={styles.input}
+            placeholder="https://example.com/article"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            autoFocus
+          />
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '14px', color: COLORS.textMuted, display: 'block', marginBottom: '6px' }}>
+            Title (optional - auto-fetched if empty)
+          </label>
+          <input
+            style={styles.input}
+            placeholder="Article title"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '14px', color: COLORS.textMuted, display: 'block', marginBottom: '6px' }}>
+            Tags (comma separated)
+          </label>
+          <input
+            style={styles.input}
+            placeholder="tech, article, read-later"
+            value={tags}
+            onChange={e => setTags(e.target.value)}
+          />
+        </div>
+
+        {error && (
+          <div style={{
+            padding: '12px',
+            marginBottom: '16px',
+            backgroundColor: '#fee2e2',
+            borderRadius: '8px',
+            color: COLORS.danger,
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button
+            style={{ ...styles.button, ...styles.secondaryButton }}
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            style={{ ...styles.button, ...styles.primaryButton, opacity: loading ? 0.6 : 1 }}
+            onClick={onSubmit}
+            disabled={loading || !url.trim()}
+          >
+            {loading ? (
+              <>
+                <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Plus size={16} /> Save Link
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -815,6 +1349,710 @@ const LinkDetailModal = ({ link, isOpen, onClose, onUpdate }) => {
 };
 
 // ============================================================
+// Share Link Modal Component
+// ============================================================
+const ShareLinkModal = ({ link, isOpen, onClose, user, onShareComplete }) => {
+  const [activeTab, setActiveTab] = useState('user'); // 'user' | 'canvas'
+  const [email, setEmail] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareError, setShareError] = useState(null);
+  const [shareSuccess, setShareSuccess] = useState(null);
+  const [sharingInfo, setSharingInfo] = useState(null);
+  const [loadingInfo, setLoadingInfo] = useState(true);
+
+  // Canvas sharing state
+  const [userCanvases, setUserCanvases] = useState([]);
+  const [loadingCanvases, setLoadingCanvases] = useState(false);
+  const [selectedCanvasId, setSelectedCanvasId] = useState('');
+
+  // Fix missing userIds state
+  const [isFixing, setIsFixing] = useState(false);
+
+  // Load sharing info when modal opens
+  React.useEffect(() => {
+    if (isOpen && link) {
+      setLoadingInfo(true);
+      setShareError(null);
+      setShareSuccess(null);
+      getLinkSharingInfo(link.id)
+        .then(info => {
+          setSharingInfo(info);
+        })
+        .catch(err => {
+          console.error('Error loading sharing info:', err);
+        })
+        .finally(() => {
+          setLoadingInfo(false);
+        });
+    }
+  }, [isOpen, link]);
+
+  // Load user's canvases when tab changes to canvas
+  React.useEffect(() => {
+    if (isOpen && activeTab === 'canvas' && user?.uid && userCanvases.length === 0) {
+      setLoadingCanvases(true);
+
+      const loadCanvases = async () => {
+        try {
+          const capsulesRef = collection(db, 'capsules');
+
+          // Query 1: Capsules owned by user
+          const ownedQuery = query(
+            capsulesRef,
+            where('ownerId', '==', user.uid),
+            limit(50)
+          );
+          const ownedSnap = await getDocs(ownedQuery);
+          console.log('[ShareLinkModal] Owned canvases found:', ownedSnap.docs.length);
+
+          const owned = ownedSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            _source: 'owned'
+          }));
+
+          // Query 2: Also check recent capsules for collaborator access
+          // (Firestore can't query nested array objects, so fetch and filter)
+          const recentQuery = query(
+            capsulesRef,
+            orderBy('updatedAt', 'desc'),
+            limit(100)
+          );
+          const recentSnap = await getDocs(recentQuery);
+
+          const userEmail = user.email?.toLowerCase();
+          const shared = recentSnap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(cap =>
+              cap.ownerId !== user.uid &&
+              cap.collaborators?.some(c => c.email === userEmail)
+            )
+            .map(cap => ({ ...cap, _source: 'shared' }));
+
+          console.log('[ShareLinkModal] Shared canvases found:', shared.length);
+
+          // Combine and dedupe
+          const allCanvases = [...owned];
+          shared.forEach(cap => {
+            if (!allCanvases.some(c => c.id === cap.id)) {
+              allCanvases.push(cap);
+            }
+          });
+
+          // Sort by updatedAt
+          allCanvases.sort((a, b) => {
+            const aTime = a.updatedAt?.toMillis?.() || a.updatedAt || 0;
+            const bTime = b.updatedAt?.toMillis?.() || b.updatedAt || 0;
+            return bTime - aTime;
+          });
+
+          console.log('[ShareLinkModal] Total canvases:', allCanvases.length);
+          setUserCanvases(allCanvases);
+        } catch (err) {
+          console.error('[ShareLinkModal] Error loading canvases:', err);
+        } finally {
+          setLoadingCanvases(false);
+        }
+      };
+
+      loadCanvases();
+    }
+  }, [isOpen, activeTab, user?.uid, user?.email, userCanvases.length]);
+
+  const handleShareToUser = async () => {
+    if (!email.trim()) {
+      setShareError('Please enter an email address');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setShareError('Please enter a valid email address');
+      return;
+    }
+
+    setIsSharing(true);
+    setShareError(null);
+    setShareSuccess(null);
+
+    try {
+      // First, try to resolve the email to a Firebase user ID
+      let targetUserId = null;
+      const targetEmail = email.trim().toLowerCase();
+
+      try {
+        const response = await fetch(
+          `https://us-central1-yellowcircle-app.cloudfunctions.net/getUserInfo?email=${encodeURIComponent(targetEmail)}`
+        );
+        const data = await response.json();
+        if (data.success && data.user?.uid) {
+          targetUserId = data.user.uid;
+          console.log('[ShareLink] Resolved email to userId:', targetUserId);
+        }
+      } catch (lookupErr) {
+        // User might not exist in Firebase Auth yet - still allow sharing by email
+        console.log('[ShareLink] Could not resolve email to userId, sharing by email only:', lookupErr.message);
+      }
+
+      await shareLink(link.id, user.uid, targetEmail, targetUserId);
+      setShareSuccess(`Link shared with ${email}`);
+      setEmail('');
+
+      const info = await getLinkSharingInfo(link.id);
+      setSharingInfo(info);
+
+      if (onShareComplete) {
+        onShareComplete();
+      }
+    } catch (err) {
+      console.error('Error sharing link:', err);
+      setShareError(err.message || 'Failed to share link');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleShareToCanvas = async () => {
+    if (!selectedCanvasId) {
+      setShareError('Please select a canvas');
+      return;
+    }
+
+    setIsSharing(true);
+    setShareError(null);
+    setShareSuccess(null);
+
+    try {
+      await shareLinkToCanvas(link.id, user.uid, selectedCanvasId);
+      const canvas = userCanvases.find(c => c.id === selectedCanvasId);
+      setShareSuccess(`Link shared to "${canvas?.title || 'canvas'}"`);
+      setSelectedCanvasId('');
+
+      const info = await getLinkSharingInfo(link.id);
+      setSharingInfo(info);
+
+      if (onShareComplete) {
+        onShareComplete();
+      }
+    } catch (err) {
+      console.error('Error sharing to canvas:', err);
+      setShareError(err.message || 'Failed to share to canvas');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleUnshare = async (share) => {
+    try {
+      if (share.type === 'user') {
+        await unshareLink(link.id, user.uid, share.targetEmail || share.targetId);
+      } else if (share.type === 'canvas') {
+        await unshareLinkFromCanvas(link.id, user.uid, share.targetId);
+      }
+
+      const info = await getLinkSharingInfo(link.id);
+      setSharingInfo(info);
+
+      if (onShareComplete) {
+        onShareComplete();
+      }
+    } catch (err) {
+      console.error('Error unsharing:', err);
+      setShareError(err.message || 'Failed to remove share');
+    }
+  };
+
+  // Fix missing user IDs for existing shares
+  const handleFixMissingUserIds = async () => {
+    setIsFixing(true);
+    setShareError(null);
+    setShareSuccess(null);
+
+    try {
+      const lookupUserByEmail = async (email) => {
+        const response = await fetch(
+          `https://us-central1-yellowcircle-app.cloudfunctions.net/getUserInfo?email=${encodeURIComponent(email)}`
+        );
+        const data = await response.json();
+        if (data.success && data.user?.uid) {
+          return data.user.uid;
+        }
+        return null;
+      };
+
+      const result = await fixMissingUserIds(link.id, lookupUserByEmail);
+
+      if (result.fixedCount > 0) {
+        setShareSuccess(`Fixed ${result.fixedCount} share(s). User IDs now: ${result.sharedWithUserIds.join(', ')}`);
+        // Reload sharing info
+        const info = await getLinkSharingInfo(link.id);
+        setSharingInfo(info);
+
+        if (onShareComplete) {
+          onShareComplete();
+        }
+      } else {
+        setShareSuccess('No fixes needed - all shares already have user IDs');
+      }
+    } catch (err) {
+      console.error('Error fixing user IDs:', err);
+      setShareError(err.message || 'Failed to fix missing user IDs');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  if (!isOpen || !link) return null;
+
+  const userShares = sharingInfo?.sharedWith?.filter(s => s.type === 'user') || [];
+  const canvasShares = sharingInfo?.sharedWith?.filter(s => s.type === 'canvas') || [];
+
+  // Check if there are user shares missing targetId (need fixing)
+  const sharesNeedingFix = userShares.filter(s => s.targetEmail && !s.targetId);
+  const hasMissingUserIds = sharesNeedingFix.length > 0;
+
+  return (
+    <div style={styles.modal} onClick={onClose}>
+      <div style={{ ...styles.modalContent, maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalTitle}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Share2 size={20} color={COLORS.primary} />
+            Share Link
+          </span>
+          <button
+            style={{ ...styles.actionButton, padding: '4px' }}
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Link being shared */}
+        <div style={{
+          padding: '12px',
+          backgroundColor: COLORS.cardBg,
+          borderRadius: '8px',
+          marginBottom: '16px'
+        }}>
+          <div style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: COLORS.text,
+            marginBottom: '4px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {link.title}
+          </div>
+          <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+            {link.domain}
+          </div>
+        </div>
+
+        {/* Tab Selector */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '16px',
+          padding: '4px',
+          backgroundColor: '#f3f4f6',
+          borderRadius: '8px'
+        }}>
+          <button
+            onClick={() => { setActiveTab('user'); setShareError(null); setShareSuccess(null); }}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              backgroundColor: activeTab === 'user' ? '#ffffff' : 'transparent',
+              color: activeTab === 'user' ? COLORS.text : COLORS.textMuted,
+              boxShadow: activeTab === 'user' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+              transition: 'all 0.15s'
+            }}
+          >
+            <Users size={16} />
+            Share with User
+          </button>
+          <button
+            onClick={() => { setActiveTab('canvas'); setShareError(null); setShareSuccess(null); }}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              backgroundColor: activeTab === 'canvas' ? '#ffffff' : 'transparent',
+              color: activeTab === 'canvas' ? COLORS.text : COLORS.textMuted,
+              boxShadow: activeTab === 'canvas' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+              transition: 'all 0.15s'
+            }}
+          >
+            <LayoutIcon size={16} />
+            Share to Canvas
+          </button>
+        </div>
+
+        {/* User Sharing Tab */}
+        {activeTab === 'user' && (
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '13px', color: COLORS.textMuted, display: 'block', marginBottom: '8px' }}>
+              Enter email address
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ ...styles.searchBox, flex: 1, maxWidth: 'none' }}>
+                <Mail size={16} color={COLORS.textMuted} />
+                <input
+                  style={styles.searchInput}
+                  placeholder="user@example.com"
+                  value={email}
+                  onChange={e => {
+                    setEmail(e.target.value);
+                    setShareError(null);
+                    setShareSuccess(null);
+                  }}
+                  onKeyDown={e => e.key === 'Enter' && handleShareToUser()}
+                />
+              </div>
+              <button
+                style={{
+                  ...styles.button,
+                  ...styles.primaryButton,
+                  opacity: isSharing ? 0.6 : 1
+                }}
+                onClick={handleShareToUser}
+                disabled={isSharing || !email.trim()}
+              >
+                {isSharing ? (
+                  <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <Share2 size={16} />
+                )}
+                Share
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Canvas Sharing Tab */}
+        {activeTab === 'canvas' && (
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '13px', color: COLORS.textMuted, display: 'block', marginBottom: '8px' }}>
+              Select a canvas to share to
+            </label>
+            {loadingCanvases ? (
+              <div style={{ padding: '16px', textAlign: 'center', color: COLORS.textMuted }}>
+                Loading your canvases...
+              </div>
+            ) : userCanvases.length === 0 ? (
+              <div style={{
+                padding: '16px',
+                textAlign: 'center',
+                border: `1px dashed ${COLORS.border}`,
+                borderRadius: '8px',
+                color: COLORS.textMuted
+              }}>
+                <LayoutIcon size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                <p style={{ fontSize: '13px', margin: 0 }}>
+                  No canvases found. Create one in Unity Notes first.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={selectedCanvasId}
+                  onChange={e => {
+                    setSelectedCanvasId(e.target.value);
+                    setShareError(null);
+                    setShareSuccess(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '10px 12px',
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    backgroundColor: '#ffffff',
+                    color: COLORS.text,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">Select a canvas...</option>
+                  {userCanvases.map(canvas => (
+                    <option
+                      key={canvas.id}
+                      value={canvas.id}
+                      disabled={canvasShares.some(s => s.targetId === canvas.id)}
+                    >
+                      {canvas.title || 'Untitled Canvas'}
+                      {canvasShares.some(s => s.targetId === canvas.id) ? ' (already shared)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  style={{
+                    ...styles.button,
+                    ...styles.primaryButton,
+                    opacity: isSharing || !selectedCanvasId ? 0.6 : 1
+                  }}
+                  onClick={handleShareToCanvas}
+                  disabled={isSharing || !selectedCanvasId}
+                >
+                  {isSharing ? (
+                    <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Share2 size={16} />
+                  )}
+                  Share
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Error/Success messages */}
+        {shareError && (
+          <div style={{
+            padding: '10px 12px',
+            backgroundColor: '#fee2e2',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            color: COLORS.danger,
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <AlertCircle size={16} />
+            {shareError}
+          </div>
+        )}
+
+        {shareSuccess && (
+          <div style={{
+            padding: '10px 12px',
+            backgroundColor: '#d1fae5',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            color: COLORS.success,
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <CheckCircle size={16} />
+            {shareSuccess}
+          </div>
+        )}
+
+        {/* Current shares */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <label style={{ fontSize: '13px', color: COLORS.textMuted }}>
+              Currently shared with ({userShares.length + canvasShares.length})
+            </label>
+            {/* Fix button for shares missing userId */}
+            {hasMissingUserIds && !loadingInfo && (
+              <button
+                onClick={handleFixMissingUserIds}
+                disabled={isFixing}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  border: `1px solid ${COLORS.warning}`,
+                  borderRadius: '4px',
+                  backgroundColor: '#fef3c7',
+                  color: '#92400e',
+                  cursor: isFixing ? 'not-allowed' : 'pointer',
+                  opacity: isFixing ? 0.6 : 1
+                }}
+                title={`${sharesNeedingFix.length} share(s) need user ID resolution for "Shared" tab to work`}
+              >
+                {isFixing ? (
+                  <>
+                    <RefreshCw size={12} style={{ animation: 'spin 1s linear infinite' }} />
+                    Fixing...
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={12} />
+                    Fix {sharesNeedingFix.length} share(s)
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {loadingInfo ? (
+            <div style={{ padding: '16px', textAlign: 'center', color: COLORS.textMuted }}>
+              Loading...
+            </div>
+          ) : (userShares.length + canvasShares.length) > 0 ? (
+            <div style={{
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '8px',
+              overflow: 'hidden',
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}>
+              {/* User shares */}
+              {userShares.map((share, idx) => (
+                <div
+                  key={share.targetEmail || share.targetId || `user-${idx}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    borderBottom: `1px solid ${COLORS.border}`
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: COLORS.primary,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Users size={16} color={COLORS.text} />
+                    </div>
+                    <div>
+                      <div style={{
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        color: COLORS.text,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        {share.targetEmail}
+                        {!share.targetId && (
+                          <AlertCircle
+                            size={12}
+                            color={COLORS.warning}
+                            title="Missing user ID - click 'Fix' to resolve"
+                          />
+                        )}
+                      </div>
+                      <div style={{ fontSize: '11px', color: COLORS.textMuted }}>
+                        User • Shared {new Date(share.sharedAt).toLocaleDateString()}
+                        {share.targetId && <span style={{ color: COLORS.success }}> ✓</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    style={{
+                      ...styles.actionButton,
+                      color: COLORS.danger
+                    }}
+                    onClick={() => handleUnshare(share)}
+                    title="Remove share"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+              {/* Canvas shares */}
+              {canvasShares.map((share, idx) => {
+                const canvas = userCanvases.find(c => c.id === share.targetId);
+                return (
+                  <div
+                    key={share.targetId || `canvas-${idx}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 12px',
+                      borderBottom: idx < canvasShares.length - 1 || userShares.length > 0 ? `1px solid ${COLORS.border}` : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: '#e0e7ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <LayoutIcon size={16} color="#4f46e5" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: '500', color: COLORS.text }}>
+                          {canvas?.title || 'Canvas'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: COLORS.textMuted }}>
+                          Canvas • Shared {new Date(share.sharedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      style={{
+                        ...styles.actionButton,
+                        color: COLORS.danger
+                      }}
+                      onClick={() => handleUnshare(share)}
+                      title="Remove share"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{
+              padding: '24px 16px',
+              textAlign: 'center',
+              border: `1px dashed ${COLORS.border}`,
+              borderRadius: '8px',
+              color: COLORS.textMuted
+            }}>
+              <Share2 size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+              <p style={{ fontSize: '13px', margin: 0 }}>
+                Not shared with anyone yet
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Close button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+          <button
+            style={{ ...styles.button, ...styles.secondaryButton }}
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
 // Main Component
 // ============================================================
 const LinkArchiverPage = () => {
@@ -840,7 +2078,21 @@ const LinkArchiverPage = () => {
   // Modals
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [showAddLinkModal, setShowAddLinkModal] = useState(false);
+  const [showBulkFolderModal, setShowBulkFolderModal] = useState(false);
   const [selectedLink, setSelectedLink] = useState(null);
+  const [shareLink, setShareLinkState] = useState(null); // Link being shared
+
+  // Add Link Form
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkTitle, setNewLinkTitle] = useState('');
+  const [newLinkTags, setNewLinkTags] = useState('');
+  const [addLinkLoading, setAddLinkLoading] = useState(false);
+  const [addLinkError, setAddLinkError] = useState(null);
+
+  // UI State
+  const [tagSearch, setTagSearch] = useState('');
+  const [folderCounts, setFolderCounts] = useState({});
 
   // Pagination
   const [_lastDoc, setLastDoc] = useState(null); // TODO: Implement pagination
@@ -863,20 +2115,34 @@ const LinkArchiverPage = () => {
         pageSize: 50
       };
 
-      const [linksResult, foldersResult, tagsResult, tagCountsResult, statsResult] = await Promise.all([
+      const [linksResult, foldersResult, tagsResult, tagCountsResult, folderCountsResult, statsResult] = await Promise.all([
         getLinks(user.uid, options),
         getFolders(user.uid),
         getUserTags(user.uid),
         getTagCounts(user.uid),
+        getFolderCounts(user.uid),
         getReadingStats(user.uid)
       ]);
 
       setLinks(linksResult.links);
       setLastDoc(linksResult.lastDoc);
       setHasMore(linksResult.hasMore);
+
+      // Debug: Log sharing data for all links
+      const sharedLinks = linksResult.links.filter(l => l.sharedWith?.length > 0 || l.sharedWithUserIds?.length > 0);
+      if (sharedLinks.length > 0) {
+        console.log('[LinkArchiver] Links with sharing data:', sharedLinks.map(l => ({
+          id: l.id,
+          title: l.title,
+          sharedWith: l.sharedWith,
+          sharedWithUserIds: l.sharedWithUserIds,
+          sharedWithCanvasIds: l.sharedWithCanvasIds
+        })));
+      }
       setFolders(foldersResult);
       setTags(tagsResult);
       setTagCounts(tagCountsResult);
+      setFolderCounts(folderCountsResult);
       setStats(statsResult);
     } catch (err) {
       console.error('Error loading data:', err);
@@ -931,6 +2197,52 @@ const LinkArchiverPage = () => {
     }
   };
 
+  // Add new link manually
+  const handleAddLink = async () => {
+    if (!newLinkUrl.trim()) {
+      setAddLinkError('Please enter a URL');
+      return;
+    }
+
+    setAddLinkLoading(true);
+    setAddLinkError(null);
+
+    try {
+      const response = await fetch('https://us-central1-yellowcircle-app.cloudfunctions.net/linkArchiverSaveLink', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await user.getIdToken()}`
+        },
+        body: JSON.stringify({
+          url: newLinkUrl.trim(),
+          title: newLinkTitle.trim() || undefined,
+          tags: newLinkTags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
+          folderId: activeFolder || null
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save link');
+      }
+
+      // Reset form and close modal
+      setNewLinkUrl('');
+      setNewLinkTitle('');
+      setNewLinkTags('');
+      setShowAddLinkModal(false);
+
+      // Reload data
+      loadData();
+    } catch (err) {
+      console.error('Error adding link:', err);
+      setAddLinkError(err.message || 'Failed to add link');
+    } finally {
+      setAddLinkLoading(false);
+    }
+  };
+
   const handleImport = async (pocketLinks) => {
     return await importFromPocket(user.uid, pocketLinks);
   };
@@ -942,6 +2254,10 @@ const LinkArchiverPage = () => {
     } catch (err) {
       console.error('Error creating folder:', err);
     }
+  };
+
+  const handleBulkMoveByTag = async (tag, targetFolderId) => {
+    return await moveTaggedLinksToFolder(user.uid, tag, targetFolderId);
   };
 
   const handleUpdateLink = async (linkId, updates) => {
@@ -981,7 +2297,7 @@ const LinkArchiverPage = () => {
         sidebarVariant="standard"
         allowScroll={true}
         pageLabel="LINKS"
-        navigationItems={adminNavigationItems}
+        navigationItems={navigationItems}
         onHomeClick={handleHomeClick}
       >
         <div style={{
@@ -1011,7 +2327,7 @@ const LinkArchiverPage = () => {
       sidebarVariant="standard"
       allowScroll={true}
       pageLabel="LINKS"
-      navigationItems={adminNavigationItems}
+      navigationItems={navigationItems}
       onHomeClick={handleHomeClick}
     >
       <div style={styles.container}>
@@ -1020,9 +2336,15 @@ const LinkArchiverPage = () => {
         <div style={styles.header}>
           <h1 style={styles.title}>
             <Bookmark size={32} color={COLORS.primary} />
-            Link Archiver
+            Link Saver
           </h1>
           <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              style={{ ...styles.button, ...styles.primaryButton }}
+              onClick={() => setShowAddLinkModal(true)}
+            >
+              <Plus size={16} /> Add Link
+            </button>
             <button
               style={{ ...styles.button, ...styles.secondaryButton }}
               onClick={() => setShowImportModal(true)}
@@ -1030,8 +2352,15 @@ const LinkArchiverPage = () => {
               <Upload size={16} /> Import
             </button>
             <button
-              style={{ ...styles.button, ...styles.primaryButton }}
-              onClick={() => window.open('/link-archiver/extension', '_blank')}
+              style={{ ...styles.button, ...styles.secondaryButton }}
+              onClick={() => setShowBulkFolderModal(true)}
+              title="Move links by tag to folders"
+            >
+              <Folder size={16} /> Organize
+            </button>
+            <button
+              style={{ ...styles.button, ...styles.secondaryButton }}
+              onClick={() => window.open('/links/extension', '_blank')}
             >
               <Download size={16} /> Get Extension
             </button>
@@ -1057,9 +2386,9 @@ const LinkArchiverPage = () => {
             <div style={styles.sidebarSection}>
               <div style={styles.sidebarTitle}>Views</div>
               {[
-                { id: 'all', label: 'All Links', icon: Link2 },
-                { id: 'starred', label: 'Starred', icon: Star },
-                { id: 'archived', label: 'Archive', icon: Archive }
+                { id: 'all', label: 'All Links', icon: Link2, count: stats ? stats.totalLinks - stats.archived : 0 },
+                { id: 'starred', label: 'Starred', icon: Star, count: stats?.starred || 0 },
+                { id: 'archived', label: 'Archive', icon: Archive, count: stats?.archived || 0 }
               ].map(view => (
                 <div
                   key={view.id}
@@ -1074,7 +2403,18 @@ const LinkArchiverPage = () => {
                   }}
                 >
                   <view.icon size={18} />
-                  {view.label}
+                  <span style={{ flex: 1 }}>{view.label}</span>
+                  <span style={{
+                    fontSize: '11px',
+                    color: activeView === view.id && !activeFolder && !activeTag ? COLORS.text : COLORS.textMuted,
+                    backgroundColor: activeView === view.id && !activeFolder && !activeTag ? 'rgba(0,0,0,0.1)' : COLORS.cardBg,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    minWidth: '24px',
+                    textAlign: 'center'
+                  }}>
+                    {view.count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -1104,7 +2444,18 @@ const LinkArchiverPage = () => {
                   }}
                 >
                   <Folder size={18} color={folder.color} />
-                  {folder.name}
+                  <span style={{ flex: 1 }}>{folder.name}</span>
+                  <span style={{
+                    fontSize: '11px',
+                    color: activeFolder === folder.id ? COLORS.text : COLORS.textMuted,
+                    backgroundColor: activeFolder === folder.id ? 'rgba(0,0,0,0.1)' : COLORS.cardBg,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    minWidth: '24px',
+                    textAlign: 'center'
+                  }}>
+                    {folderCounts[folder.id] || 0}
+                  </span>
                 </div>
               ))}
               {folders.length === 0 && (
@@ -1114,29 +2465,99 @@ const LinkArchiverPage = () => {
               )}
             </div>
 
-            {/* Tags */}
+            {/* Tags - Searchable */}
             <div style={styles.sidebarSection}>
-              <div style={styles.sidebarTitle}>Tags</div>
-              {tags.slice(0, 10).map(tag => (
-                <div
-                  key={tag}
+              <div style={{ ...styles.sidebarTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Tags</span>
+                <span style={{ fontSize: '11px', color: COLORS.textMuted }}>
+                  {tags.length}
+                </span>
+              </div>
+              {/* Tag Search Input */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: COLORS.cardBg,
+                borderRadius: '6px',
+                padding: '6px 10px',
+                marginBottom: '8px'
+              }}>
+                <Search size={14} color={COLORS.textMuted} />
+                <input
+                  type="text"
+                  placeholder="Search tags..."
+                  value={tagSearch}
+                  onChange={(e) => setTagSearch(e.target.value)}
                   style={{
-                    ...styles.sidebarItem,
-                    ...(activeTag === tag ? styles.sidebarItemActive : {})
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '12px',
+                    outline: 'none',
+                    flex: 1,
+                    color: COLORS.text
                   }}
-                  onClick={() => {
-                    setActiveTag(tag);
-                    setActiveView('all');
-                    setActiveFolder(null);
-                  }}
-                >
-                  <Tag size={18} />
-                  {tag}
-                  <span style={{ marginLeft: 'auto', fontSize: '12px', color: COLORS.textLight }}>
-                    {tagCounts[tag] || 0}
-                  </span>
-                </div>
-              ))}
+                />
+                {tagSearch && (
+                  <button
+                    onClick={() => setTagSearch('')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex'
+                    }}
+                  >
+                    <X size={12} color={COLORS.textMuted} />
+                  </button>
+                )}
+              </div>
+              {/* Filtered Tags List */}
+              <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                {tags
+                  .filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()))
+                  .slice(0, tagSearch ? 50 : 15)
+                  .map(tag => (
+                    <div
+                      key={tag}
+                      style={{
+                        ...styles.sidebarItem,
+                        padding: '8px 10px',
+                        ...(activeTag === tag ? styles.sidebarItemActive : {})
+                      }}
+                      onClick={() => {
+                        setActiveTag(tag);
+                        setActiveView('all');
+                        setActiveFolder(null);
+                      }}
+                    >
+                      <Tag size={14} />
+                      <span style={{ flex: 1, fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tag}
+                      </span>
+                      <span style={{
+                        fontSize: '10px',
+                        color: activeTag === tag ? COLORS.text : COLORS.textMuted,
+                        backgroundColor: activeTag === tag ? 'rgba(0,0,0,0.1)' : COLORS.cardBg,
+                        padding: '1px 5px',
+                        borderRadius: '3px'
+                      }}>
+                        {tagCounts[tag] || 0}
+                      </span>
+                    </div>
+                  ))}
+                {tagSearch && tags.filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase())).length === 0 && (
+                  <p style={{ fontSize: '12px', color: COLORS.textLight, padding: '8px 10px' }}>
+                    No tags match "{tagSearch}"
+                  </p>
+                )}
+                {!tagSearch && tags.length > 15 && (
+                  <p style={{ fontSize: '11px', color: COLORS.textMuted, padding: '6px 10px', textAlign: 'center' }}>
+                    Type to search {tags.length - 15} more tags...
+                  </p>
+                )}
+              </div>
               {tags.length === 0 && (
                 <p style={{ fontSize: '13px', color: COLORS.textLight, padding: '8px 12px' }}>
                   No tags yet
@@ -1208,6 +2629,7 @@ const LinkArchiverPage = () => {
                   onArchive={handleArchive}
                   onDelete={handleDelete}
                   onClick={setSelectedLink}
+                  onShare={setShareLinkState}
                 />
               ))
             )}
@@ -1228,6 +2650,23 @@ const LinkArchiverPage = () => {
       </div>
 
       {/* Modals */}
+      <AddLinkModal
+        isOpen={showAddLinkModal}
+        onClose={() => {
+          setShowAddLinkModal(false);
+          setAddLinkError(null);
+        }}
+        url={newLinkUrl}
+        setUrl={setNewLinkUrl}
+        title={newLinkTitle}
+        setTitle={setNewLinkTitle}
+        tags={newLinkTags}
+        setTags={setNewLinkTags}
+        loading={addLinkLoading}
+        error={addLinkError}
+        onSubmit={handleAddLink}
+      />
+
       <ImportModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
@@ -1240,11 +2679,28 @@ const LinkArchiverPage = () => {
         onAdd={handleAddFolder}
       />
 
+      <BulkFolderModal
+        isOpen={showBulkFolderModal}
+        onClose={() => setShowBulkFolderModal(false)}
+        folders={folders}
+        tags={tags}
+        onMoveTags={handleBulkMoveByTag}
+        onRefresh={loadData}
+      />
+
       <LinkDetailModal
         link={selectedLink}
         isOpen={!!selectedLink}
         onClose={() => setSelectedLink(null)}
         onUpdate={handleUpdateLink}
+      />
+
+      <ShareLinkModal
+        link={shareLink}
+        isOpen={!!shareLink}
+        onClose={() => setShareLinkState(null)}
+        user={user}
+        onShareComplete={loadData}
       />
     </Layout>
   );

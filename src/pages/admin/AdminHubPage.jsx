@@ -118,11 +118,11 @@ const ADMIN_TOOLS = [
     bgColor: '#fee2e2'
   },
   {
-    id: 'link-archiver',
-    title: 'Link Archiver',
+    id: 'link-saver',
+    title: 'Link Saver',
     description: 'Save and organize links - Pocket alternative with AI summaries',
     icon: Bookmark,
-    route: '/admin/links',
+    route: '/links',
     color: '#f97316',
     bgColor: '#ffedd5'
   }

@@ -2069,6 +2069,56 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView, setIsUploadModalOpen, handleOpenStudio, user, userProfile, storedGoogleMapsKey]);
 
+  // Handle adding a link from Link Saver to the canvas
+  const handleAddLinkFromSaver = useCallback((link) => {
+    // Check node limit
+    if (nodes.length >= nodeLimit) {
+      alert(
+        `⚠️ Node Limit Reached (${nodeLimit} nodes)\n\n` +
+        (tier === 'premium' || isAdmin
+          ? 'You are at your canvas limit.'
+          : `Free tier allows ${FREE_NODE_LIMIT} nodes.\n\nUpgrade to Pro for ${PRO_NODE_LIMIT} nodes.`)
+      );
+      return;
+    }
+
+    const timestamp = Date.now();
+    const totalNodes = nodes.length;
+    const gridX = totalNodes % 8;
+    const gridY = Math.floor(totalNodes / 8);
+
+    const newNode = {
+      id: `link-${timestamp}`,
+      type: 'textNode',
+      position: {
+        x: 300 + gridX * 350,
+        y: 100 + gridY * 300
+      },
+      data: {
+        title: link.title || 'Untitled Link',
+        content: link.excerpt || '',
+        url: link.url,
+        cardType: 'link',
+        color: CARD_TYPES.link.color,
+        createdAt: timestamp,
+        // Store link metadata for reference
+        linkMeta: {
+          domain: link.domain,
+          favicon: link.favicon,
+          image: link.image,
+          linkSaverId: link.id
+        },
+        onUpdate: handleNodeUpdate,
+        onDelete: handleDeleteNode,
+      }
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    setTimeout(() => {
+      fitView({ duration: 400, padding: 0.2 });
+    }, 100);
+  }, [nodes.length, nodeLimit, tier, isAdmin, handleNodeUpdate, handleDeleteNode, setNodes, fitView]);
+
   // Handle Deploy from ProspectNode - opens prospect modal
   // Uses refs to avoid circular dependency with useEffect that injects callbacks
   const handleDeployFromNode = useCallback(async (nodeId, nodeData) => {
@@ -5142,6 +5192,8 @@ Example format:
         starredNodes={starredNodes}
         bookmarkedCapsules={bookmarkedCapsules}
         notifications={[]} // TODO: Wire up notifications
+        canvasId={currentCapsuleId}
+        onAddLinkNode={handleAddLinkFromSaver}
         onNodeClick={(node) => {
           // Focus on the clicked node
           const { x, y } = node.position;
