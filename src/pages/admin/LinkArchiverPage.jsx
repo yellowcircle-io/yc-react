@@ -74,7 +74,8 @@ import {
   Share2,
   Users,
   Mail,
-  Layout as LayoutIcon
+  Layout as LayoutIcon,
+  Info
 } from 'lucide-react';
 
 // ============================================================
@@ -1754,6 +1755,23 @@ const ShareLinkModal = ({ link, isOpen, onClose, user, onShareComplete }) => {
             <label style={{ fontSize: '13px', color: COLORS.textMuted, display: 'block', marginBottom: '8px' }}>
               Select a canvas to share to
             </label>
+            <div style={{
+              padding: '8px 12px',
+              backgroundColor: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              borderRadius: '6px',
+              marginBottom: '12px',
+              fontSize: '12px',
+              color: '#0369a1',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '8px'
+            }}>
+              <Info size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
+              <span>
+                <strong>Note:</strong> Sharing to a canvas makes this link visible to <strong>all collaborators</strong> of that canvas in their Links tab.
+              </span>
+            </div>
             {loadingCanvases ? (
               <div style={{ padding: '16px', textAlign: 'center', color: COLORS.textMuted }}>
                 Loading your canvases...
