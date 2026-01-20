@@ -27,6 +27,9 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
   const [starredLinks, setStarredLinks] = useState([]);
   const [recentLinks, setRecentLinks] = useState([]);
   const [sharedLinks, setSharedLinks] = useState([]);
+  const [sharedWithMeLinks, setSharedWithMeLinks] = useState([]);
+  const [sharedToCanvasLinks, setSharedToCanvasLinks] = useState([]);
+  const [sharedFilter, setSharedFilter] = useState('all'); // 'all', 'withMe', 'toCanvas'
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -115,6 +118,10 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
         // Combine shared links: links shared with user + links shared to canvas
         const sharedWithMe = sharedWithMeResult.links || [];
         const canvasShared = canvasSharedResult?.links || [];
+
+        // Store separate arrays for filtering
+        setSharedWithMeLinks(sharedWithMe);
+        setSharedToCanvasLinks(canvasShared.map(link => ({ ...link, _sharedToCanvas: true })));
 
         // Dedupe by link ID and mark source
         const allSharedLinks = [...sharedWithMe];
@@ -430,9 +437,62 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
     );
   };
 
+  // Get filtered shared links based on current filter
+  const getFilteredSharedLinks = () => {
+    switch (sharedFilter) {
+      case 'withMe':
+        return sharedWithMeLinks;
+      case 'toCanvas':
+        return sharedToCanvasLinks;
+      default:
+        return sharedLinks;
+    }
+  };
+
+  // Shared filter pill component
+  const SharedFilterPill = ({ id, label, count }) => {
+    const isActive = sharedFilter === id;
+    return (
+      <button
+        onClick={() => setSharedFilter(id)}
+        style={{
+          padding: '4px 10px',
+          fontSize: '10px',
+          fontWeight: isActive ? '600' : '500',
+          backgroundColor: isActive ? '#fef3c7' : '#f3f4f6',
+          color: isActive ? '#92400e' : '#6b7280',
+          border: 'none',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          transition: 'all 0.15s'
+        }}
+      >
+        {label}
+        {count > 0 && (
+          <span style={{
+            fontSize: '9px',
+            backgroundColor: isActive ? '#fbbf24' : '#e5e7eb',
+            color: isActive ? '#171717' : '#6b7280',
+            padding: '1px 4px',
+            borderRadius: '6px',
+            fontWeight: '600'
+          }}>
+            {count}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   // Shared tab content - shows links shared with user or to canvas
   const SharedTabContent = () => {
-    if (sharedLinks.length === 0) {
+    const filteredLinks = getFilteredSharedLinks();
+    const hasAnyShared = sharedLinks.length > 0;
+
+    if (!hasAnyShared) {
       return (
         <div style={{ padding: '32px 16px', textAlign: 'center' }}>
           <div style={{
@@ -464,9 +524,33 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
 
     return (
       <>
-        {sharedLinks.map((link) => (
-          <SharedLinkItem key={`shared-${link.id}`} link={link} />
-        ))}
+        {/* Filter pills */}
+        <div style={{
+          padding: '8px 12px',
+          borderBottom: '1px solid #f3f4f6',
+          display: 'flex',
+          gap: '6px',
+          flexWrap: 'wrap'
+        }}>
+          <SharedFilterPill id="all" label="All" count={sharedLinks.length} />
+          <SharedFilterPill id="withMe" label="With Me" count={sharedWithMeLinks.length} />
+          {canvasId && (
+            <SharedFilterPill id="toCanvas" label="To Canvas" count={sharedToCanvasLinks.length} />
+          )}
+        </div>
+
+        {/* Filtered links */}
+        {filteredLinks.length === 0 ? (
+          <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+            <p style={{ fontSize: '12px', color: '#9ca3af' }}>
+              No links in this category
+            </p>
+          </div>
+        ) : (
+          filteredLinks.map((link) => (
+            <SharedLinkItem key={`shared-${link.id}`} link={link} />
+          ))
+        )}
       </>
     );
   };
