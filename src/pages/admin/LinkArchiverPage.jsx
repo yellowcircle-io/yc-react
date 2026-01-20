@@ -1756,21 +1756,22 @@ const ShareLinkModal = ({ link, isOpen, onClose, user, onShareComplete }) => {
               Select a canvas to share to
             </label>
             <div style={{
-              padding: '8px 12px',
+              padding: '10px 12px',
               backgroundColor: '#f0f9ff',
               border: '1px solid #bae6fd',
               borderRadius: '6px',
               marginBottom: '12px',
               fontSize: '12px',
-              color: '#0369a1',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '8px'
+              color: '#0369a1'
             }}>
-              <Info size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
-              <span>
-                <strong>Note:</strong> Sharing to a canvas makes this link visible to <strong>all collaborators</strong> of that canvas in their Links tab.
-              </span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                <Info size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
+                <span><strong>Sharing Options:</strong></span>
+              </div>
+              <ul style={{ margin: '0', paddingLeft: '22px', lineHeight: '1.6' }}>
+                <li><strong>UnityNotes</strong> — Link appears in the Links tab of <em>every</em> canvas</li>
+                <li><strong>Individual Canvas</strong> — Link appears only in that specific canvas</li>
+              </ul>
             </div>
             {loadingCanvases ? (
               <div style={{ padding: '16px', textAlign: 'center', color: COLORS.textMuted }}>
@@ -1810,16 +1811,36 @@ const ShareLinkModal = ({ link, isOpen, onClose, user, onShareComplete }) => {
                   }}
                 >
                   <option value="">Select a canvas...</option>
-                  {userCanvases.map(canvas => (
-                    <option
-                      key={canvas.id}
-                      value={canvas.id}
-                      disabled={canvasShares.some(s => s.targetId === canvas.id)}
-                    >
-                      {canvas.title || 'Untitled Canvas'}
-                      {canvasShares.some(s => s.targetId === canvas.id) ? ' (already shared)' : ''}
-                    </option>
-                  ))}
+                  {/* Universal option - UnityNotes shares to ALL canvases */}
+                  <optgroup label="📌 Universal (All Canvases)">
+                    {userCanvases
+                      .filter(canvas => (canvas.title || '').toLowerCase().includes('unitynotes'))
+                      .map(canvas => (
+                        <option
+                          key={canvas.id}
+                          value={canvas.id}
+                          disabled={canvasShares.some(s => s.targetId === canvas.id)}
+                        >
+                          {canvas.title || 'UnityNotes'} — visible in ALL canvases
+                          {canvasShares.some(s => s.targetId === canvas.id) ? ' (already shared)' : ''}
+                        </option>
+                      ))}
+                  </optgroup>
+                  {/* Individual canvas options */}
+                  <optgroup label="📁 Individual Canvases">
+                    {userCanvases
+                      .filter(canvas => !(canvas.title || '').toLowerCase().includes('unitynotes'))
+                      .map(canvas => (
+                        <option
+                          key={canvas.id}
+                          value={canvas.id}
+                          disabled={canvasShares.some(s => s.targetId === canvas.id)}
+                        >
+                          {canvas.title || 'Untitled Canvas'}
+                          {canvasShares.some(s => s.targetId === canvas.id) ? ' (already shared)' : ''}
+                        </option>
+                      ))}
+                  </optgroup>
                 </select>
                 <button
                   style={{
