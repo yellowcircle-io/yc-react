@@ -198,3 +198,287 @@ There are two main application files:
 
 ### Development Workflow
 Always run `npm run lint` after making changes to ensure code quality. The project uses modern React patterns with hooks and functional components exclusively.
+
+---
+
+## Architecture Patterns
+
+### Primary Pattern: Clean Architecture + Hexagonal Separation
+
+**Rule:** Firebase integration code NEVER appears in UI components.
+
+**Structure:**
+```
+src/
+├── components/          # React UI layer (NO Firebase imports allowed)
+├── contexts/            # React contexts (may use services)
+├── hooks/               # Custom React hooks (use services, NO Firebase)
+├── pages/               # Page components (composition layer)
+├── utils/firestore*.js  # Firebase operations ONLY (canonical location)
+├── services/firebase/   # Alternative Firebase location (if needed)
+└── config/              # Configuration (pure data)
+```
+
+**Canonical Firebase Service Pattern:**
+```javascript
+// src/utils/firestoreLinks.js - SINGLE RESPONSIBILITY: Firebase operations only
+export async function saveLink(userId, linkData) {
+  try {
+    const docRef = await addDoc(collection(db, 'users', userId, 'links'), linkData);
+    return { success: true, id: docRef.id, error: null };
+  } catch (error) {
+    return { success: false, id: null, error: error.message };
+  }
+}
+// ✓ Returns structured result (never throws in services)
+// ✓ All Firebase logic isolated here
+```
+
+**Component Pattern (React):**
+```javascript
+// src/components/LinkCard.jsx - SINGLE RESPONSIBILITY: UI rendering only
+function LinkCard({ link }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleDelete = async () => {
+    setLoading(true);
+    const result = await deleteLink(link.id); // Call service
+    if (!result.success) {
+      setError(result.error);
+    }
+    setLoading(false);
+  };
+
+  // JSX only - NO Firebase code, NO business logic
+}
+// ✓ Firebase code completely separated
+// ✓ Clear loading/error state management
+```
+
+**Key Rule:**
+> Firebase imports ONLY allowed in: `src/utils/firestore*.js`, `src/services/firebase/*`, `functions/`
+
+---
+
+## Forbidden Patterns
+
+### Code Structure Violations
+
+- ❌ `import { db } from` in any file EXCEPT `src/utils/firestore*.js` or `services/firebase/*`
+- ❌ Firebase operations directly in components (use service layer)
+- ❌ Nested ternaries beyond 1 level (max: `a ? b : c`)
+- ❌ Component files > 200 lines (split into smaller components)
+- ❌ Props object with >5 properties (use composition or context)
+- ❌ Async operations without explicit loading/error state
+- ❌ Multiple responsibilities in single function
+
+### Dependency Violations
+
+- ❌ Unused imports (ESLint: no-unused-vars error)
+- ❌ Unused dependencies in package.json (knip will flag)
+- ❌ Installing packages without checking if already installed
+
+### Error Handling Violations
+
+- ❌ Silent failures: `try { risky(); } catch(e) { /* ignore */ }`
+- ❌ Unhandled promise rejections
+- ❌ Missing loading states in async operations
+- ❌ Missing cleanup in useEffect (event listeners, subscriptions)
+
+---
+
+## Quality Gates & Tools
+
+### Pre-Commit Verification
+```bash
+npm run lint                  # ESLint checks
+npm run build                 # Verify production build
+npm run deadcode              # Dead code detection (knip)
+```
+
+### Quality Check Scripts
+```bash
+npm run check:deps            # knip production analysis
+npm run check:unused          # depcheck for unused dependencies
+```
+
+### Weekly Maintenance
+```bash
+npm run deadcode              # Full dead code report
+npm run check:unused          # Unused dependencies report
+```
+
+### Existing Tool Configuration
+
+**knip** (already configured in `knip.json`):
+- Entry points: `src/main.jsx`, `src/RouterApp.jsx`
+- Ignores: `.claude/**`, `dev-context/**`, `functions/**`, `scripts/**`, `src/archive/**`
+- Ignored deps: `@builder.io/dev-tools`, `@rollup/rollup-linux-x64-gnu`, `autoprefixer`, `postcss`
+
+**ESLint** (configured in `eslint.config.js`):
+- React hooks rules enabled
+- React refresh plugin for HMR
+
+**Sentry** (configured in `src/main.jsx`):
+- DSN via `VITE_SENTRY_DSN` environment variable
+- 10% transaction sampling
+- Session replay enabled
+
+---
+
+## Development Workflows
+
+Detailed workflow documentation available in `.claude/workflows/`:
+
+### Plan-First Workflow
+For new features - understand architecture before coding.
+See: `.claude/workflows/WORKFLOW_PLAN_FIRST.md`
+
+### Refactoring Workflow
+For cleaning up existing code safely.
+See: `.claude/workflows/WORKFLOW_REFACTORING.md`
+
+### Waterfall Workflow
+For systematic codebase improvements.
+See: `.claude/workflows/WORKFLOW_WATERFALL.md`
+
+### Quick Reference
+
+**Before ANY Code Change:**
+```
+□ Read file(s) first - NEVER modify unread code
+□ Check existing patterns in related files
+□ Run `npm run lint` before and after changes
+□ Verify build succeeds: `npm run build`
+```
+
+**Before Deployment:**
+```
+□ Deploy to staging first: `firebase hosting:channel:deploy staging --expires 30d`
+□ Test staging URL before production
+□ Deploy to production: `firebase deploy --only hosting`
+□ Verify production URL works
+```
+
+---
+
+## Common Mistakes to Avoid
+
+### 1. Firebase + UI Coupling
+**Problem:** Firebase operations directly in component
+```javascript
+// ❌ WRONG
+useEffect(() => {
+  const unsubscribe = onSnapshot(collection(db, 'users'), (snap) => {
+    setUsers(snap.docs.map(d => d.data()));
+  });
+  return unsubscribe;
+}, []);
+```
+
+**Fix:** Use service layer
+```javascript
+// ✓ RIGHT
+useEffect(() => {
+  loadUsers();
+}, []);
+
+const loadUsers = async () => {
+  const result = await getUsers(); // from src/utils/firestoreUsers.js
+  if (result.success) {
+    setUsers(result.users);
+  }
+};
+```
+
+### 2. Missing Error States
+**Problem:** Showing data before checking for errors
+```javascript
+// ❌ WRONG
+if (loading) return <Skeleton />;
+return <UserList users={users} />; // What if error?
+```
+
+**Fix:** Always render error state
+```javascript
+// ✓ RIGHT
+if (loading) return <Skeleton />;
+if (error) return <ErrorMessage error={error} />;
+return <UserList users={users} />;
+```
+
+### 3. Over-Generalization
+**Problem:** Creating utility functions for 1-2 use cases
+```javascript
+// ❌ WRONG
+const formatDataForDisplay = (data, format, locale) => {
+  // 50 lines of logic for ONE use case
+};
+```
+
+**Fix:** Only abstract patterns used 3+ times
+```javascript
+// ✓ RIGHT - Implement inline until pattern repeats
+const displayName = name.toUpperCase();
+```
+
+### 4. Missing Cleanup
+**Problem:** Event listeners without cleanup
+```javascript
+// ❌ WRONG
+useEffect(() => {
+  window.addEventListener('resize', handler);
+}, []);
+```
+
+**Fix:** Proper cleanup
+```javascript
+// ✓ RIGHT
+useEffect(() => {
+  window.addEventListener('resize', handler);
+  return () => window.removeEventListener('resize', handler);
+}, []);
+```
+
+### 5. Async Race Conditions
+**Problem:** Multiple simultaneous requests with shared state
+```javascript
+// ❌ WRONG
+const handleSearch = async (query) => {
+  setResults(await searchUsers(query));
+  // What if user types again before response?
+};
+```
+
+**Fix:** Use loading flags or abort controllers
+```javascript
+// ✓ RIGHT
+const [loading, setLoading] = useState(false);
+const handleSearch = async (query) => {
+  if (loading) return; // Prevent concurrent requests
+  setLoading(true);
+  const results = await searchUsers(query);
+  setResults(results);
+  setLoading(false);
+};
+```
+
+---
+
+## Red Flags - When to PAUSE
+
+1. **"This is deprecated but..."** → Understand why FIRST
+2. **"Just remove this..."** → Verify nothing depends on it with grep
+3. **"Quick fix..."** → Consider long-term implications
+4. **"Works on my machine..."** → Must test in staging
+5. **"I'll add error handling later..."** → NO - do it now
+
+---
+
+## References
+
+- **Deployment Rules:** `dev-context/SCOPE_CODE_QUALITY_RULES.md`
+- **Firebase Patterns:** `src/utils/firestore*.js` (canonical implementations)
+- **Component Patterns:** `src/components/` (reference implementations)
+- **Workflow Details:** `.claude/workflows/`
