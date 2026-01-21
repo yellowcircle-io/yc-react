@@ -2,8 +2,8 @@ name: Auto-Revert Content Changes
 
 on:
   schedule:
-    # Run every hour
-    - cron: '0 * * * *'
+    # Run twice daily at 8am and 8pm UTC
+    - cron: '0 8,20 * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -30,13 +30,13 @@ jobs:
             });
 
             const now = new Date();
-            const oneHourAgo = new Date(now - 60 * 60 * 1000);
+            const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
 
             for (const issue of issues.data) {
               const closedAt = new Date(issue.closed_at);
 
-              // Check if issue was closed more than 1 hour ago
-              if (closedAt < oneHourAgo) {
+              // Check if issue was closed more than 12 hours ago (runs twice daily)
+              if (closedAt < twelveHoursAgo) {
                 // Find the commit hash from issue comments
                 const comments = await github.rest.issues.listComments({
                   owner: context.repo.owner,

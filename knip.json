@@ -23,20 +23,24 @@
     "src/components/notifications/NotificationBell.jsx",
     "src/hooks/usePresence.js",
     "src/components/unity/ActiveUsersIndicator.jsx",
-    "src/components/unity/UserAvatar.jsx"
+    "src/components/unity/UserAvatar.jsx",
+    "src/pages/experiments/component-library/**"
   ],
   "ignoreDependencies": [
     "@builder.io/dev-tools",
-    "@rollup/rollup-linux-x64-gnu",
     "autoprefixer",
     "postcss",
     "tailwindcss",
     "@tailwindcss/vite",
     "html2canvas",
     "playwright",
-    "esbuild",
     "husky",
-    "lint-staged"
+    "lint-staged",
+    "@lottiefiles/dotlottie-react"
+  ],
+  "ignoreBinaries": [
+    "knip",
+    "vite-bundle-visualizer"
   ],
   "ignoreExportsUsedInFile": true
 }

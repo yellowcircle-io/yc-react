@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+# Pre-push hook: Verify build compiles before pushing to remote
+# This prevents CI failures due to missing dependencies or build errors
+
+echo "🔨 Verifying build before push..."
+
+# Run build in a way that captures errors
+if ! npm run build > /dev/null 2>&1; then
+    echo ""
+    echo "🚨 BUILD FAILED! Push aborted."
+    echo ""
+    echo "Run 'npm run build' to see the full error."
+    echo ""
+    echo "Common issues:"
+    echo "  - Missing dependencies (run 'npm install <package>')"
+    echo "  - Import errors (check file paths)"
+    echo "  - Syntax errors"
+    echo ""
+    echo "To bypass (NOT RECOMMENDED): git push --no-verify"
+    exit 1
+fi
+
+echo "✅ Build verified successfully"
