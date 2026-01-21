@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   collection,
   query,
@@ -184,7 +184,8 @@ export function NotificationProvider({ children }) {
     }
   }, [user?.uid]);
 
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const value = useMemo(() => ({
     notifications,
     unreadCount,
     loading,
@@ -193,7 +194,7 @@ export function NotificationProvider({ children }) {
     dismissNotification,
     deleteNotification,
     clearDismissed
-  };
+  }), [notifications, unreadCount, loading, markAsRead, markAllAsRead, dismissNotification, deleteNotification, clearDismissed]);
 
   return (
     <NotificationContext.Provider value={value}>

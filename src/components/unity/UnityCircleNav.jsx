@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import LazyLottieIcon from '../shared/LazyLottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
-// Import Lottie JSON files directly for reliability
-import settingsAnimation from '../../assets/lottie/settings-gear.json';
-import addAnimation from '../../assets/lottie/add.json';
+import { useLottieAnimation } from '../../hooks/useLottieAnimation';
 
 /**
  * UnityCircleNav - Custom CircleNav for UnityNotes
@@ -18,7 +16,7 @@ import addAnimation from '../../assets/lottie/add.json';
  */
 
 // Add Icon Circle Component - White Lottie "+" on yellow circle
-const AddIconCircle = ({ size = 64, isHovered = false }) => {
+const AddIconCircle = ({ size = 64, isHovered = false, animationData }) => {
   return (
     <div style={{
       width: size,
@@ -47,21 +45,25 @@ const AddIconCircle = ({ size = 64, isHovered = false }) => {
         width: size * 0.7,
         height: size * 0.7,
       }}>
-        <LazyLottieIcon
-          animationData={addAnimation}
-          size={size * 0.7}
-          isHovered={isHovered}
-          useGrayscale={false}
-          alwaysAnimate={false}
-          alt="Add Note"
-        />
+        {animationData ? (
+          <LazyLottieIcon
+            animationData={animationData}
+            size={size * 0.7}
+            isHovered={isHovered}
+            useGrayscale={false}
+            alwaysAnimate={false}
+            alt="Add Note"
+          />
+        ) : (
+          <div style={{ width: size * 0.7, height: size * 0.7, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '4px' }} />
+        )}
       </div>
     </div>
   );
 };
 
 // Settings Gear Button - Perfect circle with Lottie animation
-const SettingsGear = ({ onClick, isHovered, onHover }) => {
+const SettingsGear = ({ onClick, isHovered, onHover, animationData }) => {
   const size = 28;
 
   return (
@@ -104,13 +106,17 @@ const SettingsGear = ({ onClick, isHovered, onHover }) => {
         justifyContent: 'center',
         filter: 'invert(1) brightness(2) grayscale(1)'
       }}>
-        <LazyLottieIcon
-          animationData={settingsAnimation}
-          size={16}
-          isHovered={isHovered}
-          useGrayscale={false}
-          alt="Settings"
-        />
+        {animationData ? (
+          <LazyLottieIcon
+            animationData={animationData}
+            size={16}
+            isHovered={isHovered}
+            useGrayscale={false}
+            alt="Settings"
+          />
+        ) : (
+          <div style={{ width: 16, height: 16, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: '50%' }} />
+        )}
       </div>
     </button>
   );
@@ -541,6 +547,9 @@ function UnityCircleNav({
   const [showStatusExpanded, setShowStatusExpanded] = useState(false);
   const containerRef = useRef(null);
 
+  // Lazy load Lottie animations (reduces initial bundle by ~21KB)
+  const { animationData: addAnimationData } = useLottieAnimation('add');
+
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -673,7 +682,7 @@ function UnityCircleNav({
               }}
               title="Add Note (right-click for menu)"
             >
-              <AddIconCircle size={64} isHovered={isCircleHovered} />
+              <AddIconCircle size={64} isHovered={isCircleHovered} animationData={addAnimationData} />
             </div>
           </div>
 

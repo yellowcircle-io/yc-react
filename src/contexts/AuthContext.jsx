@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -450,7 +451,11 @@ export function AuthProvider({ children }) {
     return { success: true, message: `Upgraded user to premium` };
   };
 
-  const value = {
+  // Memoize refreshProfile callback to prevent unnecessary re-renders
+  const refreshProfile = useCallback(() => user && syncUserProfile(user), [user]);
+
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const value = useMemo(() => ({
     // State
     user,
     userProfile,
@@ -468,14 +473,19 @@ export function AuthProvider({ children }) {
     clearError,
 
     // Re-sync profile (useful after credit changes)
-    refreshProfile: () => user && syncUserProfile(user),
+    refreshProfile,
 
     // Admin methods (client provisioning)
     addClientEmail,
     removeClientEmail,
     getClientWhitelist,
     upgradeUserToPremium
-  };
+  }), [
+    user, userProfile, loading, error, refreshProfile,
+    signInWithGoogle, signInWithEmail, signUpWithEmail, signOut,
+    resetPassword, clearError, addClientEmail, removeClientEmail,
+    getClientWhitelist, upgradeUserToPremium
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

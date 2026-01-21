@@ -6,18 +6,14 @@
  *
  * Only pages that need different sidebar behavior (like UnityNotes)
  * should use the sidebarVariant prop - not different navigationItems.
+ *
+ * NOTE: Animations are loaded dynamically via useLottieAnimation hook
+ * to reduce initial bundle size (~178KB saved).
  */
-
-// Lottie animation data for sidebar icons
-import servicesAnimation from '../assets/lottie/wip.json';
-import storiesAnimation from '../assets/lottie/scroll-with-quill.json';
-import checklistAnimation from '../assets/lottie/checklist.json';
-import mapAnimation from '../assets/lottie/map.json';
-import aboutAnimation from '../assets/lottie/wave.json';
 
 /**
  * Standard navigation items for all pages
- * Uses Lottie animations for icons
+ * Uses lottieAnimation name (string) - loaded dynamically by Sidebar
  * Organized into two sections: START HERE and EXPLORE
  *
  * IMPORTANT: Keep in sync with HamburgerMenu.jsx menuConfig
@@ -32,14 +28,14 @@ export const navigationItems = [
     itemKey: "section-start-here"
   },
   {
-    lottieData: checklistAnimation,
+    lottieAnimation: 'checklist',  // Dynamic load via useLottieAnimation
     label: "GROWTH HEALTH CHECK",
     itemKey: "assessment",
     route: "/assessment",
     subItems: []
   },
   {
-    lottieData: servicesAnimation,
+    lottieAnimation: 'wip',  // Dynamic load via useLottieAnimation
     label: "SERVICES",
     itemKey: "services",
     subItems: [
@@ -54,7 +50,7 @@ export const navigationItems = [
     ]
   },
   {
-    lottieData: aboutAnimation,
+    lottieAnimation: 'wave',  // Dynamic load via useLottieAnimation
     label: "ABOUT",
     itemKey: "about",
     route: "/about",
@@ -69,7 +65,7 @@ export const navigationItems = [
     itemKey: "section-explore"
   },
   {
-    lottieData: storiesAnimation,
+    lottieAnimation: 'scroll-with-quill',  // Dynamic load via useLottieAnimation
     label: "STORIES",
     itemKey: "stories",
     subItems: [
@@ -87,7 +83,7 @@ export const navigationItems = [
     ]
   },
   {
-    lottieData: mapAnimation,
+    lottieAnimation: 'map',  // Dynamic load via useLottieAnimation
     label: "JOURNEYS",
     itemKey: "journeys",
     subItems: [

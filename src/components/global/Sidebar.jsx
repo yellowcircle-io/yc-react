@@ -3,6 +3,33 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import LazyLottieIcon from '../shared/LazyLottieIcon';
 import { useLayout } from '../../contexts/LayoutContext';
 import UserMenu from '../auth/UserMenu';
+import { useLottieAnimation } from '../../hooks/useLottieAnimation';
+
+// Wrapper component for dynamic Lottie loading
+const DynamicLottieIcon = ({ animationName, size, isHovered, alt }) => {
+  const { animationData, loading } = useLottieAnimation(animationName);
+
+  if (loading || !animationData) {
+    // Placeholder while loading
+    return (
+      <div style={{
+        width: size,
+        height: size,
+        borderRadius: '4px',
+        backgroundColor: 'rgba(128, 128, 128, 0.15)',
+      }} />
+    );
+  }
+
+  return (
+    <LazyLottieIcon
+      animationData={animationData}
+      size={size}
+      isHovered={isHovered}
+      alt={alt}
+    />
+  );
+};
 
 /**
  * Sidebar - Three-section collapsible sidebar with slide-over navigation
@@ -128,8 +155,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
   };
 
   // Navigation Item Component - with slide-over trigger
-  // Supports both Lottie animations (lottieData) and static images (icon URL)
-  const NavigationItem = ({ icon, lottieData, label, subItems, itemKey, index: _index, route }) => {
+  // Supports: lottieAnimation (string for lazy load), lottieData (object), or static images (icon URL)
+  const NavigationItem = ({ icon, lottieData, lottieAnimation, label, subItems, itemKey, index: _index, route }) => {
     const [isHovered, setIsHovered] = useState(false);
     const hoverTimeoutRef = useRef(null);
     const hasSubItems = subItems && subItems.length > 0;
@@ -248,8 +275,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             font: 'inherit'
           }}
         >
-          {/* Icon - Uses LazyLottieIcon to defer loading lottie-web (~877KB) */}
-          {/* Supports: lottieData (local JSON), dotLottieSrc (remote .lottie), or static icon URL */}
+          {/* Icon - Uses LazyLottieIcon to defer loading lottie-web */}
+          {/* Supports: lottieAnimation (string), lottieData (object), or static icon URL */}
           <div style={{
             position: sidebarOpen ? 'relative' : 'absolute',
             left: sidebarOpen ? '0' : '40px',
@@ -264,7 +291,14 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             pointerEvents: 'none',
             flexShrink: 0
           }}>
-            {lottieData ? (
+            {lottieAnimation ? (
+              <DynamicLottieIcon
+                animationName={lottieAnimation}
+                size={28}
+                isHovered={isHovered}
+                alt={label}
+              />
+            ) : lottieData ? (
               <LazyLottieIcon
                 animationData={lottieData}
                 size={28}

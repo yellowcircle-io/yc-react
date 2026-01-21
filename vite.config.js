@@ -27,8 +27,8 @@ export default defineConfig({
             return 'vendor-firebase';
           }
 
-          // Lottie - heavy, lazy loaded
-          if (id.includes('lottie-web') || id.includes('lottie-react') || id.includes('@lottiefiles')) {
+          // Lottie - heavy, lazy loaded (consolidated to lottie-react only)
+          if (id.includes('lottie-web') || id.includes('lottie-react')) {
             return 'vendor-lottie';
           }
 

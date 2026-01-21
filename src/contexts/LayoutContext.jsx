@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 const LayoutContext = createContext();
 
@@ -50,8 +51,11 @@ export function LayoutProvider({ children }) {
     };
   }, [handleMouseMove]);
 
-  // Device motion handlers
+  // Device motion handlers with throttling (~30fps for smooth animation without excessive renders)
   useEffect(() => {
+    let orientationTimeoutId;
+    let motionTimeoutId;
+
     const handleDeviceOrientation = (e) => {
       if (e.gamma !== null && e.beta !== null) {
         setDeviceMotion({
@@ -73,17 +77,34 @@ export function LayoutProvider({ children }) {
       }
     };
 
+    // Throttled handlers (~30fps = 33ms interval, balances smoothness vs performance)
+    const throttledOrientation = (e) => {
+      if (orientationTimeoutId) return;
+      orientationTimeoutId = setTimeout(() => {
+        handleDeviceOrientation(e);
+        orientationTimeoutId = null;
+      }, 33);
+    };
+
+    const throttledMotion = (e) => {
+      if (motionTimeoutId) return;
+      motionTimeoutId = setTimeout(() => {
+        handleDeviceMotion(e);
+        motionTimeoutId = null;
+      }, 33);
+    };
+
     if ('DeviceOrientationEvent' in window) {
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
           .then(response => {
             if (response === 'granted') {
-              window.addEventListener('deviceorientation', handleDeviceOrientation);
+              window.addEventListener('deviceorientation', throttledOrientation);
             }
           })
           .catch(() => {});
       } else {
-        window.addEventListener('deviceorientation', handleDeviceOrientation);
+        window.addEventListener('deviceorientation', throttledOrientation);
       }
     }
 
@@ -92,18 +113,20 @@ export function LayoutProvider({ children }) {
         DeviceMotionEvent.requestPermission()
           .then(response => {
             if (response === 'granted') {
-              window.addEventListener('devicemotion', handleDeviceMotion);
+              window.addEventListener('devicemotion', throttledMotion);
             }
           })
           .catch(() => {});
       } else {
-        window.addEventListener('devicemotion', handleDeviceMotion);
+        window.addEventListener('devicemotion', throttledMotion);
       }
     }
 
     return () => {
-      window.removeEventListener('deviceorientation', handleDeviceOrientation);
-      window.removeEventListener('devicemotion', handleDeviceMotion);
+      window.removeEventListener('deviceorientation', throttledOrientation);
+      window.removeEventListener('devicemotion', throttledMotion);
+      if (orientationTimeoutId) clearTimeout(orientationTimeoutId);
+      if (motionTimeoutId) clearTimeout(motionTimeoutId);
     };
   }, []);
 
@@ -143,7 +166,8 @@ export function LayoutProvider({ children }) {
     setContactModalEmail('');
   }, []);
 
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const value = useMemo(() => ({
     // State
     sidebarOpen,
     setSidebarOpen,
@@ -172,7 +196,13 @@ export function LayoutProvider({ children }) {
     handleContactModalToggle,
     openContactModal,
     closeContactModal
-  };
+  }), [
+    sidebarOpen, footerOpen, menuOpen, contactModalOpen, contactModalEmail,
+    expandedSection, expandedSubSection, mousePosition, deviceMotion,
+    accelerometerData, parallaxX, parallaxY,
+    handleSidebarToggle, handleFooterToggle, handleMenuToggle,
+    handleContactModalToggle, openContactModal, closeContactModal
+  ]);
 
   return (
     <LayoutContext.Provider value={value}>

@@ -13,6 +13,30 @@ import ServicesPage from './pages/ServicesPage';
 import WorksPage from './pages/WorksPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+// Retry wrapper for lazy imports - handles chunk load failures
+const lazyWithRetry = (componentImport, retries = 3, interval = 1000) => {
+  return lazy(async () => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await componentImport();
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, interval));
+        // Clear cache to force fresh import on retry
+        if (typeof window !== 'undefined' && 'caches' in window) {
+          try {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key)));
+          } catch (_cacheError) {
+            // Ignore cache clear errors
+          }
+        }
+      }
+    }
+  });
+};
+
 // Lazy loaded pages (code-split for smaller initial bundle)
 const Home17Page = lazy(() => import('./pages/Home17Page'));
 const ExperimentsPage = lazy(() => import('./pages/ExperimentsPage'));
@@ -34,13 +58,13 @@ const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const ShortlinkRedirectPage = lazy(() => import('./pages/ShortlinkRedirectPage'));
 const ShortlinkManagerPage = lazy(() => import('./pages/ShortlinkManagerPage'));
 
-// Experiment sub-routes (lazy loaded)
-const GoldenUnknownPage = lazy(() => import('./pages/experiments/GoldenUnknownPage'));
-const BeingRhymePage = lazy(() => import('./pages/experiments/BeingRhymePage'));
-const Cath3dralPage = lazy(() => import('./pages/experiments/Cath3dralPage'));
-const ComponentLibraryPage = lazy(() => import('./pages/experiments/ComponentLibraryPage'));
-const OutreachGeneratorPage = lazy(() => import('./pages/experiments/OutreachGeneratorPage'));
-const OutreachBusinessPage = lazy(() => import('./pages/experiments/OutreachBusinessPage'));
+// Experiment sub-routes (lazy loaded with retry for better reliability)
+const GoldenUnknownPage = lazyWithRetry(() => import('./pages/experiments/GoldenUnknownPage'));
+const BeingRhymePage = lazyWithRetry(() => import('./pages/experiments/BeingRhymePage'));
+const Cath3dralPage = lazyWithRetry(() => import('./pages/experiments/Cath3dralPage'));
+const ComponentLibraryPage = lazyWithRetry(() => import('./pages/experiments/ComponentLibraryPage'));
+const OutreachGeneratorPage = lazyWithRetry(() => import('./pages/experiments/OutreachGeneratorPage'));
+const OutreachBusinessPage = lazyWithRetry(() => import('./pages/experiments/OutreachBusinessPage'));
 
 // Thoughts sub-routes (lazy loaded)
 const BlogPage = lazy(() => import('./pages/thoughts/BlogPage'));

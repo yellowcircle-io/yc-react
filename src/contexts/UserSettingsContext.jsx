@@ -8,7 +8,7 @@
  */
 /* eslint-disable react-refresh/only-export-components */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from './AuthContext';
@@ -21,6 +21,9 @@ const DEFAULT_SETTINGS = {
   displayName: '',
   marketingEmails: true,
   notificationEmails: true,
+
+  // Sharing Notifications
+  shareNotificationEmails: true, // Receive email when someone shares with you
 
   // Link Archiver
   linkArchiverView: 'all', // 'all', 'starred', 'recent'
@@ -154,7 +157,8 @@ export function UserSettingsProvider({ children }) {
     setHasUnsavedChanges(true);
   }, [user?.displayName]);
 
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const value = useMemo(() => ({
     settings,
     loading,
     saving,
@@ -163,7 +167,7 @@ export function UserSettingsProvider({ children }) {
     updateSettings,
     saveSettings,
     resetSettings
-  };
+  }), [settings, loading, saving, error, hasUnsavedChanges, updateSettings, saveSettings, resetSettings]);
 
   return (
     <UserSettingsContext.Provider value={value}>

@@ -35,8 +35,7 @@
     "html2canvas",
     "playwright",
     "husky",
-    "lint-staged",
-    "@lottiefiles/dotlottie-react"
+    "lint-staged"
   ],
   "ignoreBinaries": [
     "knip",

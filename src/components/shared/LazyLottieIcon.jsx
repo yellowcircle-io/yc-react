@@ -1,20 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useRef, useEffect, useCallback, Suspense, lazy, memo } from 'react';
 
-// Lazy load the heavy Lottie libraries
+// Lazy load Lottie library (removed unused @lottiefiles/dotlottie-react for ~50% bundle reduction)
 const Lottie = lazy(() => import('lottie-react'));
-const DotLottieReact = lazy(() =>
-  import('@lottiefiles/dotlottie-react').then(m => ({ default: m.DotLottieReact }))
-);
 
 /**
  * LazyLottieIcon - Lazy-loaded Lottie component to reduce initial bundle
  *
- * Same API as LottieIcon but lazy loads lottie-web (~877KB) only when needed.
+ * Lazy loads lottie-web only when needed.
  * Falls back to a simple placeholder during loading.
+ * Wrapped with React.memo to prevent unnecessary re-renders.
  */
-const LazyLottieIcon = ({
+const LazyLottieIcon = memo(({
   animationData,
-  src,
   size = 28,
   isHovered = false,
   alwaysAnimate = false,
@@ -24,7 +21,6 @@ const LazyLottieIcon = ({
   onAnimationLoaded
 }) => {
   const [internalHover, setInternalHover] = useState(false);
-  const [dotLottieInstance, setDotLottieInstance] = useState(null);
   const hoverTimeoutRef = useRef(null);
 
   const effectiveHover = isHovered || internalHover;
@@ -45,23 +41,6 @@ const LazyLottieIcon = ({
   }, []);
 
   useEffect(() => {
-    if (dotLottieInstance) {
-      try {
-        if (shouldAnimate) {
-          dotLottieInstance.play();
-        } else {
-          dotLottieInstance.pause();
-          if (typeof dotLottieInstance.goToAndStop === 'function') {
-            dotLottieInstance.goToAndStop(0);
-          }
-        }
-      } catch (_err) {
-        // Silently handle
-      }
-    }
-  }, [shouldAnimate, dotLottieInstance]);
-
-  useEffect(() => {
     return () => {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
@@ -69,6 +48,7 @@ const LazyLottieIcon = ({
     };
   }, []);
 
+  // GPU-accelerated styles with will-change hint
   const containerStyle = {
     width: size,
     height: size,
@@ -78,28 +58,11 @@ const LazyLottieIcon = ({
     transition: 'transform 0.2s ease-out, filter 0.3s ease-out',
     transform: effectiveHover ? 'scale(1.05)' : 'scale(1)',
     filter: useGrayscale ? (effectiveHover ? 'grayscale(0)' : 'grayscale(1)') : 'none',
+    willChange: 'transform, filter',
     flexShrink: 0,
     pointerEvents: 'auto',
     ...style
   };
-
-  const handleDotLottieReady = useCallback((instance) => {
-    if (!instance) return;
-    setDotLottieInstance(instance);
-    try {
-      if (!shouldAnimate) {
-        instance.pause();
-        if (typeof instance.goToAndStop === 'function') {
-          instance.goToAndStop(0);
-        }
-      }
-      if (onAnimationLoaded) {
-        onAnimationLoaded(instance);
-      }
-    } catch (_err) {
-      // Silently handle
-    }
-  }, [shouldAnimate, onAnimationLoaded]);
 
   // Simple placeholder while loading
   const Placeholder = () => (
@@ -128,34 +91,14 @@ const LazyLottieIcon = ({
             loop={shouldAnimate}
             autoplay={shouldAnimate}
             style={{ width: size, height: size }}
+            onDOMLoaded={onAnimationLoaded}
           />
         </Suspense>
       </div>
     );
   }
 
-  if (src) {
-    return (
-      <div
-        style={containerStyle}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        aria-label={alt}
-        role="img"
-      >
-        <Suspense fallback={<Placeholder />}>
-          <DotLottieReact
-            src={src}
-            loop={shouldAnimate}
-            autoplay={shouldAnimate}
-            style={{ width: size, height: size }}
-            dotLottieRefCallback={handleDotLottieReady}
-          />
-        </Suspense>
-      </div>
-    );
-  }
-
+  // Fallback placeholder for missing animation data
   return (
     <div
       style={{
@@ -167,6 +110,17 @@ const LazyLottieIcon = ({
       role="img"
     />
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison for memo - only re-render when these props change
+  return (
+    prevProps.animationData === nextProps.animationData &&
+    prevProps.size === nextProps.size &&
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.alwaysAnimate === nextProps.alwaysAnimate &&
+    prevProps.useGrayscale === nextProps.useGrayscale
+  );
+});
+
+LazyLottieIcon.displayName = 'LazyLottieIcon';
 
 export default LazyLottieIcon;

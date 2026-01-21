@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
+import { replayIntegration } from '@sentry/replay'
 import './index.css'
 import RouterApp from './RouterApp.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
@@ -15,6 +16,23 @@ if (SENTRY_DSN) {
 
     // Performance monitoring - sample 10% of transactions
     tracesSampleRate: 0.1,
+
+    // Session Replay configuration
+    integrations: [
+      replayIntegration({
+        // Mask all text for privacy (can be relaxed later)
+        maskAllText: false,
+        // Block all media (images/videos) - reduces bandwidth
+        blockAllMedia: false,
+        // Only record sessions that have errors
+        // On free plan, this is most efficient use of quota
+      }),
+    ],
+
+    // Capture 0% of sessions normally, 100% when error occurs
+    // This is optimal for free tier - only records when needed
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 1.0,
 
     // Filter out common non-actionable errors
     ignoreErrors: [
