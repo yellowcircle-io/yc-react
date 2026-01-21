@@ -13003,3 +13003,222 @@ exports.updateLinkUserIds = linkUserIdUpdate.updateLinkUserIds;
 // Get User Info (debug)
 const userInfo = require('./getUserInfo');
 exports.getUserInfo = userInfo.getUserInfo;
+
+
+// ============================================
+// Notification Email Triggers
+// ============================================
+
+/**
+ * Firestore Trigger: Send Email on Notification Created
+ *
+ * Sends an email notification when a sharing notification is created,
+ * respecting user preferences.
+ *
+ * Supports notification types:
+ * - folder_shared: User shared a folder with recipient
+ * - link_shared: User shared a link with recipient
+ * - canvas_shared: User shared a canvas with recipient
+ */
+exports.onNotificationCreated = functions.firestore
+  .document('notifications/{notificationId}')
+  .onCreate(async (snap, context) => {
+    const notification = snap.data();
+    const notificationId = context.params.notificationId;
+
+    // Only send emails for sharing-related notifications
+    const emailableTypes = ['folder_shared', 'link_shared', 'canvas_shared'];
+    if (!emailableTypes.includes(notification.type)) {
+      console.log(`📧 Skipping email for notification type: ${notification.type}`);
+      return null;
+    }
+
+    // Must have an email to send to
+    const recipientEmail = notification.userEmail;
+    if (!recipientEmail) {
+      console.log(`📧 No email address for notification ${notificationId}`);
+      return null;
+    }
+
+    console.log(`📧 Processing email notification: ${notification.type} for ${recipientEmail}`);
+
+    try {
+      // Check if Resend is configured
+      const resendApiKey = functions.config().resend?.api_key;
+      if (!resendApiKey) {
+        console.log('📧 Resend API key not configured - skipping email');
+        return null;
+      }
+
+      // Check user's email notification preference
+      // Try to find user by userId to get their settings
+      if (notification.userId) {
+        const settingsRef = db.collection('user_settings').doc(notification.userId);
+        const settingsDoc = await settingsRef.get();
+        if (settingsDoc.exists) {
+          const settings = settingsDoc.data();
+          // Check specific share notification setting first, then general setting
+          if (settings.shareNotificationEmails === false) {
+            console.log(`📧 User ${notification.userId} has disabled share notification emails`);
+            return null;
+          }
+          if (settings.notificationEmails === false) {
+            console.log(`📧 User ${notification.userId} has disabled all notification emails`);
+            return null;
+          }
+        }
+      }
+
+      // Build email content based on notification type
+      const emailContent = buildShareNotificationEmail(notification);
+      if (!emailContent) {
+        console.log('📧 Could not build email content');
+        return null;
+      }
+
+      // Send the email via Resend
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: "yellowCircle <hello@yellowcircle.io>",
+          to: [recipientEmail],
+          subject: emailContent.subject,
+          html: emailContent.html,
+          tags: [
+            { name: "type", value: notification.type },
+            { name: "notification_id", value: notificationId }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`📧 Email send failed:`, errorData);
+        return null;
+      }
+
+      const result = await response.json();
+      console.log(`📧 Email sent successfully: ${result.id}`);
+
+      // Update notification to track that email was sent
+      await snap.ref.update({
+        emailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        emailId: result.id
+      });
+
+      return { success: true, emailId: result.id };
+
+    } catch (error) {
+      console.error(`📧 Error sending notification email:`, error);
+      return null;
+    }
+  });
+
+/**
+ * Build email content for sharing notifications
+ */
+function buildShareNotificationEmail(notification) {
+  const { type, title, message, metadata, actionUrl } = notification;
+
+  const sharerName = metadata?.sharedByName || metadata?.sharedByEmail || 'Someone';
+  const appUrl = 'https://yellowcircle.io';
+  const actionLink = actionUrl ? `${appUrl}${actionUrl.startsWith('/') ? '' : '/'}${actionUrl}` : `${appUrl}/links`;
+
+  let subject, itemName, itemType;
+
+  switch (type) {
+    case 'folder_shared':
+      itemName = metadata?.folderName || 'a folder';
+      itemType = 'folder';
+      subject = `${sharerName} shared a folder with you`;
+      break;
+    case 'link_shared':
+      itemName = metadata?.linkTitle || metadata?.linkUrl || 'a link';
+      itemType = 'link';
+      subject = `${sharerName} shared a link with you`;
+      break;
+    case 'canvas_shared':
+      itemName = metadata?.canvasTitle || 'a canvas';
+      itemType = 'canvas';
+      subject = `${sharerName} shared a canvas with you`;
+      break;
+    default:
+      return null;
+  }
+
+  // Build HTML email
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #FFD700; padding: 24px; text-align: center;">
+              <span style="font-size: 24px; font-weight: bold; color: #333333;">
+                <span style="font-style: italic;">yellow</span>CIRCLE
+              </span>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px 24px;">
+              <h1 style="margin: 0 0 16px 0; font-size: 22px; color: #333333;">
+                ${title}
+              </h1>
+              <p style="margin: 0 0 24px 0; font-size: 16px; color: #666666; line-height: 1.5;">
+                ${message}
+              </p>
+
+              ${type === 'link_shared' && metadata?.linkUrl ? `
+              <div style="background-color: #f8f9fa; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #999999;">Shared link:</p>
+                <a href="${metadata.linkUrl}" style="font-size: 14px; color: #0066cc; word-break: break-all;">${metadata.linkUrl}</a>
+              </div>
+              ` : ''}
+
+              <table cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td style="background-color: #FFD700; border-radius: 6px;">
+                    <a href="${actionLink}" style="display: inline-block; padding: 14px 28px; color: #333333; text-decoration: none; font-weight: 600; font-size: 16px;">
+                      View ${itemType === 'link' ? 'in Link Saver' : itemType === 'folder' ? 'Shared Folder' : 'Shared Canvas'}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px; background-color: #f8f9fa; border-top: 1px solid #eee;">
+              <p style="margin: 0; font-size: 12px; color: #999999; text-align: center;">
+                You received this email because someone shared content with you on yellowCircle.
+                <br><br>
+                <a href="${appUrl}/settings" style="color: #666666;">Manage notification preferences</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+
+  return { subject, html };
+}

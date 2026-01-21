@@ -1920,8 +1920,43 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
           author: user?.displayName || userProfile?.name || 'User',
           timestamp: new Date().toISOString(),
           createdAt: timestamp,
+          // Pass collaborators for @mention autocomplete
+          collaborators: collaborators.map(c => ({
+            email: c.email,
+            name: c.name || c.email?.split('@')[0]
+          })),
           onContentChange: (id, content) => {
             setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, content } } : n));
+          },
+          // Notify mentioned users
+          onMention: async (nodeId, mentionedEmail, _content) => {
+            try {
+              // Dynamic import to avoid circular deps
+              const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+              const { db } = await import('../config/firebase');
+
+              await addDoc(collection(db, 'notifications'), {
+                userId: '',
+                userEmail: mentionedEmail.toLowerCase(),
+                type: 'comment_mention',
+                title: 'You were mentioned in a canvas comment',
+                message: `${user?.displayName || userProfile?.name || 'Someone'} mentioned you in a comment`,
+                actionUrl: `/capsule/${currentCapsuleId}`,
+                read: false,
+                dismissed: false,
+                metadata: {
+                  targetType: 'capsule',
+                  targetId: currentCapsuleId,
+                  nodeId,
+                  mentionedBy: user?.uid,
+                  mentionedByName: user?.displayName || userProfile?.name
+                },
+                createdAt: serverTimestamp()
+              });
+              console.log('[CommentNode] Mention notification created for:', mentionedEmail);
+            } catch (error) {
+              console.error('[CommentNode] Error creating mention notification:', error);
+            }
           },
           onDelete: handleDeleteNode,
         }

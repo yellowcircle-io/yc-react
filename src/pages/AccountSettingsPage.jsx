@@ -291,7 +291,8 @@ const ProfileTab = ({ user, settings, updateSettings }) => {
   const safeSettings = settings || {
     displayName: user?.displayName || '',
     marketingEmails: true,
-    notificationEmails: true
+    notificationEmails: true,
+    shareNotificationEmails: true
   };
 
   return (
@@ -365,6 +366,19 @@ const ProfileTab = ({ user, settings, updateSettings }) => {
             onClick={() => updateSettings({ notificationEmails: !safeSettings.notificationEmails })}
           >
             <div style={{ ...styles.toggleKnob, ...(safeSettings.notificationEmails ? styles.toggleKnobActive : {}) }} />
+          </div>
+        </div>
+
+        <div style={styles.toggle}>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: '500', color: COLORS.text }}>Sharing Notification Emails</div>
+            <div style={{ fontSize: '12px', color: COLORS.textMuted }}>Receive an email when someone shares a link, folder, or canvas with you</div>
+          </div>
+          <div
+            style={{ ...styles.toggleSwitch, ...(safeSettings.shareNotificationEmails ? styles.toggleSwitchActive : {}) }}
+            onClick={() => updateSettings({ shareNotificationEmails: !safeSettings.shareNotificationEmails })}
+          >
+            <div style={{ ...styles.toggleKnob, ...(safeSettings.shareNotificationEmails ? styles.toggleKnobActive : {}) }} />
           </div>
         </div>
       </div>

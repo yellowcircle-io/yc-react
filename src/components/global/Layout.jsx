@@ -36,7 +36,10 @@ function Layout({
   allowScroll = false // Enable vertical scrolling for article pages
 }) {
   const navigate = useNavigate();
-  const { openContactModal } = useLayout();
+  const { openContactModal, handleMenuToggle } = useLayout();
+
+  // Use context handler if no prop provided
+  const menuToggleHandler = onMenuToggle || handleMenuToggle;
 
   // Navigation handlers for CircleNav menu
   const handleHomeClick = () => {
@@ -154,7 +157,7 @@ function Layout({
             onClick={onFooterToggle}
             scrollOffset={scrollOffset}
             isHomePage={isHomePage}
-            onMenuToggle={onMenuToggle}
+            onMenuToggle={menuToggleHandler}
             onContactClick={openContactModal}
             onScrollNext={onScrollNext}
             onHomeClick={handleHomeClick}
@@ -168,7 +171,7 @@ function Layout({
 
       {/* Hamburger Menu */}
       <HamburgerMenu
-        onMenuToggle={onMenuToggle}
+        onMenuToggle={menuToggleHandler}
         onHomeClick={onHomeClick}
         onFooterToggle={onFooterToggle}
         onContactClick={openContactModal}

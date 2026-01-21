@@ -184,6 +184,55 @@ service cloud.firestore {
                    && request.resource.data.userId == request.auth.uid;
     }
 
+    // Notifications collection - in-app notifications
+    match /notifications/{notificationId} {
+      // Users can read their own notifications (by userId or userEmail)
+      allow read: if request.auth != null
+                  && (resource.data.userId == request.auth.uid
+                      || resource.data.userEmail == request.auth.token.email);
+
+      // Create: authenticated users can create notifications for others (sharing flow)
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll(['type', 'title', 'message', 'read', 'dismissed', 'createdAt']);
+
+      // Update: users can update their own notifications (mark read, dismiss)
+      allow update: if request.auth != null
+                    && (resource.data.userId == request.auth.uid
+                        || resource.data.userEmail == request.auth.token.email)
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['read', 'readAt', 'dismissed']);
+
+      // Delete: users can delete their own notifications
+      allow delete: if request.auth != null
+                    && (resource.data.userId == request.auth.uid
+                        || resource.data.userEmail == request.auth.token.email);
+    }
+
+    // Comments collection - unified comments for links, folders, canvases
+    match /comments/{commentId} {
+      // Read: authenticated users can read all comments
+      // (visibility is managed by target access in app code)
+      allow read: if request.auth != null;
+
+      // Create: authenticated users can create comments
+      allow create: if request.auth != null
+                    && request.resource.data.authorId == request.auth.uid
+                    && request.resource.data.keys().hasAll(['targetType', 'targetId', 'authorId', 'content', 'createdAt'])
+                    && request.resource.data.targetType in ['link', 'folder', 'capsule']
+                    && request.resource.data.content is string
+                    && request.resource.data.content.size() <= 2000;
+
+      // Update: only author can update their own comments
+      allow update: if request.auth != null
+                    && resource.data.authorId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['content', 'mentions', 'editedAt']);
+
+      // Delete: author can delete their own comments
+      allow delete: if request.auth != null
+                    && resource.data.authorId == request.auth.uid;
+    }
+
     // ============================================================
     // END NEW COLLECTIONS
     // ============================================================

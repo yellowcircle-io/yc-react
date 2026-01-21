@@ -4,6 +4,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { UserSettingsProvider } from './contexts/UserSettingsContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 // Eagerly loaded pages (critical for initial render)
 import HomePage from './pages/HomePage';
@@ -65,6 +66,7 @@ const ArticleEditorPage = lazy(() => import('./pages/admin/ArticleEditorPage'));
 const BlockEditorPage = lazy(() => import('./pages/admin/BlockEditorPage'));
 const StorageCleanupPage = lazy(() => import('./pages/admin/StorageCleanupPage'));
 const LinkArchiverPage = lazy(() => import('./pages/admin/LinkArchiverPage'));
+const LinkReaderPage = lazy(() => import('./pages/admin/LinkReaderPage'));
 const SaveLinkPage = lazy(() => import('./pages/SaveLinkPage'));
 const LinkSaverExtensionPage = lazy(() => import('./pages/LinkSaverExtensionPage'));
 
@@ -105,9 +107,10 @@ function RouterApp() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <UserSettingsProvider>
-          <LayoutProvider>
-          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <NotificationProvider>
+          <UserSettingsProvider>
+            <LayoutProvider>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Suspense fallback={<PageLoader />}>
               <Routes>
             <Route path="/" element={<HomePage />} />
@@ -189,6 +192,7 @@ function RouterApp() {
 
             {/* Link Saver (User Tool - not admin-gated) */}
             <Route path="/links" element={<LinkArchiverPage />} />
+            <Route path="/links/read/:linkId" element={<LinkReaderPage />} />
             <Route path="/links/extension" element={<LinkSaverExtensionPage />} />
             <Route path="/link-archiver/extension" element={<LinkSaverExtensionPage />} /> {/* Legacy */}
             <Route path="/save" element={<SaveLinkPage />} />
@@ -208,8 +212,9 @@ function RouterApp() {
               </Routes>
             </Suspense>
           </Router>
-          </LayoutProvider>
-        </UserSettingsProvider>
+            </LayoutProvider>
+          </UserSettingsProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

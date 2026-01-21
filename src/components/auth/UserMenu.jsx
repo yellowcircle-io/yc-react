@@ -10,15 +10,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
+import { useNotifications } from '../../contexts/NotificationContext';
 import AuthModal from './AuthModal';
-import { Settings, Bookmark } from 'lucide-react';
+import { Settings, Bookmark, Bell, Check, X } from 'lucide-react';
 
 const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
   const navigate = useNavigate();
   const { user, userProfile, isAuthenticated, signOut } = useAuth();
   const { creditsRemaining, tier } = useCredits();
+  const { notifications, unreadCount, markAsRead, dismissNotification } = useNotifications();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Get initials for avatar
   const getInitials = (name) => {
@@ -125,6 +128,31 @@ const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
             `${creditsRemaining} credits`
           )}
         </span>
+
+        {/* Notification Badge */}
+        {unreadCount > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-4px',
+              minWidth: '18px',
+              height: '18px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: '600',
+              borderRadius: '9px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 4px',
+              border: '2px solid white'
+            }}
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
 
       {/* Dropdown Menu */}
@@ -215,6 +243,149 @@ const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
                   {tier}
                 </span>
               </div>
+            </div>
+
+            {/* Notifications Section */}
+            <div style={{ borderBottom: '1px solid #f3f4f6' }}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  color: '#374151',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transition: 'background-color 0.15s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Bell size={16} color="#6b7280" />
+                  Notifications
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        minWidth: '18px',
+                        height: '18px',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        borderRadius: '9px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 4px'
+                      }}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
+                </span>
+                <span style={{ fontSize: '10px', color: '#9ca3af' }}>
+                  {showNotifications ? '▲' : '▼'}
+                </span>
+              </button>
+
+              {/* Expanded Notifications List */}
+              {showNotifications && (
+                <div style={{ maxHeight: '240px', overflowY: 'auto', backgroundColor: '#fafafa' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '16px', textAlign: 'center', fontSize: '13px', color: '#9ca3af' }}>
+                      No notifications
+                    </div>
+                  ) : (
+                    notifications.slice(0, 5).map((notification) => (
+                      <div
+                        key={notification.id}
+                        style={{
+                          padding: '12px 16px',
+                          borderTop: '1px solid #f3f4f6',
+                          backgroundColor: notification.read ? 'transparent' : 'rgba(251, 191, 36, 0.05)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                          if (!notification.read) markAsRead(notification.id);
+                          if (notification.actionUrl) {
+                            navigate(notification.actionUrl);
+                            setShowDropdown(false);
+                          }
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '13px',
+                              fontWeight: notification.read ? '400' : '500',
+                              color: '#374151',
+                              marginBottom: '2px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {notification.title}
+                            </div>
+                            <div style={{
+                              fontSize: '11px',
+                              color: '#9ca3af',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {notification.message}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                            {!notification.read && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
+                                style={{
+                                  padding: '4px',
+                                  backgroundColor: 'transparent',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  color: '#9ca3af'
+                                }}
+                                title="Mark as read"
+                              >
+                                <Check size={14} />
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                dismissNotification(notification.id);
+                              }}
+                              style={{
+                                padding: '4px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                color: '#9ca3af'
+                              }}
+                              title="Dismiss"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Navigation Links */}

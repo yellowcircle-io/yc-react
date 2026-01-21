@@ -316,6 +316,20 @@ exports.saveLink = functions.https.onRequest(async (request, response) => {
 
     console.log(`✅ Link saved: ${url} by ${auth.email}`);
 
+    // Auto-tag: Queue AI processing asynchronously (fire-and-forget)
+    // Only trigger if we have content to analyze
+    const contentToAnalyze = extracted.content || extracted.excerpt || title;
+    if (contentToAnalyze && contentToAnalyze.length >= 50) {
+      // Fire-and-forget AI processing (don't await, don't block response)
+      processAITagsAsync(linkRef.id, contentToAnalyze, extracted.title || title)
+        .then(() => {
+          console.log(`🤖 Auto-tagging completed for: ${url}`);
+        })
+        .catch((err) => {
+          console.warn(`⚠️ Auto-tagging failed for ${url}:`, err.message);
+        });
+    }
+
     response.json({
       success: true,
       link,
@@ -327,6 +341,42 @@ exports.saveLink = functions.https.onRequest(async (request, response) => {
     response.status(500).json({ error: "Failed to save link" });
   }
 });
+
+/**
+ * Process AI tags asynchronously (fire-and-forget)
+ * This runs after the link is saved without blocking the response
+ */
+async function processAITagsAsync(linkId, content, title) {
+  try {
+    // Generate AI tags
+    const aiTags = await generateAITags(content.slice(0, 2000), title);
+
+    // Generate AI summary
+    const aiSummary = await generateAISummary(content.slice(0, 5000), title);
+
+    // Update the link with AI-generated data
+    if (aiTags.length > 0 || aiSummary) {
+      const linkRef = getDb().collection(LINKS_COLLECTION).doc(linkId);
+      const updates = {
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      if (aiTags.length > 0) {
+        updates.aiTags = aiTags;
+      }
+
+      if (aiSummary) {
+        updates.aiSummary = aiSummary;
+      }
+
+      await linkRef.update(updates);
+      console.log(`✅ AI processing complete for link ${linkId}: ${aiTags.length} tags, summary: ${!!aiSummary}`);
+    }
+  } catch (error) {
+    console.error(`AI processing error for link ${linkId}:`, error);
+    // Don't throw - this is fire-and-forget
+  }
+}
 
 /**
  * Get user's links
