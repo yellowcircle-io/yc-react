@@ -16,12 +16,27 @@
     "yellowcircle-outreach/**",
     "docs/**",
     "src/archive/**",
-    "*.config.js"
+    "*.config.js",
+    "src/App.jsx",
+    "src/utils/toast.js",
+    "src/utils/notificationManager.js",
+    "src/components/notifications/NotificationBell.jsx",
+    "src/hooks/usePresence.js",
+    "src/components/unity/ActiveUsersIndicator.jsx",
+    "src/components/unity/UserAvatar.jsx"
   ],
   "ignoreDependencies": [
     "@builder.io/dev-tools",
     "@rollup/rollup-linux-x64-gnu",
     "autoprefixer",
-    "postcss"
-  ]
+    "postcss",
+    "tailwindcss",
+    "@tailwindcss/vite",
+    "html2canvas",
+    "playwright",
+    "esbuild",
+    "husky",
+    "lint-staged"
+  ],
+  "ignoreExportsUsedInFile": true
 }
