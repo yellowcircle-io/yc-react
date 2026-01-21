@@ -37,7 +37,18 @@ jobs:
           npx vite --version || echo "Vite not accessible"
       
       - name: Build project
-        run: npm run build
+        run: |
+          echo "Starting build..."
+          npm run build 2>&1 || {
+            echo "Build failed. Checking for common issues..."
+            echo "Node modules check:"
+            ls -la node_modules/.bin/ | head -20
+            echo "Vite check:"
+            npx vite --version || echo "Vite not found"
+            echo "esbuild check:"
+            npx esbuild --version || echo "esbuild not found"
+            exit 1
+          }
       
       - name: Verify build output
         run: |
