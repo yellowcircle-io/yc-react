@@ -20,6 +20,21 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "headers": [
+      {
+        "source": "**/*.zip",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/zip"
+          },
+          {
+            "key": "Content-Disposition",
+            "value": "attachment"
+          }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "/api/generate",
@@ -32,6 +47,14 @@
       {
         "source": "/api/sleepless",
         "function": "sleepless"
+      },
+      {
+        "source": "/s/**",
+        "function": "linkArchiverVanitySave"
+      },
+      {
+        "source": "!**/*.@(zip|png|jpg|jpeg|gif|svg|ico|pdf|woff|woff2|ttf|eot)",
+        "destination": "/index.html"
       },
       {
         "source": "**",

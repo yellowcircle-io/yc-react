@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shortcut Name (set when importing) -->
+	<key>WFWorkflowName</key>
+	<string>Save to yellowCircle</string>
+
+	<!-- ========================================== -->
+	<!-- WORKFLOW ACTIONS - The actual shortcut logic -->
+	<!-- ========================================== -->
+	<key>WFWorkflowActions</key>
+	<array>
+
+		<!-- ===== ACTION 1: Get token file from iCloud ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.documentpicker.open</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFFile</key>
+				<dict>
+					<key>WFFileExtension</key>
+					<string>txt</string>
+					<key>WFFileName</key>
+					<string>yellowcircle-token.txt</string>
+					<key>WFFilePath</key>
+					<string>Shortcuts/yellowcircle-token.txt</string>
+					<key>WFIsDirectory</key>
+					<false/>
+				</dict>
+				<key>WFGetFilePath</key>
+				<string>Shortcuts/yellowcircle-token.txt</string>
+				<key>WFFileErrorIfNotFound</key>
+				<false/>
+				<key>WFShowFilePicker</key>
+				<false/>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000001</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 2: Count items (check if file exists) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.count</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>Input</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>File</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000001</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000002</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 3: IF count = 0 (no token file) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>TOKEN-CHECK-IF-GROUP</string>
+				<key>WFCondition</key>
+				<integer>4</integer>
+				<key>WFConditionalActionString</key>
+				<string>0</string>
+				<key>WFControlFlowMode</key>
+				<integer>0</integer>
+				<key>WFInput</key>
+				<dict>
+					<key>Type</key>
+					<string>Variable</string>
+					<key>Variable</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Count</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000002</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 4: Ask for Input (token) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.ask</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFAskActionPrompt</key>
+				<string>Enter your yellowCircle Save Token (from Settings → Link Saver)</string>
+				<key>WFAskActionDefaultAnswer</key>
+				<string></string>
+				<key>WFInputType</key>
+				<string>Text</string>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000004</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 5: Save token to file ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.documentpicker.save</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Provided Input</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000004</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFFileDestinationPath</key>
+				<string>Shortcuts/yellowcircle-token.txt</string>
+				<key>WFSaveFileOverwrite</key>
+				<true/>
+				<key>WFAskWhereToSave</key>
+				<false/>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000005</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 6: Set Variable (NewToken) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Provided Input</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000004</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFVariableName</key>
+				<string>SaveToken</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 7: Otherwise (token exists) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>TOKEN-CHECK-IF-GROUP</string>
+				<key>WFControlFlowMode</key>
+				<integer>1</integer>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 8: Get file contents (read existing token) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.documentpicker.open</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFFile</key>
+				<dict>
+					<key>WFFileExtension</key>
+					<string>txt</string>
+					<key>WFFileName</key>
+					<string>yellowcircle-token.txt</string>
+					<key>WFFilePath</key>
+					<string>Shortcuts/yellowcircle-token.txt</string>
+					<key>WFIsDirectory</key>
+					<false/>
+				</dict>
+				<key>WFGetFilePath</key>
+				<string>Shortcuts/yellowcircle-token.txt</string>
+				<key>WFFileErrorIfNotFound</key>
+				<false/>
+				<key>WFShowFilePicker</key>
+				<false/>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000008</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 9: Set Variable (ExistingToken) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>File</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000008</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFVariableName</key>
+				<string>SaveToken</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 10: End If ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>TOKEN-CHECK-IF-GROUP</string>
+				<key>WFControlFlowMode</key>
+				<integer>2</integer>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 11: Get Shortcut Input ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFVariable</key>
+				<dict>
+					<key>Type</key>
+					<string>ExtensionInput</string>
+				</dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000011</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 12: Count (check if URL input exists) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.count</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>Input</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Shortcut Input</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000011</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000012</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 13: IF count = 0 (no URL from share sheet) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>URL-CHECK-IF-GROUP</string>
+				<key>WFCondition</key>
+				<integer>4</integer>
+				<key>WFConditionalActionString</key>
+				<string>0</string>
+				<key>WFControlFlowMode</key>
+				<integer>0</integer>
+				<key>WFInput</key>
+				<dict>
+					<key>Type</key>
+					<string>Variable</string>
+					<key>Variable</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Count</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000012</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 14: Get Clipboard ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getclipboard</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000014</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 15: Get URLs from Clipboard ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.detect.link</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Clipboard</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000014</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000015</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 16: Set Variable (LinkURL from clipboard) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>URLs</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000015</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFVariableName</key>
+				<string>LinkURL</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 17: Otherwise (URL from share sheet) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>URL-CHECK-IF-GROUP</string>
+				<key>WFControlFlowMode</key>
+				<integer>1</integer>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 18: Get URLs from Shortcut Input ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.detect.link</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Shortcut Input</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000011</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000018</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 19: Set Variable (LinkURL from share sheet) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>URLs</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000018</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFVariableName</key>
+				<string>LinkURL</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 20: End If ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>URL-CHECK-IF-GROUP</string>
+				<key>WFControlFlowMode</key>
+				<integer>2</integer>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 21: Text (Build save URL) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.gettext</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFTextActionText</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{30, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>Variable</string>
+								<key>VariableName</key>
+								<string>SaveToken</string>
+							</dict>
+							<key>{32, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>Variable</string>
+								<key>VariableName</key>
+								<string>LinkURL</string>
+							</dict>
+						</dict>
+						<key>string</key>
+						<string>https://yellowcircle.io/s/￼/￼</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenString</string>
+				</dict>
+				<key>UUID</key>
+				<string>A1B2C3D4-E5F6-7890-ABCD-100000000021</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 22: Open URLs ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.openurl</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Text</string>
+						<key>OutputUUID</key>
+						<string>A1B2C3D4-E5F6-7890-ABCD-100000000021</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 23: Show Notification ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.notification</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFNotificationActionBody</key>
+				<string>Link saved to yellowCircle!</string>
+				<key>WFNotificationActionTitle</key>
+				<string>Saved</string>
+				<key>WFNotificationActionSound</key>
+				<true/>
+			</dict>
+		</dict>
+
+	</array>
+
+	<!-- ========================================== -->
+	<!-- WORKFLOW METADATA -->
+	<!-- ========================================== -->
+
+	<key>WFWorkflowClientVersion</key>
+	<string>2605.0.5</string>
+
+	<key>WFWorkflowHasOutputFallback</key>
+	<false/>
+
+	<key>WFWorkflowHasShortcutInputVariables</key>
+	<true/>
+
+	<!-- Icon: Yellow circle with link icon -->
+	<key>WFWorkflowIcon</key>
+	<dict>
+		<key>WFWorkflowIconGlyphNumber</key>
+		<integer>59819</integer>
+		<key>WFWorkflowIconStartColor</key>
+		<integer>4294956800</integer>
+	</dict>
+
+	<!-- No import questions - we handle token storage ourselves -->
+	<key>WFWorkflowImportQuestions</key>
+	<array/>
+
+	<!-- Accept URLs from Share Sheet -->
+	<key>WFWorkflowInputContentItemClasses</key>
+	<array>
+		<string>WFURLContentItem</string>
+		<string>WFArticleContentItem</string>
+		<string>WFSafariWebPageContentItem</string>
+	</array>
+
+	<key>WFWorkflowMinimumClientVersion</key>
+	<integer>900</integer>
+
+	<key>WFWorkflowMinimumClientVersionString</key>
+	<string>900</string>
+
+	<!-- Show in Share Sheet -->
+	<key>WFWorkflowTypes</key>
+	<array>
+		<string>ActionExtension</string>
+		<string>NCWidget</string>
+		<string>WatchKit</string>
+	</array>
+
+</dict>
+</plist>

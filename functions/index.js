@@ -13002,6 +13002,19 @@ exports.linkArchiverValidateToken = linkArchiver.validateToken;
 exports.linkArchiverSaveSecretKey = linkArchiver.saveSecretKey;
 exports.linkArchiverGetSecretKeyStatus = linkArchiver.getSecretKeyStatus;
 
+// Save ID System (Proxy Save - no token exposure)
+exports.linkArchiverProxySave = linkArchiver.proxySave;
+exports.linkArchiverGenerateSaveId = linkArchiver.generateSaveId;
+exports.linkArchiverGetSaveId = linkArchiver.getSaveId;
+
+// Vanity Save (path-based URL saving: /s/TOKEN/URL)
+exports.linkArchiverVanitySave = linkArchiver.vanitySave;
+
+// Vanity Slug Management (custom slugs like /s/chris/)
+exports.linkArchiverCheckVanityAvailability = linkArchiver.checkVanityAvailability;
+exports.linkArchiverClaimVanitySlug = linkArchiver.claimVanitySlug;
+exports.linkArchiverGetVanitySlug = linkArchiver.getVanitySlug;
+
 // Pocket Import Function (bulk import)
 const pocketImport = require('./importPocketHttp');
 exports.importPocketLinks = pocketImport.importPocketLinks;

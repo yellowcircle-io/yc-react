@@ -101,7 +101,11 @@ const styles = {
     display: 'flex',
     gap: '4px',
     borderBottom: `2px solid ${COLORS.border}`,
-    marginBottom: '32px'
+    marginBottom: '32px',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none'
   },
   tab: {
     display: 'flex',
@@ -116,7 +120,9 @@ const styles = {
     borderBottom: '2px solid transparent',
     marginBottom: '-2px',
     cursor: 'pointer',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap',
+    flexShrink: 0
   },
   tabActive: {
     color: COLORS.text,
@@ -541,36 +547,149 @@ const FUNCTIONS_BASE_URL = 'https://us-central1-yellowcircle-app.cloudfunctions.
 // ============================================================
 const ApiAccessTab = ({ user }) => {
   const [token, setToken] = useState(null);
+  const [saveId, setSaveId] = useState(null);
+  const [vanitySlug, setVanitySlug] = useState(null);
+  const [vanityInput, setVanityInput] = useState('');
+  const [vanityAvailable, setVanityAvailable] = useState(null);
+  const [checkingVanity, setCheckingVanity] = useState(false);
+  const [claimingVanity, setClaimingVanity] = useState(false);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingSaveId, setGeneratingSaveId] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [copied, setCopied] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fetch current token on mount
+  // Fetch current token, Save ID, and Vanity Slug on mount
   useEffect(() => {
-    const fetchToken = async () => {
+    const fetchCredentials = async () => {
       if (!user) return;
       try {
         const idToken = await user.getIdToken();
-        const response = await fetch(`${FUNCTIONS_BASE_URL}/linkArchiverGetApiToken`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${idToken}`
-          }
-        });
-        const data = await response.json();
-        if (data.success && data.token) {
-          setToken(data.token);
+
+        // Fetch token, Save ID, and Vanity Slug in parallel
+        const [tokenRes, saveIdRes, vanityRes] = await Promise.all([
+          fetch(`${FUNCTIONS_BASE_URL}/linkArchiverGetApiToken`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          }),
+          fetch(`${FUNCTIONS_BASE_URL}/linkArchiverGetSaveId`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          }),
+          fetch(`${FUNCTIONS_BASE_URL}/linkArchiverGetVanitySlug`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          })
+        ]);
+
+        const tokenData = await tokenRes.json();
+        const saveIdData = await saveIdRes.json();
+        const vanityData = await vanityRes.json();
+
+        if (tokenData.success && tokenData.token) {
+          setToken(tokenData.token);
+        }
+        if (saveIdData.success && saveIdData.saveId) {
+          setSaveId(saveIdData.saveId);
+        }
+        if (vanityData.success && vanityData.hasVanitySlug) {
+          setVanitySlug(vanityData.slug);
         }
       } catch {
-        // No token exists yet - that's fine
+        // No credentials exist yet - that's fine
       } finally {
         setLoading(false);
       }
     };
-    fetchToken();
+    fetchCredentials();
   }, [user]);
+
+  const generateSaveId = async () => {
+    if (!user) return;
+    setGeneratingSaveId(true);
+    setError(null);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch(`${FUNCTIONS_BASE_URL}/linkArchiverGenerateSaveId`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSaveId(data.saveId);
+      } else {
+        setError(data.error || 'Failed to generate Save ID');
+      }
+    } catch (_err) {
+      setError('Failed to generate Save ID. Please try again.');
+    } finally {
+      setGeneratingSaveId(false);
+    }
+  };
+
+  // Check vanity slug availability (debounced)
+  const checkVanityAvailability = async (slug) => {
+    if (!slug || slug.length < 3) {
+      setVanityAvailable(null);
+      return;
+    }
+    setCheckingVanity(true);
+    try {
+      const response = await fetch(`${FUNCTIONS_BASE_URL}/linkArchiverCheckVanityAvailability?slug=${encodeURIComponent(slug)}`);
+      const data = await response.json();
+      setVanityAvailable(data);
+    } catch {
+      setVanityAvailable({ available: false, reason: 'Failed to check availability' });
+    } finally {
+      setCheckingVanity(false);
+    }
+  };
+
+  // Handle vanity input change with debounce
+  const handleVanityInputChange = (e) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setVanityInput(value);
+    setVanityAvailable(null);
+    // Debounce the availability check
+    clearTimeout(window.vanityCheckTimeout);
+    window.vanityCheckTimeout = setTimeout(() => {
+      checkVanityAvailability(value);
+    }, 500);
+  };
+
+  // Claim vanity slug
+  const claimVanitySlug = async () => {
+    if (!user || !vanityInput || vanityInput.length < 3) return;
+    setClaimingVanity(true);
+    setError(null);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch(`${FUNCTIONS_BASE_URL}/linkArchiverClaimVanitySlug`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ slug: vanityInput })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setVanitySlug(data.slug);
+        setVanityInput('');
+        setVanityAvailable(null);
+      } else {
+        setError(data.error || 'Failed to claim vanity slug');
+      }
+    } catch (_err) {
+      setError('Failed to claim vanity slug. Please try again.');
+    } finally {
+      setClaimingVanity(false);
+    }
+  };
 
   const generateToken = async () => {
     if (!user) return;
@@ -652,14 +771,350 @@ const ApiAccessTab = ({ user }) => {
 
   return (
     <>
+      {/* Save ID Section - Primary method for iOS Shortcuts */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>
+          <Link2 size={18} />
+          Save ID
+          <span style={{
+            marginLeft: '8px',
+            padding: '2px 8px',
+            backgroundColor: '#dcfce7',
+            color: '#166534',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: '500'
+          }}>
+            Recommended
+          </span>
+        </h3>
+        <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '16px' }}>
+          Use your Save ID for iOS Shortcuts and mobile automations. It's a short, easy-to-type identifier that's safe to use in shared shortcuts.
+        </p>
+
+        {saveId ? (
+          <>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Your Save ID</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={saveId}
+                  readOnly
+                  style={{
+                    ...styles.input,
+                    ...styles.inputReadOnly,
+                    fontFamily: 'monospace',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    letterSpacing: '2px',
+                    textAlign: 'center',
+                    width: '160px',
+                    flex: 'none'
+                  }}
+                />
+                <button
+                  onClick={() => copyToClipboard(saveId, 'saveId')}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: copied === 'saveId' ? COLORS.success : COLORS.cardBg,
+                    border: `2px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: copied === 'saveId' ? COLORS.white : COLORS.text,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {copied === 'saveId' ? <Check size={14} /> : <Copy size={14} />}
+                  {copied === 'saveId' ? 'Copied!' : 'Copy'}
+                </button>
+                <button
+                  onClick={generateSaveId}
+                  disabled={generatingSaveId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '12px 16px',
+                    backgroundColor: COLORS.cardBg,
+                    border: `2px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: generatingSaveId ? 'not-allowed' : 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: COLORS.text,
+                    opacity: generatingSaveId ? 0.5 : 1
+                  }}
+                >
+                  <RefreshCw size={14} className={generatingSaveId ? 'animate-spin' : ''} />
+                  {generatingSaveId ? 'Generating...' : 'Regenerate'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: COLORS.cardBg,
+              padding: '16px',
+              borderRadius: '8px',
+              marginTop: '16px'
+            }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: COLORS.text, marginBottom: '8px' }}>
+                How to use:
+              </div>
+              <code style={{
+                fontSize: '13px',
+                color: COLORS.textMuted,
+                fontFamily: 'monospace',
+                wordBreak: 'break-all'
+              }}>
+                yellowcircle.io/s/<strong style={{ color: COLORS.text }}>{saveId}</strong>/https://example.com
+              </code>
+              <p style={{ fontSize: '11px', color: COLORS.textLight, marginTop: '10px', marginBottom: 0 }}>
+                Paste this URL format in any browser → Link saves → Redirects to article
+              </p>
+            </div>
+
+            <div style={{
+              padding: '12px 14px',
+              backgroundColor: '#f0fdf4',
+              borderRadius: '6px',
+              marginTop: '16px',
+              fontSize: '12px',
+              color: '#166534'
+            }}>
+              <strong>Safe to share:</strong> Your Save ID identifies your account but is not a secret. Use it in iOS Shortcuts you share with others.
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '24px' }}>
+            <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '16px' }}>
+              Generate a Save ID to use with iOS Shortcuts and mobile automations.
+            </p>
+            <button
+              onClick={generateSaveId}
+              disabled={generatingSaveId}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                backgroundColor: COLORS.primary,
+                color: COLORS.text,
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: generatingSaveId ? 'not-allowed' : 'pointer',
+                opacity: generatingSaveId ? 0.7 : 1
+              }}
+            >
+              <Key size={16} />
+              {generatingSaveId ? 'Generating...' : 'Generate Save ID'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Custom Vanity URL Section */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>
+          <Link size={18} />
+          Custom Vanity URL
+          <span style={{
+            marginLeft: '8px',
+            fontSize: '10px',
+            padding: '2px 6px',
+            backgroundColor: '#fef3c7',
+            color: '#92400e',
+            borderRadius: '4px',
+            fontWeight: '600'
+          }}>
+            Optional
+          </span>
+        </h3>
+        <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '16px' }}>
+          Claim a custom URL like <code style={{ fontSize: '12px' }}>yellowcircle.io/s/yourname/</code> instead of using your Save ID.
+        </p>
+
+        {vanitySlug ? (
+          <>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Your Vanity URL</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={`yellowcircle.io/s/${vanitySlug}/`}
+                  readOnly
+                  style={{
+                    ...styles.input,
+                    ...styles.inputReadOnly,
+                    fontFamily: 'monospace',
+                    fontSize: '13px',
+                    flex: 1
+                  }}
+                />
+                <button
+                  onClick={() => copyToClipboard(`yellowcircle.io/s/${vanitySlug}/`, 'vanitySlug')}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: copied === 'vanitySlug' ? COLORS.success : COLORS.cardBg,
+                    border: `2px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: copied === 'vanitySlug' ? COLORS.white : COLORS.text,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {copied === 'vanitySlug' ? <Check size={14} /> : <Copy size={14} />}
+                  {copied === 'vanitySlug' ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: COLORS.cardBg,
+              padding: '16px',
+              borderRadius: '8px',
+              marginTop: '16px'
+            }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: COLORS.text, marginBottom: '8px' }}>
+                Usage:
+              </div>
+              <code style={{
+                fontSize: '13px',
+                color: COLORS.textMuted,
+                fontFamily: 'monospace',
+                wordBreak: 'break-all'
+              }}>
+                yellowcircle.io/s/<strong style={{ color: COLORS.text }}>{vanitySlug}</strong>/https://example.com
+              </code>
+              <p style={{ fontSize: '11px', color: COLORS.textLight, marginTop: '10px', marginBottom: 0 }}>
+                Your vanity URL works the same as your Save ID — paste in browser to save links.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Choose your custom slug</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{
+                    padding: '12px',
+                    backgroundColor: COLORS.cardBg,
+                    border: `2px solid ${COLORS.border}`,
+                    borderRight: 'none',
+                    borderRadius: '8px 0 0 8px',
+                    fontSize: '13px',
+                    color: COLORS.textMuted,
+                    fontFamily: 'monospace'
+                  }}>
+                    yellowcircle.io/s/
+                  </span>
+                  <input
+                    type="text"
+                    value={vanityInput}
+                    onChange={handleVanityInputChange}
+                    placeholder="yourname"
+                    maxLength={20}
+                    style={{
+                      ...styles.input,
+                      flex: 1,
+                      borderRadius: '0 8px 8px 0',
+                      fontFamily: 'monospace'
+                    }}
+                  />
+                </div>
+                {vanityInput.length > 0 && vanityInput.length < 3 && (
+                  <p style={{ fontSize: '11px', color: COLORS.textLight, marginTop: '6px', marginBottom: 0 }}>
+                    Minimum 3 characters required
+                  </p>
+                )}
+                {vanityAvailable && (
+                  <p style={{
+                    fontSize: '11px',
+                    marginTop: '6px',
+                    marginBottom: 0,
+                    color: vanityAvailable.available ? '#166534' : '#991b1b'
+                  }}>
+                    {vanityAvailable.available
+                      ? `✓ "${vanityAvailable.normalizedSlug}" is available!`
+                      : `✗ ${vanityAvailable.reason}`
+                    }
+                  </p>
+                )}
+                {checkingVanity && (
+                  <p style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '6px', marginBottom: 0 }}>
+                    Checking availability...
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={claimVanitySlug}
+                disabled={claimingVanity || !vanityAvailable?.available}
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: vanityAvailable?.available ? COLORS.primary : COLORS.cardBg,
+                  border: `2px solid ${vanityAvailable?.available ? COLORS.primary : COLORS.border}`,
+                  borderRadius: '8px',
+                  cursor: (claimingVanity || !vanityAvailable?.available) ? 'not-allowed' : 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: vanityAvailable?.available ? COLORS.text : COLORS.textMuted,
+                  opacity: claimingVanity ? 0.7 : 1,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {claimingVanity ? 'Claiming...' : 'Claim URL'}
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: COLORS.textLight, marginTop: '12px' }}>
+              Lowercase letters, numbers, and hyphens only. 3-20 characters. <strong>Cannot be changed later.</strong>
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Personal Save Token Section - For advanced users */}
       <div style={styles.section}>
         <h3 style={styles.sectionTitle}>
           <Key size={18} />
-          Personal API Token
+          Personal Save Token
+          <span style={{
+            marginLeft: '8px',
+            padding: '2px 8px',
+            backgroundColor: COLORS.cardBg,
+            color: COLORS.textMuted,
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: '500'
+          }}>
+            Advanced
+          </span>
         </h3>
-        <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '20px' }}>
-          Use your personal API token to save links from anywhere - iOS Shortcuts, browser bookmarklets, automation tools, and more.
+        <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '12px' }}>
+          Full API token for browser extensions and automation tools. Use Save ID above for iOS Shortcuts instead.
         </p>
+        <div style={{
+          padding: '10px 14px',
+          backgroundColor: '#fef3c7',
+          borderRadius: '6px',
+          marginBottom: '20px',
+          fontSize: '12px',
+          color: COLORS.text
+        }}>
+          <strong>⚠️ Keep this private</strong> — This token allows saving links to your account. Don't share it publicly or use it in distributed apps.
+        </div>
 
         {error && (
           <div style={{
@@ -784,14 +1239,14 @@ const ApiAccessTab = ({ user }) => {
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>
               <Link2 size={18} />
-              Quick Save URL
+              Automation Endpoint
             </h3>
             <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '16px' }}>
-              Append any URL to this endpoint to save it directly to your Link Saver.
+              Use this endpoint in iOS Shortcuts, Zapier, or other automation tools to save links programmatically.
             </p>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Endpoint URL</label>
+              <label style={styles.label}>API Endpoint URL</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
@@ -854,15 +1309,15 @@ const ApiAccessTab = ({ user }) => {
               Vanity Save URL
             </h3>
             <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '16px' }}>
-              Prepend this URL prefix to any link to save it. Works great from mobile or messaging apps.
+              The quickest way to save links — just prepend this prefix to any URL. Uses your {vanitySlug ? 'custom vanity URL' : saveId ? 'Save ID' : 'token'}.
             </p>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>URL Prefix</label>
+              <label style={styles.label}>Your Save URL Prefix</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
-                  value={`yellowcircle.io/s/${token}/`}
+                  value={`yellowcircle.io/s/${vanitySlug || saveId || token}/`}
                   readOnly
                   style={{
                     ...styles.input,
@@ -873,7 +1328,7 @@ const ApiAccessTab = ({ user }) => {
                   }}
                 />
                 <button
-                  onClick={() => copyToClipboard(`yellowcircle.io/s/${token}/`, 'vanity')}
+                  onClick={() => copyToClipboard(`yellowcircle.io/s/${vanitySlug || saveId || token}/`, 'vanity')}
                   style={{
                     padding: '12px 16px',
                     backgroundColor: copied === 'vanity' ? COLORS.success : COLORS.cardBg,
@@ -902,7 +1357,7 @@ const ApiAccessTab = ({ user }) => {
               marginTop: '16px'
             }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: COLORS.text, marginBottom: '8px' }}>
-                Example:
+                How it works:
               </div>
               <code style={{
                 fontSize: '12px',
@@ -910,11 +1365,26 @@ const ApiAccessTab = ({ user }) => {
                 fontFamily: 'monospace',
                 wordBreak: 'break-all'
               }}>
-                yellowcircle.io/s/{token}/https://nytimes.com/article
+                yellowcircle.io/s/{vanitySlug || saveId || token}/https://nytimes.com/article
               </code>
               <p style={{ fontSize: '11px', color: COLORS.textLight, marginTop: '10px', marginBottom: 0 }}>
-                The link is saved to your collection and you're redirected to the destination.
+                → Link saved to your collection → You're redirected to the article
               </p>
+            </div>
+
+            <div style={{
+              padding: '12px 14px',
+              backgroundColor: '#f0fdf4',
+              borderRadius: '6px',
+              marginTop: '16px',
+              fontSize: '12px',
+              color: '#166534',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>💡</span>
+              <span><strong>Pro tip:</strong> Custom vanity slugs (e.g., yellowcircle.io/s/yourname/) coming soon!</span>
             </div>
           </div>
 
@@ -1013,7 +1483,7 @@ const ApiAccessTab = ({ user }) => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
-                  value={`save+${token}@yellowcircle.io`}
+                  value={`save+${vanitySlug || saveId || token}@yellowcircle.io`}
                   readOnly
                   style={{
                     ...styles.input,
@@ -1024,7 +1494,7 @@ const ApiAccessTab = ({ user }) => {
                   }}
                 />
                 <button
-                  onClick={() => copyToClipboard(`save+${token}@yellowcircle.io`, 'email')}
+                  onClick={() => copyToClipboard(`save+${vanitySlug || saveId || token}@yellowcircle.io`, 'email')}
                   style={{
                     padding: '12px 16px',
                     backgroundColor: copied === 'email' ? COLORS.success : COLORS.cardBg,
@@ -1504,7 +1974,18 @@ function AccountSettingsPage() {
 
   return (
     <Layout navigationItems={navigationItems} allowScroll={true}>
-      <div style={styles.container}>
+      {/* Mobile-responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .settings-container {
+            padding: 80px 16px 16px 16px !important;
+          }
+          .settings-tabs::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      `}</style>
+      <div style={styles.container} className="settings-container">
         <div style={styles.innerContainer}>
           {/* Header */}
           <div style={styles.header}>
@@ -1518,7 +1999,7 @@ function AccountSettingsPage() {
           </div>
 
           {/* Tabs */}
-          <div style={styles.tabsContainer}>
+          <div style={styles.tabsContainer} className="settings-tabs">
             {TABS.map((tab) => (
               <button
                 key={tab.id}

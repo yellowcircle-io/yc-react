@@ -328,7 +328,7 @@ const LinkSaverExtensionPage = () => {
               Save links directly from Safari, Twitter, or any app using the iOS Share Sheet.
             </p>
 
-            {/* Quick Setup Card */}
+            {/* Quick Steps Overview */}
             <div style={{
               padding: '20px',
               backgroundColor: COLORS.white,
@@ -336,101 +336,124 @@ const LinkSaverExtensionPage = () => {
               borderRadius: '12px',
               marginBottom: '16px'
             }}>
-              <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: COLORS.text }}>
-                Create Your Shortcut
+              <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '16px', color: COLORS.text }}>
+                Quick Setup (2 minutes)
               </div>
 
-              {/* Step 1 */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={styles.step}>
-                  <div style={styles.stepNumber}>1</div>
-                  <div>
-                    <strong>Get your API token</strong> from{' '}
-                    <Link to="/account/settings?tab=api" style={{ color: COLORS.primary }}>
-                      Account Settings → API Access
-                    </Link>
-                  </div>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>1</div>
+                <div>
+                  <strong>Get your Save Token</strong> from{' '}
+                  <Link to="/account/settings?tab=api" style={{ color: COLORS.primary, fontWeight: '600' }}>
+                    Settings → API Access
+                  </Link>
                 </div>
               </div>
 
-              {/* Step 2 */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={styles.step}>
-                  <div style={styles.stepNumber}>2</div>
-                  <div><strong>Open Shortcuts app</strong> on your iPhone/iPad</div>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>2</div>
+                <div>
+                  <strong>Download the Shortcut</strong> — One-tap install (iCloud link below)
                 </div>
               </div>
 
-              {/* Step 3 */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={styles.step}>
-                  <div style={styles.stepNumber}>3</div>
-                  <div><strong>Create new shortcut</strong> with these actions:</div>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>3</div>
+                <div>
+                  <strong>Add your Token</strong> — Paste when prompted during setup
                 </div>
+              </div>
 
-                <div style={{
-                  marginLeft: '36px',
-                  marginTop: '12px',
-                  padding: '16px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb'
-                }}>
-                  <div style={{ fontFamily: "'Monaco', 'Menlo', monospace", fontSize: '12px', lineHeight: '1.8' }}>
-                    <div style={{ marginBottom: '8px', color: '#6b7280' }}>
-                      ▼ <strong>Receive</strong> URLs from <em>Share Sheet</em>
-                    </div>
-                    <div style={{ marginBottom: '8px', color: '#6b7280' }}>
-                      ▼ <strong>Get Contents of URL:</strong>
-                    </div>
-                    <div style={{
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>4</div>
+                <div style={{ marginBottom: 0 }}>
+                  <strong>Done!</strong> — Share any link → tap "Save to yC"
+                </div>
+              </div>
+            </div>
+
+            {/* Download Button */}
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #86efac',
+              borderRadius: '12px',
+              textAlign: 'center',
+              marginBottom: '16px'
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: '#166534', marginBottom: '12px' }}>
+                📱 Get the iOS Shortcut
+              </div>
+              <a
+                href="/YellowCircle-LinkSaver.shortcut"
+                download="YellowCircle-LinkSaver.shortcut"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '14px 24px',
+                  backgroundColor: COLORS.primary,
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: COLORS.text,
+                  textDecoration: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <Download size={18} />
+                Download Shortcut
+              </a>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '10px' }}>
+                Open on iPhone/iPad to add to Shortcuts • iOS 13+
+              </div>
+              <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>
+                First run prompts for your <strong>Save ID</strong> (from Settings → API Access)
+              </div>
+            </div>
+
+            {/* Manual Setup Accordion */}
+            <details style={{
+              backgroundColor: COLORS.cardBg,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '8px',
+              padding: '14px 16px'
+            }}>
+              <summary style={{
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: COLORS.text,
+                outline: 'none'
+              }}>
+                Manual Setup (if link doesn't work)
+              </summary>
+              <div style={{ marginTop: '16px', fontSize: '13px', lineHeight: '1.8' }}>
+                <p style={{ marginBottom: '12px' }}>Create a new shortcut with these actions:</p>
+                <ol style={{ margin: '0 0 0 20px', padding: 0 }}>
+                  <li style={{ marginBottom: '8px' }}>Add <strong>"Receive URLs"</strong> from Share Sheet</li>
+                  <li style={{ marginBottom: '8px' }}>Add <strong>"Text"</strong> action with:<br/>
+                    <code style={{
+                      fontSize: '11px',
                       backgroundColor: '#1f2937',
                       color: '#f9fafb',
-                      padding: '8px 12px',
+                      padding: '4px 8px',
                       borderRadius: '4px',
-                      marginBottom: '12px',
+                      display: 'inline-block',
+                      marginTop: '4px',
                       wordBreak: 'break-all'
                     }}>
-                      {`https://us-central1-yellowcircle-app.cloudfunctions.net/linkArchiverQuickSave?token=`}<span style={{ color: COLORS.primary }}>{`YOUR_TOKEN`}</span>{`&url=`}<span style={{ color: '#93c5fd' }}>{`[Shortcut Input]`}</span>
-                    </div>
-                    <div style={{ color: '#6b7280' }}>
-                      ▼ <strong>Show Notification:</strong> "Link saved!"
-                    </div>
-                  </div>
-                </div>
+                      https://yellowcircle.io/s/YOUR_SAVE_ID/[Shortcut Input]
+                    </code>
+                    <br/><span style={{ fontSize: '11px', color: '#6b7280' }}>Replace YOUR_SAVE_ID with your Save ID from Settings</span>
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>Add <strong>"Open URLs"</strong> action</li>
+                  <li style={{ marginBottom: '8px' }}>Add <strong>"Show Notification"</strong>: "Link saved!"</li>
+                  <li>Enable <strong>"Show in Share Sheet"</strong> in shortcut settings</li>
+                </ol>
               </div>
-
-              {/* Step 4 */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={styles.step}>
-                  <div style={styles.stepNumber}>4</div>
-                  <div><strong>Enable "Show in Share Sheet"</strong> in shortcut settings</div>
-                </div>
-              </div>
-
-              {/* Step 5 */}
-              <div>
-                <div style={styles.step}>
-                  <div style={styles.stepNumber}>5</div>
-                  <div><strong>Done!</strong> Use the Share button in any app → tap your shortcut</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Video/Visual Guide Link */}
-            <div style={{
-              padding: '14px 16px',
-              backgroundColor: '#fef3c7',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <Smartphone size={20} color={COLORS.text} />
-              <div style={{ fontSize: '13px', color: COLORS.text }}>
-                <strong>Tip:</strong> Name your shortcut "Save to yC" for quick access from the share sheet.
-              </div>
-            </div>
+            </details>
           </div>
 
           {/* Chrome Extension Section */}

@@ -1725,6 +1725,584 @@ exports.quickSave = functions.https.onRequest(async (request, response) => {
   }
 });
 
+// ============================================
+// Save ID System (Proxy Save - No Token Exposure)
+// ============================================
+
+const SAVE_IDS_COLLECTION = "userSaveIds";
+
+/**
+ * Generate a short, URL-safe Save ID
+ * Format: 8 alphanumeric characters (lowercase)
+ */
+const generateSaveId = () => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+/**
+ * Proxy Save - Save link using Save ID (no token exposure)
+ * GET/POST /proxySave?id=SAVE_ID&url=URL
+ *
+ * The Save ID is a public identifier that maps to a user.
+ * Unlike tokens, Save IDs are not secrets - they're like email addresses.
+ * The actual user lookup happens server-side.
+ */
+exports.proxySave = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST" && request.method !== "GET") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const saveId = request.query.id || request.body?.id;
+
+  if (!saveId) {
+    response.status(400).json({
+      error: "Save ID required",
+      hint: "Add ?id=YOUR_SAVE_ID to the URL"
+    });
+    return;
+  }
+
+  try {
+    // Look up the Save ID
+    const saveIdDoc = await getDb().collection(SAVE_IDS_COLLECTION)
+      .where('saveId', '==', saveId.toLowerCase())
+      .where('active', '==', true)
+      .limit(1)
+      .get();
+
+    if (saveIdDoc.empty) {
+      response.status(404).json({ error: "Invalid or inactive Save ID" });
+      return;
+    }
+
+    const saveIdData = saveIdDoc.docs[0].data();
+    const userId = saveIdData.userId;
+
+    // Get URL from query or body
+    const url = request.query.url || request.body?.url;
+    const title = request.query.title || request.body?.title;
+    const tagsParam = request.query.tags || request.body?.tags;
+    const tags = Array.isArray(tagsParam)
+      ? tagsParam
+      : typeof tagsParam === 'string'
+        ? tagsParam.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+        : [];
+
+    if (!url) {
+      response.status(400).json({ error: "URL is required" });
+      return;
+    }
+
+    // Validate URL
+    try {
+      new URL(url);
+    } catch {
+      response.status(400).json({ error: "Invalid URL format" });
+      return;
+    }
+
+    // Check for duplicate
+    const existingQuery = await getDb().collection(LINKS_COLLECTION)
+      .where("userId", "==", userId)
+      .where("url", "==", url)
+      .limit(1)
+      .get();
+
+    if (!existingQuery.empty) {
+      const existingLink = { id: existingQuery.docs[0].id, ...existingQuery.docs[0].data() };
+      response.json({
+        success: true,
+        link: { id: existingLink.id, title: existingLink.title, url: existingLink.url },
+        duplicate: true,
+        message: "Link already saved"
+      });
+      return;
+    }
+
+    // Fetch content
+    let extracted = {};
+    try {
+      extracted = await fetchUrlContent(url);
+    } catch (fetchError) {
+      console.warn("Content extraction failed:", fetchError.message);
+    }
+
+    const domain = extractDomain(url);
+
+    // Create link document
+    const linkRef = getDb().collection(LINKS_COLLECTION).doc();
+    const link = {
+      id: linkRef.id,
+      userId: userId,
+      url,
+      title: title || extracted.title || "Untitled",
+      excerpt: extracted.excerpt || "",
+      content: extracted.content || "",
+      contentHtml: extracted.contentHtml || "",
+      domain,
+      favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+      image: extracted.image || null,
+      author: extracted.author || null,
+      publishedAt: extracted.publishedAt || null,
+      tags: tags.length > 0 ? tags : ['quick-save'],
+      folderId: null,
+      starred: false,
+      archived: false,
+      readProgress: 0,
+      readTime: 0,
+      estimatedReadTime: estimateReadTime(extracted.content || ""),
+      aiSummary: null,
+      aiTags: [],
+      archiveUrl: null,
+      archiveTimestamp: null,
+      unityNodeId: null,
+      unityCapsuleId: null,
+      savedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      readAt: null,
+      savedVia: 'save-id'
+    };
+
+    await linkRef.set(link);
+
+    // Update usage count
+    await saveIdDoc.docs[0].ref.update({
+      usageCount: admin.firestore.FieldValue.increment(1),
+      lastUsedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`📎 Proxy save: ${url} via Save ID ${saveId}`);
+
+    response.json({
+      success: true,
+      link: {
+        id: link.id,
+        title: link.title,
+        url: link.url,
+        domain: link.domain
+      },
+      message: "Link saved successfully"
+    });
+
+  } catch (error) {
+    console.error("proxySave error:", error);
+    response.status(500).json({ error: "Failed to save link" });
+  }
+});
+
+/**
+ * Generate or regenerate Save ID
+ * POST /generateSaveId
+ * Requires Firebase Auth
+ *
+ * Returns a short, shareable Save ID that maps to the user's account.
+ * This ID can be shared publicly - it's not a secret.
+ */
+exports.generateSaveId = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const auth = await verifyUserAuth(request);
+  if (!auth.success) {
+    response.status(401).json({ error: auth.error });
+    return;
+  }
+
+  try {
+    // Deactivate any existing Save IDs for this user
+    const existingIds = await getDb().collection(SAVE_IDS_COLLECTION)
+      .where('userId', '==', auth.uid)
+      .where('active', '==', true)
+      .get();
+
+    const batch = getDb().batch();
+    existingIds.docs.forEach(doc => {
+      batch.update(doc.ref, { active: false, deactivatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    });
+
+    // Generate new Save ID (ensure uniqueness)
+    let newSaveId;
+    let isUnique = false;
+    while (!isUnique) {
+      newSaveId = generateSaveId();
+      const existing = await getDb().collection(SAVE_IDS_COLLECTION)
+        .where('saveId', '==', newSaveId)
+        .limit(1)
+        .get();
+      isUnique = existing.empty;
+    }
+
+    // Create new Save ID document
+    const saveIdRef = getDb().collection(SAVE_IDS_COLLECTION).doc();
+    batch.set(saveIdRef, {
+      id: saveIdRef.id,
+      userId: auth.uid,
+      email: auth.email,
+      saveId: newSaveId,
+      active: true,
+      usageCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastUsedAt: null
+    });
+
+    await batch.commit();
+
+    console.log(`🆔 Generated Save ID ${newSaveId} for user ${auth.uid}`);
+
+    // Generate the save URL
+    const proxySaveUrl = `https://us-central1-yellowcircle-app.cloudfunctions.net/linkArchiverProxySave?id=${newSaveId}&url=`;
+    const vanityUrl = `yellowcircle.io/s/${newSaveId}/`;
+
+    response.json({
+      success: true,
+      saveId: newSaveId,
+      proxySaveUrl,
+      vanityUrl,
+      note: "This Save ID is safe to share - it identifies your account but is not a secret. Anyone with this ID can save links to your collection.",
+      usage: {
+        shortcut: `Open URL: ${proxySaveUrl}[URL]`,
+        vanity: `${vanityUrl}https://example.com`,
+        curl: `curl "${proxySaveUrl}https://example.com"`
+      }
+    });
+
+  } catch (error) {
+    console.error("generateSaveId error:", error);
+    response.status(500).json({ error: "Failed to generate Save ID" });
+  }
+});
+
+/**
+ * Get current Save ID for user
+ * GET /getSaveId
+ * Requires Firebase Auth
+ */
+exports.getSaveId = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "GET") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const auth = await verifyUserAuth(request);
+  if (!auth.success) {
+    response.status(401).json({ error: auth.error });
+    return;
+  }
+
+  try {
+    const saveIdDoc = await getDb().collection(SAVE_IDS_COLLECTION)
+      .where('userId', '==', auth.uid)
+      .where('active', '==', true)
+      .limit(1)
+      .get();
+
+    if (saveIdDoc.empty) {
+      response.json({
+        success: true,
+        hasSaveId: false,
+        saveId: null
+      });
+      return;
+    }
+
+    const data = saveIdDoc.docs[0].data();
+    const proxySaveUrl = `https://us-central1-yellowcircle-app.cloudfunctions.net/linkArchiverProxySave?id=${data.saveId}&url=`;
+    const vanityUrl = `yellowcircle.io/s/${data.saveId}/`;
+
+    response.json({
+      success: true,
+      hasSaveId: true,
+      saveId: data.saveId,
+      createdAt: data.createdAt,
+      usageCount: data.usageCount || 0,
+      lastUsedAt: data.lastUsedAt,
+      proxySaveUrl,
+      vanityUrl,
+      usage: {
+        shortcut: `Open URL: ${proxySaveUrl}[URL]`,
+        vanity: `${vanityUrl}https://example.com`
+      }
+    });
+
+  } catch (error) {
+    console.error("getSaveId error:", error);
+    response.status(500).json({ error: "Failed to get Save ID" });
+  }
+});
+
+/**
+ * Vanity Save - Save link via vanity URL path
+ * GET /s/TOKEN_OR_SAVE_ID/https://example.com
+ *
+ * This handles the user-friendly URL format:
+ * - yellowcircle.io/s/abc12345/https://example.com (8-char Save ID)
+ * - yellowcircle.io/s/longtokenhere.../https://example.com (64-char API token)
+ *
+ * Saves the link and redirects user to the original URL.
+ */
+exports.vanitySave = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "GET") {
+    response.status(405).json({ error: "Method not allowed - use GET" });
+    return;
+  }
+
+  try {
+    // Parse path: /s/TOKEN_OR_ID/URL or just get from query params
+    // Path format: /vanitySave/TOKEN_OR_ID/https://example.com
+    const fullPath = request.path || '';
+    const pathParts = fullPath.split('/').filter(Boolean);
+
+    // Extract token and URL from path
+    // Format could be: vanitySave/TOKEN/https://example.com or just TOKEN/https://...
+    let identifier = null;
+    let targetUrl = null;
+
+    // Try to extract from path (after function name)
+    if (pathParts.length >= 2) {
+      identifier = pathParts[0];
+      // Everything after the identifier is the URL (might have multiple slashes)
+      targetUrl = pathParts.slice(1).join('/');
+
+      // Re-add protocol if it was split
+      if (targetUrl && !targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        // Check if it looks like a URL without protocol
+        if (targetUrl.startsWith('http:/') || targetUrl.startsWith('https:/')) {
+          targetUrl = targetUrl.replace('http:/', 'http://').replace('https:/', 'https://');
+        } else {
+          // Assume https
+          targetUrl = 'https://' + targetUrl;
+        }
+      }
+    }
+
+    // Fallback to query params
+    if (!identifier) {
+      identifier = request.query.id || request.query.token;
+    }
+    if (!targetUrl) {
+      targetUrl = request.query.url;
+    }
+
+    if (!identifier) {
+      response.status(400).send(`
+        <html>
+          <head><title>yellowCircle - Invalid Request</title></head>
+          <body style="font-family: -apple-system, sans-serif; padding: 40px; text-align: center;">
+            <h1>❌ Missing Save ID or Token</h1>
+            <p>URL format: yellowcircle.io/s/YOUR_ID/https://example.com</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
+    if (!targetUrl) {
+      response.status(400).send(`
+        <html>
+          <head><title>yellowCircle - Invalid Request</title></head>
+          <body style="font-family: -apple-system, sans-serif; padding: 40px; text-align: center;">
+            <h1>❌ Missing URL</h1>
+            <p>URL format: yellowcircle.io/s/${identifier}/https://example.com</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
+    // Validate target URL
+    try {
+      new URL(targetUrl);
+    } catch {
+      response.status(400).send(`
+        <html>
+          <head><title>yellowCircle - Invalid URL</title></head>
+          <body style="font-family: -apple-system, sans-serif; padding: 40px; text-align: center;">
+            <h1>❌ Invalid URL Format</h1>
+            <p>Could not parse: ${targetUrl}</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
+    let userId = null;
+    let savedVia = 'vanity';
+
+    // Determine if this is a Save ID (8 chars) or API token (64 chars)
+    const normalizedId = identifier.toLowerCase();
+
+    if (normalizedId.length === 8) {
+      // Try Save ID first
+      const saveIdDoc = await getDb().collection(SAVE_IDS_COLLECTION)
+        .where('saveId', '==', normalizedId)
+        .where('active', '==', true)
+        .limit(1)
+        .get();
+
+      if (!saveIdDoc.empty) {
+        userId = saveIdDoc.docs[0].data().userId;
+        savedVia = 'vanity-save-id';
+
+        // Update usage count
+        await saveIdDoc.docs[0].ref.update({
+          usageCount: admin.firestore.FieldValue.increment(1),
+          lastUsedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    // If not found as Save ID, try as API token
+    if (!userId) {
+      const tokenDoc = await getDb().collection(TOKENS_COLLECTION)
+        .where('token', '==', identifier)
+        .where('active', '==', true)
+        .limit(1)
+        .get();
+
+      if (!tokenDoc.empty) {
+        userId = tokenDoc.docs[0].data().userId;
+        savedVia = 'vanity-token';
+      }
+    }
+
+    // If still not found, try vanity slug
+    if (!userId) {
+      const vanityDoc = await getDb().collection('vanitySlugs').doc(normalizedId).get();
+      if (vanityDoc.exists && vanityDoc.data().active) {
+        userId = vanityDoc.data().userId;
+        savedVia = 'vanity-slug';
+      }
+    }
+
+    if (!userId) {
+      response.status(404).send(`
+        <html>
+          <head><title>yellowCircle - Not Found</title></head>
+          <body style="font-family: -apple-system, sans-serif; padding: 40px; text-align: center;">
+            <h1>❌ Invalid Save ID or Token</h1>
+            <p>The identifier "${identifier.substring(0, 8)}..." was not found.</p>
+            <p>Please check your yellowCircle settings for the correct Save ID.</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
+    // Check for duplicate
+    const existingQuery = await getDb().collection(LINKS_COLLECTION)
+      .where("userId", "==", userId)
+      .where("url", "==", targetUrl)
+      .limit(1)
+      .get();
+
+    if (!existingQuery.empty) {
+      // Already saved - just redirect
+      console.log(`📎 Vanity save (duplicate): ${targetUrl}`);
+      response.redirect(302, targetUrl);
+      return;
+    }
+
+    // Fetch content
+    let extracted = {};
+    try {
+      extracted = await fetchUrlContent(targetUrl);
+    } catch (fetchError) {
+      console.warn("Content extraction failed:", fetchError.message);
+    }
+
+    const domain = extractDomain(targetUrl);
+
+    // Create link document
+    const linkRef = getDb().collection(LINKS_COLLECTION).doc();
+    const link = {
+      id: linkRef.id,
+      userId: userId,
+      url: targetUrl,
+      title: extracted.title || "Untitled",
+      excerpt: extracted.excerpt || "",
+      content: extracted.content || "",
+      contentHtml: extracted.contentHtml || "",
+      domain,
+      favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+      image: extracted.image || null,
+      author: extracted.author || null,
+      publishedAt: extracted.publishedAt || null,
+      tags: ['quick-save'],
+      folderId: null,
+      starred: false,
+      archived: false,
+      readProgress: 0,
+      readTime: 0,
+      estimatedReadTime: estimateReadTime(extracted.content || ""),
+      aiSummary: null,
+      aiTags: [],
+      archiveUrl: null,
+      archiveTimestamp: null,
+      unityNodeId: null,
+      unityCapsuleId: null,
+      savedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      readAt: null,
+      savedVia: savedVia
+    };
+
+    await linkRef.set(link);
+
+    console.log(`📎 Vanity save: ${targetUrl} via ${savedVia}`);
+
+    // Redirect to original URL
+    response.redirect(302, targetUrl);
+
+  } catch (error) {
+    console.error("vanitySave error:", error);
+    response.status(500).send(`
+      <html>
+        <head><title>yellowCircle - Error</title></head>
+        <body style="font-family: -apple-system, sans-serif; padding: 40px; text-align: center;">
+          <h1>❌ Error</h1>
+          <p>Failed to save link. Please try again.</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
 /**
  * Generate or regenerate personal API token
  * POST /generateApiToken
@@ -2008,6 +2586,294 @@ exports.createVanitySlug = functions.https.onRequest(async (request, response) =
   } catch (error) {
     console.error("createVanitySlug error:", error);
     response.status(500).json({ error: "Failed to create vanity slug" });
+  }
+});
+
+/**
+ * Check Vanity Slug Availability
+ * GET /checkVanityAvailability?slug=myslug
+ *
+ * Returns whether a slug is available for claiming
+ * No authentication required (public check)
+ */
+exports.checkVanityAvailability = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "GET") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  try {
+    const slug = request.query.slug;
+
+    if (!slug) {
+      response.status(400).json({ error: "Missing slug parameter" });
+      return;
+    }
+
+    // Normalize slug: lowercase, alphanumeric and hyphens only
+    const normalizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+    // Validation rules
+    if (normalizedSlug.length < 3) {
+      response.json({
+        available: false,
+        reason: "Slug must be at least 3 characters",
+        normalizedSlug
+      });
+      return;
+    }
+
+    if (normalizedSlug.length > 20) {
+      response.json({
+        available: false,
+        reason: "Slug must be 20 characters or less",
+        normalizedSlug
+      });
+      return;
+    }
+
+    // Reserved slugs
+    const reserved = ['admin', 'api', 'help', 'support', 'yellowcircle', 'yc', 'save', 'settings', 'login', 'signup', 'auth'];
+    if (reserved.includes(normalizedSlug)) {
+      response.json({
+        available: false,
+        reason: "This slug is reserved",
+        normalizedSlug
+      });
+      return;
+    }
+
+    // Check if slug already exists in vanitySlugs collection
+    const existingSlug = await getDb().collection('vanitySlugs').doc(normalizedSlug).get();
+    if (existingSlug.exists) {
+      response.json({
+        available: false,
+        reason: "This slug is already taken",
+        normalizedSlug
+      });
+      return;
+    }
+
+    // Check if it conflicts with any Save ID
+    const saveIdQuery = await getDb().collection('userSaveIds')
+      .where('saveId', '==', normalizedSlug)
+      .get();
+    if (!saveIdQuery.empty) {
+      response.json({
+        available: false,
+        reason: "This slug conflicts with an existing Save ID",
+        normalizedSlug
+      });
+      return;
+    }
+
+    response.json({
+      available: true,
+      normalizedSlug,
+      preview: `yellowcircle.io/s/${normalizedSlug}/`
+    });
+
+  } catch (error) {
+    console.error("checkVanityAvailability error:", error);
+    response.status(500).json({ error: "Failed to check availability" });
+  }
+});
+
+/**
+ * Claim Vanity Slug - User self-service
+ * POST /claimVanitySlug
+ * Body: { slug }
+ * Requires Firebase Auth
+ */
+exports.claimVanitySlug = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  try {
+    // Verify Firebase Auth
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      response.status(401).json({ error: "Missing or invalid authorization header" });
+      return;
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    let auth;
+    try {
+      auth = await admin.auth().verifyIdToken(idToken);
+    } catch {
+      response.status(401).json({ error: "Invalid authentication token" });
+      return;
+    }
+
+    const { slug } = request.body;
+
+    if (!slug) {
+      response.status(400).json({ error: "Missing slug in request body" });
+      return;
+    }
+
+    // Normalize slug
+    const normalizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+    // Validation
+    if (normalizedSlug.length < 3 || normalizedSlug.length > 20) {
+      response.status(400).json({ error: "Slug must be 3-20 characters" });
+      return;
+    }
+
+    const reserved = ['admin', 'api', 'help', 'support', 'yellowcircle', 'yc', 'save', 'settings', 'login', 'signup', 'auth'];
+    if (reserved.includes(normalizedSlug)) {
+      response.status(400).json({ error: "This slug is reserved" });
+      return;
+    }
+
+    // Check if user already has a vanity slug
+    const existingUserSlug = await getDb().collection('vanitySlugs')
+      .where('userId', '==', auth.uid)
+      .where('active', '==', true)
+      .get();
+
+    if (!existingUserSlug.empty) {
+      const currentSlug = existingUserSlug.docs[0].data().slug;
+      response.status(400).json({
+        error: "You already have a vanity slug",
+        currentSlug,
+        hint: "Contact support to change your vanity slug"
+      });
+      return;
+    }
+
+    // Check availability (race condition safe with transaction)
+    const slugRef = getDb().collection('vanitySlugs').doc(normalizedSlug);
+
+    await getDb().runTransaction(async (transaction) => {
+      const slugDoc = await transaction.get(slugRef);
+
+      if (slugDoc.exists) {
+        throw new Error("Slug already taken");
+      }
+
+      // Also check Save ID collision
+      const saveIdQuery = await getDb().collection('userSaveIds')
+        .where('saveId', '==', normalizedSlug)
+        .get();
+      if (!saveIdQuery.empty) {
+        throw new Error("Slug conflicts with existing Save ID");
+      }
+
+      // Create the vanity slug
+      transaction.set(slugRef, {
+        slug: normalizedSlug,
+        userId: auth.uid,
+        email: auth.email || null,
+        active: true,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: auth.uid
+      });
+    });
+
+    console.log(`🔗 User claimed vanity slug: ${normalizedSlug} -> ${auth.email}`);
+
+    response.json({
+      success: true,
+      slug: normalizedSlug,
+      vanityUrl: `yellowcircle.io/s/${normalizedSlug}/`,
+      usage: {
+        example: `yellowcircle.io/s/${normalizedSlug}/https://example.com`,
+        email: `save+${normalizedSlug}@yellowcircle.io`
+      }
+    });
+
+  } catch (error) {
+    console.error("claimVanitySlug error:", error);
+    if (error.message === "Slug already taken" || error.message === "Slug conflicts with existing Save ID") {
+      response.status(409).json({ error: error.message });
+    } else {
+      response.status(500).json({ error: "Failed to claim vanity slug" });
+    }
+  }
+});
+
+/**
+ * Get User's Vanity Slug
+ * GET /getVanitySlug
+ * Requires Firebase Auth
+ */
+exports.getVanitySlug = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "GET") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  try {
+    // Verify Firebase Auth
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      response.status(401).json({ error: "Missing or invalid authorization header" });
+      return;
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    let auth;
+    try {
+      auth = await admin.auth().verifyIdToken(idToken);
+    } catch {
+      response.status(401).json({ error: "Invalid authentication token" });
+      return;
+    }
+
+    // Find user's vanity slug
+    const vanityQuery = await getDb().collection('vanitySlugs')
+      .where('userId', '==', auth.uid)
+      .where('active', '==', true)
+      .get();
+
+    if (vanityQuery.empty) {
+      response.json({
+        success: true,
+        hasVanitySlug: false,
+        slug: null
+      });
+      return;
+    }
+
+    const vanityData = vanityQuery.docs[0].data();
+
+    response.json({
+      success: true,
+      hasVanitySlug: true,
+      slug: vanityData.slug,
+      vanityUrl: `yellowcircle.io/s/${vanityData.slug}/`,
+      createdAt: vanityData.createdAt
+    });
+
+  } catch (error) {
+    console.error("getVanitySlug error:", error);
+    response.status(500).json({ error: "Failed to get vanity slug" });
   }
 });
 
