@@ -2,9 +2,297 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 16, 2026 at 2:00 AM EST
+**Updated:** January 22, 2026 at 12:15 AM EST
 **Machine:** Mac Mini
-**Status:** ✅ Phase 1 Sleepless Agent Optimizations Complete - Static Constants Added
+**Status:** ✅ Performance Optimizations COMPLETE - Awaiting Firebase re-auth for deploy
+
+---
+
+## ✅ SESSION SUMMARY (Jan 22, 2026 ~12AM) - Mac Mini
+
+### Performance Optimizations Completed (Phase 1-3):
+
+1. **Phase 1.1: Consolidated Lottie Libraries** ✅
+   - Removed `@lottiefiles/dotlottie-react` dependency (verified URLs never used)
+   - Updated LazyLottieIcon.jsx and LottieIcon.jsx
+   - Updated vite.config.js vendor chunks
+
+2. **Phase 1.2: Memoized LazyLottieIcon** ✅
+   - Added React.memo() with custom comparison function
+   - Added `willChange: 'transform, filter'` for GPU acceleration
+
+3. **Phase 1.3: Memoized Context Providers** ✅
+   - Added useMemo to: LayoutContext, AuthContext, UserSettingsContext, NotificationContext
+   - ThemeContext already had useMemo
+
+4. **Phase 1.4: Lazy Load Lottie JSON** ✅
+   - Created `src/hooks/useLottieAnimation.js` for dynamic imports
+   - Updated navigationItems.js (string names instead of imports)
+   - Updated Sidebar.jsx with DynamicLottieIcon wrapper
+   - Updated UnityCircleNav.jsx to use hook
+   - **Result:** Lottie animations code-split into separate chunks
+
+5. **Phase 2.1: React Flow nodeTypes** ✅
+   - Already optimized (module-level definition)
+
+6. **Phase 2.3: Throttled Device Motion** ✅
+   - Added ~30fps (33ms) throttling to handleDeviceOrientation/handleDeviceMotion
+   - Proper cleanup of timeout IDs
+
+7. **Phase 3.1: Code-split React Flow** ✅
+   - Already optimized (lazy-loaded route, separate vendor chunk)
+
+8. **Phase 3.2: Image Lazy Loading** ✅
+   - Added `loading="lazy"` to PortfolioPage gallery images
+
+### Local Testing Results:
+- ✅ Homepage: All Lottie icons rendering
+- ✅ Sidebar: Hover animations working, submenus expanding
+- ✅ Works page: Client cards displaying
+- ✅ Unity Notes: React Flow canvas with minimap, toolbar working
+- ✅ No console errors
+
+### Pending:
+- [ ] Firebase deploy (needs `firebase login --reauth`)
+- [ ] Phase 2.2: Virtual scrolling (skipped - requires new dependencies)
+
+### Files Modified This Session:
+- `package.json` - Removed @lottiefiles/dotlottie-react
+- `src/components/shared/LazyLottieIcon.jsx` - Memoization + GPU hints
+- `src/components/shared/LottieIcon.jsx` - Removed DotLottieReact
+- `src/hooks/useLottieAnimation.js` - NEW: Dynamic Lottie loader
+- `src/config/navigationItems.js` - String animation names
+- `src/components/global/Sidebar.jsx` - DynamicLottieIcon wrapper
+- `src/components/unity/UnityCircleNav.jsx` - useLottieAnimation hook
+- `src/contexts/LayoutContext.jsx` - useMemo + throttling
+- `src/contexts/AuthContext.jsx` - useMemo + useCallback
+- `src/contexts/UserSettingsContext.jsx` - useMemo
+- `src/contexts/NotificationContext.jsx` - useMemo
+- `src/pages/PortfolioPage.jsx` - Image lazy loading
+- `vite.config.js` - Updated vendor chunks
+
+### Build Output:
+- Lottie animations now in separate chunks: add.js (7.46KB), wave.js (13.23KB), map.js (38.72KB), etc.
+- ~191KB moved from main bundle to on-demand chunks
+
+---
+
+## ✅ PREVIOUS SESSION SUMMARY (Jan 21, 2026 ~11PM) - Mac Mini
+
+### Tasks Completed:
+
+1. **Sprint 4 Git Commit** ✅
+   - Committed 17 files, 8,214 insertions
+   - Fixed ESLint errors (react-refresh, unused vars)
+   - Commit: `76fe4db` - "Feature: Sprint 4 - Comments, Notifications & Smart Views"
+
+2. **Tested Comments/Notifications** ✅
+   - Link Archiver: CommentList working in link detail modal (1 test comment visible)
+   - UnityNOTES: Comment nodes displaying on canvas
+   - UserMenu: NotificationBell dropdown working ("No notifications" state)
+   - Email notifications: Cloud Function ready (needs share trigger to test)
+
+3. **Code Efficiency Review** ✅
+   - `smartViewCounts` properly memoized with useMemo
+   - `filteredLinks` NOT memoized (potential optimization for 7000+ links)
+   - Recommendation: Add useMemo to filteredLinks with [links, activeView, searchQuery]
+   - NotificationContext uses efficient onSnapshot with cleanup
+
+4. **Scoped Offline Reading** ✅
+   - Created: `dev-context/SCOPE_OFFLINE_READING.md`
+   - Recommended: PWA + IndexedDB approach
+   - Phases: PWA Foundation → Offline Storage → Reader Integration → Sync
+   - Estimate: 10-16 hours total
+
+5. **Scoped Link Sharing Use Cases** ✅
+   - Created: `dev-context/SCOPE_LINK_SHARING_USECASES.md`
+   - Covered: Slack, Email, Instagram iPhone, Cross-User Sharing
+   - Key feature: User A shares link to User B without B logging in
+   - Recommended: Email-to-Save as cross-platform foundation
+   - Estimate: 16-26 hours (core), 24-38 hours (with Slack app)
+
+### Files Created This Session:
+- `dev-context/SCOPE_OFFLINE_READING.md`
+- `dev-context/SCOPE_LINK_SHARING_USECASES.md`
+
+### Next Steps:
+- [ ] Implement filteredLinks useMemo optimization (quick win)
+- [ ] Decide priority: Offline Reading vs Link Sharing features
+- [ ] Smart folders (rule-based dynamic folders) - Sprint 4 remaining
+- [ ] Usage statistics - Sprint 4 remaining
+
+---
+
+## ✅ LINK ARCHIVER ENHANCEMENT SPRINT 4 (Jan 21, 2026) - Mac Mini
+
+### What Was Done:
+1. **Unified Comments System Backend**
+   - Added `comments` collection in Firestore
+   - Created CRUD functions: `addComment`, `getComments`, `getCommentCount`, `updateComment`, `deleteComment`, `getCommentReplies`
+   - Mention parsing with regex for @email mentions
+   - Auto-creates notifications when users are @mentioned
+   - Added Firestore security rules for comments (author CRUD only)
+   - Added 3 composite indexes for comments queries
+
+2. **Comment Components**
+   - Created `CommentInput.jsx` - Textarea with @mention autocomplete, character counter
+   - Created `CommentList.jsx` - Threaded comments with edit/delete/reply actions
+   - Created `components/comments/index.js` - Exports
+
+3. **Link Archiver Comments Integration**
+   - Added CommentList to LinkDetailModal in LinkArchiverPage
+   - Comments appear at bottom of link detail view
+   - Supports threading, @mentions, edit/delete
+
+4. **Canvas Comments Integration**
+   - Updated CommentNode creation in UnityNotesPage.jsx
+   - Added `collaborators` data for @mention autocomplete
+   - Added `onMention` callback that creates notifications in Firestore
+   - Uses dynamic imports to avoid circular dependencies
+
+5. **Moved NotificationBell to UserMenu**
+   - Removed NotificationBell from Header.jsx
+   - Added NotificationBell to UserMenu dropdown for better placement
+
+### Files Modified:
+- `src/utils/firestoreLinks.js` - Added comments CRUD functions, COMMENTS_COLLECTION
+- `src/components/comments/CommentInput.jsx` - NEW: Input with @mention autocomplete
+- `src/components/comments/CommentList.jsx` - NEW: Threaded comment display
+- `src/components/comments/index.js` - NEW: Exports
+- `src/pages/admin/LinkArchiverPage.jsx` - Added CommentList to LinkDetailModal
+- `src/pages/UnityNotesPage.jsx` - Wired CommentNode with collaborators and onMention
+- `src/components/global/Header.jsx` - Removed NotificationBell
+- `src/components/global/UserMenu.jsx` - Added NotificationBell
+- `firestore.rules` - Added comments collection rules
+- `firestore.indexes.json` - Added comments indexes
+
+### Deployed:
+- ✅ Firestore rules and indexes deployed
+- ✅ Hosting deployed to https://yellowcircle-app.web.app
+
+### Next Steps (Remaining Sprint 4):
+- [ ] Smart folders (rule-based dynamic folders)
+- [ ] Usage statistics
+
+### Plan File:
+`.claude/plans/distributed-munching-panda.md` - Full enhancement plan (Sprint 4 Comments COMPLETE)
+
+---
+
+## ✅ LINK ARCHIVER ENHANCEMENT SPRINT 3 (Jan 21, 2026) - Mac Mini
+
+### What Was Done:
+1. **Folder-Level Sharing**
+   - Added `shareFolder()` and `unshareFolder()` functions in firestoreLinks.js
+   - Created ShareFolderModal component for sharing UI
+   - Added "Shared Folders" section in sidebar for viewing folders shared with you
+   - Added `sharedWith`, `sharedWithUserIds`, `sharedWithEmails` fields to link_folders
+
+2. **Notification Infrastructure**
+   - Created NotificationContext.jsx with real-time Firestore listener
+   - Created NotificationBell.jsx component with dropdown and unread badge
+   - Added NotificationProvider to RouterApp.jsx
+   - Added NotificationBell to Header.jsx (authenticated users only)
+   - Added Firestore security rules for notifications collection
+   - Added Firestore indexes for notification queries
+
+3. **Email Notifications**
+   - Created Firestore trigger `onNotificationCreated` in functions/index.js
+   - Sends email via Resend when sharing notifications are created
+   - Respects user's `shareNotificationEmails` preference
+   - HTML email template with yellowCircle branding
+   - Added `shareNotificationEmails` user setting with toggle in AccountSettingsPage
+
+### Files Modified:
+- `src/utils/firestoreLinks.js` - shareFolder, unshareFolder, notification triggers
+- `src/contexts/NotificationContext.jsx` - NEW: Real-time notification state
+- `src/components/notifications/NotificationBell.jsx` - NEW: Bell with dropdown
+- `src/pages/admin/LinkArchiverPage.jsx` - ShareFolderModal, shared folders section
+- `src/RouterApp.jsx` - Added NotificationProvider
+- `src/components/global/Header.jsx` - Added NotificationBell
+- `src/contexts/UserSettingsContext.jsx` - Added shareNotificationEmails setting
+- `src/pages/AccountSettingsPage.jsx` - Added toggle for share notification emails
+- `functions/index.js` - Added onNotificationCreated trigger
+- `firestore.rules` - Added notifications rules
+- `firestore.indexes.json` - Added notification and shared folder indexes
+
+### Plan File:
+`.claude/plans/distributed-munching-panda.md` - Full enhancement plan (Sprint 3 COMPLETE)
+
+---
+
+## ✅ LINK ARCHIVER ENHANCEMENT SPRINT 1 (Jan 20, 2026) - Mac Mini
+
+### What Was Done:
+1. **Nested Folder Hierarchy Display**
+   - Added `FolderTreeItem` component with recursive rendering
+   - Added `FolderTreeComponent` to build tree from flat folder list
+   - Folders display with proper indentation and expand/collapse icons
+
+2. **Default System Folders**
+   - Added `ensureDefaultFolders()` in firestoreLinks.js
+   - Auto-creates "Inbox" folder on first load (marked with `isSystem: true`)
+   - System folders cannot be deleted
+
+3. **Enhanced Search**
+   - Added `content` and `aiSummary` fields to search filter
+   - Full-text search now searches link body content
+
+4. **Auto-Tag on Save**
+   - Added `processAITagsAsync()` in functions/linkArchiver.js
+   - Fire-and-forget AI processing after link save
+   - Uses Gemini to generate tags and summary
+
+5. **Shared Section with Subfolders**
+   - Renamed "Shared with Me" to "Shared"
+   - Added expandable section with Personal/Canvas subfolders
+   - Shows separate counts for each type
+
+6. **Folder Delete Functionality**
+   - Added delete button on hover for non-system folders
+   - Confirmation dialog before deletion
+   - Prevents deletion of system folders
+
+7. **Firestore Index Fix**
+   - Fixed index field order: `userId, archived, folderId, savedAt`
+   - Deployed indexes to Firebase
+
+### Files Modified:
+- `src/utils/firestoreLinks.js` - Added ensureDefaultFolders, reorderFolders, moveFolder
+- `src/pages/admin/LinkArchiverPage.jsx` - FolderTree components, Shared section, delete
+- `functions/linkArchiver.js` - Auto-tag with processAITagsAsync
+- `firestore.indexes.json` - Fixed composite index order
+
+### Next Steps (Sprint 2):
+- [ ] Folder drag-drop reordering (requires @dnd-kit)
+- [ ] Folder color/icon customization modal
+- [ ] Reader view page (/links/read/:linkId)
+
+### Plan File:
+`.claude/plans/distributed-munching-panda.md` - Full enhancement plan
+
+---
+
+## ✅ PHASE 2 SLEEPLESS AGENT OPTIMIZATIONS (Jan 18, 2026) - Mac Mini
+
+### What Was Done:
+1. **Removed 4 Duplicated Inline Arrays**
+   - Lines ~2480, 3743, 3801, 4297 had `const mapNodeTypes = ['prospectNode', ...]`
+   - Replaced all with `MAP_NODE_TYPES.has(n.type)` for O(1) lookup
+
+2. **Build Verification**
+   - Production build: 5.58s (UnityNotesPage 431.16 kB)
+   - ESLint: No new errors in UnityNotesPage.jsx
+
+### Changes Made:
+- Removed: 4 duplicate array declarations
+- Added: O(1) Set-based lookups using Phase 1 constants
+- Net: ~20 lines removed, improved performance
+
+### Remaining (Phase 3 - Deferred):
+- [ ] Size object mismatch investigation (GROUP_NODE_SIZE_MAP)
+- [ ] Data-attribute pattern for event handlers
+- [ ] Map-based node lookups for `nodes.find()`
 
 ---
 
@@ -35,10 +323,11 @@
 | Lines Added | N/A | +70 lines |
 | Static Constants | N/A | 4 Sets/Objects + 3 helpers |
 
-### Next Steps (Phase 2-3):
-- [ ] Replace inline node type checks with Set lookups
+### Next Steps (Phase 3):
+- [x] Replace inline node type checks with Set lookups ✅ (Jan 18, 2026)
 - [ ] Replace nodes.find() with Map-based lookups
 - [ ] Add data-attribute pattern for event handlers
+- [ ] Investigate GROUP_NODE_SIZE_MAP mismatch
 
 ---
 

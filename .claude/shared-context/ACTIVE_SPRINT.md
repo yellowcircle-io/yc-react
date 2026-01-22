@@ -1,10 +1,32 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** January 15, 2026
+**Updated:** January 22, 2026
 **Purpose:** Concise, accurate status tracking (replaces verbose WIP)
 
 ---
 
 ## 🔴 JANUARY 2026 STATUS (NEW)
+
+### CLAUDE.md Architecture & Quality Update (Jan 22, 2026)
+| Action | Status | Commit |
+|--------|--------|--------|
+| Add Architecture Patterns section | ✅ Done | `07dc671` |
+| Add Forbidden Patterns section | ✅ Done | `07dc671` |
+| Add Quality Gates & Tools section | ✅ Done | `07dc671` |
+| Add Development Workflows section | ✅ Done | `07dc671` |
+| Create .claude/workflows/ docs | ✅ Done | `07dc671` |
+| Install depcheck + npm scripts | ✅ Done | `07dc671` |
+| Run initial knip/depcheck reports | ✅ Done | Baseline established |
+
+**knip findings:** 12 unused files, 2 unused deps, 197 unused exports
+**depcheck findings:** 2 unused deps, 11 unused devDeps
+
+### Sprint 4 Complete (Jan 21, 2026)
+| Feature | Status | Commit |
+|---------|--------|--------|
+| Comments & Notifications System | ✅ Done | `76fe4db` |
+| Smart Views filtering | ✅ Done | `76fe4db` |
+| Performance optimizations | ✅ Done | See WIP |
+| Lottie code-splitting | ✅ Done | ~191KB moved to chunks |
 
 ### Q1 Recovery Complete (Jan 7, 2026)
 | Action | Status | Commit |
@@ -49,8 +71,8 @@
 
 ### Git Status (Current)
 - Branch: main
-- Last commit: `1fc89ed` (Jan 15, 2026) - "Fix: Move React hooks before early returns"
-- All changes pushed to GitHub
+- Last commit: `07dc671` (Jan 22, 2026) - "Docs: CLAUDE.md architecture patterns + quality workflows"
+- Status: 2 commits ahead of origin (need to push)
 
 ---
 

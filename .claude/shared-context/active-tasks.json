@@ -5,6 +5,21 @@
   "completed_tasks": [
     {
       "task_id": "",
+      "completed_at": "2026-01-21T07:00:23Z",
+      "status": "failed"
+    },
+    {
+      "task_id": "",
+      "completed_at": "2026-01-20T07:00:26Z",
+      "status": "failed"
+    },
+    {
+      "task_id": "",
+      "completed_at": "2026-01-19T07:00:31Z",
+      "status": "failed"
+    },
+    {
+      "task_id": "",
       "completed_at": "2026-01-16T07:00:35Z",
       "status": "failed"
     },
