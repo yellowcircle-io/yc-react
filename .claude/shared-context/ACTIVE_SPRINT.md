@@ -1,345 +1,180 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** January 22, 2026
-**Purpose:** Concise, accurate status tracking (replaces verbose WIP)
+**Updated:** January 21, 2026
+**Source of Truth:** [Notion Project Tracking](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
 
 ---
 
-## 🔴 JANUARY 2026 STATUS (NEW)
+## 🔴 CURRENT PRIORITIES (Synced with Notion)
 
-### CLAUDE.md Architecture & Quality Update (Jan 22, 2026)
-| Action | Status | Commit |
-|--------|--------|--------|
-| Add Architecture Patterns section | ✅ Done | `07dc671` |
-| Add Forbidden Patterns section | ✅ Done | `07dc671` |
-| Add Quality Gates & Tools section | ✅ Done | `07dc671` |
-| Add Development Workflows section | ✅ Done | `07dc671` |
-| Create .claude/workflows/ docs | ✅ Done | `07dc671` |
-| Install depcheck + npm scripts | ✅ Done | `07dc671` |
-| Run initial knip/depcheck reports | ✅ Done | Baseline established |
+### P1 Tasks - Active
+| Task | Status | Due | Notion Link |
+|------|--------|-----|-------------|
+| Link Archiver Integration | 📋 Planned | Jan 31 | [View](https://www.notion.so/2ea15c1b110d81728e54e06fc37e8c8d) |
+| Configure Ad Platform Tokens | ⚠️ User Action | - | [View](https://www.notion.so/2ea15c1b110d8195b4d8d08fd9d89d4e) |
+| Launch Outbound Campaign | ⏳ Blocked | - | [View](https://www.notion.so/2ea15c1b110d819e9815d359cb54f528) |
 
-**knip findings:** 12 unused files, 2 unused deps, 197 unused exports
-**depcheck findings:** 2 unused deps, 11 unused devDeps
+### P2 Tasks - Planned
+| Task | Status | Due | Est. Hours |
+|------|--------|-----|------------|
+| Review workspace optimizations (sleepless) | ⏳ Pending | Jan 22 | 4 hrs |
+| Global Theme System Enhancement | 📋 Planned | Feb 15 | 8 hrs |
+| User Settings/Config Page | 📋 Planned | - | - |
+| Claude Bot Relay | 📋 Scoped | - | - |
 
-### Sprint 4 Complete (Jan 21, 2026)
-| Feature | Status | Commit |
-|---------|--------|--------|
-| Comments & Notifications System | ✅ Done | `76fe4db` |
-| Smart Views filtering | ✅ Done | `76fe4db` |
-| Performance optimizations | ✅ Done | See WIP |
-| Lottie code-splitting | ✅ Done | ~191KB moved to chunks |
+### P3 Tasks - Backlog
+| Task | Status | Est. Hours |
+|------|--------|------------|
+| LinkNode Component | 📋 Planned | 4 hrs |
+| VideoNode Component | 📋 Planned | 4 hrs |
+| @Mentions + Notifications | 📋 Planned | 8 hrs |
+| AIChatNode Enhancement | 📋 Planned | 6 hrs |
+| UnityNOTES TravelLog Node | 📋 Planned | 20 hrs |
+| Auto-Organize Groups | 📋 Planned | 6 hrs |
 
-### Q1 Recovery Complete (Jan 7, 2026)
-| Action | Status | Commit |
-|--------|--------|--------|
-| P0-1: Fix cron job CLI flag | ✅ Done | `0e7846c` |
-| P0-2: Extract Jan 3 docs from stash | ✅ Done | `0e7846c` |
-| withCommentBadge TDZ bug fix | ✅ Done | `0e7846c` |
-| Deploy to Firebase production | ✅ Done | Jan 7 |
+---
 
-### Demo Mode & Staging (Jan 10, 2026)
-| Item | Status |
-|------|--------|
-| ThemeContext CI fix | ✅ Committed |
-| Demo Mode toggle | ✅ Working |
-| 3-email sequence (no API) | ✅ Working |
-| Slack tokens configured | ✅ In .env |
-| Staging URL | https://yellowcircle-app--staging-djr44qvi.web.app |
+## 📦 LINK ARCHIVER INTEGRATION (P1)
 
-### Valentine's Campaign Testing (Jan 15, 2026)
-| Test | Status | Notes |
-|------|--------|-------|
-| 3-email sequence | ✅ Pass | Welcome, Follow-up #1, Final Nurture |
-| LinkedIn Ads | ✅ Pass | AI generated via STUDIO |
-| Meta (FB/IG) Ads | ✅ Pass | AI generated via STUDIO |
-| Campaign Quickstart | ✅ Pass | 6 platforms generated |
+**Due:** January 31, 2026 | **Estimated:** 10 hours | **Category:** Unity Notes
 
-### Current P1 Tasks
-| Task | Status | Notes |
-|------|--------|-------|
-| Ad Platform Tokens | ⚠️ User Action | LinkedIn OAuth, Meta Verification |
-| Launch Outbound Campaign | ⏳ Blocked | Waiting on ad tokens |
-| Update instance logs | ⏳ Pending | MacMini + MacBook Air |
+### Scope Documents
+- `dev-context/SCOPE_LINK_ARCHIVER_DRAWER.md` - LinksTab integration spec
+- `dev-context/SCOPE_LINK_SHARING_USECASES.md` - Use case analysis
 
-### Current P2 Tasks
-| Task | Status | Est. Time |
-|------|--------|-----------|
-| Review workspace optimizations (sleepless agent) | ⏳ Pending | 2-4 hrs |
-| Theme System (ThemeContext) | 📋 Planned | 2-3 sessions |
-| Claude Bot Relay | 📋 Scoped | Needs ANTHROPIC_API_KEY |
+### Implementation Phases
+| Phase | Description | Hours | Status |
+|-------|-------------|-------|--------|
+| Phase 1 | Infrastructure (ArchiveBox/Wallabag eval, deploy) | 3 | ⏳ Not Started |
+| Phase 2 | UnityNOTES Integration (ArchivedLinkNode, API) | 4 | ⏳ Not Started |
+| Phase 3 | Capture Tools (iPhone Shortcut, Browser ext) | 3 | ⏳ Not Started |
 
-**Workspace Optimizations Note (Jan 15):** Sleepless agent synced 250+ optimizations to production (commit `abb7e7a`). Review needed to validate changes, identify improvements to retain, and document patterns for future automation.
+### LinksTab Integration (OverviewTray)
+```
+OverviewTray (Current)          OverviewTray (Proposed)
+├── BookmarksTab                ├── BookmarksTab
+├── NodesTab                    ├── NodesTab
+└── NotificationsTab            ├── LinksTab (NEW)
+                                └── NotificationsTab
+```
 
-### Git Status (Current)
-- Branch: main
-- Last commit: `98c7f87` (Jan 21, 2026) - "Update: MSF context files for multi-machine sync"
-- Status: ✅ Synced with origin/main
+---
 
-### Sprint 4 Commits (Jan 21, 2026)
+## 🔍 SLEEPLESS AGENT REVIEW (P2 - Due Jan 22)
+
+**Commit:** `abb7e7a` | **Impact:** +12,452 / -4,821 lines to UnityNotesPage.jsx
+
+### Review Findings (Jan 21, 2026)
+
+#### ✅ Architecture Compliance
+- No direct Firebase imports in UnityNotesPage.jsx (correct)
+- Uses `src/utils/firestore*.js` service layer (correct)
+
+#### ❌ Architecture Violations Found
+| File | Issue | Fix Required |
+|------|-------|--------------|
+| `src/components/admin/PipelineStatsCard.jsx:21` | Direct `firebase/auth` import | Use `useAuth()` |
+| `src/components/admin/AnalyticsSummary.jsx:24` | Direct `firebase/auth` import | Use `useAuth()` |
+| `src/components/admin/EmailStatsCard.jsx:23` | Direct `firebase/auth` import | Use `useAuth()` |
+
+#### ⚠️ Lint Status
+**32 errors + 31 warnings** in codebase (from `npm run lint`)
+
+Key issues:
+- 4 unused variables in HubSpot adapter
+- 4 catch blocks with unused `error` → rename to `_error`
+- 1 `process` undefined in ErrorBoundary
+- Multiple `react-refresh/only-export-components` warnings
+- Missing `useCallback` wraps in AuthContext
+
+### Action Items
+1. [ ] Fix 3 architecture violations (Firebase direct imports)
+2. [ ] Fix 32 lint errors
+3. [ ] Review 31 lint warnings (prioritize react-hooks/exhaustive-deps)
+4. [ ] Validate performance improvements from sleepless commit
+5. [ ] Document retained patterns for future automation
+
+---
+
+## 📊 RECENT COMMITS (Jan 21, 2026)
+
 | Hash | Description |
 |------|-------------|
-| `58a2afa` | Perf: Sprint 4 performance optimizations |
-| `b163570` | Cleanup: Remove archived unused code (-12,081 lines) |
-| `16e1264` | Feature: Link management UI improvements |
-| `5bce742` | Docs: Add planning and scope documentation |
-| `ff9aba0` | Feature: Pocket import Cloud Functions |
-| `79a8704` | Config: Add vite security plugin and update firebase config |
+| `6b0a495` | Update: ACTIVE_SPRINT with Jan 21 commits |
 | `98c7f87` | Update: MSF context files for multi-machine sync |
+| `79a8704` | Config: Add vite security plugin and update firebase config |
+| `ff9aba0` | Feature: Pocket import Cloud Functions |
+| `5bce742` | Docs: Add planning and scope documentation |
+| `16e1264` | Feature: Link management UI improvements |
+| `b163570` | Cleanup: Remove archived unused code (-12,081 lines) |
+| `58a2afa` | Perf: Sprint 4 performance optimizations |
+
+### Git Status
+- Branch: `main`
+- Last commit: `6b0a495`
+- Status: ✅ Synced with origin/main
 
 ---
 
-## VERIFIED SYSTEM STATUS
+## ✅ COMPLETED (Sprint 4 - Jan 2026)
 
-### Infrastructure - ALL OPERATIONAL
+### Sprint 4 Features
+| Feature | Commit |
+|---------|--------|
+| Comments & Notifications System | `76fe4db` |
+| Smart Views filtering | `76fe4db` |
+| Performance optimizations (Lottie lazy load) | `58a2afa` |
+| Archive cleanup (-12,081 lines) | `b163570` |
+| Pocket import Cloud Functions | `ff9aba0` |
+
+### CLAUDE.md Architecture Update
+| Action | Commit |
+|--------|--------|
+| Architecture Patterns section | `07dc671` |
+| Forbidden Patterns section | `07dc671` |
+| Quality Gates & Tools section | `07dc671` |
+| Development Workflows | `07dc671` |
+
+### Infrastructure Milestones (Dec-Jan)
+- ✅ Firebase Auth SSO Migration
+- ✅ Firestore Security Rules Hardening
+- ✅ Brevo ESP Integration
+- ✅ Valentine's Campaign Testing
+- ✅ Demo Mode & Staging
+
+---
+
+## 🔧 INFRASTRUCTURE STATUS
+
 | Component | Status | URL/Details |
 |-----------|--------|-------------|
 | Firebase Hosting | ✅ Live | yellowcircle.io |
-| n8n (Railway) | ✅ Live | `n8n-production-9ef7.up.railway.app` |
-| Firestore | ✅ Live | capsules, journeys, rate_limits, config |
-| Cloud Functions | ✅ 36+ deployed | processJourneys, sendEmail, onLeadCreated, etc. |
-| Resend ESP | ✅ Configured | via Firebase Functions config |
-| Brevo ESP | ✅ Configured | Dec 20 - Primary provider, tested |
-| MailerSend ESP | ✅ Configured | Dec 20 - Domain verified, tested |
-| Admin Auth | ✅ Firebase SSO | Hybrid auth (SSO + legacy tokens) |
-| Email Tracking | ✅ Active | handleResendWebhook (19 events, 5 recipients) |
-
-### Admin Pages - ALL IMPLEMENTED
-| Page | Lines | Route | Status |
-|------|-------|-------|--------|
-| AdminHubPage | 13K | /admin | ✅ Full |
-| ContactDashboardPage | 1.4K | /admin/contacts | ✅ Full |
-| TriggerRulesPage | 1.3K | /admin/triggers | ✅ Full |
-| ArticleEditorPage | 37K | /admin/articles/edit | ✅ Full |
-| ArticleListPage | 29K | /admin/articles | ✅ Full |
-| StorageCleanupPage | 14K | /admin/storage | ✅ Full |
-
-### Firestore Utilities - ALL IMPLEMENTED
-- `firestoreContacts.js` (14.8K) - CRUD, scoring, upsert
-- `firestoreLeads.js` (16K) - Lead capture, resolution
-- `firestoreTriggers.js` (12K) - Automation rules
-- `firestoreArticles.js` (12.2K) - CMS content
-
-### Unity Platform - COMPLETE
-- UnityNOTES canvas with 12+ node types (incl. MapNode)
-- AI Canvas generation (text, image, video)
-- Collaboration (sharing, collaborators)
-- Star/bookmark system
-- Local-first with cloud sync
-- Rate limiting + tier gating
-- Trip Planner capsule template (Montreal Dec 2025)
+| Firestore | ✅ Live | capsules, journeys, config |
+| Cloud Functions | ✅ 36+ deployed | All operational |
+| n8n (Railway) | ✅ Live | n8n-production-9ef7.up.railway.app |
+| Staging | ✅ Live | yellowcircle-app--staging-djr44qvi.web.app |
 
 ---
 
-## P1 TASKS - CURRENT STATUS
+## 📋 QUICK REFERENCE
 
-| Priority | Task | Status |
-|----------|------|--------|
-| P1 | Configure API Keys | ✅ **DONE** (Gemini, Places, PDL, FullEnrich, Hunter, Apollo) |
-| P1 | Meta/LinkedIn/Google Ads | ⚠️ User action (tokens/verification pending) |
-| P1 | Launch Outbound Campaign | ⏳ Ready after ad platform tokens |
-| ~~P2~~ | Firestore Security Rules | ✅ **COMPLETED** Dec 19 (deployed + committed) |
-| P3 | Dynamic Newsletter | ⏳ Scoped only (Next Week) |
-
-### API Keys Summary
-| Configured ✅ | Pending ⚠️ |
-|--------------|------------|
-| Gemini, Google Places, PDL, FullEnrich, Hunter, Apollo | LinkedIn (OAuth regen), Meta (Business Verification), Google Ads (On hold) |
-
----
-
-## PHOTOGRAPHER USE CASE (dash@dashkolos.com)
-
-### Email Tracking: ✅ OPERATIONAL
-- Webhook handler deployed (`handleResendWebhook`)
-- Events tracked: sent, delivered, opened, clicked, bounced
-- 19 events tracked across 5 recipients (live data)
-
-### 300 Contacts Capacity
-| ESP | Free Tier | 300 in 1 Day? | Recommendation |
-|-----|-----------|---------------|----------------|
-| **Brevo** | 300/day (9K/mo) | ✅ Yes | **Best free option** |
-| Resend | 100/day (3K/mo) | ❌ 3 days | Upgrade to $20/mo |
-| SendGrid | 100/day (3K/mo) | ❌ 3 days | Already integrated |
-| MailerSend | 3K/month | ✅ Yes | Clean API |
-
-### Recommended Path
-1. Dash creates Brevo account (free, 2 min)
-2. Verifies sending domain (DNS)
-3. Generates API key
-4. Store in `config/client_esp_keys` for per-client isolation
-
----
-
-## COMPLETED THIS WEEK (Dec 16-21, 2025)
-
-### ✅ Montreal Trip Planner + MapNode (Dec 21)
-- **Capsule:** `montreal-trip-dec2025` created with 12 nodes
-- **Access:** https://yellowcircle.io/unity-notes?id=montreal-trip-dec2025
-- **Collaboration:** christopher@yellowcircle.io + dash@dashkolos.com
-- **Components Built:**
-  - `MapNode.jsx` - Google Maps Embed with location search, categories
-  - `seedTripPlannerCapsule` function - Creates shared V3 capsules
-  - `geocodeAddress` function - Google Geocoding API endpoint
-- **Nodes:** 3 GroupNodes, 3 TodoNodes, 4 StickyNodes, 1 AI TextNode, 1 Map placeholder
-
-### ✅ Sleepless Agent Tasks (Dec 20-21)
-- **DOC-001:** Full yellowCircle documentation review completed
-- **AI-001:** AI Photo Editing - 3 functions added (removeBackground, enhanceHeadshot, getPhotoEditStats)
-- **CAMP-001:** Photography Studio campaign - seedHeadshotJourney with A/B/C email variants
-
-### ✅ P1 Contact Import Automation (Dec 19)
-- **121 contacts/prospects imported** (exceeded 50 target by 142%)
-- Headshot prospects: 36 stored (SF, LA, NYC)
-- Pipeline A (traditional): 48 stored (accounting, marketing, consulting)
-- Pipeline B (digital-first): 25 stored (YC GitHub, Growjo)
-
-### ✅ Firestore Security Rules Hardening (Dec 19)
-| Issue | Severity | Fix Applied |
-|-------|----------|-------------|
-| `users` collection duplicate rule | HIGH | Removed - now only own profile |
-| `access_requests` public read/update/delete | HIGH | Changed to `request.auth != null` |
-| `shortlinks` delete was public | MEDIUM | Now requires authentication |
-| All capsule operations | MEDIUM | Now requires authentication |
-- **Commit:** `ac3aa2f`
-
-### ✅ Firebase Auth SSO Migration (Dec 18)
-- Created `verifyAdminAuth()` helper with hybrid authentication
-- Updated 25+ admin functions to use Firebase Auth ID tokens
-- Frontend now uses async `getAdminHeaders()` with Firebase ID token
-- Legacy tokens preserved for n8n workflows + backwards compatibility
-- **Commits:** `53a2424`, `5a71ea4`, `9fa59bc`
-
-### ✅ Dual-Project Implementation (Dec 17)
-**Project 1: Outbound Motion Enhancement**
-- Schema extensions: Pipeline fields, 27 PE signals, discovery source
-- Firebase Functions: discoverPipelineA, discoverPipelineB, collectSignals, filterPEBacked, scorePipelines
-- UI: PipelineStatsCard, PESignalsPanel, ContactDashboard pipeline filters
-
-**Project 2: UnitySTUDIO Rearchitecture** - ✅ COMPLETE (12,030 lines)
-- CreativeCanvas.jsx (4,546 lines) - Visual editor, drag-drop, safe zones
-- CampaignQuickstart.jsx (1,637 lines) - Campaign setup wizard
-- AdCreativeBuilder.jsx (1,273 lines) - Ad creative generation
-- ExportManager.jsx (872 lines) - Batch export, campaign presets
-- useAIGeneration.js (812 lines) - AI copy via Groq
-- platform-specs.js (636 lines) - All platform dimensions
-- **Commit:** `2762d9e`
-
-### ✅ Platform Enhancements Sprint (Dec 18-19)
-**AI Image Generation:**
-- `generateImage` function with tiered pricing (free/standard/premium)
-- Free tier: SVG placeholders (always available)
-- $20/month budget cap with usage tracking
-
-**Programmatic Ads:**
-- `getAdBudgetStats` - Budget tracking across platforms
-- `createMetaCampaign` - Facebook/Instagram ads
-- `createLinkedInCampaign` - LinkedIn Marketing API
-- $100/month total cap, $35/platform cap
-
-**Headshot Sourcing:**
-- `discoverHeadshotProspects` - Google Places for headshot-ready businesses
-- `importHeadshotProspectsCSV` - CSV/JSON import
-- Targets: law firms, real estate, financial advisors, consultants
-
----
-
-## IMMEDIATE NEXT STEPS
-
-1. [x] **Deploy Functions** - ✅ Deployed Dec 18, 2025 (36 functions)
-2. [x] **Deploy Hosting** - ✅ Deployed Dec 18, 2025 (85 files)
-3. [x] **Import Contacts** - ✅ 121 contacts imported Dec 19
-4. [x] **Configure API Keys** - ✅ Gemini, Places, PDL, FullEnrich, Hunter, Apollo
-5. [x] **Firestore Security Rules** - ✅ Hardened Dec 19
-6. [x] **Brevo Integration** - ✅ Dec 20: Adapter, sendBulkEmail, tested working
-7. [x] **Client ESP Keys** - ✅ Dec 20: dash@dashkolos.com configured (300/day, 9K/mo)
-8. [x] **MCP Servers** - ✅ Dec 20: Playwright + Notion + GitHub connected (MacBook Air)
-9. [x] **Cron Jobs** - ✅ Dec 20: Installed (2AM daily, 3AM weekly, 6AM sync, 1st monthly)
-10. [x] **Sleepless Agent** - ✅ Dec 20: Installed via pipx, config.yaml created
-11. [x] **Slack App Tokens** - ✅ Dec 20: Configured in .env, sle tested
-12. [ ] **Ad Platform Tokens** - User action: LinkedIn OAuth, Meta Verification, Google Ads
-13. [ ] **Launch Outbound Campaign** - Start email sequences via UnityMAP
-
----
-
-## P2/P3 - FUTURE WORK
-
-| Item | Status | Notes |
-|------|--------|-------|
-| Auto-Organize Groups | ❌ Not started | Respect parentId in layout |
-| @Mentions + Notifications | ❌ Not started | CommentNode enhancement |
-| Dynamic Newsletter | 📋 Scoped | LiveIntent/Movable Ink style live content |
-| ~~Brevo ESP Integration~~ | ✅ Done | Multi-tenant ESP key system complete |
-| ~~MailerSend Domain~~ | ✅ Done | Domain verified Dec 20 |
-| ~~Sleepless Agent~~ | ✅ Done | Installed via pipx Dec 20 |
-| ~~Slack App Tokens~~ | ✅ Done | Configured in .env Dec 20 |
-
----
-
-## QUICK REFERENCE
-
-### Authentication (Updated Dec 18)
-Admin functions now support **hybrid authentication**:
-1. **Firebase Auth Bearer token** (preferred) - logged-in admin users
-2. **Legacy x-admin-token** (fallback) - scripts, n8n workflows
-3. **Cleanup/n8n tokens** (specific functions)
-
-**Frontend automatically uses Firebase Auth** when user is logged in.
-
-### Admin Functions
+### Development
 ```bash
-# Add Client to Whitelist
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/addClientEmail" \
-  -H "Content-Type: application/json" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"email": "user@example.com"}'
-
-# Bulk Import Contacts
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/bulkImportContacts" \
-  -H "Content-Type: application/json" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"contacts": [{"email": "a@b.com", "name": "Test", "company": "Acme"}], "source": "outbound"}'
-
-# Cascade Enrichment (PDL > FullEnrich > Hunter > Apollo)
-curl -X POST "https://us-central1-yellowcircle-app.cloudfunctions.net/cascadeEnrich" \
-  -H "Content-Type: application/json" \
-  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
-  -d '{"email": "user@company.com", "updateContact": true}'
+npm run dev          # Start dev server
+npm run lint         # Run ESLint (32 errors, 31 warnings)
+npm run build        # Build for production
+npm run check:deps   # Run knip dead code detection
 ```
 
-### Key URLs
-- Production: https://yellowcircle.io
-- Firebase Console: https://console.firebase.google.com/project/yellowcircle-app
-- n8n: https://n8n-production-9ef7.up.railway.app
+### Key Scope Documents
+- `dev-context/SCOPE_LINK_ARCHIVER_DRAWER.md`
+- `dev-context/SCOPE_LINK_SHARING_USECASES.md`
+- `dev-context/SCOPE_USER_SETTINGS_PAGE.md`
+- `dev-context/SCOPE_OFFLINE_READING.md`
 
-### Git Status
-- Branch: main
-- Last commit: `1fc89ed` (Jan 15, 2026) - "Fix: Move React hooks before early returns"
-- All changes pushed to GitHub
-- **See January 2026 section above for current status**
+### Notion Integration
+- [Project Tracking Database](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
+- Categories: yellowCircle, Unity Notes, Unity MAP, Unity STUDIO, Infrastructure
 
 ---
 
-## RECENT COMMITS (Jan 2026)
-
-| Hash | Date | Description |
-|------|------|-------------|
-| `1fc89ed` | Jan 15 | Fix: Move React hooks before early returns (Rules of Hooks) |
-| `1d79d43` | Jan 15 | Revert: Restore working UnityNotesPage (fix runtime error) |
-| `8f8751d` | Jan 15 | Fix: Add html2canvas to dependencies for CI build |
-| `abb7e7a` | Jan 15 | Sync 250+ sleepless agent optimizations to production |
-| `aefefc6` | Jan 14 | fix: Sleepless agent wrapper uses subprocess |
-| `0e7846c` | Jan 7 | Recovery: Q1 2026 MSF restoration - cron fix, docs update |
-| `43c653f` | Jan 3 | Fix: Remove react-hot-toast import |
-
-## ARCHIVED COMMITS (Dec 16-20, 2025)
-
-| Hash | Date | Description |
-|------|------|-------------|
-| `c827392` | Dec 20 | Docs: Add MCP server configuration to shared context |
-| `479cbac` | Dec 19 | Docs: Update Testing Prep with status, costs, Claude autonomous |
-| `948e646` | Dec 19 | Docs: Update yC-MSF context for Dec 19 MacBook Air session |
-| `ac3aa2f` | Dec 19 | Security: Harden Firestore rules + Add Meta domain verification |
-| `349d858` | Dec 19 | Feature: Add FullEnrich to enrichment cascade (priority 2) |
-| `5a71ea4` | Dec 18 | Security: Implement Firebase Auth SSO for admin functions |
-| `53a2424` | Dec 18 | Security: Remove hardcoded admin tokens |
-| `2762d9e` | Dec 17 | Feature: UnitySTUDIO Rearchitecture + Dual-Pipeline |
-| `69fb4bd` | Dec 16 | Feature: Blog public display |
+*Last synced with Notion: January 21, 2026*
