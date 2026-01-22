@@ -50,7 +50,7 @@ const URL_SAVE_ENDPOINT = 'https://yellowcircle.co/save?url=YOUR_URL&title=YOUR_
 const LinkSaverExtensionPage = () => {
   const navigate = useNavigate();
   const { layoutConfig } = useLayout();
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const [copiedPopup, setCopiedPopup] = useState(false);
   const [copiedRedirect, setCopiedRedirect] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -233,8 +233,23 @@ const LinkSaverExtensionPage = () => {
     <Layout
       navigationItems={navigationItems}
       layoutConfig={layoutConfig}
+      allowScroll={true}
+      pageLabel="LINKS"
     >
-      <div style={styles.container}>
+      {/* Mobile-responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .extension-container {
+            padding: 70px 12px 12px 90px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .extension-container {
+            padding: 70px 8px 8px 90px !important;
+          }
+        }
+      `}</style>
+      <div style={styles.container} className="extension-container">
         <div style={styles.innerContainer}>
           <button style={styles.backButton} onClick={() => navigate('/links')}>
             <ArrowLeft size={16} /> Back to Link Saver
@@ -250,6 +265,21 @@ const LinkSaverExtensionPage = () => {
               collection with one click.
             </p>
           </div>
+
+          {/* Sign-in Note */}
+          {!user && (
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#fef3c7',
+              borderRadius: '12px',
+              textAlign: 'center',
+              marginBottom: '24px'
+            }}>
+              <p style={{ margin: 0, color: COLORS.text }}>
+                <strong>Note:</strong> You'll need to sign in to save links to your collection.
+              </p>
+            </div>
+          )}
 
           {/* Bookmarklet Section */}
           <div style={styles.section}>
@@ -540,19 +570,6 @@ const LinkSaverExtensionPage = () => {
               </div>
             </div>
           </div>
-
-          {!currentUser && (
-            <div style={{
-              padding: '20px',
-              backgroundColor: '#fef3c7',
-              borderRadius: '12px',
-              textAlign: 'center'
-            }}>
-              <p style={{ margin: 0, color: COLORS.text }}>
-                <strong>Note:</strong> You'll need to sign in to save links to your collection.
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </Layout>

@@ -5,6 +5,8 @@ import globalContent from '../../config/globalContent';
  * Header - yellowCIRCLE navigation bar
  * Now driven by globalContent configuration
  * Editable via: .claude/automation/global-manager.js
+ *
+ * Note: NotificationBell moved to UserMenu for better placement (Jan 2026)
  */
 function Header({ onHomeClick }) {
   const handleHomeClick = (e) => {

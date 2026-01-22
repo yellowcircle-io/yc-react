@@ -10,7 +10,7 @@ import { useShortlinks } from '../hooks/useShortlinks';
 
 function ShortlinkManagerPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, handleFooterToggle, handleMenuToggle } = useLayout();
   const { isAdmin, user, userProfile } = useAuth();
 
   // Tier 2 access: Premium/Client users
@@ -40,6 +40,14 @@ function ShortlinkManagerPage() {
     campaign: ''
   });
   const [formError, setFormError] = useState('');
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Load shortlinks on mount
   useEffect(() => {
@@ -120,8 +128,6 @@ function ShortlinkManagerPage() {
     navigate('/');
   };
 
-  const baseUrl = window.location.origin;
-
   // Card style for access gate
   const cardStyle = {
     backgroundColor: 'white',
@@ -187,10 +193,10 @@ function ShortlinkManagerPage() {
         {/* Main Content */}
         <div style={{
           position: 'fixed',
-          top: '60px',
-          left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-          right: '40px',
-          bottom: '40px',
+          top: isMobile ? '70px' : '60px',
+          left: isMobile ? '90px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
+          right: isMobile ? '12px' : '40px',
+          bottom: isMobile ? '20px' : '40px',
           zIndex: 61,
           overflow: 'auto',
           transition: 'left 0.5s ease-out'
@@ -273,7 +279,7 @@ function ShortlinkManagerPage() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: '#666' }}>
                       TITLE (optional)
@@ -365,8 +371,85 @@ function ShortlinkManagerPage() {
             </div>
           )}
 
-          {/* Two Column Layout */}
-          <div style={{ display: 'grid', gridTemplateColumns: selectedLink ? '1fr 1fr' : '1fr', gap: '24px' }}>
+          {/* Two Column Layout - stacks on mobile with analytics on top */}
+          <div style={{ display: 'grid', gridTemplateColumns: selectedLink && !isMobile ? '1fr 1fr' : '1fr', gap: '24px' }}>
+            {/* Analytics Panel - Shows on top on mobile when active */}
+            {selectedLink && isMobile && (
+              <div style={{ order: -1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#666', margin: 0 }}>
+                    ANALYTICS: {selectedLink.shortCode}
+                  </h3>
+                  <button
+                    onClick={() => { setSelectedLink(null); setAnalytics(null); }}
+                    style={{
+                      padding: '4px 10px',
+                      backgroundColor: 'transparent',
+                      color: '#999',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    CLOSE
+                  </button>
+                </div>
+
+                {analytics ? (
+                  <div style={{
+                    backgroundColor: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
+                  }}>
+                    {/* Stats Overview */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '12px',
+                      marginBottom: '20px'
+                    }}>
+                      <div style={{ textAlign: 'center', padding: '16px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderRadius: '8px' }}>
+                        <p style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 4px 0' }}>{selectedLink.clicks || 0}</p>
+                        <p style={{ fontSize: '10px', color: '#666', margin: 0 }}>TOTAL CLICKS</p>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: '8px' }}>
+                        <p style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 4px 0' }}>{selectedLink.uniqueClicks || 0}</p>
+                        <p style={{ fontSize: '10px', color: '#666', margin: 0 }}>UNIQUE</p>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: '8px' }}>
+                        <p style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 4px 0' }}>
+                          {selectedLink.clicks ? ((selectedLink.uniqueClicks / selectedLink.clicks) * 100).toFixed(0) : 0}%
+                        </p>
+                        <p style={{ fontSize: '10px', color: '#666', margin: 0 }}>UNIQUE RATE</p>
+                      </div>
+                    </div>
+
+                    {/* Devices */}
+                    <div>
+                      <p style={{ fontSize: '11px', fontWeight: '600', color: '#999', marginBottom: '8px' }}>DEVICES</p>
+                      <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#666' }}>
+                        <span>🖥️ Desktop: <strong>{analytics.devices?.desktop || 0}</strong></span>
+                        <span>📱 Mobile: <strong>{analytics.devices?.mobile || 0}</strong></span>
+                        <span>📟 Tablet: <strong>{analytics.devices?.tablet || 0}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    backgroundColor: 'white',
+                    padding: '40px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    color: '#999'
+                  }}>
+                    Loading analytics...
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Shortlinks List */}
             <div>
               <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#666' }}>
@@ -465,12 +548,13 @@ function ShortlinkManagerPage() {
                             onClick={() => handleViewAnalytics(link)}
                             style={{
                               padding: '4px 10px',
-                              backgroundColor: 'transparent',
-                              color: '#666',
-                              border: '1px solid #ddd',
+                              backgroundColor: selectedLink?.shortCode === link.shortCode ? '#333' : 'transparent',
+                              color: selectedLink?.shortCode === link.shortCode ? '#fff' : '#666',
+                              border: selectedLink?.shortCode === link.shortCode ? '1px solid #333' : '1px solid #ddd',
                               borderRadius: '4px',
                               fontSize: '10px',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              fontWeight: selectedLink?.shortCode === link.shortCode ? '600' : '400'
                             }}
                           >
                             ANALYTICS
@@ -511,8 +595,8 @@ function ShortlinkManagerPage() {
               )}
             </div>
 
-            {/* Analytics Panel */}
-            {selectedLink && (
+            {/* Analytics Panel - Desktop only (mobile version is above) */}
+            {selectedLink && !isMobile && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#666', margin: 0 }}>

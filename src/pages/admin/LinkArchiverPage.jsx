@@ -10,9 +10,10 @@
  * @author Sleepless Agent
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Reorder } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import Layout from '../../components/global/Layout';
 import { useLayout } from '../../contexts/LayoutContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -2562,63 +2563,69 @@ const FolderTreeItem = ({
         {/* Edit, Share, and Delete buttons - only show on hover for non-system folders */}
         {isHovered && !folder.isSystem && (
           <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(folder);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '2px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                color: COLORS.textMuted,
-                opacity: 0.7,
-                marginRight: '2px'
-              }}
-              title="Edit folder"
-            >
-              <Pencil size={14} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onShare(folder);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '2px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                color: (folder.sharedWith?.length > 0) ? COLORS.primary : COLORS.textMuted,
-                opacity: 0.7,
-                marginRight: '2px'
-              }}
-              title={folder.sharedWith?.length > 0 ? `Shared with ${folder.sharedWith.length} user(s)` : 'Share folder'}
-            >
-              <Share2 size={14} />
-            </button>
-            <button
-              onClick={handleDelete}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '2px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                color: COLORS.danger,
-                opacity: 0.7,
-                marginRight: '4px'
-              }}
-              title="Delete folder"
-            >
-              <Trash2 size={14} />
-            </button>
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(folder);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '2px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: COLORS.textMuted,
+                  opacity: 0.7,
+                  marginRight: '2px'
+                }}
+                title="Edit folder"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
+            {onShare && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare(folder);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '2px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: (folder.sharedWith?.length > 0) ? COLORS.primary : COLORS.textMuted,
+                  opacity: 0.7,
+                  marginRight: '2px'
+                }}
+                title={folder.sharedWith?.length > 0 ? `Shared with ${folder.sharedWith.length} user(s)` : 'Share folder'}
+              >
+                <Share2 size={14} />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '2px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: COLORS.danger,
+                  opacity: 0.7,
+                  marginRight: '4px'
+                }}
+                title="Delete folder"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </>
         )}
 
@@ -2656,7 +2663,7 @@ const FolderTreeItem = ({
 };
 
 // ============================================================
-// Folder Tree Component (recursive)
+// Folder Tree Component (with virtual scrolling for large lists)
 // ============================================================
 const FolderTreeComponent = ({
   folders,
@@ -2670,17 +2677,86 @@ const FolderTreeComponent = ({
   onShareFolder,
   onReorderFolders
 }) => {
+  const parentRef = useRef(null);
+
   // Separate system folders from user folders at root level
   const rootFolders = folders.filter(f => f.parentId === null || f.parentId === undefined);
   const systemFolders = rootFolders.filter(f => f.isSystem).sort((a, b) => (a.order || 0) - (b.order || 0));
   const userFolders = rootFolders.filter(f => !f.isSystem).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  // Flatten visible folders into a single array for virtualization
+  const flattenFolders = useCallback((folderList, depth = 0, isSystemSection = false) => {
+    const result = [];
+    folderList.forEach(folder => {
+      const childFolders = folders.filter(f => f.parentId === folder.id);
+      const hasChildren = childFolders.length > 0;
+      const isExpanded = expandedFolders.has(folder.id);
+
+      result.push({
+        folder,
+        depth,
+        hasChildren,
+        isExpanded,
+        isDraggable: !isSystemSection && depth === 0
+      });
+
+      // Add children if expanded
+      if (hasChildren && isExpanded) {
+        const sortedChildren = childFolders.sort((a, b) => (a.order || 0) - (b.order || 0));
+        result.push(...flattenFolders(sortedChildren, depth + 1, isSystemSection));
+      }
+    });
+    return result;
+  }, [folders, expandedFolders]);
+
+  // Create flattened list of all visible folders
+  const flattenedFolders = useMemo(() => {
+    const systemFlattened = flattenFolders(systemFolders, 0, true);
+    const userFlattened = flattenFolders(userFolders, 0, false);
+    return [...systemFlattened, ...userFlattened];
+  }, [flattenFolders, systemFolders, userFolders]);
+
+  // Use virtualization only when there are many folders (> 20 visible)
+  const useVirtual = flattenedFolders.length > 20;
+
+  // Virtual row renderer
+  const rowVirtualizer = useVirtualizer({
+    count: flattenedFolders.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 42, // Estimated row height
+    overscan: 5, // Render 5 extra items above/below viewport
+    enabled: useVirtual
+  });
 
   // Handle reorder - only for user folders
   const handleReorder = (newOrder) => {
     onReorderFolders(newOrder.map(f => f.id));
   };
 
-  // Render a single folder item (with children if expanded)
+  // Render a folder item (non-draggable version for virtual list)
+  const renderVirtualItem = (item) => {
+    const { folder, depth, hasChildren, isExpanded, isDraggable } = item;
+
+    return (
+      <FolderTreeItem
+        key={folder.id}
+        folder={folder}
+        depth={depth}
+        isActive={activeFolder === folder.id}
+        onSelect={onSelectFolder}
+        folderCounts={folderCounts}
+        hasChildren={hasChildren}
+        isExpanded={isExpanded}
+        onToggleExpand={onToggleExpand}
+        onDelete={onDeleteFolder}
+        onEdit={onEditFolder}
+        onShare={onShareFolder}
+        isDraggable={isDraggable}
+      />
+    );
+  };
+
+  // Render a single folder item (with children if expanded) - for non-virtual mode
   const renderFolderItem = (folder, depth = 0, isDraggable = false) => {
     const childFolders = folders.filter(f => f.parentId === folder.id);
     const hasChildren = childFolders.length > 0;
@@ -2711,6 +2787,49 @@ const FolderTreeComponent = ({
     return folderContent;
   };
 
+  // Virtual scrolling mode for large folder lists
+  if (useVirtual) {
+    return (
+      <div
+        ref={parentRef}
+        style={{
+          maxHeight: '400px',
+          overflow: 'auto',
+          // Hide scrollbar but keep functionality
+          scrollbarWidth: 'thin',
+          scrollbarColor: `${COLORS.border} transparent`
+        }}
+      >
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative'
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const item = flattenedFolders[virtualRow.index];
+            return (
+              <div
+                key={item.folder.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`
+                }}
+              >
+                {renderVirtualItem(item)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Standard mode with drag-drop support for smaller folder lists
   return (
     <div>
       {/* System folders - not draggable */}
@@ -4693,34 +4812,37 @@ const LinkArchiverPage = () => {
   };
 
   // Filter links by search and smart views (includes full-text content search)
-  const filteredLinks = links.filter(link => {
-    // Smart view filters (applied before search)
-    if (activeView === 'unread') {
-      // Unread = readProgress is 0, null, or undefined
-      if (link.readProgress && link.readProgress > 0) return false;
-    } else if (activeView === 'recent') {
-      // Recent = saved in last 7 days
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const savedAt = link.savedAt?.toDate ? link.savedAt.toDate() : new Date(link.savedAt);
-      if (savedAt < sevenDaysAgo) return false;
-    } else if (activeView === 'hasComments') {
-      // Has comments = commentCount > 0
-      if (!link.commentCount || link.commentCount === 0) return false;
-    }
+  // Memoized to prevent recalculation on every render (important for 7000+ links)
+  const filteredLinks = useMemo(() => {
+    return links.filter(link => {
+      // Smart view filters (applied before search)
+      if (activeView === 'unread') {
+        // Unread = readProgress is 0, null, or undefined
+        if (link.readProgress && link.readProgress > 0) return false;
+      } else if (activeView === 'recent') {
+        // Recent = saved in last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const savedAt = link.savedAt?.toDate ? link.savedAt.toDate() : new Date(link.savedAt);
+        if (savedAt < sevenDaysAgo) return false;
+      } else if (activeView === 'hasComments') {
+        // Has comments = commentCount > 0
+        if (!link.commentCount || link.commentCount === 0) return false;
+      }
 
-    // Search filter
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      link.title?.toLowerCase().includes(query) ||
-      link.domain?.toLowerCase().includes(query) ||
-      link.excerpt?.toLowerCase().includes(query) ||
-      link.content?.toLowerCase().includes(query) ||
-      link.aiSummary?.toLowerCase().includes(query) ||
-      link.tags?.some(t => t.toLowerCase().includes(query))
-    );
-  });
+      // Search filter
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        link.title?.toLowerCase().includes(query) ||
+        link.domain?.toLowerCase().includes(query) ||
+        link.excerpt?.toLowerCase().includes(query) ||
+        link.content?.toLowerCase().includes(query) ||
+        link.aiSummary?.toLowerCase().includes(query) ||
+        link.tags?.some(t => t.toLowerCase().includes(query))
+      );
+    });
+  }, [links, activeView, searchQuery]);
 
   // Calculate smart view counts
   const smartViewCounts = useMemo(() => {

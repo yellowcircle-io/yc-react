@@ -151,7 +151,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
           border: 'none',
           borderRadius: '8px',
           cursor: 'pointer',
-          zIndex: 260,
+          zIndex: 310,
           pointerEvents: 'auto',
           transition: 'background-color 0.3s ease'
         }}
@@ -198,7 +198,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
           bottom: 0,
           backgroundColor: 'rgb(251, 191, 36)',
           opacity: 0.96,
-          zIndex: 250,
+          zIndex: 300,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
@@ -346,7 +346,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
               width: isMobile ? '100vw' : 'min(500px, 85vw)',
               height: '100vh',
               backgroundColor: 'rgb(251, 191, 36)',
-              zIndex: 270,
+              zIndex: 320,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-end',
