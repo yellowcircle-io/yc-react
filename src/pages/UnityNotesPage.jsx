@@ -44,6 +44,8 @@ import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
 import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
 import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal, MobileNodeNavigator } from '../components/unity';
+import { useMomentumPan } from '../hooks/useMomentumPan';
+import { useSmoothWheel } from '../hooks/useSmoothWheel';
 
 const nodeTypes = {
   photoNode: DraggablePhotoNode,
@@ -139,6 +141,23 @@ const _isPremiumNode = (nodeType) => PREMIUM_NODE_TYPES.has(nodeType);
 
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showParallax, setShowParallax }) => {
   const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport, setCenter } = useReactFlow();
+
+  // Smooth scrolling hooks (Phase 2-3)
+  const reactFlowContainerRef = useRef(null);
+  const { handleMoveStart, handleMove, handleMoveEnd, cancelMomentum: _cancelMomentum } = useMomentumPan(getViewport, setViewport);
+  useSmoothWheel(reactFlowContainerRef, getViewport, setViewport);
+
+  // Prevent Safari 3-finger back/forward gesture (Phase 4)
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      if (e.touches.length >= 3) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    return () => document.removeEventListener('touchstart', handleTouchStart);
+  }, []);
+
   const { sidebarOpen } = useLayout();
   const { theme, themeConfig, accentConfig: _accentConfig, isDarkMode: _isDarkMode, setTheme } = useTheme();  
   const navigate = useNavigate();
@@ -546,7 +565,16 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
 
             // Restore collaboration state (v3)
             if (capsuleData.metadata) {
-              setCollaborators(capsuleData.metadata.collaborators || []);
+              // Include owner in collaborators list for @mention support
+              const ownerEmail = capsuleData.metadata.ownerEmail;
+              const existingCollaborators = capsuleData.metadata.collaborators || [];
+              const collaboratorsWithOwner = ownerEmail
+                ? [
+                    { email: ownerEmail, name: ownerEmail.split('@')[0], role: 'owner' },
+                    ...existingCollaborators.filter(c => c.email !== ownerEmail)
+                  ]
+                : existingCollaborators;
+              setCollaborators(collaboratorsWithOwner);
               setIsPublic(capsuleData.metadata.isPublic || false);
               setIsBookmarked(capsuleData.metadata.isBookmarked || false);
             }
@@ -2855,10 +2883,10 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
         capsuleId = currentCapsuleId;
         console.log('✅ Updated existing capsule:', capsuleId);
       } else {
-        // Create new capsule
+        // Create new capsule (pass ownerId and ownerEmail for @mention support)
         capsuleId = await saveCapsule(serializableNodes, serializableEdges, {
           title: 'UnityNotes'
-        }, user?.uid);
+        }, user?.uid, user?.email);
         setCurrentCapsuleId(capsuleId);
         console.log('✅ Created new capsule:', capsuleId);
       }
@@ -4498,7 +4526,7 @@ Example format:
           />
         )}
         {/* ReactFlow Canvas - Always render but hide when studio is open */}
-        <div style={{ display: currentMode === 'studio' ? 'none' : 'block', height: '100%' }}>
+        <div ref={reactFlowContainerRef} style={{ display: currentMode === 'studio' ? 'none' : 'block', height: '100%' }}>
           {/* Override React Flow's default overflow:hidden on nodes to show delete buttons */}
           {/* Phase 1: CSS Touch Feedback - Enhanced touch targets and visual feedback */}
           <style>{`
@@ -4510,12 +4538,13 @@ Example format:
             }
 
             /* Touch optimization for React Flow canvas */
+            /* Phase 4: Enable native momentum scrolling while preserving pinch-zoom */
             .react-flow,
             .react-flow__renderer,
             .react-flow__viewport,
             .react-flow__pane,
             .react-flow__container {
-              touch-action: none !important;
+              touch-action: pan-x pan-y pinch-zoom;
               -webkit-user-select: none !important;
               user-select: none !important;
             }
@@ -4606,6 +4635,21 @@ Example format:
                 box-shadow: 0 0 0 2px rgba(238, 207, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
                 animation: pulse-resize 1.5s ease-in-out infinite;
               }
+
+              /* Phase 4: Mobile momentum scrolling enhancements */
+              .react-flow__pane {
+                -webkit-overflow-scrolling: touch;
+              }
+
+              /* Reduce animation durations for snappier mobile feel */
+              .react-flow__viewport {
+                transition-duration: 100ms !important;
+              }
+
+              /* Visual feedback on canvas touch */
+              .react-flow__pane:active {
+                background-color: rgba(255, 255, 255, 0.02);
+              }
             }
 
             /* Pulse animation for resize handles */
@@ -4666,7 +4710,12 @@ Example format:
             onConnect={onConnect}
             onNodeDrag={handleNodeDrag}
             onNodeDragStop={handleNodeDragStop}
-            onMove={(_, viewport) => setZoomLevel(viewport.zoom)}
+            onMoveStart={handleMoveStart}
+            onMove={(event, viewport) => {
+              setZoomLevel(viewport.zoom);
+              handleMove(event, viewport);
+            }}
+            onMoveEnd={handleMoveEnd}
             nodeTypes={nodeTypes}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             panOnDrag={[1, 2]}

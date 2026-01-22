@@ -12,7 +12,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
-import { getLinks, getSharedWithMeLinks, getCanvasSharedLinks } from '../../../utils/firestoreLinks';
+import { getLinks, getSharedWithMeLinks, getCanvasSharedLinks, toggleStar, archiveLink } from '../../../utils/firestoreLinks';
 
 const SUBTABS = [
   { id: 'shared', label: 'Shared', icon: 'users' },
@@ -142,6 +142,58 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
     loadLinks();
   }, [user?.uid, canvasId]);
 
+  // Handle star toggle
+  const handleToggleStar = async (link, e) => {
+    e.stopPropagation();
+    const newStarred = !link.starred;
+
+    try {
+      await toggleStar(link.id, newStarred);
+
+      // Update local state optimistically
+      const updateLinkInList = (list, setter) => {
+        setter(list.map(l =>
+          l.id === link.id ? { ...l, starred: newStarred } : l
+        ));
+      };
+
+      if (newStarred) {
+        // Add to starred list
+        setStarredLinks(prev => [{ ...link, starred: true }, ...prev.filter(l => l.id !== link.id)]);
+      } else {
+        // Remove from starred list
+        setStarredLinks(prev => prev.filter(l => l.id !== link.id));
+      }
+
+      // Update recent list
+      updateLinkInList(recentLinks, setRecentLinks);
+      // Update shared lists
+      updateLinkInList(sharedLinks, setSharedLinks);
+      updateLinkInList(sharedWithMeLinks, setSharedWithMeLinks);
+      updateLinkInList(sharedToCanvasLinks, setSharedToCanvasLinks);
+    } catch (err) {
+      console.error('[LinksTab] Failed to toggle star:', err);
+    }
+  };
+
+  // Handle archive action
+  const handleArchive = async (link, e) => {
+    e.stopPropagation();
+
+    try {
+      await archiveLink(link.id, true);
+
+      // Remove from all lists (archived links don't show in tray)
+      setStarredLinks(prev => prev.filter(l => l.id !== link.id));
+      setRecentLinks(prev => prev.filter(l => l.id !== link.id));
+      setSharedLinks(prev => prev.filter(l => l.id !== link.id));
+      setSharedWithMeLinks(prev => prev.filter(l => l.id !== link.id));
+      setSharedToCanvasLinks(prev => prev.filter(l => l.id !== link.id));
+    } catch (err) {
+      console.error('[LinksTab] Failed to archive link:', err);
+    }
+  };
+
   // Get icon SVG for subtab
   const getTabIcon = (iconType, isActive) => {
     const color = isActive ? '#171717' : '#9ca3af';
@@ -206,26 +258,16 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Title with star indicator */}
+          {/* Title */}
           <div style={{
             fontSize: '12px',
             fontWeight: '500',
             color: '#111827',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
+            whiteSpace: 'nowrap'
           }}>
-            {link.starred && (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-            )}
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {link.title || 'Untitled'}
-            </span>
+            {link.title || 'Untitled'}
           </div>
 
           {/* Domain */}
@@ -241,47 +283,97 @@ const LinksTab = ({ onAddLinkNode, canvasId }) => {
           </div>
         </div>
 
-        {/* Add to Canvas button */}
-        {onAddLinkNode && (
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+          {/* Star toggle button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddLinkNode(link);
-            }}
+            onClick={(e) => handleToggleStar(link, e)}
             style={{
-              padding: '4px 8px',
+              padding: '4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px',
               backgroundColor: 'transparent',
-              border: '1px solid #e5e7eb',
-              borderRadius: '6px',
+              border: 'none',
+              borderRadius: '4px',
               cursor: 'pointer',
-              color: '#6b7280',
-              flexShrink: 0,
-              transition: 'all 0.15s',
-              fontSize: '10px',
-              fontWeight: '500'
+              transition: 'all 0.15s'
             }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#fbbf24';
-              e.currentTarget.style.borderColor = '#fbbf24';
-              e.currentTarget.style.color = '#171717';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = '#e5e7eb';
-              e.currentTarget.style.color = '#6b7280';
-            }}
-            title="Add to canvas"
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fef3c7'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            title={link.starred ? 'Unstar' : 'Star'}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={link.starred ? '#fbbf24' : 'none'} stroke={link.starred ? '#fbbf24' : '#9ca3af'} strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span>Add</span>
           </button>
-        )}
+
+          {/* Archive button */}
+          <button
+            onClick={(e) => handleArchive(link, e)}
+            style={{
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              transition: 'all 0.15s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            title="Archive"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+              <polyline points="21 8 21 21 3 21 3 8" />
+              <rect x="1" y="3" width="22" height="5" />
+              <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>
+          </button>
+
+          {/* Add to Canvas button */}
+          {onAddLinkNode && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddLinkNode(link);
+              }}
+              style={{
+                padding: '4px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                backgroundColor: 'transparent',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                color: '#6b7280',
+                transition: 'all 0.15s',
+                fontSize: '10px',
+                fontWeight: '500'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#fbbf24';
+                e.currentTarget.style.borderColor = '#fbbf24';
+                e.currentTarget.style.color = '#171717';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.borderColor = '#e5e7eb';
+                e.currentTarget.style.color = '#6b7280';
+              }}
+              title="Add to canvas"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Add</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

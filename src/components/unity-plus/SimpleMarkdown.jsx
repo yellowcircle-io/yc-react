@@ -265,5 +265,5 @@ export default function SimpleMarkdown({ content, isDarkTheme = true, className 
 // Also export a hook for checking if content has markdown
 export function hasMarkdown(text) {
   if (!text) return false;
-  return /[#*`>\-\[\]]/.test(text);
+  return /[#*`>\-[\]]/.test(text);
 }

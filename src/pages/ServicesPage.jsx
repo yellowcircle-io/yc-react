@@ -207,7 +207,7 @@ function ServicesPage() {
     navigate('/');
   };
 
-  const handleGetStarted = (service) => {
+  const _handleGetStarted = (service) => {
     openContactModal('', `Interested in: ${service.title}`);
   };
 

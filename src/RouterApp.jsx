@@ -57,6 +57,7 @@ const JourneysPage = lazy(() => import('./pages/JourneysPage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const ShortlinkRedirectPage = lazy(() => import('./pages/ShortlinkRedirectPage'));
 const ShortlinkManagerPage = lazy(() => import('./pages/ShortlinkManagerPage'));
+const VanitySavePage = lazy(() => import('./pages/VanitySavePage'));
 
 // Experiment sub-routes (lazy loaded with retry for better reliability)
 const GoldenUnknownPage = lazyWithRetry(() => import('./pages/experiments/GoldenUnknownPage'));
@@ -154,6 +155,9 @@ function RouterApp() {
             {/* Shortlinks */}
             <Route path="/go/:shortCode" element={<ShortlinkRedirectPage />} />
             <Route path="/shortlinks" element={<ShortlinkManagerPage />} />
+
+            {/* Vanity Save URL - saves link and redirects */}
+            <Route path="/s/:token/*" element={<VanitySavePage />} />
 
             {/* Experiment Sub-routes */}
             <Route path="/experiments/golden-unknown" element={<GoldenUnknownPage />} />

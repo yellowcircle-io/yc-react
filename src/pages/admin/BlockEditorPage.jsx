@@ -11,7 +11,7 @@
  * - Save to Firestore with blocks array
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/global/Layout';
@@ -20,7 +20,6 @@ import {
   getArticle,
   saveArticle,
   publishArticle,
-  createArticleObject,
   ARTICLE_STATUS,
   ARTICLE_CATEGORIES,
   CONTENT_SOURCE,

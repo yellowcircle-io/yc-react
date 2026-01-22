@@ -10,7 +10,7 @@ import { COLORS } from '../styles/constants';
 function ShortlinkRedirectPage() {
   const { shortCode } = useParams();
   const navigate = useNavigate();
-  const { getShortlink, isLoading } = useShortlinks();
+  const { getShortlink, isLoading: _isLoading } = useShortlinks();
   const [error, setError] = useState(null);
   const [countdown, setCountdown] = useState(3);
 

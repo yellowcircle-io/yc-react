@@ -26,6 +26,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { sendToSlack, sendToN8N } from '../config/integrations';
 
 const LINKS_COLLECTION = 'links';
 const NOTIFICATIONS_COLLECTION = 'notifications';
@@ -69,6 +70,56 @@ const createNotification = async ({
     return true;
   } catch (error) {
     console.error('[Notification] Error creating notification:', error);
+    return false;
+  }
+};
+
+/**
+ * Send Slack notification for link sharing
+ * Posts to configured Slack channel when a link is shared
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<boolean>} Success status
+ */
+const notifySlackOnShare = async ({
+  linkTitle,
+  linkUrl,
+  sharedByEmail,
+  sharedWithEmail,
+  shareType = 'user'
+}) => {
+  try {
+    const shareTypeLabel = shareType === 'canvas' ? 'canvas' : 'user';
+    const truncatedTitle = linkTitle?.length > 50
+      ? linkTitle.substring(0, 47) + '...'
+      : linkTitle || 'Untitled';
+
+    const message = {
+      text: `📎 *Link Shared*\n\n` +
+            `*From:* ${sharedByEmail}\n` +
+            `*To:* ${sharedWithEmail} (${shareTypeLabel})\n` +
+            `*Link:* ${truncatedTitle}\n` +
+            `<${linkUrl}|View Link>`,
+      source: 'link-share',
+      from_name: 'yellowCircle Link Archiver'
+    };
+
+    // Try n8n first (for threading and logging), fall back to direct Slack
+    const n8nResult = await sendToN8N({
+      ...message,
+      event_type: 'link_shared',
+      share_type: shareType
+    });
+
+    if (!n8nResult.success) {
+      // Fallback to direct Slack
+      await sendToSlack(message);
+    }
+
+    console.log(`[SlackNotify] Link share notification sent: ${linkTitle}`);
+    return true;
+  } catch (error) {
+    // Don't fail the share operation if Slack notification fails
+    console.warn('[SlackNotify] Failed to send notification:', error.message);
     return false;
   }
 };
@@ -1256,6 +1307,15 @@ export const shareLink = async (linkId, ownerId, targetEmail, targetUserId = nul
     }
   });
 
+  // Send Slack notification (async, non-blocking)
+  notifySlackOnShare({
+    linkTitle: link.title,
+    linkUrl: link.url,
+    sharedByEmail: ownerEmail,
+    sharedWithEmail: targetEmail,
+    shareType: 'user'
+  }).catch(() => {}); // Ignore errors silently
+
   return { success: true, shareEntry };
 };
 
@@ -1363,6 +1423,19 @@ export const shareLinkToCanvas = async (linkId, ownerId, capsuleId, canvasName =
     sharedWithCanvasIds: updatedSharedWithCanvasIds,
     updatedAt: serverTimestamp()
   });
+
+  // Send Slack notification (async, non-blocking)
+  // Get owner email for notification
+  getDoc(doc(db, 'users', ownerId)).then(ownerSnap => {
+    const ownerEmail = ownerSnap.exists() ? ownerSnap.data().email : 'Someone';
+    notifySlackOnShare({
+      linkTitle: link.title,
+      linkUrl: link.url,
+      sharedByEmail: ownerEmail,
+      sharedWithEmail: canvasName || capsuleId,
+      shareType: 'canvas'
+    }).catch(() => {});
+  }).catch(() => {});
 
   return { success: true, shareEntry };
 };
@@ -1906,6 +1979,216 @@ export const getCommentReplies = async (parentCommentId) => {
 };
 
 // ============================================================
+// Annotations (Highlights & Notes) - No External Cost
+// ============================================================
+
+/**
+ * Generate a unique annotation ID
+ * @returns {string} Unique ID
+ */
+const generateAnnotationId = () => {
+  return `ann_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+/**
+ * Add an annotation (highlight/note) to a link
+ * @param {string} linkId - Link ID
+ * @param {string} userId - User ID for ownership verification
+ * @param {Object} annotation - Annotation data
+ * @param {string} annotation.text - Highlighted text
+ * @param {string} annotation.note - User's note (optional)
+ * @param {string} annotation.color - Highlight color (default: yellow)
+ * @param {Object} annotation.position - Position data for rendering (optional)
+ * @returns {Promise<Object>} Created annotation with ID
+ */
+export const addAnnotation = async (linkId, userId, annotation) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+
+  // Verify ownership or shared access
+  const hasAccess = link.userId === userId ||
+    (link.sharedWithUserIds || []).includes(userId);
+
+  if (!hasAccess) {
+    throw new Error('No permission to annotate this link');
+  }
+
+  const newAnnotation = {
+    id: generateAnnotationId(),
+    text: annotation.text || '',
+    note: annotation.note || '',
+    color: annotation.color || '#fbbf24', // yellowCircle yellow
+    position: annotation.position || null,
+    authorId: userId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const annotations = link.annotations || [];
+  const updatedAnnotations = [...annotations, newAnnotation];
+
+  await updateDoc(linkRef, {
+    annotations: updatedAnnotations,
+    updatedAt: serverTimestamp()
+  });
+
+  return newAnnotation;
+};
+
+/**
+ * Update an annotation
+ * @param {string} linkId - Link ID
+ * @param {string} annotationId - Annotation ID
+ * @param {string} userId - User ID for ownership verification
+ * @param {Object} updates - Fields to update (note, color, text)
+ * @returns {Promise<Object>} Updated annotation
+ */
+export const updateAnnotation = async (linkId, annotationId, userId, updates) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+  const annotations = link.annotations || [];
+
+  const annotationIndex = annotations.findIndex(a => a.id === annotationId);
+  if (annotationIndex === -1) {
+    throw new Error('Annotation not found');
+  }
+
+  const annotation = annotations[annotationIndex];
+
+  // Only the annotation author can update it
+  if (annotation.authorId !== userId) {
+    throw new Error('Only the author can update this annotation');
+  }
+
+  // Update allowed fields
+  const allowedUpdates = ['text', 'note', 'color', 'position'];
+  const updatedAnnotation = { ...annotation };
+
+  for (const key of allowedUpdates) {
+    if (updates[key] !== undefined) {
+      updatedAnnotation[key] = updates[key];
+    }
+  }
+  updatedAnnotation.updatedAt = new Date().toISOString();
+
+  // Replace in array
+  annotations[annotationIndex] = updatedAnnotation;
+
+  await updateDoc(linkRef, {
+    annotations,
+    updatedAt: serverTimestamp()
+  });
+
+  return updatedAnnotation;
+};
+
+/**
+ * Delete an annotation
+ * @param {string} linkId - Link ID
+ * @param {string} annotationId - Annotation ID
+ * @param {string} userId - User ID for ownership verification
+ * @returns {Promise<void>}
+ */
+export const deleteAnnotation = async (linkId, annotationId, userId) => {
+  const linkRef = doc(db, LINKS_COLLECTION, linkId);
+  const linkSnap = await getDoc(linkRef);
+
+  if (!linkSnap.exists()) {
+    throw new Error('Link not found');
+  }
+
+  const link = linkSnap.data();
+  const annotations = link.annotations || [];
+
+  const annotation = annotations.find(a => a.id === annotationId);
+  if (!annotation) {
+    throw new Error('Annotation not found');
+  }
+
+  // Allow deletion by annotation author OR link owner
+  if (annotation.authorId !== userId && link.userId !== userId) {
+    throw new Error('No permission to delete this annotation');
+  }
+
+  const updatedAnnotations = annotations.filter(a => a.id !== annotationId);
+
+  await updateDoc(linkRef, {
+    annotations: updatedAnnotations,
+    updatedAt: serverTimestamp()
+  });
+};
+
+/**
+ * Get all annotations for a link
+ * @param {string} linkId - Link ID
+ * @returns {Promise<Object[]>} Array of annotations
+ */
+export const getAnnotations = async (linkId) => {
+  const link = await getLink(linkId);
+  if (!link) {
+    throw new Error('Link not found');
+  }
+
+  return link.annotations || [];
+};
+
+/**
+ * Get annotation count for a link
+ * @param {string} linkId - Link ID
+ * @returns {Promise<number>} Annotation count
+ */
+export const getAnnotationCount = async (linkId) => {
+  const annotations = await getAnnotations(linkId);
+  return annotations.length;
+};
+
+/**
+ * Get all user's annotations across all links
+ * @param {string} userId - User ID
+ * @returns {Promise<Object[]>} Annotations with link info
+ */
+export const getUserAnnotations = async (userId) => {
+  const q = query(
+    collection(db, LINKS_COLLECTION),
+    where('userId', '==', userId)
+  );
+
+  const snapshot = await getDocs(q);
+  const allAnnotations = [];
+
+  snapshot.docs.forEach(docSnap => {
+    const link = docSnap.data();
+    const annotations = link.annotations || [];
+
+    annotations.forEach(annotation => {
+      allAnnotations.push({
+        ...annotation,
+        linkId: docSnap.id,
+        linkTitle: link.title,
+        linkUrl: link.url
+      });
+    });
+  });
+
+  // Sort by createdAt descending
+  allAnnotations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  return allAnnotations;
+};
+
+// ============================================================
 // Helper Functions
 // ============================================================
 
@@ -1996,5 +2279,13 @@ export default {
   getCommentCount,
   updateComment,
   deleteComment,
-  getCommentReplies
+  getCommentReplies,
+
+  // Annotations (Highlights & Notes)
+  addAnnotation,
+  updateAnnotation,
+  deleteAnnotation,
+  getAnnotations,
+  getAnnotationCount,
+  getUserAnnotations
 };

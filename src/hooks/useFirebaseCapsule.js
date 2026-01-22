@@ -249,10 +249,10 @@ export const useFirebaseCapsule = () => {
    * @param {Array} nodes - React Flow nodes array
    * @param {Array} edges - React Flow edges array
    * @param {Object} metadata - Optional metadata (title, description)
-   * @param {Object} options - { skipRateLimit: false, ownerId: null }
+   * @param {Object} options - { skipRateLimit: false, ownerId: null, ownerEmail: null }
    * @returns {Promise<string>} capsuleId - Unique ID for shareable URL
    */
-  const saveCapsule = async (nodes, edges, metadata = {}, ownerId = null, options = {}) => {
+  const saveCapsule = async (nodes, edges, metadata = {}, ownerId = null, ownerEmail = null, options = {}) => {
     const { skipRateLimit = false } = options;
 
     // Generate capsule ID early for rate limit check
@@ -291,6 +291,7 @@ export const useFirebaseCapsule = () => {
         version: 3, // v3 with collaboration support
         // Collaboration fields (v3)
         ownerId: ownerId || null,
+        ownerEmail: ownerEmail || null,
         collaborators: [],
         // Embedded arrays (cost-efficient)
         nodes: nodes.map(serializeNode),

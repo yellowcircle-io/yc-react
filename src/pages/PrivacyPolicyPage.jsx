@@ -7,7 +7,7 @@ import { navigationItems } from '../config/navigationItems';
 
 function PrivacyPolicyPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, handleFooterToggle, handleMenuToggle } = useLayout();
 
   React.useEffect(() => {
     const styleId = 'text-stagger-animations';

@@ -476,9 +476,93 @@ const handleSearch = async (query) => {
 
 ---
 
+## yc-MSF: Multi-Session Framework
+
+The yellowCircle Multi-Session Framework (yc-MSF) ensures context continuity across sessions and machines.
+
+### Key Documents (Priority Order)
+
+| Document | Purpose | Update Frequency |
+|----------|---------|------------------|
+| `.claude/shared-context/WIP_CURRENT_CRITICAL.md` | Current work status, session handoff | Every session |
+| `.claude/shared-context/ACTIVE_SPRINT.md` | Sprint tasks, scope status, priorities | When tasks change |
+| `dev-context/SCOPE_*.md` | Feature specifications | When scope changes |
+| `.claude/plans/*.md` | Detailed implementation plans | When planning |
+
+### Session Protocol
+
+**On Session Start:**
+1. Run `./.claude/verify-sync.sh` (sync status)
+2. Read `WIP_CURRENT_CRITICAL.md` (current context)
+3. Check `ACTIVE_SPRINT.md` (priorities)
+
+**On Session End:**
+1. Update `WIP_CURRENT_CRITICAL.md` with status
+2. Update `ACTIVE_SPRINT.md` if tasks completed
+3. Wait 30 seconds for Dropbox sync
+4. Git push if significant changes
+
+### Status Indicators
+
+- ✅ Complete
+- ⚠️ Partial (some work done)
+- 🔲 Not Started
+- ⏳ Blocked
+- 📋 Planned
+
+---
+
+## Agent Protocols
+
+### Sleepless Agent
+
+**Purpose:** Automated codebase improvements during off-hours.
+
+**Protocol:**
+1. Changes are committed to a feature branch (not main)
+2. All changes require human review
+3. Architecture compliance is mandatory
+4. Must not break build or tests
+
+**Review Checklist:**
+- [ ] No direct Firebase imports in components
+- [ ] Uses `useAuth()` hook for auth state
+- [ ] All imports used or prefixed with `_`
+- [ ] No new lint errors introduced
+- [ ] Build passes: `npm run build`
+
+### Playwright MCP
+
+**Purpose:** Browser automation for testing and verification.
+
+**Available via MCP tools:**
+- `mcp__playwright__browser_navigate` - Navigate to URL
+- `mcp__playwright__browser_snapshot` - Capture page state
+- `mcp__playwright__browser_click` - Interact with elements
+- `mcp__playwright__browser_type` - Enter text
+
+**Use Cases:**
+1. Visual verification of deployments
+2. Integration testing of UI flows
+3. Screenshot capture for documentation
+
+**Best Practices:**
+- Use `browser_snapshot` before interactions (accessibility tree)
+- Prefer `browser_snapshot` over `browser_take_screenshot` for actions
+
+**⚠️ CRITICAL: DO NOT close Playwright browser during session**
+- Keep browser open throughout the session for iterative testing
+- User may need to visually verify changes at any time
+- Only close if explicitly requested by user
+- Browser persists state, tabs, and login sessions
+
+---
+
 ## References
 
 - **Deployment Rules:** `dev-context/SCOPE_CODE_QUALITY_RULES.md`
 - **Firebase Patterns:** `src/utils/firestore*.js` (canonical implementations)
 - **Component Patterns:** `src/components/` (reference implementations)
 - **Workflow Details:** `.claude/workflows/`
+- **MSF Context:** `.claude/shared-context/` (WIP, Active Sprint)
+- **Agent Plans:** `.claude/plans/` (feature designs)

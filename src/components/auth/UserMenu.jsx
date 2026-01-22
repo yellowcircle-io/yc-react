@@ -12,11 +12,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import { useNotifications } from '../../contexts/NotificationContext';
 import AuthModal from './AuthModal';
-import { Settings, Bookmark, Bell, Check, X } from 'lucide-react';
+import { Settings, Bookmark, Bell, Check, X, Shield, Map } from 'lucide-react';
 
 const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
   const navigate = useNavigate();
-  const { user, userProfile, isAuthenticated, signOut } = useAuth();
+  const { user, userProfile, isAuthenticated, signOut, isAdmin } = useAuth();
   const { creditsRemaining, tier } = useCredits();
   const { notifications, unreadCount, markAsRead, dismissNotification } = useNotifications();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -443,6 +443,67 @@ const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
                 Settings
               </button>
             </div>
+
+            {/* Admin Links (only for admins) */}
+            {isAdmin && (
+              <div style={{ padding: '8px', borderBottom: '1px solid #f3f4f6' }}>
+                <div style={{ padding: '4px 12px', fontSize: '10px', fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Admin
+                </div>
+                <button
+                  onClick={() => {
+                    navigate('/admin');
+                    setShowDropdown(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'background-color 0.15s'
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <Shield size={16} color="#6b7280" />
+                  Admin Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/sitemap');
+                    setShowDropdown(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'background-color 0.15s'
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <Map size={16} color="#6b7280" />
+                  Sitemap
+                </button>
+              </div>
+            )}
 
             {/* Actions */}
             <div style={{ padding: '8px' }}>

@@ -33,10 +33,10 @@ const sendEmail = async (options) => {
   const {
     to,
     from = DEFAULT_FROM,
-    subject,
-    html,
-    text,
-    replyTo,
+    subject: _subject,      // Reserved for SMTP API
+    html: _html,            // Reserved for SMTP API
+    text: _text,            // Reserved for SMTP API
+    replyTo: _replyTo,      // Reserved for SMTP API
     templateId,
     customProperties = {},
   } = options;

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>yellowCircle Link Saver</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <div class="logo-circle"></div>
+        <span class="logo-text">yellowCircle</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+      <!-- Setup View (no token) -->
+      <div id="setup-view" class="view hidden">
+        <p class="setup-text">Connect your yellowCircle account to start saving links.</p>
+        <div class="input-group">
+          <label for="token-input">API Token</label>
+          <input
+            type="text"
+            id="token-input"
+            placeholder="yc_xxxxxxxx..."
+            autocomplete="off"
+          >
+          <p class="help-text">
+            Find your token at
+            <a href="https://yellowcircle.io/account/settings" target="_blank">Account Settings</a>
+          </p>
+        </div>
+        <button id="save-token-btn" class="btn btn-primary">Connect Account</button>
+      </div>
+
+      <!-- Save View (has token) -->
+      <div id="save-view" class="view hidden">
+        <div class="page-info">
+          <div class="page-favicon" id="page-favicon"></div>
+          <div class="page-details">
+            <div class="page-title" id="page-title">Loading...</div>
+            <div class="page-url" id="page-url"></div>
+          </div>
+        </div>
+
+        <div class="tags-section">
+          <label>Tags (optional)</label>
+          <input
+            type="text"
+            id="tags-input"
+            placeholder="tag1, tag2, tag3"
+          >
+        </div>
+
+        <button id="save-link-btn" class="btn btn-primary">
+          <span class="btn-text">Save Link</span>
+          <span class="btn-loading hidden">Saving...</span>
+        </button>
+
+        <div id="save-status" class="status hidden"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button id="settings-btn" class="footer-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+      <a href="https://yellowcircle.io/links" target="_blank" class="footer-btn" title="View Saved Links">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Settings</h3>
+          <button id="close-settings" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-item">
+            <label>API Token</label>
+            <div class="token-display">
+              <span id="current-token">yc_****</span>
+              <button id="disconnect-btn" class="btn btn-danger btn-small">Disconnect</button>
+            </div>
+          </div>
+          <div class="setting-item">
+            <label>Quick Save Shortcut</label>
+            <div class="shortcut-info">
+              <kbd>Alt</kbd> + <kbd>S</kbd>
+              <span class="shortcut-note">(Mac: Ctrl + S)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

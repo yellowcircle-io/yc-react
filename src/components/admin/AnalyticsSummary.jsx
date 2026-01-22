@@ -21,7 +21,7 @@ import {
   TrendingUp,
   RefreshCw
 } from 'lucide-react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { getAdminHeaders, FUNCTIONS_BASE_URL } from '../../utils/adminConfig';
 
 // Colors
@@ -61,6 +61,7 @@ const MiniBadge = ({ label, value, icon: IconComponent, color, trend }) => (
 );
 
 const AnalyticsSummary = ({ children, refreshTrigger = 0 }) => {
+  const { user, loading: authLoading } = useAuth();
   const [isExpanded, setIsExpanded] = useState(() => {
     // Load preference from localStorage
     const saved = localStorage.getItem('yc_analytics_expanded');
@@ -69,7 +70,6 @@ const AnalyticsSummary = ({ children, refreshTrigger = 0 }) => {
 
   const [summaryStats, setSummaryStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authReady, setAuthReady] = useState(false);
 
   // Fetch compact summary stats
   const fetchSummary = useCallback(async () => {
@@ -104,26 +104,22 @@ const AnalyticsSummary = ({ children, refreshTrigger = 0 }) => {
     }
   }, []);
 
-  // Wait for Firebase Auth
+  // Fetch stats when auth is ready and user is logged in
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setAuthReady(true);
-      if (user) {
-        fetchSummary();
-      } else {
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [fetchSummary]);
+    if (authLoading) return; // Wait for auth to be ready
+    if (user) {
+      fetchSummary();
+    } else {
+      setLoading(false);
+    }
+  }, [user, authLoading, fetchSummary]);
 
   // Refetch when refreshTrigger changes
   useEffect(() => {
-    if (authReady && refreshTrigger > 0) {
+    if (!authLoading && user && refreshTrigger > 0) {
       fetchSummary();
     }
-  }, [refreshTrigger, authReady, fetchSummary]);
+  }, [refreshTrigger, authLoading, user, fetchSummary]);
 
   // Save preference to localStorage
   useEffect(() => {

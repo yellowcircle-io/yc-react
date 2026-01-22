@@ -18,7 +18,7 @@ import {
   GitBranch,
   LogIn
 } from 'lucide-react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { getAdminHeaders, FUNCTIONS_BASE_URL } from '../../utils/adminConfig';
 
 // Colors
@@ -59,10 +59,10 @@ const StatCard = ({ label, value, icon: Icon, color, subText }) => (
 );
 
 const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -102,29 +102,23 @@ const PipelineStatsCard = ({ refreshTrigger = 0 }) => {
     }
   }, []);
 
-  // Wait for Firebase Auth to initialize before fetching
+  // Fetch stats when auth is ready and user is logged in
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setAuthReady(true);
-      if (user) {
-        // Auth is ready and user is logged in, fetch stats
-        fetchStats();
-      } else {
-        // No user logged in
-        setLoading(false);
-        setError('Not logged in');
-      }
-    });
-    return () => unsubscribe();
-  }, [fetchStats]);
+    if (authLoading) return; // Wait for auth to be ready
+    if (user) {
+      fetchStats();
+    } else {
+      setLoading(false);
+      setError('Not logged in');
+    }
+  }, [user, authLoading, fetchStats]);
 
   // Refetch when refreshTrigger changes (but only if auth is ready)
   useEffect(() => {
-    if (authReady && refreshTrigger > 0) {
+    if (!authLoading && user && refreshTrigger > 0) {
       fetchStats();
     }
-  }, [refreshTrigger, authReady, fetchStats]);
+  }, [refreshTrigger, authLoading, user, fetchStats]);
 
   if (loading) {
     return (

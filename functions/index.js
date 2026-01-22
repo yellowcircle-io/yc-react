@@ -12990,6 +12990,18 @@ exports.linkArchiverGetLinkStats = linkArchiver.getLinkStats;
 exports.linkArchiverSummarizeLink = linkArchiver.summarizeLink;
 exports.linkArchiverArchiveSnapshot = linkArchiver.archiveSnapshot;
 
+// Quick Save & API Token Management (for external integrations)
+exports.linkArchiverQuickSave = linkArchiver.quickSave;
+exports.linkArchiverGenerateApiToken = linkArchiver.generateApiToken;
+exports.linkArchiverGetApiToken = linkArchiver.getApiToken;
+exports.linkArchiverRevokeApiToken = linkArchiver.revokeApiToken;
+exports.linkArchiverCreateVanitySlug = linkArchiver.createVanitySlug;
+exports.linkArchiverEmailToSave = linkArchiver.emailToSave;
+exports.linkArchiverGetSaveEmail = linkArchiver.getSaveEmail;
+exports.linkArchiverValidateToken = linkArchiver.validateToken;
+exports.linkArchiverSaveSecretKey = linkArchiver.saveSecretKey;
+exports.linkArchiverGetSecretKeyStatus = linkArchiver.getSecretKeyStatus;
+
 // Pocket Import Function (bulk import)
 const pocketImport = require('./importPocketHttp');
 exports.importPocketLinks = pocketImport.importPocketLinks;

@@ -248,7 +248,7 @@ function ThoughtsPage() {
                 WebkitOverflowScrolling: 'touch'
               } : {})
             }}>
-              {displayArticles.map((article, index) => (
+              {displayArticles.map((article, _index) => (
                 <div
                   key={article.id}
                   onClick={() => handleArticleClick(article)}

@@ -57,6 +57,7 @@ import {
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useShortlinks } from '../../hooks/useShortlinks';
+import { useOfflineLinks } from '../../hooks/useOfflineStatus';
 import {
   Link2,
   Folder,
@@ -103,7 +104,9 @@ import {
   GripVertical,
   MessageCircle,
   Sparkles,
-  CalendarDays
+  CalendarDays,
+  WifiOff,
+  CloudOff
 } from 'lucide-react';
 import { CommentList } from '../../components/comments';
 
@@ -1586,7 +1589,7 @@ const SharePill = ({ shares, type }) => {
   );
 };
 
-const LinkCard = ({ link, onStar, onArchive, onDelete, onClick, onShare, onRead, onShortlink }) => {
+const LinkCard = ({ link, onStar, onArchive, onDelete, onClick, onShare, onRead, onShortlink, onOffline, isOffline }) => {
   const [isHovered, setIsHovered] = useState(false);
   const sharedWith = link.sharedWith || [];
   const userShares = sharedWith.filter(s => s.type === 'user');
@@ -1670,7 +1673,7 @@ const LinkCard = ({ link, onStar, onArchive, onDelete, onClick, onShare, onRead,
               <>
                 <span style={{ color: COLORS.textLight }}>•</span>
                 <Clock size={10} />
-                {Math.ceil(link.estimatedReadTime / 60)}m
+                {Math.min(60, Math.ceil(link.estimatedReadTime / 60))}m
               </>
             )}
           </div>
@@ -1684,6 +1687,24 @@ const LinkCard = ({ link, onStar, onArchive, onDelete, onClick, onShare, onRead,
             {link.tags?.length > 2 && (
               <span style={{ fontSize: '10px', color: COLORS.textLight }}>
                 +{link.tags.length - 2}
+              </span>
+            )}
+            {isOffline && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  fontSize: '10px',
+                  color: COLORS.success,
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}
+                title="Available offline"
+              >
+                <WifiOff size={10} />
+                Offline
               </span>
             )}
             {isShared && (
@@ -1755,6 +1776,19 @@ const LinkCard = ({ link, onStar, onArchive, onDelete, onClick, onShare, onRead,
           >
             <ExternalLink size={16} />
           </button>
+
+          {link.content && (
+            <button
+              style={{
+                ...styles.actionButton,
+                color: isOffline ? COLORS.success : COLORS.textMuted
+              }}
+              onClick={(e) => { e.stopPropagation(); onOffline(link); }}
+              title={isOffline ? 'Remove offline' : 'Save for offline reading'}
+            >
+              {isOffline ? <WifiOff size={16} /> : <CloudOff size={16} />}
+            </button>
+          )}
 
           <button
             style={styles.actionButton}
@@ -3293,7 +3327,14 @@ const LinkDetailModal = ({ link, isOpen, onClose, onUpdate, onRead }) => {
           <CommentList
             targetType="link"
             targetId={link.id}
-            collaborators={[]}
+            collaborators={[
+              // Include link owner if available
+              ...(link.ownerEmail ? [{ email: link.ownerEmail, name: link.ownerEmail }] : []),
+              // Include all users the link is shared with
+              ...(link.sharedWith || [])
+                .filter(s => s.type === 'user' && s.targetEmail)
+                .map(s => ({ email: s.targetEmail, name: s.targetEmail }))
+            ].filter((c, i, arr) => arr.findIndex(x => x.email === c.email) === i)}
             showInput={true}
           />
         </div>
@@ -4407,6 +4448,17 @@ const LinkArchiverPage = () => {
   useLayout(); // Context subscription for sidebar
   const { user, isAdmin, loading: authLoading } = useAuth();
 
+  // Offline storage
+  const {
+    isOnline: _isOnline, // Reserved for offline mode UI
+    offlineLinkIds,
+    offlineCount,
+    stats: offlineStats,
+    isLinkOffline,
+    toggleLinkOffline,
+    getAllOfflineLinks: _getAllOfflineLinks // Reserved for offline sync
+  } = useOfflineLinks();
+
   // State
   const [links, setLinks] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -4469,12 +4521,12 @@ const LinkArchiverPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Load data
-  const loadData = useCallback(async () => {
+  // Load data (silent = true skips loading indicator for background refreshes)
+  const loadData = useCallback(async (silent = false) => {
     if (!user) return;
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Ensure default system folders exist (Inbox) and cleanup any duplicates
@@ -4701,14 +4753,29 @@ const LinkArchiverPage = () => {
         throw new Error(error.error || 'Failed to save link');
       }
 
+      // Get the saved link from response for optimistic update
+      const result = await response.json();
+      const savedLink = result.link;
+
+      // Optimistic update: add link to state immediately (if not a duplicate)
+      if (savedLink && !result.duplicate) {
+        // Convert serverTimestamp to Date for display
+        const linkWithDate = {
+          ...savedLink,
+          savedAt: new Date(),
+          updatedAt: new Date()
+        };
+        setLinks(prev => [linkWithDate, ...prev]);
+      }
+
       // Reset form and close modal
       setNewLinkUrl('');
       setNewLinkTitle('');
       setNewLinkTags('');
       setShowAddLinkModal(false);
 
-      // Reload data
-      loadData();
+      // Silent background refresh to sync server state (don't show loading)
+      loadData(true);
     } catch (err) {
       console.error('Error adding link:', err);
       setAddLinkError(err.message || 'Failed to add link');
@@ -4737,8 +4804,22 @@ const LinkArchiverPage = () => {
       throw new Error(error.error || 'Failed to save link');
     }
 
-    // Reload data
-    loadData();
+    // Get the saved link for optimistic update
+    const result = await response.json();
+    const savedLink = result.link;
+
+    // Optimistic update: add link to state immediately (if not a duplicate)
+    if (savedLink && !result.duplicate) {
+      const linkWithDate = {
+        ...savedLink,
+        savedAt: new Date(),
+        updatedAt: new Date()
+      };
+      setLinks(prev => [linkWithDate, ...prev]);
+    }
+
+    // Silent background refresh
+    loadData(true);
   };
 
   const handleImport = async (pocketLinks) => {
@@ -4828,6 +4909,9 @@ const LinkArchiverPage = () => {
       } else if (activeView === 'hasComments') {
         // Has comments = commentCount > 0
         if (!link.commentCount || link.commentCount === 0) return false;
+      } else if (activeView === 'offline') {
+        // Offline = link is saved in IndexedDB
+        if (!offlineLinkIds.has(link.id)) return false;
       }
 
       // Search filter
@@ -4842,7 +4926,7 @@ const LinkArchiverPage = () => {
         link.tags?.some(t => t.toLowerCase().includes(query))
       );
     });
-  }, [links, activeView, searchQuery]);
+  }, [links, activeView, searchQuery, offlineLinkIds]);
 
   // Calculate smart view counts
   const smartViewCounts = useMemo(() => {
@@ -4892,13 +4976,15 @@ const LinkArchiverPage = () => {
   const handleDeleteFolder = async (folderId) => {
     try {
       await deleteFolder(folderId);
+      // Optimistic update: remove folder from state immediately
+      setFolders(prev => prev.filter(f => f.id !== folderId));
       // If we were viewing this folder, reset to all links
       if (activeFolder === folderId) {
         setActiveFolder(null);
         setActiveView('all');
       }
-      // Reload data to refresh folder list and counts
-      loadData();
+      // Silent background refresh to sync folder counts
+      loadData(true);
     } catch (err) {
       console.error('Error deleting folder:', err);
       alert(err.message || 'Failed to delete folder');
@@ -5052,9 +5138,9 @@ const LinkArchiverPage = () => {
             <button
               style={{ ...styles.button, ...styles.secondaryButton }}
               onClick={() => window.open('/links/extension', '_blank')}
-              title="Get browser extension"
+              title="Ways to save links"
             >
-              <Download size={16} /><span className="btn-label"> Get Extension</span>
+              <Download size={16} /><span className="btn-label"> Save Tools</span>
             </button>
             <button
               style={{
@@ -5107,7 +5193,8 @@ const LinkArchiverPage = () => {
                 { id: 'archived', label: 'Archive', icon: Archive },
                 { id: 'shared-personal', label: 'Shared', icon: Share2 },
                 { id: 'unread', label: 'Unread', icon: Eye },
-                { id: 'recent', label: 'Recent', icon: CalendarDays }
+                { id: 'recent', label: 'Recent', icon: CalendarDays },
+                { id: 'offline', label: 'Offline', icon: WifiOff }
               ].map(view => (
                 <button
                   key={view.id}
@@ -5424,7 +5511,8 @@ const LinkArchiverPage = () => {
               {[
                 { id: 'unread', label: 'Unread', icon: Eye, count: smartViewCounts.unread },
                 { id: 'recent', label: 'This Week', icon: CalendarDays, count: smartViewCounts.recent },
-                { id: 'hasComments', label: 'Has Comments', icon: MessageCircle, count: smartViewCounts.hasComments }
+                { id: 'hasComments', label: 'Has Comments', icon: MessageCircle, count: smartViewCounts.hasComments },
+                { id: 'offline', label: 'Offline', icon: WifiOff, count: offlineCount }
               ].map(view => (
                 <div
                   key={view.id}
@@ -5454,6 +5542,24 @@ const LinkArchiverPage = () => {
                   </span>
                 </div>
               ))}
+
+              {/* Offline Storage Stats */}
+              {offlineCount > 0 && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  color: COLORS.textMuted,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <WifiOff size={12} color="#22c55e" />
+                  <span>{offlineStats.estimatedSize} stored offline</span>
+                </div>
+              )}
             </div>
 
             {/* Folders - Nested Tree View */}
@@ -5745,6 +5851,8 @@ const LinkArchiverPage = () => {
                   onShare={setShareLinkState}
                   onRead={handleRead}
                   onShortlink={setShortlinkLink}
+                  onOffline={toggleLinkOffline}
+                  isOffline={isLinkOffline(link.id)}
                 />
               ))
             )}

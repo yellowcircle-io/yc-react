@@ -87,7 +87,7 @@ class ErrorBoundary extends React.Component {
             >
               Reload Page
             </button>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details style={{
                 marginTop: '24px',
                 textAlign: 'left',

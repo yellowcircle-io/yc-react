@@ -93,7 +93,7 @@ const generateJSON = async (prompt, options = {}) => {
 
   try {
     return JSON.parse(cleaned.trim());
-  } catch (error) {
+  } catch (_error) {
     console.error('Failed to parse OpenAI JSON response:', cleaned);
     throw new Error('Invalid JSON response from OpenAI');
   }
@@ -186,7 +186,7 @@ const analyzeImageJSON = async (imageUrl, prompt, options = {}) => {
 
   try {
     return JSON.parse(cleaned.trim());
-  } catch (error) {
+  } catch (_error) {
     console.error('Failed to parse OpenAI Vision JSON response:', cleaned);
     throw new Error('Invalid JSON response from OpenAI Vision');
   }

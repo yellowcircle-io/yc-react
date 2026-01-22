@@ -1,14 +1,16 @@
 /**
- * Link Saver Extension Page
+ * Link Saver Save Tools Page
  *
- * Provides bookmarklet and instructions for saving links
- * from any webpage to yellowCircle Link Saver.
+ * Ways to save links to yellowCircle from anywhere:
+ * - Mobile & API (iOS Shortcuts, automation)
+ * - Desktop bookmarklet
  *
  * @created 2026-01-18
+ * @updated 2026-01-22 - Reordered: Mobile first, Desktop second
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Layout from '../components/global/Layout';
 import { useLayout } from '../contexts/LayoutContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,11 +23,11 @@ import {
   ArrowLeft,
   Smartphone,
   Monitor,
-  Share2,
-  ExternalLink,
-  MessageSquare,
-  Code,
-  Zap
+  Settings,
+  ChevronRight,
+  Chrome,
+  Download,
+  ExternalLink
 } from 'lucide-react';
 
 const COLORS = {
@@ -35,31 +37,23 @@ const COLORS = {
   textMuted: '#737373',
   white: '#ffffff',
   success: '#22c55e',
-  border: 'rgba(0, 0, 0, 0.1)'
+  border: 'rgba(0, 0, 0, 0.1)',
+  cardBg: '#fafafa'
 };
 
 // Bookmarklet code - saves current page to Link Saver (popup version)
-const BOOKMARKLET_POPUP = `javascript:(function(){window.open('https://yellowcircle.co/save?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title),'yc_save','width=500,height=600,left=100,top=100')})()`;
+const BOOKMARKLET_POPUP = `javascript:(function(){window.open('https://yellowcircle.io/save?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title),'yc_save','width=500,height=600,left=100,top=100')})()`;
 
 // Bookmarklet code - saves current page (simple redirect - more reliable)
-const BOOKMARKLET_REDIRECT = `javascript:location.href='https://yellowcircle.co/save?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)`;
-
-// URL save endpoint format
-const URL_SAVE_ENDPOINT = 'https://yellowcircle.co/save?url=YOUR_URL&title=YOUR_TITLE&tags=tag1,tag2';
+const BOOKMARKLET_REDIRECT = `javascript:location.href='https://yellowcircle.io/save?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)`;
 
 const LinkSaverExtensionPage = () => {
   const navigate = useNavigate();
   const { layoutConfig } = useLayout();
   const { user } = useAuth();
   const [copiedPopup, setCopiedPopup] = useState(false);
-  const [copiedRedirect, setCopiedRedirect] = useState(false);
-  const [copiedUrl, setCopiedUrl] = useState(false);
-
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(URL_SAVE_ENDPOINT);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 2000);
-  };
+  // Redirect copy state kept for potential future use
+  const [_copiedRedirect, _setCopiedRedirect] = useState(false);
 
   const handleCopyPopup = () => {
     navigator.clipboard.writeText(BOOKMARKLET_POPUP);
@@ -67,10 +61,11 @@ const LinkSaverExtensionPage = () => {
     setTimeout(() => setCopiedPopup(false), 2000);
   };
 
-  const handleCopyRedirect = () => {
+  // Redirect copy handler kept for potential future use
+  const _handleCopyRedirect = () => {
     navigator.clipboard.writeText(BOOKMARKLET_REDIRECT);
-    setCopiedRedirect(true);
-    setTimeout(() => setCopiedRedirect(false), 2000);
+    _setCopiedRedirect(true);
+    setTimeout(() => _setCopiedRedirect(false), 2000);
   };
 
   const styles = {
@@ -80,7 +75,7 @@ const LinkSaverExtensionPage = () => {
       padding: '100px 40px 40px 120px'
     },
     innerContainer: {
-      maxWidth: '800px',
+      maxWidth: '700px',
       margin: '0 auto'
     },
     backButton: {
@@ -97,7 +92,8 @@ const LinkSaverExtensionPage = () => {
       marginBottom: '24px'
     },
     header: {
-      marginBottom: '32px'
+      marginBottom: '32px',
+      textAlign: 'center'
     },
     title: {
       fontSize: '32px',
@@ -105,19 +101,22 @@ const LinkSaverExtensionPage = () => {
       color: COLORS.text,
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       gap: '12px',
-      marginBottom: '8px'
+      marginBottom: '12px'
     },
     subtitle: {
       fontSize: '16px',
       color: COLORS.textMuted,
-      lineHeight: '1.6'
+      lineHeight: '1.6',
+      maxWidth: '500px',
+      margin: '0 auto'
     },
     section: {
-      backgroundColor: '#fafafa',
+      backgroundColor: COLORS.cardBg,
       border: `1px solid ${COLORS.border}`,
       borderRadius: '16px',
-      padding: '24px',
+      padding: '28px',
       marginBottom: '24px'
     },
     sectionTitle: {
@@ -129,32 +128,49 @@ const LinkSaverExtensionPage = () => {
       gap: '10px',
       marginBottom: '16px'
     },
+    bookmarkletContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: '24px',
+      backgroundColor: COLORS.white,
+      borderRadius: '12px',
+      border: `2px dashed ${COLORS.primary}`,
+      marginBottom: '20px'
+    },
     bookmarkletButton: {
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '8px',
-      padding: '14px 24px',
+      gap: '10px',
+      padding: '16px 28px',
       backgroundColor: COLORS.primary,
       border: 'none',
-      borderRadius: '8px',
+      borderRadius: '10px',
       fontSize: '16px',
       fontWeight: '600',
       color: COLORS.text,
       cursor: 'grab',
       textDecoration: 'none',
-      marginRight: '12px',
-      marginBottom: '12px'
+      boxShadow: '0 2px 8px rgba(251, 191, 36, 0.3)'
+    },
+    dragHint: {
+      marginTop: '12px',
+      fontSize: '13px',
+      color: COLORS.textMuted,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px'
     },
     instructions: {
       fontSize: '14px',
-      color: COLORS.textMuted,
-      lineHeight: '1.8',
-      marginTop: '16px'
+      color: COLORS.text,
+      lineHeight: '1.8'
     },
     step: {
       display: 'flex',
       gap: '12px',
-      marginBottom: '12px'
+      marginBottom: '12px',
+      alignItems: 'flex-start'
     },
     stepNumber: {
       width: '24px',
@@ -171,61 +187,84 @@ const LinkSaverExtensionPage = () => {
     codeBlock: {
       backgroundColor: '#1f2937',
       color: '#f9fafb',
-      padding: '16px',
+      padding: '14px 16px',
       borderRadius: '8px',
-      fontSize: '12px',
+      fontSize: '11px',
       fontFamily: 'monospace',
       overflow: 'auto',
-      marginTop: '16px',
+      marginTop: '12px',
       position: 'relative'
     },
     copyButton: {
       position: 'absolute',
       top: '8px',
       right: '8px',
-      padding: '6px 12px',
+      padding: '5px 10px',
       backgroundColor: COLORS.primary,
       border: 'none',
       borderRadius: '4px',
-      fontSize: '12px',
+      fontSize: '11px',
       cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
       gap: '4px'
     },
     copyButtonSuccess: {
-      backgroundColor: COLORS.success
+      backgroundColor: COLORS.success,
+      color: COLORS.white
     },
-    methodCard: {
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: '16px',
+    altOption: {
       padding: '16px',
       backgroundColor: COLORS.white,
       border: `1px solid ${COLORS.border}`,
-      borderRadius: '12px',
+      borderRadius: '10px',
+      marginTop: '16px'
+    },
+    altOptionTitle: {
+      fontSize: '14px',
+      fontWeight: '600',
+      color: COLORS.text,
+      marginBottom: '6px'
+    },
+    altOptionDesc: {
+      fontSize: '13px',
+      color: COLORS.textMuted,
       marginBottom: '12px'
     },
-    methodIcon: {
+    linkCard: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '16px 20px',
+      backgroundColor: COLORS.white,
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: '12px',
+      textDecoration: 'none',
+      color: COLORS.text,
+      transition: 'border-color 0.2s, background-color 0.2s'
+    },
+    linkCardContent: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '14px'
+    },
+    linkCardIcon: {
       width: '40px',
       height: '40px',
       backgroundColor: '#fef3c7',
       borderRadius: '10px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0
+      justifyContent: 'center'
     },
-    methodTitle: {
+    linkCardTitle: {
       fontSize: '14px',
       fontWeight: '600',
-      color: COLORS.text,
-      marginBottom: '4px'
+      marginBottom: '2px'
     },
-    methodDesc: {
-      fontSize: '13px',
-      color: COLORS.textMuted,
-      lineHeight: '1.5'
+    linkCardDesc: {
+      fontSize: '12px',
+      color: COLORS.textMuted
     }
   };
 
@@ -240,12 +279,12 @@ const LinkSaverExtensionPage = () => {
       <style>{`
         @media (max-width: 768px) {
           .extension-container {
-            padding: 70px 12px 12px 90px !important;
+            padding: 70px 16px 16px 90px !important;
           }
         }
         @media (max-width: 480px) {
           .extension-container {
-            padding: 70px 8px 8px 90px !important;
+            padding: 70px 12px 12px 70px !important;
           }
         }
       `}</style>
@@ -258,316 +297,335 @@ const LinkSaverExtensionPage = () => {
           <div style={styles.header}>
             <h1 style={styles.title}>
               <Bookmark size={32} color={COLORS.primary} />
-              Save Links Anywhere
+              Save Tools
             </h1>
             <p style={styles.subtitle}>
-              Add the bookmarklet to your browser to save any webpage to your Link Saver
-              collection with one click.
+              Multiple ways to save links to your collection from any device.
             </p>
           </div>
 
           {/* Sign-in Note */}
           {!user && (
             <div style={{
-              padding: '20px',
+              padding: '16px 20px',
               backgroundColor: '#fef3c7',
               borderRadius: '12px',
               textAlign: 'center',
-              marginBottom: '24px'
+              marginBottom: '24px',
+              fontSize: '14px'
             }}>
-              <p style={{ margin: 0, color: COLORS.text }}>
-                <strong>Note:</strong> You'll need to sign in to save links to your collection.
-              </p>
+              <strong>Note:</strong> You'll need to sign in to save links.
             </div>
           )}
 
-          {/* Bookmarklet Section */}
+          {/* iOS Shortcut Section */}
+          <div style={styles.section}>
+            <h2 style={styles.sectionTitle}>
+              <Smartphone size={20} />
+              iOS Share Sheet
+            </h2>
+            <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px' }}>
+              Save links directly from Safari, Twitter, or any app using the iOS Share Sheet.
+            </p>
+
+            {/* Quick Setup Card */}
+            <div style={{
+              padding: '20px',
+              backgroundColor: COLORS.white,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: COLORS.text }}>
+                Create Your Shortcut
+              </div>
+
+              {/* Step 1 */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={styles.step}>
+                  <div style={styles.stepNumber}>1</div>
+                  <div>
+                    <strong>Get your API token</strong> from{' '}
+                    <Link to="/account/settings?tab=api" style={{ color: COLORS.primary }}>
+                      Account Settings → API Access
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={styles.step}>
+                  <div style={styles.stepNumber}>2</div>
+                  <div><strong>Open Shortcuts app</strong> on your iPhone/iPad</div>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={styles.step}>
+                  <div style={styles.stepNumber}>3</div>
+                  <div><strong>Create new shortcut</strong> with these actions:</div>
+                </div>
+
+                <div style={{
+                  marginLeft: '36px',
+                  marginTop: '12px',
+                  padding: '16px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb'
+                }}>
+                  <div style={{ fontFamily: "'Monaco', 'Menlo', monospace", fontSize: '12px', lineHeight: '1.8' }}>
+                    <div style={{ marginBottom: '8px', color: '#6b7280' }}>
+                      ▼ <strong>Receive</strong> URLs from <em>Share Sheet</em>
+                    </div>
+                    <div style={{ marginBottom: '8px', color: '#6b7280' }}>
+                      ▼ <strong>Get Contents of URL:</strong>
+                    </div>
+                    <div style={{
+                      backgroundColor: '#1f2937',
+                      color: '#f9fafb',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      marginBottom: '12px',
+                      wordBreak: 'break-all'
+                    }}>
+                      {`https://us-central1-yellowcircle-app.cloudfunctions.net/linkArchiverQuickSave?token=`}<span style={{ color: COLORS.primary }}>{`YOUR_TOKEN`}</span>{`&url=`}<span style={{ color: '#93c5fd' }}>{`[Shortcut Input]`}</span>
+                    </div>
+                    <div style={{ color: '#6b7280' }}>
+                      ▼ <strong>Show Notification:</strong> "Link saved!"
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={styles.step}>
+                  <div style={styles.stepNumber}>4</div>
+                  <div><strong>Enable "Show in Share Sheet"</strong> in shortcut settings</div>
+                </div>
+              </div>
+
+              {/* Step 5 */}
+              <div>
+                <div style={styles.step}>
+                  <div style={styles.stepNumber}>5</div>
+                  <div><strong>Done!</strong> Use the Share button in any app → tap your shortcut</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Video/Visual Guide Link */}
+            <div style={{
+              padding: '14px 16px',
+              backgroundColor: '#fef3c7',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <Smartphone size={20} color={COLORS.text} />
+              <div style={{ fontSize: '13px', color: COLORS.text }}>
+                <strong>Tip:</strong> Name your shortcut "Save to yC" for quick access from the share sheet.
+              </div>
+            </div>
+          </div>
+
+          {/* Chrome Extension Section */}
+          <div style={styles.section}>
+            <h2 style={styles.sectionTitle}>
+              <Chrome size={20} />
+              Chrome Extension
+            </h2>
+            <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px' }}>
+              Save links with one click, keyboard shortcuts, or right-click menu.
+            </p>
+
+            <div style={{
+              padding: '20px',
+              backgroundColor: COLORS.white,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: '#fef3c7',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Chrome size={24} color={COLORS.text} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '2px' }}>
+                    yellowCircle Link Saver
+                  </div>
+                  <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
+                    Chrome Extension • Developer Mode
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '14px', marginBottom: '16px' }}>
+                <strong>Features:</strong>
+                <ul style={{ margin: '8px 0 0 20px', lineHeight: '1.8' }}>
+                  <li>Click extension icon to save current page</li>
+                  <li><code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>Alt+S</code> — Quick save (no popup)</li>
+                  <li><code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>Alt+Shift+S</code> — Open popup with tags</li>
+                  <li>Right-click on any link → Save to yellowCircle</li>
+                </ul>
+              </div>
+
+              <div style={{
+                padding: '14px',
+                backgroundColor: '#fef3c7',
+                borderRadius: '8px',
+                fontSize: '13px',
+                marginBottom: '16px'
+              }}>
+                <strong>Note:</strong> This extension requires Developer Mode.
+                Chrome Web Store version coming soon.
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <a
+                  href="/chrome-extension.zip"
+                  download
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 20px',
+                    backgroundColor: COLORS.primary,
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: COLORS.text,
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Download size={16} />
+                  Download Extension
+                </a>
+                <a
+                  href="/chrome-extension/README.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 20px',
+                    backgroundColor: 'transparent',
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: COLORS.text,
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ExternalLink size={16} />
+                  Full Documentation
+                </a>
+              </div>
+            </div>
+
+            <div style={styles.instructions}>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>1</div>
+                <div>Download and unzip the extension</div>
+              </div>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>2</div>
+                <div>Go to <code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>chrome://extensions</code> and enable <strong>Developer mode</strong></div>
+              </div>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>3</div>
+                <div>Click <strong>Load unpacked</strong> and select the unzipped folder</div>
+              </div>
+              <div style={styles.step}>
+                <div style={styles.stepNumber}>4</div>
+                <div>Click the extension icon and enter your <Link to="/account/settings?tab=api" style={{ color: COLORS.primary }}>API token</Link></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Bookmarklet Section */}
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>
               <Monitor size={20} />
               Desktop Bookmarklet
             </h2>
+            <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px' }}>
+              Works in any browser — Firefox, Safari, Edge, and more. No extension required.
+            </p>
 
-            {/* Option 1: Popup Version */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: COLORS.text, marginBottom: '12px' }}>
-                Option 1: Popup Window (Recommended)
-              </h3>
-              <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '12px' }}>
-                Opens a small popup to save the link without leaving the page.
-              </p>
+            <div style={styles.bookmarkletContainer}>
               <a
                 href={BOOKMARKLET_POPUP}
                 style={styles.bookmarkletButton}
                 onClick={(e) => e.preventDefault()}
                 draggable="true"
               >
-                <Link2 size={18} />
+                <Link2 size={20} />
                 Save to yellowCircle
               </a>
-              <div style={styles.codeBlock}>
-                <button
-                  style={{...styles.copyButton, ...(copiedPopup ? styles.copyButtonSuccess : {})}}
-                  onClick={handleCopyPopup}
-                >
-                  {copiedPopup ? <Check size={14} /> : <Copy size={14} />}
-                  {copiedPopup ? 'Copied!' : 'Copy'}
-                </button>
-                <code style={{ wordBreak: 'break-all' }}>{BOOKMARKLET_POPUP}</code>
-              </div>
-            </div>
-
-            {/* Option 2: Redirect Version */}
-            <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: COLORS.text, marginBottom: '12px' }}>
-                Option 2: Full Page (If popups are blocked)
-              </h3>
-              <p style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '12px' }}>
-                Navigates to the save page. Use this if your browser blocks popups.
-              </p>
-              <a
-                href={BOOKMARKLET_REDIRECT}
-                style={{...styles.bookmarkletButton, backgroundColor: '#e5e7eb', color: COLORS.text}}
-                onClick={(e) => e.preventDefault()}
-                draggable="true"
-              >
-                <Link2 size={18} />
-                Save (Full Page)
-              </a>
-              <div style={styles.codeBlock}>
-                <button
-                  style={{...styles.copyButton, ...(copiedRedirect ? styles.copyButtonSuccess : {})}}
-                  onClick={handleCopyRedirect}
-                >
-                  {copiedRedirect ? <Check size={14} /> : <Copy size={14} />}
-                  {copiedRedirect ? 'Copied!' : 'Copy'}
-                </button>
-                <code style={{ wordBreak: 'break-all' }}>{BOOKMARKLET_REDIRECT}</code>
+              <div style={styles.dragHint}>
+                <span>↑</span> Drag this button to your bookmarks bar
               </div>
             </div>
 
             <div style={styles.instructions}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: COLORS.text, marginBottom: '12px' }}>
-                How to Install:
-              </h3>
               <div style={styles.step}>
                 <div style={styles.stepNumber}>1</div>
-                <div>Show your bookmarks bar (Cmd+Shift+B on Mac, Ctrl+Shift+B on Windows)</div>
+                <div>Show your bookmarks bar (<strong>Cmd+Shift+B</strong> on Mac, <strong>Ctrl+Shift+B</strong> on Windows)</div>
               </div>
               <div style={styles.step}>
                 <div style={styles.stepNumber}>2</div>
-                <div>Drag one of the buttons above to your bookmarks bar</div>
+                <div>Drag the yellow button above to your bookmarks bar</div>
               </div>
               <div style={styles.step}>
                 <div style={styles.stepNumber}>3</div>
-                <div>When you find a page you want to save, click the bookmark</div>
-              </div>
-              <div style={styles.step}>
-                <div style={styles.stepNumber}>4</div>
-                <div>Sign in if prompted, then your link will be saved</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Section */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>
-              <Smartphone size={20} />
-              Mobile Sharing
-            </h2>
-
-            <div style={styles.methodCard}>
-              <div style={styles.methodIcon}>
-                <Share2 size={20} color={COLORS.text} />
-              </div>
-              <div>
-                <div style={styles.methodTitle}>Share Sheet (iOS & Android)</div>
-                <div style={styles.methodDesc}>
-                  Use your browser's share button and select "Copy Link", then paste
-                  directly into Link Saver. Or bookmark this URL to quick-save:
-                </div>
-                <code style={{
-                  display: 'block',
-                  marginTop: '8px',
-                  padding: '8px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  wordBreak: 'break-all'
-                }}>
-                  https://yellowcircle.co/save?url=YOUR_URL
-                </code>
-              </div>
-            </div>
-          </div>
-
-          {/* URL API Method */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>
-              <Code size={20} />
-              URL API Method
-            </h2>
-            <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px', lineHeight: '1.6' }}>
-              Save links programmatically using URL parameters. Perfect for automation,
-              shortcuts, and integrating with other tools.
-            </p>
-
-            <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '16px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase' }}>Endpoint</span>
-                <button
-                  style={{
-                    padding: '4px 10px',
-                    backgroundColor: copiedUrl ? COLORS.success : COLORS.primary,
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                  onClick={handleCopyUrl}
-                >
-                  {copiedUrl ? <Check size={12} /> : <Copy size={12} />}
-                  {copiedUrl ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-              <code style={{ color: '#f9fafb', fontSize: '13px', wordBreak: 'break-all' }}>
-                https://yellowcircle.co/save?url=<span style={{ color: '#fbbf24' }}>URL</span>&title=<span style={{ color: '#fbbf24' }}>TITLE</span>&tags=<span style={{ color: '#fbbf24' }}>tag1,tag2</span>
-              </code>
-            </div>
-
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#f5f5f5',
-                borderRadius: '8px'
-              }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: COLORS.text, marginBottom: '4px' }}>
-                  Parameters
-                </div>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: COLORS.textMuted, lineHeight: '1.8' }}>
-                  <li><code style={{ color: COLORS.text }}>url</code> (required) - The URL to save (URL encoded)</li>
-                  <li><code style={{ color: COLORS.text }}>title</code> (optional) - Page title</li>
-                  <li><code style={{ color: COLORS.text }}>tags</code> (optional) - Comma-separated tags</li>
-                  <li><code style={{ color: COLORS.text }}>folder</code> (optional) - Folder ID to save to</li>
-                </ul>
-              </div>
-
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#fef3c7',
-                borderRadius: '8px'
-              }}>
-                <div style={{ fontSize: '12px', fontWeight: '600', color: COLORS.text, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Zap size={14} />
-                  iOS/Mac Shortcut Example
-                </div>
-                <p style={{ margin: 0, fontSize: '13px', color: COLORS.text, lineHeight: '1.5' }}>
-                  Create a Shortcut that gets the current Safari URL, encodes it, and opens the save URL.
-                  Assign it to share sheet for one-tap saving.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Slack Integration */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>
-              <MessageSquare size={20} />
-              Slack Integration
-            </h2>
-            <p style={{ fontSize: '14px', color: COLORS.textMuted, marginBottom: '16px', lineHeight: '1.6' }}>
-              Save links directly from Slack messages to your Link Saver collection.
-            </p>
-
-            <div style={styles.methodCard}>
-              <div style={styles.methodIcon}>
-                <Zap size={20} color={COLORS.text} />
-              </div>
-              <div>
-                <div style={styles.methodTitle}>Slack Workflow</div>
-                <div style={styles.methodDesc}>
-                  Create a Slack workflow that extracts URLs from messages and sends them to the
-                  save endpoint. Use the <code style={{ fontSize: '11px' }}>Webhook</code> step with the URL API above.
-                </div>
+                <div>When you find a page to save, click the bookmark</div>
               </div>
             </div>
 
-            <div style={styles.methodCard}>
-              <div style={styles.methodIcon}>
-                <MessageSquare size={20} color={COLORS.text} />
+            {/* Alternative: Full Page Redirect */}
+            <div style={styles.altOption}>
+              <div style={styles.altOptionTitle}>Popup blocked?</div>
+              <div style={styles.altOptionDesc}>
+                If your browser blocks popups, use this version instead:
               </div>
-              <div>
-                <div style={styles.methodTitle}>Slackbot Command</div>
-                <div style={styles.methodDesc}>
-                  Type <code style={{ fontSize: '11px' }}>/save https://example.com</code> in any channel
-                  (coming soon - requires Slack app installation).
-                </div>
-              </div>
+              <a
+                href={BOOKMARKLET_REDIRECT}
+                style={{...styles.bookmarkletButton, backgroundColor: '#e5e7eb', boxShadow: 'none', padding: '12px 20px', fontSize: '14px'}}
+                onClick={(e) => e.preventDefault()}
+                draggable="true"
+              >
+                <Link2 size={16} />
+                Save (Full Page)
+              </a>
             </div>
 
-            <div style={{
-              padding: '12px 16px',
-              backgroundColor: '#f5f5f5',
-              borderRadius: '8px',
-              fontSize: '12px',
-              color: COLORS.textMuted,
-              marginTop: '8px'
-            }}>
-              Want native Slack integration? <a href="mailto:hello@yellowcircle.co" style={{ color: COLORS.primary }}>Contact us</a> to request early access.
-            </div>
-          </div>
-
-          {/* Other Methods */}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>
-              <Link2 size={20} />
-              Other Ways to Save
-            </h2>
-
-            <div style={styles.methodCard}>
-              <div style={styles.methodIcon}>
-                <Bookmark size={20} color={COLORS.text} />
-              </div>
-              <div>
-                <div style={styles.methodTitle}>Manual Entry</div>
-                <div style={styles.methodDesc}>
-                  Go to <a href="/links" style={{ color: COLORS.primary }}>Link Saver</a> and
-                  click the "+" button to manually add a URL.
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.methodCard}>
-              <div style={styles.methodIcon}>
-                <Copy size={20} color={COLORS.text} />
-              </div>
-              <div>
-                <div style={styles.methodTitle}>Import from Pocket</div>
-                <div style={styles.methodDesc}>
-                  Export your Pocket data and import it via Settings in Link Saver.
-                  Supports JSON and CSV export formats.
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.methodCard}>
-              <div style={styles.methodIcon}>
-                <ExternalLink size={20} color={COLORS.text} />
-              </div>
-              <div>
-                <div style={styles.methodTitle}>Browser Extension</div>
-                <div style={styles.methodDesc}>
-                  Chrome/Firefox extension coming soon for even faster saving with metadata extraction.
-                </div>
-              </div>
+            {/* Code for manual setup */}
+            <div style={styles.codeBlock}>
+              <button
+                style={{...styles.copyButton, ...(copiedPopup ? styles.copyButtonSuccess : {})}}
+                onClick={handleCopyPopup}
+              >
+                {copiedPopup ? <Check size={12} /> : <Copy size={12} />}
+                {copiedPopup ? 'Copied!' : 'Copy'}
+              </button>
+              <code style={{ wordBreak: 'break-all', paddingRight: '70px', display: 'block' }}>{BOOKMARKLET_POPUP}</code>
             </div>
           </div>
         </div>

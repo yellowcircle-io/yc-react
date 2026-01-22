@@ -146,13 +146,14 @@ function renderBlock(block, index, navigate) {
         </CalloutBoxBlock>
       );
 
-    case BLOCK_TYPES.CTA_SECTION:
+    case BLOCK_TYPES.CTA_SECTION: {
       // Map button links to navigate calls
       const buttons = (block.buttons || []).map(btn => ({
         ...btn,
         onClick: btn.link ? () => navigate(btn.link) : btn.onClick
       }));
       return <CTASectionBlock key={key} prompt={block.prompt} buttons={buttons} />;
+    }
 
     case BLOCK_TYPES.SOURCES:
       return <SourcesBlock key={key} sources={block.sources} />;
@@ -168,7 +169,7 @@ function renderBlock(block, index, navigate) {
 // ============================================================
 export function ArticleRenderer({ article, showBackNav = true }) {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, handleFooterToggle, handleMenuToggle } = useLayout();
   const contentRef = useRef(null);
   const [readingProgress, setReadingProgress] = useState(0);
 

@@ -21,10 +21,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   getArticle,
   saveArticle,
-  publishArticle,
   unpublishArticle,
   deleteArticle,
-  listArticles,
   createArticleObject,
   ARTICLE_STATUS,
   ARTICLE_CATEGORIES
@@ -200,36 +198,39 @@ const EditorToolbar = ({ onFormat }) => {
       borderTopLeftRadius: '8px',
       borderTopRightRadius: '8px'
     }}>
-      {tools.map(({ icon: Icon, action, title }) => (
-        <button
-          key={action}
-          type="button"
-          onClick={() => onFormat(action)}
-          title={title}
-          style={{
-            padding: '6px 8px',
-            borderRadius: '4px',
-            border: 'none',
-            backgroundColor: 'transparent',
-            color: COLORS.textMuted,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.15s'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = COLORS.white;
-            e.target.style.color = COLORS.text;
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-            e.target.style.color = COLORS.textMuted;
-          }}
-        >
-          <Icon size={16} />
-        </button>
-      ))}
+      {tools.map((tool) => {
+        const IconComponent = tool.icon;
+        return (
+          <button
+            key={tool.action}
+            type="button"
+            onClick={() => onFormat(tool.action)}
+            title={tool.title}
+            style={{
+              padding: '6px 8px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: COLORS.textMuted,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = COLORS.white;
+              e.target.style.color = COLORS.text;
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = COLORS.textMuted;
+            }}
+          >
+            <IconComponent size={16} />
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -265,7 +266,7 @@ const ArticleEditorPage = () => {
   // UI state
   const [showPreview, setShowPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [_hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Layout callbacks
   const handleHomeClick = () => navigate('/');

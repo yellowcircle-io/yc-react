@@ -9,7 +9,7 @@ import { Handle, Position } from '@xyflow/react';
  */
 const ExitNode = memo(({ data, selected }) => {
   const {
-    label = 'Exit',
+    label: _label = 'Exit',
     exitType = 'completed', // 'completed', 'won', 'lost', 'unsubscribed', 'bounced'
     count = 0
   } = data;

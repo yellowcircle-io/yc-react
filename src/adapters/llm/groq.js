@@ -104,7 +104,7 @@ const generateJSON = async (prompt, options = {}) => {
 
   try {
     return JSON.parse(cleaned.trim());
-  } catch (error) {
+  } catch (_error) {
     console.error('Failed to parse Groq JSON response:', cleaned);
     throw new Error('Invalid JSON response from Groq');
   }

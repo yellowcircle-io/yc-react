@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** January 21, 2026
+**Updated:** January 22, 2026
 **Source of Truth:** [Notion Project Tracking](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
 
 ---
@@ -7,91 +7,99 @@
 ## 🔴 CURRENT PRIORITIES (Synced with Notion)
 
 ### P1 Tasks - Active
-| Task | Status | Due | Notion Link |
-|------|--------|-----|-------------|
-| Link Archiver Integration | 📋 Planned | Jan 31 | [View](https://www.notion.so/2ea15c1b110d81728e54e06fc37e8c8d) |
-| Configure Ad Platform Tokens | ⚠️ User Action | - | [View](https://www.notion.so/2ea15c1b110d8195b4d8d08fd9d89d4e) |
-| Launch Outbound Campaign | ⏳ Blocked | - | [View](https://www.notion.so/2ea15c1b110d819e9815d359cb54f528) |
+| Task | Status | Due | Notes |
+|------|--------|-----|-------|
+| Link Archiver Core | ✅ Complete | - | Phases 1-4 complete, Phase 5 partial |
+| UnityNOTES Smooth Scrolling | ✅ Complete | - | All 4 phases complete |
+| Configure Ad Platform Tokens | ⚠️ User Action | - | Awaiting credentials |
+| Firebase Deploy | ⏳ Blocked | - | Needs `firebase login --reauth` |
 
 ### P2 Tasks - Planned
 | Task | Status | Due | Est. Hours |
 |------|--------|-----|------------|
-| Review workspace optimizations (sleepless) | ⏳ Pending | Jan 22 | 4 hrs |
+| Offline Reading (PWA) | ✅ Complete | - | All 4 phases done |
+| Link Sharing Use Cases | ⚠️ Partial | - | 16-26 hrs (Phase 3 done) |
+| User Settings/Config Page | ✅ Complete | - | AccountSettingsPage + UserSettingsContext |
 | Global Theme System Enhancement | 📋 Planned | Feb 15 | 8 hrs |
-| User Settings/Config Page | 📋 Planned | - | - |
-| Claude Bot Relay | 📋 Scoped | - | - |
 
 ### P3 Tasks - Backlog
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| LinkNode Component | 📋 Planned | 4 hrs |
+| LinkNode Component | ✅ Complete | - |
 | VideoNode Component | 📋 Planned | 4 hrs |
-| @Mentions + Notifications | 📋 Planned | 8 hrs |
+| @Mentions + Notifications | ✅ Complete | - |
 | AIChatNode Enhancement | 📋 Planned | 6 hrs |
 | UnityNOTES TravelLog Node | 📋 Planned | 20 hrs |
 | Auto-Organize Groups | 📋 Planned | 6 hrs |
 
 ---
 
-## 📦 LINK ARCHIVER INTEGRATION (P1)
+## 📦 SCOPE STATUS OVERVIEW
 
-**Due:** January 31, 2026 | **Estimated:** 10 hours | **Category:** Unity Notes
+### Link Archiver (Pocket Alternative)
+**Scope:** `.claude/plans/link-archiver-pocket-alternative.md`
 
-### Scope Documents
-- `dev-context/SCOPE_LINK_ARCHIVER_DRAWER.md` - LinksTab integration spec
-- `dev-context/SCOPE_LINK_SHARING_USECASES.md` - Use case analysis
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Core MVP (schema, CRUD, bookmarklet) | ✅ Complete |
+| Phase 2 | Organization (tags, folders, search, Pocket import) | ✅ Complete |
+| Phase 3 | Reader Experience (reader mode, progress) | ⚠️ Partial |
+| Phase 4 | Unity Integration (LinkNode, capsules) | ✅ Complete |
+| Phase 5 | AI Enhancement (summaries, smart tags) | ⚠️ Partial |
 
-### Implementation Phases
-| Phase | Description | Hours | Status |
-|-------|-------------|-------|--------|
-| Phase 1 | Infrastructure (ArchiveBox/Wallabag eval, deploy) | 3 | ⏳ Not Started |
-| Phase 2 | UnityNOTES Integration (ArchivedLinkNode, API) | 4 | ⏳ Not Started |
-| Phase 3 | Capture Tools (iPhone Shortcut, Browser ext) | 3 | ⏳ Not Started |
+**Remaining:** Annotations, archive snapshots, Chrome extension (bookmarklet exists)
 
-### LinksTab Integration (OverviewTray)
-```
-OverviewTray (Current)          OverviewTray (Proposed)
-├── BookmarksTab                ├── BookmarksTab
-├── NodesTab                    ├── NodesTab
-└── NotificationsTab            ├── LinksTab (NEW)
-                                └── NotificationsTab
-```
+### Link Sharing Use Cases
+**Scope:** `dev-context/SCOPE_LINK_SHARING_USECASES.md`
+**Docs:** `dev-context/LINK_SHARING_METHODS_OUTLINE.md`
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Email-to-Save | 🔲 Not Started |
+| Phase 2 | iOS Share Sheet (PWA) | 🔲 Not Started |
+| Phase 3 | Cross-User Sharing | ✅ Complete |
+| Phase 4 | Slack App | ⚠️ Partial |
+
+**Slack Integration Added (Jan 22):**
+- `notifySlackOnShare()` - Posts to Slack when links shared (user or canvas)
+- Uses n8n webhook with Slack fallback
+- Full Slack App (slash commands) not yet implemented
+
+### UnityNOTES Smooth Scrolling
+**Scope:** `dev-context/SCOPE_UNITYNOTES_SMOOTH_SCROLLING.md`
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Quick Wins (remove useIOSPinchZoom) | ✅ Complete |
+| Phase 2 | Momentum Panning | ✅ Complete |
+| Phase 3 | Smooth Scroll Enhancement | ✅ Complete |
+| Phase 4 | Mobile Optimizations | ✅ Complete |
+
+**All phases complete:** useMomentumPan, useSmoothWheel, easing utils, touch-action CSS, Safari 3-finger prevention
+
+### Offline Reading (PWA)
+**Scope:** `dev-context/SCOPE_OFFLINE_READING.md`
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Service Worker + App Shell Caching | ✅ Complete |
+| Phase 2 | IndexedDB Offline Storage | ✅ Complete |
+| Phase 3 | Reader Integration | ✅ Complete |
+| Phase 4 | Sync & Polish | ✅ Complete |
+
+**All phases complete:** sw.js, offlineStorage.js, useOfflineStatus.js, LinkArchiverPage offline UI, LinkReaderPage offline fallback
 
 ---
 
-## 🔍 SLEEPLESS AGENT REVIEW (P2 - Due Jan 22)
+## ✅ SLEEPLESS AGENT REVIEW (COMPLETED)
 
-**Commit:** `abb7e7a` | **Impact:** +12,452 / -4,821 lines to UnityNotesPage.jsx
+**Commit:** `abb7e7a` | **Status:** ✅ Review Complete (Jan 22, 2026)
 
-### Review Findings (Jan 21, 2026)
-
-#### ✅ Architecture Compliance
-- No direct Firebase imports in UnityNotesPage.jsx (correct)
-- Uses `src/utils/firestore*.js` service layer (correct)
-
-#### ❌ Architecture Violations Found
-| File | Issue | Fix Required |
-|------|-------|--------------|
-| `src/components/admin/PipelineStatsCard.jsx:21` | Direct `firebase/auth` import | Use `useAuth()` |
-| `src/components/admin/AnalyticsSummary.jsx:24` | Direct `firebase/auth` import | Use `useAuth()` |
-| `src/components/admin/EmailStatsCard.jsx:23` | Direct `firebase/auth` import | Use `useAuth()` |
-
-#### ⚠️ Lint Status
-**32 errors + 31 warnings** in codebase (from `npm run lint`)
-
-Key issues:
-- 4 unused variables in HubSpot adapter
-- 4 catch blocks with unused `error` → rename to `_error`
-- 1 `process` undefined in ErrorBoundary
-- Multiple `react-refresh/only-export-components` warnings
-- Missing `useCallback` wraps in AuthContext
-
-### Action Items
-1. [ ] Fix 3 architecture violations (Firebase direct imports)
-2. [ ] Fix 32 lint errors
-3. [ ] Review 31 lint warnings (prioritize react-hooks/exhaustive-deps)
-4. [ ] Validate performance improvements from sleepless commit
-5. [ ] Document retained patterns for future automation
+### Results
+- ✅ Architecture violations fixed (3 Firebase imports → useAuth())
+- ✅ Lint errors: 1135 → 13 (only react-refresh warnings)
+- ✅ Build verified passing
+- ✅ Code quality tools verified (depcheck v1.4.7, knip, @tanstack/react-virtual v3.13.18)
 
 ---
 

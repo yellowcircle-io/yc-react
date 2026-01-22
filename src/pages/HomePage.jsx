@@ -198,7 +198,7 @@ function HomePage() {
   };
 
   // Handle navigation circle click - progress through pages or toggle footer
-  const handleNavCircleClick = () => {
+  const _handleNavCircleClick = () => {
     if (scrollOffset >= 200) {
       handleFooterToggle();
     } else if (scrollOffset >= 100) {

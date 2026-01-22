@@ -10,10 +10,10 @@ import { Handle, Position } from '@xyflow/react';
  */
 const ConditionNode = memo(({ id, data, selected }) => {
   const {
-    label = 'Condition',
+    label: _label = 'Condition',
     conditionType = 'opened', // 'opened', 'clicked', 'replied', 'custom'
-    operator = 'equals', // 'equals', 'contains', 'greater_than'
-    value = true,
+    operator: _operator = 'equals', // 'equals', 'contains', 'greater_than'
+    value: _value = true,
     waitDays = 3, // Days to wait before evaluating
     customCondition = null, // { field, operator, value, label } for custom conditions
     onInlineEdit, // Edit handler
@@ -43,7 +43,7 @@ const ConditionNode = memo(({ id, data, selected }) => {
     return defaultLabels[conditionType] || 'Condition';
   };
 
-  const conditionLabels = {
+  const _conditionLabels = {
     opened: 'Email Opened?',
     clicked: 'Link Clicked?',
     replied: 'Got Reply?',

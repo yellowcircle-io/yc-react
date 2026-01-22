@@ -2,13 +2,188 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 22, 2026 at 12:15 AM EST
+**Updated:** January 22, 2026 at 11:00 PM EST
 **Machine:** Mac Mini
-**Status:** ✅ Performance Optimizations COMPLETE - Awaiting Firebase re-auth for deploy
+**Status:** ✅ Personal API Token System & Sharing Methods Complete
 
 ---
 
-## ✅ SESSION SUMMARY (Jan 22, 2026 ~12AM) - Mac Mini
+## ✅ SESSION SUMMARY (Jan 22, 2026 ~11:00PM) - Mac Mini
+
+### Personal API Token System & Sharing Methods Complete:
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Read Time Fix | ✅ Complete | Fixed inflated read times (was showing 753 min, now capped at 60) |
+| quickSave API | ✅ Complete | Personal token-based endpoint for saving links from anywhere |
+| API Token UI | ✅ Complete | AccountSettingsPage Integrations tab with token management |
+| Sharing Methods | ✅ Complete | Verified all existing methods work; documented new API approach |
+
+**Cloud Functions Added (`functions/linkArchiver.js`):**
+- `quickSave` - Token-authenticated link saving (GET/POST)
+- `generateApiToken` - Create personal API token
+- `getApiToken` - Retrieve current token
+- `revokeApiToken` - Deactivate token
+
+**Files Modified:**
+- `functions/linkArchiver.js` - Added token system + fixed estimateReadTime (proper word counting, 60-min cap)
+- `src/pages/AccountSettingsPage.jsx` - Added Integrations tab with full API token management UI
+- `src/pages/LinkSaverExtensionPage.jsx` - Added Personal API Token section as recommended method
+- `src/pages/admin/LinkReaderPage.jsx` - Fixed read time display (was showing seconds as minutes)
+- `src/pages/admin/LinkArchiverPage.jsx` - Added 60-min cap to read time display
+
+**User Issue Solved:**
+> "there still does not be an easy way to send a link to a destination (endpoint)... it lacks proper auth check and user designation (all links flow into same bucket)"
+
+Solution: Personal API tokens (`yc_xxxxx`) stored per-user in Firestore. quickSave endpoint authenticates via token and saves to correct user's collection.
+
+**Pending:**
+- Deploy Cloud Functions: `firebase deploy --only functions` (requires `firebase login --reauth`)
+
+---
+
+## ✅ PREVIOUS SESSION (Jan 22, 2026 ~8:30PM) - Mac Mini
+
+### Link Sharing with Slack Notifications Complete:
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Reader Content Formatting Fix | ✅ Complete | Updated formatContent for intelligent paragraph detection |
+| Cloud Function Paragraph Fix | ✅ Complete | extractWithParagraphs preserves structure |
+| Link Sharing Methods Outline | ✅ Complete | Created comprehensive documentation |
+| Slack Notifications | ✅ Complete | Integrated notifySlackOnShare function |
+
+**Files Created:**
+- `dev-context/LINK_SHARING_METHODS_OUTLINE.md` - Comprehensive outline of all sharing methods
+
+**Files Modified:**
+- `src/utils/firestoreLinks.js` - Added Slack notification on link shares (user and canvas)
+- `src/pages/admin/LinkReaderPage.jsx` - Fixed formatContent for content without paragraph breaks
+- `functions/linkArchiver.js` - Added extractWithParagraphs function
+
+**Slack Integration:**
+- `notifySlackOnShare()` helper function posts to Slack when links are shared
+- Uses n8n webhook first, falls back to direct Slack
+- Non-blocking async - won't fail share operations if Slack fails
+- Supports both user shares and canvas shares
+
+**Pending:**
+- Deploy Cloud Functions: `firebase deploy --only functions` (for paragraph fix on new links)
+
+---
+
+## ✅ PREVIOUS SESSION (Jan 22, 2026 ~6:45PM) - Mac Mini
+
+### Offline Reading (PWA) Complete (All 4 Phases):
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1: Service Worker | ✅ Complete | public/sw.js with cache strategies |
+| Phase 2: IndexedDB Storage | ✅ Complete | src/utils/offlineStorage.js |
+| Phase 3: Reader Integration | ✅ Complete | LinkReaderPage.jsx with offline fallback |
+| Phase 4: Sync & Polish | ✅ Complete | Storage stats, offline indicators |
+
+**Files Created:**
+- `public/sw.js` - Service worker with cache-first/network-first strategies
+- `src/utils/offlineStorage.js` - IndexedDB wrapper for offline links
+- `src/hooks/useOfflineStatus.js` - Hooks for network status and offline links
+
+**Files Modified:**
+- `src/main.jsx` - Service worker registration
+- `src/pages/admin/LinkArchiverPage.jsx` - Offline view, toggle button, storage stats
+- `src/pages/admin/LinkReaderPage.jsx` - Offline reading with IndexedDB fallback
+
+**Features:**
+- Save links for offline reading with one click
+- Read saved links without network connection
+- Offline indicator in reader header
+- Storage stats in sidebar (shows size used)
+- Smart "Offline" view in sidebar filters
+
+---
+
+## ✅ PREVIOUS SESSION (Jan 22, 2026 ~5:20PM) - Mac Mini
+
+### Link Archiver Drawer Integration Complete (All 3 Phases):
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1: LinksTab Component | ✅ Complete | LinksTab.jsx with subtabs (Shared/Starred/Recent) |
+| Phase 2: Canvas Integration | ✅ Complete | handleAddLinkFromSaver creates LinkNodes |
+| Phase 3: Quick Actions | ✅ Complete | Star/archive buttons added to LinksTab |
+
+**Changes Made:**
+- `src/components/unity/tray/LinksTab.jsx`:
+  - Added `toggleStar` and `archiveLink` imports
+  - Added `handleToggleStar` and `handleArchive` handlers with optimistic updates
+  - Updated LinkItem component with star toggle and archive buttons
+
+**Deployed to staging:** https://yellowcircle-app--staging-djr44qvi.web.app
+
+---
+
+## ✅ PREVIOUS SESSION SUMMARY (Jan 22, 2026 ~1:30AM) - Mac Mini
+
+### Architecture & Lint Cleanup Completed:
+1. **Lint errors reduced:** 1135 → 13 (only react-refresh design warnings remain)
+2. **Architecture violations fixed:** 3 Firebase auth imports replaced with `useAuth()` hook
+3. **Build verified passing:** `npm run build` succeeds
+
+### Code Quality Tools Verified:
+| Tool | Status |
+|------|--------|
+| **depcheck** | ✅ Installed (v1.4.7) |
+| **knip** | ✅ Configured (`npm run deadcode`, `npm run check:deps`, `npm run check:unused`) |
+| **@tanstack/react-virtual** | ✅ Installed (v3.13.18) - virtual scrolling ready |
+
+### Scope Documents Reviewed (VERIFIED AGAINST CODEBASE):
+
+**1. Link Archiver (Pocket Alternative)** - P1
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1: Core MVP | ✅ Complete | firestoreLinks.js, LinkArchiverPage.jsx, bookmarklet |
+| Phase 2: Organization | ✅ Complete | Tags, folders, search, Pocket import |
+| Phase 3: Reader Experience | ⚠️ Partial | Reader mode + progress done; annotations/PWA missing |
+| Phase 4: Unity Integration | ✅ Complete | LinkNode.jsx, LinksTab integration |
+| Phase 5: AI Enhancement | ⚠️ Partial | UI for aiSummary exists; backend needs work |
+
+**Remaining:** Annotations, archive snapshots, Chrome extension (bookmarklet exists)
+
+**2. Link Sharing Use Cases** - 16-26 hours
+| Phase | Status |
+|-------|--------|
+| Phase 1: Email-to-Save | 🔲 Not Started |
+| Phase 2: iOS Share Sheet | 🔲 Not Started |
+| Phase 3: Cross-User Sharing | ✅ Complete (shareLink, shareLinkToCanvas in firestoreLinks.js) |
+| Phase 4: Slack App | 🔲 Not Started |
+
+**3. UnityNOTES Smooth Scrolling** - 11-16 hours
+| Phase | Status |
+|-------|--------|
+| Phase 1: Quick Wins | ✅ Complete (useIOSPinchZoom already removed) |
+| Phase 2: Momentum Panning | 🔲 Not Started |
+| Phase 3: Smooth Scroll | 🔲 Not Started |
+| Phase 4: Mobile Optimizations | 🔲 Not Started |
+
+**4. Offline Reading (PWA)** - 10-16 hours - 🔲 **NOT STARTED**
+- No manifest.webmanifest
+- No service-worker.js
+- No IndexedDB utilities
+
+**5. repo_reorganization_plan.md** - DOES NOT EXIST
+
+### Documents Updated This Session:
+- ✅ `.claude/shared-context/ACTIVE_SPRINT.md` - Updated scope status
+- ✅ `CLAUDE.md` - Added yc-MSF and Agent Protocols sections
+
+### Next Steps:
+- [ ] Firebase deploy (needs `firebase login --reauth`)
+- [ ] Sync with Trimurti Notion doc
+- [ ] Prioritize: PWA (offline reading) vs Momentum scrolling vs Email-to-Save
+
+---
+
+## ✅ PREVIOUS SESSION SUMMARY (Jan 22, 2026 ~12AM) - Mac Mini
 
 ### Performance Optimizations Completed (Phase 1-3):
 

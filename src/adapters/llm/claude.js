@@ -84,7 +84,7 @@ const generateJSON = async (prompt, options = {}) => {
 
   try {
     return JSON.parse(cleaned.trim());
-  } catch (error) {
+  } catch (_error) {
     console.error('Failed to parse Claude JSON response:', cleaned);
     throw new Error('Invalid JSON response from Claude');
   }

@@ -17,7 +17,9 @@ export default defineConfig([
     'scripts/**',
     'yellowcircle-outreach/**',
     'dev-context/**',
-    'fix-layout.js'
+    'workspace/**',
+    'fix-layout.js',
+    'public/chrome-extension/**'
   ]),
   {
     files: ['**/*.{js,jsx}'],

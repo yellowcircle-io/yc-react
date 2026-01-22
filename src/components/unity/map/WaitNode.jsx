@@ -13,7 +13,7 @@ const WaitNode = memo(({ id, data, selected }) => {
     label = 'Wait',
     duration = 3,
     unit = 'days', // 'hours', 'days', 'weeks'
-    reason = '', // Optional: "Let them think", "Weekend buffer", etc.
+    reason: _reason = '', // Optional: "Let them think", "Weekend buffer", etc.
     prospectsAtNode = 0, // Number of prospects waiting at this node
     onInlineEdit, // Edit handler
     onDelete // Delete this node

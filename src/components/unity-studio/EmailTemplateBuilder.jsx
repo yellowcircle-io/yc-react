@@ -196,7 +196,7 @@ function EmailTemplateBuilder({ onBack, onSave, onSaveToCanvas, onExportToMAP, i
     }));
   };
 
-  const insertVariable = useCallback((sectionKey, variable) => {
+  const _insertVariable = useCallback((sectionKey, variable) => {
     const placeholder = `{{${variable}}}`;
     const currentValue = editedSections[sectionKey] || '';
     handleSectionChange(sectionKey, currentValue + placeholder);

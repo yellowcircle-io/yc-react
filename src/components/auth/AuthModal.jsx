@@ -55,7 +55,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       clearError();
       await signInWithGoogle();
       handleClose();
-    } catch (err) {
+    } catch (_err) {
       // Error handled in context
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
         await resetPassword(email);
         setSuccessMessage('Password reset email sent! Check your inbox.');
       }
-    } catch (err) {
+    } catch (_err) {
       // Error handled in context
     } finally {
       setLoading(false);

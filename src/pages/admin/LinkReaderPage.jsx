@@ -8,10 +8,14 @@ import {
   Calendar,
   Tag,
   Share2,
-  ChevronUp
+  ChevronUp,
+  WifiOff,
+  Wifi
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getLink, updateReadProgress, toggleStar, archiveLink } from '../../utils/firestoreLinks';
+import { getOfflineLink, updateReadingProgress as updateOfflineProgress } from '../../utils/offlineStorage';
+import { useNetworkStatus } from '../../hooks/useOfflineStatus';
 
 const COLORS = {
   primary: '#fbbf24',
@@ -32,10 +36,12 @@ function LinkReaderPage() {
   const { linkId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isOnline } = useNetworkStatus();
 
   const [link, setLink] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isReadingOffline, setIsReadingOffline] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('readerDarkMode');
     return saved ? JSON.parse(saved) : false;
@@ -51,7 +57,7 @@ function LinkReaderPage() {
   const startTimeRef = useRef(null);
   const lastSaveRef = useRef(0);
 
-  // Fetch link data
+  // Fetch link data - check offline storage first, then Firestore
   useEffect(() => {
     const fetchLink = async () => {
       if (!linkId) {
@@ -61,9 +67,49 @@ function LinkReaderPage() {
       }
 
       try {
-        const linkData = await getLink(linkId);
+        // First, try to get from IndexedDB (offline storage)
+        const offlineLink = await getOfflineLink(linkId);
+
+        // If offline or we have cached content, use it
+        if (!isOnline && offlineLink) {
+          console.log('[Reader] Using offline cached content');
+          setLink(offlineLink);
+          setReadProgress(offlineLink.readingProgress || 0);
+          setIsReadingOffline(true);
+          startTimeRef.current = Date.now();
+          setLoading(false);
+          return;
+        }
+
+        // Try to fetch from Firestore
+        let linkData = null;
+        try {
+          linkData = await getLink(linkId);
+        } catch (fetchErr) {
+          // If fetch fails and we have offline data, use it
+          if (offlineLink) {
+            console.log('[Reader] Network error, using offline cached content');
+            setLink(offlineLink);
+            setReadProgress(offlineLink.readingProgress || 0);
+            setIsReadingOffline(true);
+            startTimeRef.current = Date.now();
+            setLoading(false);
+            return;
+          }
+          throw fetchErr;
+        }
 
         if (!linkData) {
+          // If not in Firestore but we have offline copy, use that
+          if (offlineLink) {
+            console.log('[Reader] Not in Firestore, using offline cached content');
+            setLink(offlineLink);
+            setReadProgress(offlineLink.readingProgress || 0);
+            setIsReadingOffline(true);
+            startTimeRef.current = Date.now();
+            setLoading(false);
+            return;
+          }
           setError('Link not found');
           setLoading(false);
           return;
@@ -84,17 +130,18 @@ function LinkReaderPage() {
 
         setLink(linkData);
         setReadProgress(linkData.readProgress || 0);
+        setIsReadingOffline(false);
         startTimeRef.current = Date.now();
       } catch (err) {
         console.error('Error fetching link:', err);
-        setError('Failed to load link');
+        setError(isOnline ? 'Failed to load link' : 'No offline version available');
       } finally {
         setLoading(false);
       }
     };
 
     fetchLink();
-  }, [linkId, user]);
+  }, [linkId, user, isOnline]);
 
   // Save preferences to localStorage
   useEffect(() => {
@@ -151,11 +198,21 @@ function LinkReaderPage() {
 
     if (timeSinceLastSave > 10000 && user && link?.userId === user.uid) {
       const timeSpent = Math.floor((now - startTimeRef.current) / 1000);
-      updateReadProgress(linkId, progress, timeSpent).catch(console.error);
+
+      // Save to Firestore if online, save to IndexedDB for offline links
+      if (isOnline && !isReadingOffline) {
+        updateReadProgress(linkId, progress, timeSpent).catch(console.error);
+      }
+
+      // Always update IndexedDB if reading from offline cache
+      if (isReadingOffline) {
+        updateOfflineProgress(linkId, Math.round(progress * 100)).catch(console.error);
+      }
+
       lastSaveRef.current = now;
       startTimeRef.current = now; // Reset for next interval
     }
-  }, [linkId, user, link]);
+  }, [linkId, user, link, isOnline, isReadingOffline]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
@@ -366,6 +423,13 @@ function LinkReaderPage() {
       color: theme.text,
       wordBreak: 'break-word'
     },
+    // Rich HTML article styling
+    articleHtml: {
+      fontSize: `${fontSize}px`,
+      lineHeight: '1.9',
+      color: theme.text,
+      wordBreak: 'break-word'
+    },
     paragraph: {
       marginBottom: '1.5em',
       textAlign: 'left'
@@ -482,33 +546,134 @@ function LinkReaderPage() {
   const formatContent = (content) => {
     if (!content) return null;
 
-    // Split by double newlines (paragraphs) or single newlines with empty lines
-    const paragraphs = content
+    // First, try to split by double newlines (proper paragraph breaks)
+    let paragraphs = content
       .split(/\n\s*\n|\n{2,}/)
       .map(p => p.trim())
       .filter(p => p.length > 0);
 
-    // If no paragraph breaks found, try to split on single newlines for very long text
-    if (paragraphs.length === 1 && content.length > 500) {
-      const singleLineParagraphs = content
-        .split(/\n/)
-        .map(p => p.trim())
-        .filter(p => p.length > 0);
-
-      if (singleLineParagraphs.length > 1) {
-        return singleLineParagraphs.map((para, i) => (
-          <p key={i} style={styles.paragraph}>
-            {para}
-          </p>
-        ));
-      }
+    // If we have good paragraph breaks, use them
+    if (paragraphs.length > 1) {
+      return paragraphs.map((para, i) => (
+        <p key={i} style={styles.paragraph}>
+          {para}
+        </p>
+      ));
     }
 
-    return paragraphs.map((para, i) => (
-      <p key={i} style={styles.paragraph}>
-        {para}
+    // Try single newlines
+    const singleLineParagraphs = content
+      .split(/\n/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+
+    if (singleLineParagraphs.length > 1) {
+      return singleLineParagraphs.map((para, i) => (
+        <p key={i} style={styles.paragraph}>
+          {para}
+        </p>
+      ));
+    }
+
+    // No natural breaks found - intelligently split long content
+    // This handles legacy content that was saved without paragraph breaks
+    if (content.length > 300) {
+      // Strategy: Split at sentence boundaries where patterns indicate new paragraphs
+      // Common patterns:
+      // 1. Period followed by space and capital letter: ". A"
+      // 2. Question mark or exclamation followed by space and capital
+      // 3. Period followed by quote and capital: "." A
+      // 4. Numbers/dates that start new sections
+
+      // First, identify potential heading patterns (short sentences that might be headers)
+      const headingPattern = /^[A-Z][^.!?]{5,50}[.!?]?\s*$/;
+
+      // Split on sentence boundaries
+      const sentences = content.split(/(?<=[.!?])\s+(?=[A-Z])/);
+
+      if (sentences.length > 1) {
+        // Group sentences into paragraphs (3-5 sentences per paragraph)
+        const SENTENCES_PER_PARAGRAPH = 4;
+        const resultParagraphs = [];
+        let currentParagraph = [];
+
+        sentences.forEach((sentence, _idx) => {
+          const trimmed = sentence.trim();
+          if (!trimmed) return;
+
+          // Check if this might be a heading (short, capitalized)
+          const isHeading = headingPattern.test(trimmed) && trimmed.length < 60;
+
+          // Start new paragraph if:
+          // 1. Current paragraph is full
+          // 2. This sentence looks like a heading
+          // 3. Previous was a heading
+          if (currentParagraph.length >= SENTENCES_PER_PARAGRAPH ||
+              (isHeading && currentParagraph.length > 0)) {
+            resultParagraphs.push(currentParagraph.join(' '));
+            currentParagraph = [];
+          }
+
+          currentParagraph.push(trimmed);
+
+          // If this was a heading, also end the paragraph
+          if (isHeading) {
+            resultParagraphs.push(currentParagraph.join(' '));
+            currentParagraph = [];
+          }
+        });
+
+        // Don't forget the last paragraph
+        if (currentParagraph.length > 0) {
+          resultParagraphs.push(currentParagraph.join(' '));
+        }
+
+        if (resultParagraphs.length > 1) {
+          return resultParagraphs.map((para, i) => (
+            <p key={i} style={styles.paragraph}>
+              {para}
+            </p>
+          ));
+        }
+      }
+
+      // Last resort: split every ~500 characters at sentence boundaries
+      const chunks = [];
+      let remaining = content;
+      const CHUNK_SIZE = 500;
+
+      while (remaining.length > 0) {
+        if (remaining.length <= CHUNK_SIZE) {
+          chunks.push(remaining.trim());
+          break;
+        }
+
+        // Find a good break point (sentence end) near CHUNK_SIZE
+        let breakPoint = CHUNK_SIZE;
+        const searchRange = remaining.substring(CHUNK_SIZE - 100, CHUNK_SIZE + 100);
+        const sentenceEnd = searchRange.search(/[.!?]\s+/);
+
+        if (sentenceEnd > -1) {
+          breakPoint = CHUNK_SIZE - 100 + sentenceEnd + 2;
+        }
+
+        chunks.push(remaining.substring(0, breakPoint).trim());
+        remaining = remaining.substring(breakPoint).trim();
+      }
+
+      return chunks.map((para, i) => (
+        <p key={i} style={styles.paragraph}>
+          {para}
+        </p>
+      ));
+    }
+
+    // Short content - just return as single paragraph
+    return (
+      <p style={styles.paragraph}>
+        {content}
       </p>
-    ));
+    );
   };
 
   return (
@@ -528,6 +693,46 @@ function LinkReaderPage() {
           <span style={{ color: theme.textSecondary, fontSize: '14px' }}>
             {Math.round(readProgress * 100)}% read
           </span>
+
+          {/* Offline/Online indicator */}
+          {isReadingOffline && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                backgroundColor: darkMode ? 'rgba(34, 197, 94, 0.2)' : 'rgba(34, 197, 94, 0.1)',
+                color: '#22c55e',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}
+              title="Reading from offline cache"
+            >
+              <WifiOff size={12} />
+              Offline
+            </span>
+          )}
+          {!isOnline && !isReadingOffline && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}
+              title="You are offline"
+            >
+              <WifiOff size={12} />
+              No Connection
+            </span>
+          )}
         </div>
 
         <div style={styles.headerRight}>
@@ -633,10 +838,10 @@ function LinkReaderPage() {
               </span>
             )}
 
-            {link.estimatedReadTime && (
+            {link.estimatedReadTime > 0 && (
               <span style={styles.metaItem}>
                 <Clock size={14} color={darkMode ? '#9ca3af' : '#6b7280'} strokeWidth={2} />
-                {link.estimatedReadTime} min read
+                {Math.min(60, Math.ceil(link.estimatedReadTime / 60))} min read
               </span>
             )}
 
@@ -668,8 +873,101 @@ function LinkReaderPage() {
           </div>
         )}
 
-        {/* Article Content */}
-        {link.content ? (
+        {/* Article Content - prefer HTML, fallback to plain text */}
+        {link.contentHtml ? (
+          <>
+            <style>{`
+              .reader-article-html {
+                font-size: ${fontSize}px;
+                line-height: 1.9;
+                color: ${theme.text};
+                word-break: break-word;
+              }
+              .reader-article-html p {
+                margin-bottom: 1.5em;
+              }
+              .reader-article-html h1, .reader-article-html h2, .reader-article-html h3,
+              .reader-article-html h4, .reader-article-html h5, .reader-article-html h6 {
+                margin-top: 1.5em;
+                margin-bottom: 0.75em;
+                font-weight: 600;
+                line-height: 1.3;
+              }
+              .reader-article-html h1 { font-size: 1.8em; }
+              .reader-article-html h2 { font-size: 1.5em; }
+              .reader-article-html h3 { font-size: 1.25em; }
+              .reader-article-html img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                margin: 1.5em 0;
+                display: block;
+              }
+              .reader-article-html a {
+                color: ${COLORS.primary};
+                text-decoration: underline;
+              }
+              .reader-article-html a:hover {
+                opacity: 0.8;
+              }
+              .reader-article-html blockquote {
+                border-left: 4px solid ${COLORS.primary};
+                padding-left: 1em;
+                margin: 1.5em 0;
+                font-style: italic;
+                color: ${theme.textSecondary};
+              }
+              .reader-article-html ul, .reader-article-html ol {
+                margin: 1em 0;
+                padding-left: 2em;
+              }
+              .reader-article-html li {
+                margin-bottom: 0.5em;
+              }
+              .reader-article-html pre, .reader-article-html code {
+                background-color: ${darkMode ? '#2d2d2d' : '#f3f4f6'};
+                border-radius: 4px;
+                font-family: 'SF Mono', Consolas, monospace;
+                font-size: 0.9em;
+              }
+              .reader-article-html pre {
+                padding: 1em;
+                overflow-x: auto;
+                margin: 1.5em 0;
+              }
+              .reader-article-html code {
+                padding: 0.2em 0.4em;
+              }
+              .reader-article-html figure {
+                margin: 1.5em 0;
+              }
+              .reader-article-html figcaption {
+                font-size: 0.9em;
+                color: ${theme.textSecondary};
+                text-align: center;
+                margin-top: 0.5em;
+              }
+              .reader-article-html table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1.5em 0;
+              }
+              .reader-article-html th, .reader-article-html td {
+                border: 1px solid ${theme.border};
+                padding: 0.75em;
+                text-align: left;
+              }
+              .reader-article-html th {
+                background-color: ${darkMode ? '#2d2d2d' : '#f3f4f6'};
+                font-weight: 600;
+              }
+            `}</style>
+            <article
+              className="reader-article-html"
+              dangerouslySetInnerHTML={{ __html: link.contentHtml }}
+            />
+          </>
+        ) : link.content ? (
           <article style={styles.article}>
             {formatContent(link.content)}
           </article>

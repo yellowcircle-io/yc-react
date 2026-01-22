@@ -106,10 +106,10 @@ function QuoteBlock({ children, author }) {
 
 function OwnYourStoryArticle1Page() {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, handleFooterToggle, handleMenuToggle } = useLayout();
   const contentRef = useRef(null);
   const [readingProgress, setReadingProgress] = useState(0);
-  const [readingTime, setReadingTime] = useState(12);
+  // Reading time is static for this article
 
   // Calculate reading progress
   useEffect(() => {
@@ -239,7 +239,7 @@ function OwnYourStoryArticle1Page() {
                 color: COLORS.yellow,
                 fontWeight: '600'
               }}>
-                📖 ~{readingTime} min read
+                📖 ~12 min read
               </span>
               <span>November 2025</span>
               <span>•</span>

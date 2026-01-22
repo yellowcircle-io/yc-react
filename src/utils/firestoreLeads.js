@@ -22,7 +22,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { generateContactId, upsertContact, getContactByEmail } from './firestoreContacts';
+import { upsertContact } from './firestoreContacts';
 
 // ============================================================
 // Lead Creation
@@ -410,7 +410,7 @@ const getNestedValue = (obj, path) => {
  * Execute a single action
  * Full implementation will be in Cloud Functions
  */
-const executeAction = async (action, lead, contact, rule) => {
+const executeAction = async (action, _lead, _contact, _rule) => {
   try {
     switch (action.type) {
       case 'add_tag':
