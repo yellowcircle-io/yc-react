@@ -86,3 +86,9 @@ scripts/__pycache__/
 # Temporary/WIP page backups
 src/pages/*.backup-*
 src/pages/*.broken-*
+
+# Pocket import data (raw user data)
+dev-context/pocket-*.json
+dev-context/pocket-*.csv
+dev-context/pocket-import-batches/
+dev-context/import-console-script.js
