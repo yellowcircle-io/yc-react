@@ -2,13 +2,46 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 22, 2026 at 11:00 PM EST
+**Updated:** January 23, 2026 at 12:30 AM EST
 **Machine:** Mac Mini
-**Status:** ✅ Personal API Token System & Sharing Methods Complete
+**Status:** ✅ Save ID System, Vanity URLs & iOS Shortcut Complete
 
 ---
 
-## ✅ SESSION SUMMARY (Jan 22, 2026 ~11:00PM) - Mac Mini
+## ✅ SESSION SUMMARY (Jan 23, 2026 ~12:30AM) - Mac Mini
+
+### Save ID, Vanity URLs & iOS Shortcut Complete:
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Save ID System | ✅ Complete | 8-char IDs for mobile-friendly URLs |
+| Vanity URL Claiming | ✅ Complete | Custom slugs like /s/yourname/ |
+| iOS Shortcut | ✅ Complete | Downloadable .shortcut file on Extension page |
+| Email-to-Save Update | ✅ Complete | Uses vanitySlug > saveId > token |
+
+**New Cloud Functions Deployed:**
+- `linkArchiverCheckVanityAvailability` - Public availability check
+- `linkArchiverClaimVanitySlug` - Self-service claim (one-time)
+- `linkArchiverGetVanitySlug` - Get user's vanity slug
+
+**Files Modified:**
+- `functions/linkArchiver.js` - Added vanity slug functions
+- `functions/index.js` - Exported new functions
+- `src/pages/AccountSettingsPage.jsx` - Added vanity URL section, updated all displays
+- `src/pages/LinkSaverExtensionPage.jsx` - Shortcut download, updated instructions
+- `public/YellowCircle-LinkSaver.shortcut` - iOS Shortcut file
+
+**Files Created:**
+- `scripts/shortcut-generator/` - iOS Shortcut generator with plist template
+
+**Priority Order for Displays:**
+All URLs and emails now use: `vanitySlug || saveId || token`
+
+**Git:** Committed and pushed `067e6d1`
+
+---
+
+## ✅ PREVIOUS SESSION (Jan 22, 2026 ~11:00PM) - Mac Mini
 
 ### Personal API Token System & Sharing Methods Complete:
 
