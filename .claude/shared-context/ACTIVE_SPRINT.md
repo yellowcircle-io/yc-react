@@ -109,19 +109,19 @@
 
 | Hash | Description |
 |------|-------------|
+| `04d22be` | UI: Mobile padding audit - 17 pages fixed + MSF update |
+| `fe547b9` | Fix: Inject Firebase config secrets in CI builds |
+| `96db367` | Add GitHub Action for iOS Shortcut signing |
+| `067e6d1` | Feature: Save ID System, Vanity URLs & iOS Shortcut |
 | `76fe4db` | Feature: Sprint 4 - Comments, Notifications & Smart Views |
 | `f558798` | UI: Canvas sharing dropdown hierarchy |
 | `6bd8fcc` | Feature: Shared links filtering + scope docs for notifications |
-| `1f924d3` | UI: Add info message for canvas sharing clarification |
 | `e310bb8` | Feature: Link Sharing & Unity Platform Links Integration |
-| `6b0a495` | Update: ACTIVE_SPRINT with Jan 21 commits |
-| `98c7f87` | Update: MSF context files for multi-machine sync |
-| `79a8704` | Config: Add vite security plugin and update firebase config |
 
 ### Git Status
 - Branch: `main`
-- Last commit: `76fe4db`
-- Status: Changes pending (mobile padding fixes, MSF update)
+- Last commit: `04d22be`
+- Status: ✅ Synced with origin/main
 
 ---
 
