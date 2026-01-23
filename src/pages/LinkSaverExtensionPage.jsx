@@ -9,7 +9,7 @@
  * @updated 2026-01-22 - Reordered: Mobile first, Desktop second
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Layout from '../components/global/Layout';
 import { useLayout } from '../contexts/LayoutContext';
@@ -27,8 +27,14 @@ import {
   ChevronRight,
   Chrome,
   Download,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
+
+// Firebase Functions base URL
+const FUNCTIONS_BASE_URL = import.meta.env.PROD
+  ? 'https://us-central1-yellowcircle-app.cloudfunctions.net'
+  : 'https://us-central1-yellowcircle-app.cloudfunctions.net';
 
 const COLORS = {
   primary: '#fbbf24',
@@ -50,10 +56,107 @@ const BOOKMARKLET_REDIRECT = `javascript:location.href='https://yellowcircle.io/
 const LinkSaverExtensionPage = () => {
   const navigate = useNavigate();
   const { layoutConfig } = useLayout();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [copiedPopup, setCopiedPopup] = useState(false);
   // Redirect copy state kept for potential future use
   const [_copiedRedirect, _setCopiedRedirect] = useState(false);
+
+  // User's save slug (vanity or save ID)
+  const [userSlug, setUserSlug] = useState(null);
+  const [loadingSlug, setLoadingSlug] = useState(false);
+  const [downloadingShortcut, setDownloadingShortcut] = useState(false);
+  // Shortcut status: { signed: boolean, url?: string }
+  const [shortcutStatus, setShortcutStatus] = useState(null);
+
+  // Fetch user's vanity slug or save ID when logged in
+  useEffect(() => {
+    const fetchUserSlug = async () => {
+      if (!user) {
+        setUserSlug(null);
+        setShortcutStatus(null);
+        return;
+      }
+
+      setLoadingSlug(true);
+      try {
+        const idToken = await user.getIdToken();
+
+        // Try to get vanity slug first, then fall back to save ID
+        const [vanityRes, saveIdRes] = await Promise.all([
+          fetch(`${FUNCTIONS_BASE_URL}/getVanitySlug`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          }),
+          fetch(`${FUNCTIONS_BASE_URL}/linkArchiverGetSaveId`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          })
+        ]);
+
+        const vanityData = await vanityRes.json();
+        const saveIdData = await saveIdRes.json();
+
+        // Prefer vanity slug over save ID
+        let slug = null;
+        if (vanityData.success && vanityData.hasVanitySlug) {
+          slug = vanityData.slug;
+        } else if (saveIdData.success && saveIdData.saveId) {
+          slug = saveIdData.saveId;
+        }
+
+        setUserSlug(slug);
+
+        // Check if pre-signed shortcut exists for this slug
+        if (slug) {
+          try {
+            const statusRes = await fetch(`${FUNCTIONS_BASE_URL}/getShortcutStatus?slug=${encodeURIComponent(slug)}`);
+            const statusData = await statusRes.json();
+            setShortcutStatus(statusData);
+          } catch (statusErr) {
+            console.error('Failed to check shortcut status:', statusErr);
+            setShortcutStatus({ signed: false });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch user slug:', err);
+      } finally {
+        setLoadingSlug(false);
+      }
+    };
+
+    fetchUserSlug();
+  }, [user]);
+
+  // Universal fallback shortcut URL (prompts for token on first run)
+  const UNIVERSAL_SHORTCUT_URL = 'https://firebasestorage.googleapis.com/v0/b/yellowcircle-app.firebasestorage.app/o/shortcuts%2Fsigned%2Funiversal.shortcut?alt=media';
+
+  // Download personalized shortcut (user-specific signed or universal fallback)
+  const handleDownloadShortcut = async () => {
+    setDownloadingShortcut(true);
+    try {
+      let downloadUrl;
+
+      // Priority: user-specific signed shortcut > universal fallback
+      if (shortcutStatus?.signed && shortcutStatus?.url) {
+        // User has a pre-signed personalized shortcut
+        downloadUrl = shortcutStatus.url;
+      } else {
+        // Fallback to universal shortcut (prompts for Save ID on first run)
+        downloadUrl = UNIVERSAL_SHORTCUT_URL;
+      }
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'Save-to-yellowCircle.shortcut';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Failed to download shortcut:', err);
+    } finally {
+      setTimeout(() => setDownloadingShortcut(false), 1000);
+    }
+  };
 
   const handleCopyPopup = () => {
     navigator.clipboard.writeText(BOOKMARKLET_POPUP);
@@ -170,12 +273,14 @@ const LinkSaverExtensionPage = () => {
       display: 'flex',
       gap: '12px',
       marginBottom: '12px',
-      alignItems: 'flex-start'
+      alignItems: 'flex-start',
+      color: COLORS.text
     },
     stepNumber: {
       width: '24px',
       height: '24px',
       backgroundColor: COLORS.primary,
+      color: COLORS.text,
       borderRadius: '50%',
       display: 'flex',
       alignItems: 'center',
@@ -279,12 +384,12 @@ const LinkSaverExtensionPage = () => {
       <style>{`
         @media (max-width: 768px) {
           .extension-container {
-            padding: 70px 16px 16px 90px !important;
+            padding: 70px 16px 16px 16px !important; /* sidebar hidden on mobile */
           }
         }
         @media (max-width: 480px) {
           .extension-container {
-            padding: 70px 12px 12px 70px !important;
+            padding: 70px 12px 12px 12px !important; /* sidebar hidden on mobile */
           }
         }
       `}</style>
@@ -353,14 +458,14 @@ const LinkSaverExtensionPage = () => {
               <div style={styles.step}>
                 <div style={styles.stepNumber}>2</div>
                 <div>
-                  <strong>Download the Shortcut</strong> — One-tap install (iCloud link below)
+                  <strong>Create the Shortcut</strong> — Follow the steps below (takes 2 minutes)
                 </div>
               </div>
 
               <div style={styles.step}>
                 <div style={styles.stepNumber}>3</div>
                 <div>
-                  <strong>Add your Token</strong> — Paste when prompted during setup
+                  <strong>Add your Save ID</strong> — Replace YOUR_SAVE_ID in the URL
                 </div>
               </div>
 
@@ -372,66 +477,26 @@ const LinkSaverExtensionPage = () => {
               </div>
             </div>
 
-            {/* Download Button */}
-            <div style={{
-              padding: '20px',
-              backgroundColor: '#f0fdf4',
-              border: '2px solid #86efac',
-              borderRadius: '12px',
-              textAlign: 'center',
-              marginBottom: '16px'
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: '600', color: '#166534', marginBottom: '12px' }}>
-                📱 Get the iOS Shortcut
-              </div>
-              <a
-                href="/YellowCircle-LinkSaver.shortcut"
-                download="YellowCircle-LinkSaver.shortcut"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '14px 24px',
-                  backgroundColor: COLORS.primary,
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  color: COLORS.text,
-                  textDecoration: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <Download size={18} />
-                Download Shortcut
-              </a>
-              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '10px' }}>
-                Open on iPhone/iPad to add to Shortcuts • iOS 13+
-              </div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>
-                First run prompts for your <strong>Save ID</strong> (from Settings → API Access)
-              </div>
-            </div>
-
-            {/* Manual Setup Accordion */}
-            <details style={{
+            {/* Manual Setup - Primary */}
+            <details open style={{
               backgroundColor: COLORS.cardBg,
               border: `1px solid ${COLORS.border}`,
               borderRadius: '8px',
-              padding: '14px 16px'
+              padding: '14px 16px',
+              marginBottom: '16px'
             }}>
               <summary style={{
                 cursor: 'pointer',
-                fontSize: '13px',
+                fontSize: '14px',
                 fontWeight: '600',
                 color: COLORS.text,
                 outline: 'none'
               }}>
-                Manual Setup (if link doesn't work)
+                📱 Create the Shortcut (2 minutes)
               </summary>
-              <div style={{ marginTop: '16px', fontSize: '13px', lineHeight: '1.8' }}>
-                <p style={{ marginBottom: '12px' }}>Create a new shortcut with these actions:</p>
-                <ol style={{ margin: '0 0 0 20px', padding: 0 }}>
+              <div style={{ marginTop: '16px', fontSize: '13px', lineHeight: '1.8', color: COLORS.text }}>
+                <p style={{ marginBottom: '12px', color: COLORS.text }}>Create a new shortcut with these actions:</p>
+                <ol style={{ margin: '0 0 0 20px', padding: 0, color: COLORS.text }}>
                   <li style={{ marginBottom: '8px' }}>Add <strong>"Receive URLs"</strong> from Share Sheet</li>
                   <li style={{ marginBottom: '8px' }}>Add <strong>"Text"</strong> action with:<br/>
                     <code style={{
@@ -454,6 +519,162 @@ const LinkSaverExtensionPage = () => {
                 </ol>
               </div>
             </details>
+
+            {/* Personalized Download - Primary Option for logged-in users */}
+            {user && (
+              <div style={{
+                padding: '20px',
+                backgroundColor: shortcutStatus?.signed ? '#dcfce7' : '#fef3c7',
+                border: `2px solid ${shortcutStatus?.signed ? '#22c55e' : COLORS.primary}`,
+                borderRadius: '12px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '8px', color: COLORS.text, fontSize: '15px' }}>
+                  {shortcutStatus?.signed ? '✅ Signed Shortcut Ready' : '⚡ One-Click Setup'}
+                </div>
+                {loadingSlug ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: COLORS.textMuted }}>
+                    <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+                    Loading your Save ID...
+                  </div>
+                ) : userSlug ? (
+                  <>
+                    <div style={{ color: COLORS.text, marginBottom: '12px', fontSize: '13px' }}>
+                      {shortcutStatus?.signed ? (
+                        <>Your signed shortcut for <strong>yellowcircle.io/s/{userSlug}/</strong> is ready!</>
+                      ) : (
+                        <>Download a pre-configured shortcut for <strong>yellowcircle.io/s/{userSlug}/</strong></>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleDownloadShortcut}
+                      disabled={downloadingShortcut}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px 20px',
+                        backgroundColor: shortcutStatus?.signed ? '#22c55e' : COLORS.primary,
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: shortcutStatus?.signed ? '#fff' : COLORS.text,
+                        cursor: downloadingShortcut ? 'wait' : 'pointer',
+                        opacity: downloadingShortcut ? 0.7 : 1
+                      }}
+                    >
+                      {downloadingShortcut ? (
+                        <>
+                          <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={16} />
+                          {shortcutStatus?.signed ? 'Download My Shortcut' : 'Download Shortcut'}
+                        </>
+                      )}
+                    </button>
+                    <p style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '10px', marginBottom: 0 }}>
+                      {shortcutStatus?.signed ? (
+                        <>Pre-configured with your Save ID — just tap "Add Shortcut" and you're done!</>
+                      ) : (
+                        <>
+                          On first use, you'll be prompted to enter your Save ID (find it in{' '}
+                          <Link to="/account/settings?tab=api" style={{ color: COLORS.primary }}>Settings</Link>).
+                        </>
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <div style={{ fontSize: '13px', color: COLORS.text }}>
+                    You need a Save ID first.{' '}
+                    <Link to="/account/settings?tab=api" style={{ color: COLORS.primary, fontWeight: '600' }}>
+                      Generate one in Settings →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Style for spinner animation */}
+            <style>{`
+              @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+
+            {/* Mac Users - Download Option (fallback/manual) */}
+            <div style={{
+              padding: '14px 16px',
+              backgroundColor: '#f5f5f4',
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '8px',
+              fontSize: '13px'
+            }}>
+              <div style={{ fontWeight: '600', marginBottom: '8px', color: COLORS.text }}>
+                {user && userSlug ? '📋 Alternative: Manual Setup' : '💻 Mac users:'}
+              </div>
+              <div style={{ color: COLORS.textMuted, marginBottom: '12px' }}>
+                {user && userSlug ? (
+                  <>Or download a template and edit manually. Open in Shortcuts app, edit the first "Text" action to change the URL.</>
+                ) : (
+                  <>
+                    Download the shortcut file below, open it in Shortcuts app, then <strong>edit the first "Text" action</strong> to replace "YOUR_SAVE_ID" with your Save ID from{' '}
+                    <Link to="/account/settings?tab=api" style={{ color: COLORS.primary }}>Settings</Link>.
+                    Then AirDrop to your iPhone or use "File → Share → Copy iCloud Link".
+                  </>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <a
+                  href="/YellowCircle-LinkSaver.shortcut"
+                  download="YellowCircle-LinkSaver.shortcut"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    backgroundColor: COLORS.white,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: COLORS.text,
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Download size={14} />
+                  Download Template
+                </a>
+                {isAdmin && (
+                  <a
+                    href="/YellowCircle-LinkSaver-Admin.shortcut"
+                    download="YellowCircle-LinkSaver-Admin.shortcut"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      backgroundColor: '#fef3c7',
+                      border: `1px solid ${COLORS.primary}`,
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      color: COLORS.text,
+                      textDecoration: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Download size={14} />
+                    Admin: Pre-configured
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Chrome Extension Section */}
@@ -486,7 +707,7 @@ const LinkSaverExtensionPage = () => {
                   <Chrome size={24} color={COLORS.text} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '2px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '2px', color: COLORS.text }}>
                     yellowCircle Link Saver
                   </div>
                   <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
@@ -495,12 +716,12 @@ const LinkSaverExtensionPage = () => {
                 </div>
               </div>
 
-              <div style={{ fontSize: '14px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '14px', marginBottom: '16px', color: COLORS.text }}>
                 <strong>Features:</strong>
-                <ul style={{ margin: '8px 0 0 20px', lineHeight: '1.8' }}>
+                <ul style={{ margin: '8px 0 0 20px', lineHeight: '1.8', color: COLORS.text }}>
                   <li>Click extension icon to save current page</li>
-                  <li><code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>Alt+S</code> — Quick save (no popup)</li>
-                  <li><code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>Alt+Shift+S</code> — Open popup with tags</li>
+                  <li><code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px', color: COLORS.text }}>Alt+S</code> — Quick save (no popup)</li>
+                  <li><code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px', color: COLORS.text }}>Alt+Shift+S</code> — Open popup with tags</li>
                   <li>Right-click on any link → Save to yellowCircle</li>
                 </ul>
               </div>
@@ -510,7 +731,8 @@ const LinkSaverExtensionPage = () => {
                 backgroundColor: '#fef3c7',
                 borderRadius: '8px',
                 fontSize: '13px',
-                marginBottom: '16px'
+                marginBottom: '16px',
+                color: COLORS.text
               }}>
                 <strong>Note:</strong> This extension requires Developer Mode.
                 Chrome Web Store version coming soon.
@@ -569,7 +791,7 @@ const LinkSaverExtensionPage = () => {
               </div>
               <div style={styles.step}>
                 <div style={styles.stepNumber}>2</div>
-                <div>Go to <code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>chrome://extensions</code> and enable <strong>Developer mode</strong></div>
+                <div>Go to <code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px', color: COLORS.text }}>chrome://extensions</code> and enable <strong>Developer mode</strong></div>
               </div>
               <div style={styles.step}>
                 <div style={styles.stepNumber}>3</div>

@@ -351,7 +351,20 @@ const TriggerRulesPage = () => {
       onMenuToggle={handleMenuToggle}
       navigationItems={adminNavigationItems}
     >
-      <div style={{
+      {/* Mobile responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .trigger-rules-container {
+            padding: 80px 16px 16px 16px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .trigger-rules-container {
+            padding: 70px 12px 12px 12px !important;
+          }
+        }
+      `}</style>
+      <div className="trigger-rules-container" style={{
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '100px 24px 40px 120px',

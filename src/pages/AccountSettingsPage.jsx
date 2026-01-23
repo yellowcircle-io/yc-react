@@ -11,11 +11,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import Layout from '../components/global/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserSettings } from '../contexts/UserSettingsContext';
 import { navigationItems } from '../config/navigationItems';
+import AuthModal from '../components/auth/AuthModal';
 import {
   Settings,
   User,
@@ -103,9 +104,11 @@ const styles = {
     borderBottom: `2px solid ${COLORS.border}`,
     marginBottom: '32px',
     overflowX: 'auto',
+    overflowY: 'hidden',
     WebkitOverflowScrolling: 'touch',
     scrollbarWidth: 'none',
-    msOverflowStyle: 'none'
+    msOverflowStyle: 'none',
+    flexWrap: 'nowrap'
   },
   tab: {
     display: 'flex',
@@ -167,6 +170,7 @@ const styles = {
     width: '100%',
     padding: '12px 16px',
     fontSize: '14px',
+    color: COLORS.text,
     border: `2px solid ${COLORS.border}`,
     borderRadius: '8px',
     outline: 'none',
@@ -175,6 +179,7 @@ const styles = {
   },
   inputReadOnly: {
     backgroundColor: COLORS.cardBg,
+    color: COLORS.text,
     cursor: 'not-allowed'
   },
   select: {
@@ -1908,7 +1913,6 @@ const IntegrationsTab = () => {
 // Main Component
 // ============================================================
 function AccountSettingsPage() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAdmin: _isAdmin, loading: authLoading } = useAuth();
   const { settings, loading: settingsLoading, saving, error, hasUnsavedChanges, updateSettings, saveSettings } = useUserSettings();
@@ -1929,12 +1933,16 @@ function AccountSettingsPage() {
     }
   };
 
-  // Redirect if not authenticated
+  // Show auth modal if not authenticated (instead of redirecting)
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/');
+      setShowAuthModal(true);
+    } else if (user) {
+      setShowAuthModal(false);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
   const handleTabChange = (tabId) => {
     const tab = TABS.find(t => t.id === tabId);
@@ -1972,16 +1980,60 @@ function AccountSettingsPage() {
     );
   }
 
+  // Show login prompt for unauthenticated users
+  if (!user) {
+    return (
+      <Layout navigationItems={navigationItems} allowScroll={true}>
+        <div style={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+          <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+            <Settings size={48} color={COLORS.primary} style={{ marginBottom: '16px' }} />
+            <h2 style={{ color: COLORS.text, marginBottom: '8px' }}>Sign in to access Settings</h2>
+            <p style={{ color: COLORS.textMuted, marginBottom: '24px' }}>
+              You need to be signed in to manage your account settings, API keys, and preferences.
+            </p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              style={{
+                backgroundColor: COLORS.primary,
+                color: COLORS.text,
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      </Layout>
+    );
+  }
+
   return (
     <Layout navigationItems={navigationItems} allowScroll={true}>
       {/* Mobile-responsive styles */}
       <style>{`
         @media (max-width: 768px) {
           .settings-container {
-            padding: 80px 16px 16px 16px !important;
+            padding: 80px 16px 16px 16px !important; /* sidebar hidden on mobile */
           }
           .settings-tabs::-webkit-scrollbar {
             display: none;
+          }
+        }
+        @media (max-width: 480px) {
+          .settings-container {
+            padding: 70px 12px 12px 12px !important; /* sidebar hidden on mobile */
           }
         }
       `}</style>

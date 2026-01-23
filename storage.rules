@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default: deny all
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Allow public read access to signed shortcuts
+    match /shortcuts/signed/{shortcutFile} {
+      allow read: if true;
+      allow write: if false; // Admin upload via Cloud Function only
+    }
+  }
+}

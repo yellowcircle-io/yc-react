@@ -333,7 +333,7 @@ function HomePage() {
       <div style={{
         position: 'fixed',
         bottom: footerOpen ? '420px' : (isMobile ? '120px' : '80px'),
-        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
         right: isMobile ? '100px' : '140px',
         padding: isMobile ? '0 20px' : '0 40px',
         zIndex: 61,
@@ -398,7 +398,7 @@ function HomePage() {
         <div style={{
           position: 'fixed',
           bottom: footerOpen ? '340px' : '40px',
-          left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+          left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
           right: isMobile ? '100px' : '140px',
           padding: isMobile ? '0 20px' : '0 40px',
           zIndex: 61,

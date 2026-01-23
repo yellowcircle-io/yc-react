@@ -204,7 +204,20 @@ const AdminHubPage = () => {
       navigationItems={adminNavigationItems}
       onHomeClick={handleHomeClick}
     >
-      <div style={{
+      {/* Mobile responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .admin-hub-container {
+            padding: 80px 16px 16px 16px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .admin-hub-container {
+            padding: 70px 12px 12px 12px !important;
+          }
+        }
+      `}</style>
+      <div className="admin-hub-container" style={{
         minHeight: '100vh',
         backgroundColor: COLORS.white,
         padding: '100px 40px 40px 120px'

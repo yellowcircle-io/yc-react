@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shortcut Name -->
+	<key>WFWorkflowName</key>
+	<string>Save to yellowCircle</string>
+
+	<!-- ========================================== -->
+	<!-- WORKFLOW ACTIONS -->
+	<!-- ========================================== -->
+	<key>WFWorkflowActions</key>
+	<array>
+
+		<!-- ===== ACTION 1: Get token file from iCloud ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.documentpicker.open</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFFile</key>
+				<dict>
+					<key>WFFileExtension</key>
+					<string>txt</string>
+					<key>WFFileName</key>
+					<string>yellowcircle-saveid.txt</string>
+					<key>WFFilePath</key>
+					<string>Shortcuts/yellowcircle-saveid.txt</string>
+					<key>WFIsDirectory</key>
+					<false/>
+				</dict>
+				<key>WFGetFilePath</key>
+				<string>Shortcuts/yellowcircle-saveid.txt</string>
+				<key>WFFileErrorIfNotFound</key>
+				<false/>
+				<key>WFShowFilePicker</key>
+				<false/>
+				<key>UUID</key>
+				<string>UNIV-0001-0001-0001-000000000001</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 2: Count items (check if file exists) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.count</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>Input</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>File</string>
+						<key>OutputUUID</key>
+						<string>UNIV-0001-0001-0001-000000000001</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>UUID</key>
+				<string>UNIV-0001-0001-0001-000000000002</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 3: IF count = 0 (no save ID file) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>SAVEID-CHECK-IF-GROUP</string>
+				<key>WFCondition</key>
+				<integer>4</integer>
+				<key>WFConditionalActionString</key>
+				<string>0</string>
+				<key>WFControlFlowMode</key>
+				<integer>0</integer>
+				<key>WFInput</key>
+				<dict>
+					<key>Type</key>
+					<string>Variable</string>
+					<key>Variable</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Count</string>
+						<key>OutputUUID</key>
+						<string>UNIV-0001-0001-0001-000000000002</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 4: Ask for Input (Save ID) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.ask</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFAskActionPrompt</key>
+				<string>Enter your Save ID (from Settings → API Access)</string>
+				<key>WFAskActionDefaultAnswer</key>
+				<string></string>
+				<key>WFInputType</key>
+				<string>Text</string>
+				<key>UUID</key>
+				<string>UNIV-0001-0001-0001-000000000004</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 5: Save Save ID to file ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.documentpicker.save</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Provided Input</string>
+						<key>OutputUUID</key>
+						<string>UNIV-0001-0001-0001-000000000004</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFFileDestinationPath</key>
+				<string>Shortcuts/yellowcircle-saveid.txt</string>
+				<key>WFSaveFileOverwrite</key>
+				<true/>
+				<key>WFAskWhereToSave</key>
+				<false/>
+				<key>UUID</key>
+				<string>UNIV-0001-0001-0001-000000000005</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 6: Set Variable (NewSaveID) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Provided Input</string>
+						<key>OutputUUID</key>
+						<string>UNIV-0001-0001-0001-000000000004</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFVariableName</key>
+				<string>SaveID</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 7: Otherwise (Save ID exists) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>SAVEID-CHECK-IF-GROUP</string>
+				<key>WFControlFlowMode</key>
+				<integer>1</integer>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 8: Get file contents (read existing Save ID) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.documentpicker.open</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFFile</key>
+				<dict>
+					<key>WFFileExtension</key>
+					<string>txt</string>
+					<key>WFFileName</key>
+					<string>yellowcircle-saveid.txt</string>
+					<key>WFFilePath</key>
+					<string>Shortcuts/yellowcircle-saveid.txt</string>
+					<key>WFIsDirectory</key>
+					<false/>
+				</dict>
+				<key>WFGetFilePath</key>
+				<string>Shortcuts/yellowcircle-saveid.txt</string>
+				<key>WFFileErrorIfNotFound</key>
+				<false/>
+				<key>WFShowFilePicker</key>
+				<false/>
+				<key>UUID</key>
+				<string>UNIV-0001-0001-0001-000000000008</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 9: Set Variable (ExistingSaveID) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.setvariable</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>File</string>
+						<key>OutputUUID</key>
+						<string>UNIV-0001-0001-0001-000000000008</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+				<key>WFVariableName</key>
+				<string>SaveID</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 10: End If ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>SAVEID-CHECK-IF-GROUP</string>
+				<key>WFControlFlowMode</key>
+				<integer>2</integer>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 11: Text (Build save URL) ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.gettext</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFTextActionText</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{30, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>Variable</string>
+								<key>VariableName</key>
+								<string>SaveID</string>
+							</dict>
+							<key>{32, 1}</key>
+							<dict>
+								<key>Type</key>
+								<string>ExtensionInput</string>
+							</dict>
+						</dict>
+						<key>string</key>
+						<string>https://yellowcircle.io/s/￼/￼</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenString</string>
+				</dict>
+				<key>UUID</key>
+				<string>UNIV-0001-0001-0001-000000000011</string>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 12: Open URLs ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.openurl</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>Text</string>
+						<key>OutputUUID</key>
+						<string>UNIV-0001-0001-0001-000000000011</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+
+		<!-- ===== ACTION 13: Show Notification ===== -->
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.notification</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>WFNotificationActionBody</key>
+				<string>Link saved to yellowCircle!</string>
+				<key>WFNotificationActionTitle</key>
+				<string>Saved</string>
+				<key>WFNotificationActionSound</key>
+				<true/>
+			</dict>
+		</dict>
+
+	</array>
+
+	<!-- ========================================== -->
+	<!-- WORKFLOW METADATA -->
+	<!-- ========================================== -->
+
+	<key>WFWorkflowClientVersion</key>
+	<string>2605.0.5</string>
+
+	<key>WFWorkflowHasOutputFallback</key>
+	<false/>
+
+	<key>WFWorkflowHasShortcutInputVariables</key>
+	<true/>
+
+	<!-- Icon: Yellow circle with link icon -->
+	<key>WFWorkflowIcon</key>
+	<dict>
+		<key>WFWorkflowIconGlyphNumber</key>
+		<integer>59819</integer>
+		<key>WFWorkflowIconStartColor</key>
+		<integer>4294956800</integer>
+	</dict>
+
+	<!-- No import questions - we handle Save ID storage ourselves -->
+	<key>WFWorkflowImportQuestions</key>
+	<array/>
+
+	<!-- Accept URLs from Share Sheet -->
+	<key>WFWorkflowInputContentItemClasses</key>
+	<array>
+		<string>WFURLContentItem</string>
+		<string>WFArticleContentItem</string>
+		<string>WFSafariWebPageContentItem</string>
+	</array>
+
+	<key>WFWorkflowMinimumClientVersion</key>
+	<integer>900</integer>
+
+	<key>WFWorkflowMinimumClientVersionString</key>
+	<string>900</string>
+
+	<!-- Show in Share Sheet -->
+	<key>WFWorkflowTypes</key>
+	<array>
+		<string>ActionExtension</string>
+		<string>NCWidget</string>
+		<string>WatchKit</string>
+	</array>
+
+</dict>
+</plist>

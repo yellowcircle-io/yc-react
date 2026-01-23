@@ -553,7 +553,20 @@ const ContactDashboardPage = () => {
       onMenuToggle={handleMenuToggle}
       navigationItems={adminNavigationItems}
     >
-      <div style={{
+      {/* Mobile responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .contact-dashboard-container {
+            padding: 80px 16px 16px 16px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .contact-dashboard-container {
+            padding: 70px 12px 12px 12px !important;
+          }
+        }
+      `}</style>
+      <div className="contact-dashboard-container" style={{
         minHeight: '100vh',
         backgroundColor: COLORS.white,
         padding: '100px 40px 40px 120px'

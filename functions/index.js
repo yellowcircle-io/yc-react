@@ -13014,6 +13014,12 @@ exports.linkArchiverVanitySave = linkArchiver.vanitySave;
 exports.linkArchiverCheckVanityAvailability = linkArchiver.checkVanityAvailability;
 exports.linkArchiverClaimVanitySlug = linkArchiver.claimVanitySlug;
 exports.linkArchiverGetVanitySlug = linkArchiver.getVanitySlug;
+exports.getVanitySlug = linkArchiver.getVanitySlug; // Frontend expects this direct name
+
+// iOS Shortcut Generation (dynamic pre-configured shortcuts)
+exports.generateShortcut = linkArchiver.generateShortcut;
+exports.getShortcutStatus = linkArchiver.getShortcutStatus;
+exports.uploadSignedShortcut = linkArchiver.uploadSignedShortcut;
 
 // Pocket Import Function (bulk import)
 const pocketImport = require('./importPocketHttp');

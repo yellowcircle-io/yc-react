@@ -38,6 +38,15 @@ function ComponentLibraryPage() {
   const [expandedSection, setExpandedSection] = useState(null);
   const [footerOpen, setFooterOpen] = useState(false);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Sample component data - this would typically come from a data source
   const componentData = useMemo(() => ({
     yellowcircle: yellowCircleComponents,
@@ -831,7 +840,7 @@ const primaryColor = RhoColors.primary; // "#00ECC0"`,
       {/* Main Content Area */}
       <div style={{
         position: 'fixed',
-        left: sidebarOpen ? 'min(30vw, 450px)' : '80px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(30vw, 450px)' : '80px'),
         top: '0',
         right: '0',
         bottom: '0',

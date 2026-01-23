@@ -253,7 +253,7 @@ function CompanyDetailPage() {
       <div style={{
         position: 'fixed',
         top: '80px',
-        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
         right: 0,
         bottom: footerOpen ? '320px' : '20px',
         display: 'flex',

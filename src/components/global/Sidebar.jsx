@@ -357,11 +357,14 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
     );
   };
 
-  const closedWidth = variant === "hidden" ? '0px' : '80px';
-  const showBackground = variant === "hidden" ? sidebarOpen : true;
+  // On mobile: always hide sidebar completely when closed (like "hidden" variant)
+  // On desktop: standard variant shows 80px when closed
+  const closedWidth = isMobile || variant === "hidden" ? '0px' : '80px';
+  const showBackground = (isMobile || variant === "hidden") ? sidebarOpen : true;
   // Always use fixed position for toggle button to prevent scrolling issues
   const togglePosition = 'fixed';
-  const toggleLeft = variant === "hidden" ? '20px' : '40px';
+  // On mobile: toggle button position matches "hidden" variant (top-left, no translate)
+  const toggleLeft = isMobile || variant === "hidden" ? '20px' : '40px';
 
   // Helper function for sub-item navigation
   const handleSubItemClick = (item) => {
@@ -428,7 +431,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
           position: togglePosition,
           top: '20px',
           left: toggleLeft,
-          transform: variant === "hidden" ? 'none' : 'translateX(-50%)',
+          transform: (isMobile || variant === "hidden") ? 'none' : 'translateX(-50%)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -805,21 +808,21 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
         )}
 
         {/* FOOTER SECTION - YC Logo + UserMenu (only for standard variant) */}
-        {/* Always opens Footer only */}
+        {/* On mobile: use fixed positioning like hidden variant; on desktop: relative to sidebar */}
         {variant === "standard" && (
           <div style={{
             flexShrink: 0,
-            height: '85px',
+            height: isMobile ? '0px' : '85px',
             position: 'relative',
             zIndex: 60  // Above sidebar container (50)
           }}>
             <div
               className="yc-logo clickable-element"
               style={{
-                position: 'absolute',
-                left: '40px',
+                position: isMobile ? 'fixed' : 'absolute',
+                left: isMobile ? '20px' : '40px',
                 bottom: '20px',
-                transform: 'translateX(-50%)',
+                transform: isMobile ? 'none' : 'translateX(-50%)',
                 width: '45px',
                 height: '45px',
                 minWidth: '40px',
@@ -838,8 +841,8 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
                 }
                 // Logo only opens Footer - no home navigation
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1.15) rotate(5deg)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-50%) scale(1) rotate(0deg)'}
+              onMouseEnter={(e) => e.currentTarget.style.transform = isMobile ? 'scale(1.15) rotate(5deg)' : 'translateX(-50%) scale(1.15) rotate(5deg)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = isMobile ? 'scale(1) rotate(0deg)' : 'translateX(-50%) scale(1) rotate(0deg)'}
             >
               <img
                 src="https://res.cloudinary.com/yellowcircle-io/image/upload/v1756494388/yc-logo_xbntno.png"
@@ -885,7 +888,7 @@ function Sidebar({ onHomeClick, onFooterToggle, navigationItems = [], scrollOffs
             transition: transform 0.2s ease-out, background-color 0.2s ease-out;
           }
           .sidebar-toggle-btn:hover {
-            transform: ${variant === "hidden" ? 'scale(1.1)' : 'translateX(-50%) scale(1.1)'};
+            transform: ${(isMobile || variant === "hidden") ? 'scale(1.1)' : 'translateX(-50%) scale(1.1)'};
             background-color: rgba(251, 191, 36, 0.1);
           }
 

@@ -202,7 +202,7 @@ function ServiceDetailPage() {
         position: 'fixed',
         top: '80px',
         bottom: footerOpen ? '320px' : '40px',
-        left: sidebarOpen ? 'min(35vw, 472px)' : '80px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
         right: 0,
         padding: isMobile ? '0 20px' : '0 80px',
         zIndex: 61,

@@ -906,7 +906,20 @@ const BlockEditorPage = () => {
       onMenuToggle={() => {}}
       navigationItems={adminNavigationItems}
     >
-      <div style={{
+      {/* Mobile responsive styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .block-editor-container {
+            padding: 80px 16px 16px 16px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .block-editor-container {
+            padding: 70px 12px 12px 12px !important;
+          }
+        }
+      `}</style>
+      <div className="block-editor-container" style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
         padding: '100px 40px 40px 120px'

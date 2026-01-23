@@ -4446,7 +4446,7 @@ const ShareFolderModal = ({ folder, isOpen, onClose, user, onShareComplete }) =>
 const LinkArchiverPage = () => {
   const navigate = useNavigate();
   useLayout(); // Context subscription for sidebar
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // Offline storage
   const {
@@ -4680,12 +4680,8 @@ const LinkArchiverPage = () => {
     }
   }, [user, loadData]);
 
-  // Redirect non-admins
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/unity-notes');
-    }
-  }, [authLoading, isAdmin, navigate]);
+  // Note: Link Saver is a user tool, not admin-gated
+  // All authenticated users can access their own saved links
 
   // Handlers
   const handleStar = async (link) => {
@@ -5059,7 +5055,7 @@ const LinkArchiverPage = () => {
             display: none !important; /* Hidden on mobile - using mobile views bar instead */
           }
           .links-container {
-            padding: 70px 12px 12px 90px !important; /* top right bottom left - clear header and sidebar */
+            padding: 70px 12px 12px 16px !important; /* top right bottom left - sidebar hidden on mobile */
           }
           .links-list-header {
             padding: 12px !important;
@@ -5073,15 +5069,23 @@ const LinkArchiverPage = () => {
             gap: 10px;
           }
           .links-header-buttons {
+            position: sticky;
+            top: 56px;
+            z-index: 45;
             width: 100%;
             justify-content: space-between !important;
+            background-color: #fafafa;
+            margin: 0 -8px;
+            padding: 8px;
+            width: calc(100% + 16px);
+            border-bottom: 1px solid #e5e7eb;
           }
           .links-header-buttons button {
             padding: 6px !important;
             font-size: 12px !important;
           }
           .links-container {
-            padding: 70px 8px 8px 90px !important; /* top right bottom left - clear header and sidebar */
+            padding: 70px 8px 8px 12px !important; /* top right bottom left - sidebar hidden on mobile */
           }
         }
       `}</style>

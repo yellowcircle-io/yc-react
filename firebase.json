@@ -3,6 +3,9 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "functions": {
     "source": "functions",
     "ignore": [
@@ -33,6 +36,19 @@
             "value": "attachment"
           }
         ]
+      },
+      {
+        "source": "**/*.shortcut",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "Content-Disposition",
+            "value": "attachment; filename=\"YellowCircle-LinkSaver.shortcut\""
+          }
+        ]
       }
     ],
     "rewrites": [
@@ -53,7 +69,11 @@
         "function": "linkArchiverVanitySave"
       },
       {
-        "source": "!**/*.@(zip|png|jpg|jpeg|gif|svg|ico|pdf|woff|woff2|ttf|eot)",
+        "source": "/api/shortcut",
+        "function": "generateShortcut"
+      },
+      {
+        "source": "!**/*.@(zip|shortcut|png|jpg|jpeg|gif|svg|ico|pdf|woff|woff2|ttf|eot)",
         "destination": "/index.html"
       },
       {

@@ -35,6 +35,65 @@ const setCors = (response) => {
 };
 
 // ============================================
+// GitHub Action Trigger (for iOS Shortcut signing)
+// ============================================
+
+/**
+ * Trigger GitHub Action to sign an iOS Shortcut for a user
+ * @param {string} slug - The user's Save ID or vanity slug
+ * @returns {Promise<boolean>} - Whether the trigger was successful
+ */
+const triggerShortcutSigning = async (slug) => {
+  try {
+    // Get GitHub token from Firebase config
+    const githubToken = functions.config().github?.token;
+    if (!githubToken) {
+      console.log('GitHub token not configured - skipping shortcut signing');
+      return false;
+    }
+
+    const payload = JSON.stringify({
+      event_type: 'sign-shortcut',
+      client_payload: { slug }
+    });
+
+    return new Promise((resolve) => {
+      const req = https.request({
+        hostname: 'api.github.com',
+        path: '/repos/yellowcircle/yellow-circle/dispatches',
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${githubToken}`,
+          'User-Agent': 'yellowCircle-Functions',
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      }, (res) => {
+        if (res.statusCode === 204) {
+          console.log(`✅ Triggered shortcut signing for: ${slug}`);
+          resolve(true);
+        } else {
+          console.log(`⚠️ GitHub Action trigger returned status ${res.statusCode}`);
+          resolve(false);
+        }
+      });
+
+      req.on('error', (err) => {
+        console.error('GitHub Action trigger error:', err.message);
+        resolve(false);
+      });
+
+      req.write(payload);
+      req.end();
+    });
+  } catch (err) {
+    console.error('Failed to trigger shortcut signing:', err.message);
+    return false;
+  }
+};
+
+// ============================================
 // Authentication Helper
 // ============================================
 
@@ -1971,6 +2030,12 @@ exports.generateSaveId = functions.https.onRequest(async (request, response) => 
 
     console.log(`🆔 Generated Save ID ${newSaveId} for user ${auth.uid}`);
 
+    // Trigger GitHub Action to sign a personalized shortcut (non-blocking)
+    // This runs asynchronously so the signed shortcut is ready when user requests it
+    triggerShortcutSigning(newSaveId).catch(err => {
+      console.log('Shortcut signing trigger failed (non-critical):', err.message);
+    });
+
     // Generate the save URL
     const proxySaveUrl = `https://us-central1-yellowcircle-app.cloudfunctions.net/linkArchiverProxySave?id=${newSaveId}&url=`;
     const vanityUrl = `yellowcircle.io/s/${newSaveId}/`;
@@ -2084,16 +2149,21 @@ exports.vanitySave = functions.https.onRequest(async (request, response) => {
 
   try {
     // Parse path: /s/TOKEN_OR_ID/URL or just get from query params
-    // Path format: /vanitySave/TOKEN_OR_ID/https://example.com
+    // Firebase hosting rewrites /s/** to this function, so path includes /s/
+    // Path format: /s/TOKEN_OR_ID/https://example.com
     const fullPath = request.path || '';
-    const pathParts = fullPath.split('/').filter(Boolean);
+    let pathParts = fullPath.split('/').filter(Boolean);
+
+    // Skip the 's' prefix if present (Firebase hosting rewrite includes it)
+    if (pathParts[0] === 's') {
+      pathParts = pathParts.slice(1);
+    }
 
     // Extract token and URL from path
-    // Format could be: vanitySave/TOKEN/https://example.com or just TOKEN/https://...
     let identifier = null;
     let targetUrl = null;
 
-    // Try to extract from path (after function name)
+    // Try to extract from path
     if (pathParts.length >= 2) {
       identifier = pathParts[0];
       // Everything after the identifier is the URL (might have multiple slashes)
@@ -2189,7 +2259,7 @@ exports.vanitySave = functions.https.onRequest(async (request, response) => {
 
     // If not found as Save ID, try as API token
     if (!userId) {
-      const tokenDoc = await getDb().collection(TOKENS_COLLECTION)
+      const tokenDoc = await getDb().collection(API_TOKENS_COLLECTION)
         .where('token', '==', identifier)
         .where('active', '==', true)
         .limit(1)
@@ -2232,9 +2302,50 @@ exports.vanitySave = functions.https.onRequest(async (request, response) => {
       .get();
 
     if (!existingQuery.empty) {
-      // Already saved - just redirect
+      // Already saved - show already saved message
       console.log(`📎 Vanity save (duplicate): ${targetUrl}`);
-      response.redirect(302, targetUrl);
+      response.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>yellowCircle - Already Saved</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px 20px; text-align: center; background: #fff; }
+              .container { max-width: 400px; margin: 0 auto; }
+              .icon { font-size: 48px; margin-bottom: 16px; }
+              h1 { font-size: 24px; margin: 0 0 12px; color: #171717; }
+              .message { color: #737373; font-size: 14px; margin-bottom: 24px; }
+              .url { background: #f5f5f5; padding: 12px 16px; border-radius: 8px; font-size: 13px; word-break: break-all; margin-bottom: 24px; color: #171717; }
+              .btn { display: inline-block; padding: 14px 28px; background: #fbbf24; color: #171717; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; }
+              .btn:hover { background: #f59e0b; }
+              .auto { color: #a3a3a3; font-size: 12px; margin-top: 16px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">📎</div>
+              <h1>Already Saved</h1>
+              <p class="message">This link is already in your collection.</p>
+              <div class="url">${targetUrl.substring(0, 100)}${targetUrl.length > 100 ? '...' : ''}</div>
+              <a href="${targetUrl}" class="btn">Continue to Link →</a>
+              <p class="auto">Redirecting in <span id="countdown">5</span> seconds...</p>
+            </div>
+            <script>
+              let seconds = 5;
+              const countdown = document.getElementById('countdown');
+              const timer = setInterval(() => {
+                seconds--;
+                countdown.textContent = seconds;
+                if (seconds <= 0) {
+                  clearInterval(timer);
+                  window.location.href = "${targetUrl.replace(/"/g, '\\"')}";
+                }
+              }, 1000);
+            </script>
+          </body>
+        </html>
+      `);
       return;
     }
 
@@ -2286,17 +2397,77 @@ exports.vanitySave = functions.https.onRequest(async (request, response) => {
 
     console.log(`📎 Vanity save: ${targetUrl} via ${savedVia}`);
 
-    // Redirect to original URL
-    response.redirect(302, targetUrl);
+    // Show success confirmation page
+    const displayTitle = (link.title || 'Untitled').substring(0, 80);
+    response.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>yellowCircle - Saved!</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px 20px; text-align: center; background: #fff; }
+            .container { max-width: 400px; margin: 0 auto; }
+            .icon { font-size: 48px; margin-bottom: 16px; }
+            h1 { font-size: 24px; margin: 0 0 12px; color: #171717; }
+            .title { font-weight: 600; color: #171717; font-size: 16px; margin-bottom: 8px; }
+            .url { background: #f5f5f5; padding: 12px 16px; border-radius: 8px; font-size: 13px; word-break: break-all; margin-bottom: 24px; color: #737373; }
+            .btn { display: inline-block; padding: 14px 28px; background: #fbbf24; color: #171717; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; }
+            .btn:hover { background: #f59e0b; }
+            .auto { color: #a3a3a3; font-size: 12px; margin-top: 16px; }
+            .tag { display: inline-block; background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; margin-bottom: 16px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="icon">✅</div>
+            <h1>Link Saved!</h1>
+            <span class="tag">quick-save</span>
+            <p class="title">${displayTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            <div class="url">${targetUrl.substring(0, 100)}${targetUrl.length > 100 ? '...' : ''}</div>
+            <a href="${targetUrl}" class="btn">Continue to Link →</a>
+            <p class="auto">Redirecting in <span id="countdown">3</span> seconds...</p>
+          </div>
+          <script>
+            let seconds = 3;
+            const countdown = document.getElementById('countdown');
+            const timer = setInterval(() => {
+              seconds--;
+              countdown.textContent = seconds;
+              if (seconds <= 0) {
+                clearInterval(timer);
+                window.location.href = "${targetUrl.replace(/"/g, '\\"')}";
+              }
+            }, 1000);
+          </script>
+        </body>
+      </html>
+    `);
 
   } catch (error) {
     console.error("vanitySave error:", error);
     response.status(500).send(`
+      <!DOCTYPE html>
       <html>
-        <head><title>yellowCircle - Error</title></head>
-        <body style="font-family: -apple-system, sans-serif; padding: 40px; text-align: center;">
-          <h1>❌ Error</h1>
-          <p>Failed to save link. Please try again.</p>
+        <head>
+          <title>yellowCircle - Error</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px 20px; text-align: center; background: #fff; }
+            .container { max-width: 400px; margin: 0 auto; }
+            .icon { font-size: 48px; margin-bottom: 16px; }
+            h1 { font-size: 24px; margin: 0 0 12px; color: #171717; }
+            .message { color: #737373; font-size: 14px; margin-bottom: 24px; }
+            .btn { display: inline-block; padding: 14px 28px; background: #f5f5f5; color: #171717; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="icon">❌</div>
+            <h1>Save Failed</h1>
+            <p class="message">Something went wrong. Please try again.</p>
+            <a href="javascript:history.back()" class="btn">← Go Back</a>
+          </div>
         </body>
       </html>
     `);
@@ -3343,6 +3514,364 @@ exports.validateToken = functions.https.onRequest(async (request, response) => {
   } catch (error) {
     console.error("validateToken error:", error);
     response.status(500).json({ valid: false, error: "Validation failed" });
+  }
+});
+
+// ============================================
+// Generate iOS Shortcut - Hybrid Signed/Unsigned
+// ============================================
+
+/**
+ * Get Shortcut Status - Check if pre-signed shortcut exists
+ * GET /getShortcutStatus?slug=yourslug
+ *
+ * Returns status of shortcut availability for a user.
+ * @returns { available: boolean, signed: boolean, url?: string }
+ */
+exports.getShortcutStatus = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    const slug = request.query.slug;
+
+    if (!slug) {
+      response.status(400).json({ error: "Slug parameter required" });
+      return;
+    }
+
+    const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+    if (sanitizedSlug.length < 2 || sanitizedSlug.length > 30) {
+      response.status(400).json({ error: "Invalid slug length" });
+      return;
+    }
+
+    // Verify this slug exists
+    const vanityDoc = await getDb().collection('vanitySlugs').doc(sanitizedSlug).get();
+    const saveIdDoc = await getDb().collection('linkSaverTokens')
+      .where('saveId', '==', sanitizedSlug)
+      .limit(1)
+      .get();
+
+    if (!vanityDoc.exists && saveIdDoc.empty) {
+      response.status(404).json({ available: false, error: "Slug not found" });
+      return;
+    }
+
+    // Check for pre-signed shortcut in Cloud Storage
+    try {
+      const bucket = admin.storage().bucket('yellowcircle-app.firebasestorage.app');
+      const filePath = `shortcuts/signed/${sanitizedSlug}.shortcut`;
+      const file = bucket.file(filePath);
+      console.log(`Checking for signed shortcut at: ${filePath}`);
+      const [exists] = await file.exists();
+      console.log(`File exists: ${exists}`);
+
+      if (exists) {
+        // Return public URL (shortcuts/signed/* is publicly readable)
+        const publicUrl = `https://firebasestorage.googleapis.com/v0/b/yellowcircle-app.firebasestorage.app/o/shortcuts%2Fsigned%2F${sanitizedSlug}.shortcut?alt=media`;
+
+        response.json({
+          available: true,
+          signed: true,
+          url: publicUrl,
+          slug: sanitizedSlug
+        });
+        return;
+      }
+    } catch (storageError) {
+      console.error("Storage check failed:", storageError.message, storageError.stack);
+    }
+
+    // No pre-signed shortcut available
+    response.json({
+      available: true,
+      signed: false,
+      slug: sanitizedSlug,
+      unsignedUrl: `/api/shortcut?slug=${sanitizedSlug}`
+    });
+
+  } catch (error) {
+    console.error("getShortcutStatus error:", error);
+    response.status(500).json({ error: "Failed to check shortcut status" });
+  }
+});
+
+/**
+ * Generate iOS Shortcut - Creates a pre-configured .shortcut file
+ * GET /generateShortcut?slug=yourslug
+ *
+ * First checks for pre-signed shortcut in Cloud Storage.
+ * Falls back to generating unsigned XML plist.
+ *
+ * @param {string} slug - The vanity slug or save ID to configure
+ * @returns {binary} .shortcut file for download
+ */
+exports.generateShortcut = functions.https.onRequest(async (request, response) => {
+  // Allow CORS for downloads
+  response.set("Access-Control-Allow-Origin", "*");
+  response.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  try {
+    const slug = request.query.slug;
+
+    if (!slug) {
+      response.status(400).json({ error: "Slug parameter required" });
+      return;
+    }
+
+    // Sanitize slug - only allow alphanumeric and hyphens
+    const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+    if (sanitizedSlug.length < 2 || sanitizedSlug.length > 30) {
+      response.status(400).json({ error: "Invalid slug length" });
+      return;
+    }
+
+    // Verify this slug exists (either as vanity slug or save ID)
+    const vanityDoc = await getDb().collection('vanitySlugs').doc(sanitizedSlug).get();
+    const saveIdDoc = await getDb().collection('linkSaverTokens')
+      .where('saveId', '==', sanitizedSlug)
+      .limit(1)
+      .get();
+
+    if (!vanityDoc.exists && saveIdDoc.empty) {
+      response.status(404).json({ error: "Slug not found. Please verify your Save ID or vanity slug." });
+      return;
+    }
+
+    // Check for pre-signed shortcut in Cloud Storage first
+    try {
+      const bucket = admin.storage().bucket('yellowcircle-app.firebasestorage.app');
+      const filePath = `shortcuts/signed/${sanitizedSlug}.shortcut`;
+      const file = bucket.file(filePath);
+      console.log(`generateShortcut: Checking for signed shortcut at: ${filePath}`);
+      const [exists] = await file.exists();
+      console.log(`generateShortcut: File exists: ${exists}`);
+
+      if (exists) {
+        // Stream the signed shortcut directly
+        response.set("Content-Type", "application/octet-stream");
+        response.set("Content-Disposition", `attachment; filename="Save-to-yellowCircle.shortcut"`);
+        response.set("X-Shortcut-Signed", "true");
+
+        const readStream = file.createReadStream();
+        readStream.pipe(response);
+        return;
+      }
+    } catch (storageError) {
+      console.error("Storage check failed, falling back to unsigned:", storageError.message, storageError.stack);
+    }
+
+    // Fall back to generating unsigned shortcut
+    // Generate unique UUID for action references
+    const uuid = 'FFFFFFFF-FFFF-4FFF-BFFF-' + Date.now().toString(16).toUpperCase().padStart(12, '0');
+
+    // Create the iOS Shortcut XML plist
+    const shortcutXml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+\t<key>WFWorkflowClientVersion</key>
+\t<string>2605.0.5</string>
+\t<key>WFWorkflowMinimumClientVersion</key>
+\t<integer>900</integer>
+\t<key>WFWorkflowMinimumClientVersionString</key>
+\t<string>900</string>
+\t<key>WFWorkflowName</key>
+\t<string>Save to yellowCircle</string>
+\t<key>WFWorkflowTypes</key>
+\t<array>
+\t\t<string>ActionExtension</string>
+\t</array>
+\t<key>WFWorkflowInputContentItemClasses</key>
+\t<array>
+\t\t<string>WFURLContentItem</string>
+\t\t<string>WFArticleContentItem</string>
+\t</array>
+\t<key>WFWorkflowIcon</key>
+\t<dict>
+\t\t<key>WFWorkflowIconGlyphNumber</key>
+\t\t<integer>59819</integer>
+\t\t<key>WFWorkflowIconStartColor</key>
+\t\t<integer>4294956800</integer>
+\t</dict>
+\t<key>WFWorkflowActions</key>
+\t<array>
+\t\t<dict>
+\t\t\t<key>WFWorkflowActionIdentifier</key>
+\t\t\t<string>is.workflow.actions.gettext</string>
+\t\t\t<key>WFWorkflowActionParameters</key>
+\t\t\t<dict>
+\t\t\t\t<key>WFTextActionText</key>
+\t\t\t\t<dict>
+\t\t\t\t\t<key>Value</key>
+\t\t\t\t\t<dict>
+\t\t\t\t\t\t<key>string</key>
+\t\t\t\t\t\t<string>https://yellowcircle.io/s/${sanitizedSlug}/</string>
+\t\t\t\t\t\t<key>attachmentsByRange</key>
+\t\t\t\t\t\t<dict>
+\t\t\t\t\t\t</dict>
+\t\t\t\t\t</dict>
+\t\t\t\t\t<key>WFSerializationType</key>
+\t\t\t\t\t<string>WFTextTokenString</string>
+\t\t\t\t</dict>
+\t\t\t\t<key>UUID</key>
+\t\t\t\t<string>${uuid}</string>
+\t\t\t</dict>
+\t\t</dict>
+\t\t<dict>
+\t\t\t<key>WFWorkflowActionIdentifier</key>
+\t\t\t<string>is.workflow.actions.openurl</string>
+\t\t\t<key>WFWorkflowActionParameters</key>
+\t\t\t<dict>
+\t\t\t\t<key>WFInput</key>
+\t\t\t\t<dict>
+\t\t\t\t\t<key>Value</key>
+\t\t\t\t\t<dict>
+\t\t\t\t\t\t<key>string</key>
+\t\t\t\t\t\t<string>\uFFFC\uFFFC</string>
+\t\t\t\t\t\t<key>attachmentsByRange</key>
+\t\t\t\t\t\t<dict>
+\t\t\t\t\t\t\t<key>{0, 1}</key>
+\t\t\t\t\t\t\t<dict>
+\t\t\t\t\t\t\t\t<key>Type</key>
+\t\t\t\t\t\t\t\t<string>ActionOutput</string>
+\t\t\t\t\t\t\t\t<key>OutputName</key>
+\t\t\t\t\t\t\t\t<string>Text</string>
+\t\t\t\t\t\t\t\t<key>OutputUUID</key>
+\t\t\t\t\t\t\t\t<string>${uuid}</string>
+\t\t\t\t\t\t\t</dict>
+\t\t\t\t\t\t\t<key>{1, 1}</key>
+\t\t\t\t\t\t\t<dict>
+\t\t\t\t\t\t\t\t<key>Type</key>
+\t\t\t\t\t\t\t\t<string>ExtensionInput</string>
+\t\t\t\t\t\t\t</dict>
+\t\t\t\t\t\t</dict>
+\t\t\t\t\t</dict>
+\t\t\t\t\t<key>WFSerializationType</key>
+\t\t\t\t\t<string>WFTextTokenString</string>
+\t\t\t\t</dict>
+\t\t\t</dict>
+\t\t</dict>
+\t</array>
+</dict>
+</plist>`;
+
+    // Set response headers for file download
+    response.set("Content-Type", "application/x-apple-shortcut");
+    response.set("Content-Disposition", `attachment; filename="Save-to-yellowCircle.shortcut"`);
+
+    // Send the XML plist (iOS accepts both XML and binary plist formats)
+    response.status(200).send(shortcutXml);
+
+  } catch (error) {
+    console.error("generateShortcut error:", error);
+    response.status(500).json({ error: "Failed to generate shortcut" });
+  }
+});
+
+// ============================================
+// Admin: Upload Signed Shortcut to Storage
+// ============================================
+
+/**
+ * Upload Signed Shortcut - Admin-only endpoint to upload pre-signed shortcuts
+ * POST /uploadSignedShortcut
+ * Body: { slug: string, content: string (base64) }
+ *
+ * Requires admin authentication.
+ * Stores the shortcut in Cloud Storage at shortcuts/signed/{slug}.shortcut
+ */
+exports.uploadSignedShortcut = functions.https.onRequest(async (request, response) => {
+  setCors(response);
+
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  try {
+    // Verify admin authentication
+    const authResult = await verifyUserAuth(request);
+    if (!authResult.success) {
+      response.status(401).json({ error: authResult.error });
+      return;
+    }
+
+    // Check if user is admin
+    const userDoc = await getDb().collection('users').doc(authResult.uid).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const isAdmin = userData?.role === 'admin' || userData?.isAdmin === true;
+
+    if (!isAdmin) {
+      response.status(403).json({ error: "Admin access required" });
+      return;
+    }
+
+    const { slug, content } = request.body;
+
+    if (!slug || !content) {
+      response.status(400).json({ error: "slug and content (base64) required" });
+      return;
+    }
+
+    // Sanitize slug
+    const sanitizedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (sanitizedSlug.length < 2 || sanitizedSlug.length > 30) {
+      response.status(400).json({ error: "Invalid slug length" });
+      return;
+    }
+
+    // Decode base64 content
+    const buffer = Buffer.from(content, 'base64');
+    if (buffer.length < 1000 || buffer.length > 100000) {
+      response.status(400).json({ error: "Invalid shortcut file size" });
+      return;
+    }
+
+    // Upload to Cloud Storage
+    const bucket = admin.storage().bucket('yellowcircle-app.firebasestorage.app');
+    const file = bucket.file(`shortcuts/signed/${sanitizedSlug}.shortcut`);
+
+    await file.save(buffer, {
+      metadata: {
+        contentType: 'application/octet-stream',
+        metadata: {
+          signedAt: new Date().toISOString(),
+          uploadedBy: authResult.uid,
+          slug: sanitizedSlug
+        }
+      }
+    });
+
+    console.log(`Uploaded signed shortcut for slug: ${sanitizedSlug}`);
+
+    response.json({
+      success: true,
+      slug: sanitizedSlug,
+      path: `shortcuts/signed/${sanitizedSlug}.shortcut`,
+      size: buffer.length
+    });
+
+  } catch (error) {
+    console.error("uploadSignedShortcut error:", error);
+    response.status(500).json({ error: "Failed to upload shortcut" });
   }
 });
 

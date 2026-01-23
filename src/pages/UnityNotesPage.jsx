@@ -142,10 +142,24 @@ const _isPremiumNode = (nodeType) => PREMIUM_NODE_TYPES.has(nodeType);
 const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggle, showParallax, setShowParallax }) => {
   const { fitView, zoomIn, zoomOut, getZoom, setViewport, getViewport, setCenter } = useReactFlow();
 
-  // Smooth scrolling hooks (Phase 2-3)
+  // Mobile detection for touch-specific behavior
+  const [isTouchDevice, setIsTouchDevice] = useState(() =>
+    typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  );
+
+  useEffect(() => {
+    const checkTouch = () => setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    window.addEventListener('resize', checkTouch);
+    return () => window.removeEventListener('resize', checkTouch);
+  }, []);
+
+  // Smooth scrolling hooks (Phase 2-3) - DISABLED: causes canvas jumping
+  // TODO: Re-enable after fixing momentum animation conflicts
   const reactFlowContainerRef = useRef(null);
-  const { handleMoveStart, handleMove, handleMoveEnd, cancelMomentum: _cancelMomentum } = useMomentumPan(getViewport, setViewport);
-  useSmoothWheel(reactFlowContainerRef, getViewport, setViewport);
+  // const { handleMoveStart, handleMove, handleMoveEnd, cancelMomentum: _cancelMomentum } = useMomentumPan(getViewport, setViewport);
+  // useSmoothWheel(reactFlowContainerRef, getViewport, setViewport);
+  const _unusedMomentum = useMomentumPan; // Keep import to avoid lint errors
+  const _unusedSmooth = useSmoothWheel;
 
   // Prevent Safari 3-finger back/forward gesture (Phase 4)
   useEffect(() => {
@@ -4629,11 +4643,10 @@ Example format:
                 border-width: 3px !important;
               }
 
-              /* Pulse animation on selected nodes for mobile */
+              /* Selected node styling (no animation - cleaner UX) */
               .react-flow__node.selected .nodrag:not(.react-flow__handle) {
                 background-color: rgba(238, 207, 0, 0.9) !important;
                 box-shadow: 0 0 0 2px rgba(238, 207, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
-                animation: pulse-resize 1.5s ease-in-out infinite;
               }
 
               /* Phase 4: Mobile momentum scrolling enhancements */
@@ -4710,18 +4723,15 @@ Example format:
             onConnect={onConnect}
             onNodeDrag={handleNodeDrag}
             onNodeDragStop={handleNodeDragStop}
-            onMoveStart={handleMoveStart}
             onMove={(event, viewport) => {
               setZoomLevel(viewport.zoom);
-              handleMove(event, viewport);
             }}
-            onMoveEnd={handleMoveEnd}
             nodeTypes={nodeTypes}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-            panOnDrag={[1, 2]}
-            selectionOnDrag={true}
+            panOnDrag={isTouchDevice ? true : [1, 2]}
+            selectionOnDrag={!isTouchDevice}
             selectionMode={SelectionMode.Partial}
-            selectionKeyCode={null}
+            selectionKeyCode={isTouchDevice ? false : null}
             multiSelectionKeyCode="Shift"
             panOnScroll={true}
             zoomOnScroll={false}

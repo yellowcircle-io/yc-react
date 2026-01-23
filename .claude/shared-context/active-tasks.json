@@ -4,64 +4,34 @@
   "tasks": {},
   "completed_tasks": [
     {
-      "task_id": "",
-      "completed_at": "2026-01-22T07:00:25Z",
-      "status": "failed"
+      "task_id": "mobile-padding-audit",
+      "completed_at": "2026-01-23T21:30:00Z",
+      "status": "completed",
+      "description": "Comprehensive mobile padding audit - 17 pages fixed"
     },
     {
-      "task_id": "",
-      "completed_at": "2026-01-21T07:00:23Z",
-      "status": "failed"
+      "task_id": "save-id-vanity-urls",
+      "completed_at": "2026-01-23T05:30:00Z",
+      "status": "completed",
+      "description": "Save ID System, Vanity URLs & iOS Shortcut"
     },
     {
-      "task_id": "",
-      "completed_at": "2026-01-20T07:00:26Z",
-      "status": "failed"
+      "task_id": "api-token-system",
+      "completed_at": "2026-01-23T04:00:00Z",
+      "status": "completed",
+      "description": "Personal API Token System & Sharing Methods"
     },
     {
-      "task_id": "",
-      "completed_at": "2026-01-19T07:00:31Z",
-      "status": "failed"
+      "task_id": "offline-reading-pwa",
+      "completed_at": "2026-01-22T23:45:00Z",
+      "status": "completed",
+      "description": "Offline Reading PWA - All 4 phases"
     },
     {
-      "task_id": "",
-      "completed_at": "2026-01-16T07:00:35Z",
-      "status": "failed"
-    },
-    {
-      "task_id": "",
-      "completed_at": "2026-01-15T07:00:18Z",
-      "status": "failed"
-    },
-    {
-      "task_id": "",
-      "completed_at": "2026-01-14T07:00:18Z",
-      "status": "failed"
-    },
-    {
-      "task_id": "",
-      "completed_at": "2026-01-13T07:00:23Z",
-      "status": "failed"
-    },
-    {
-      "task_id": "",
-      "completed_at": "2026-01-12T07:00:20Z",
-      "status": "failed"
-    },
-    {
-      "task_id": "",
-      "completed_at": "2026-01-09T07:00:26Z",
-      "status": "failed"
-    },
-    {
-      "task_id": "e6bb276aaaa097f5c9e52a81c297d960",
-      "completed_at": "2026-01-08T18:04:48Z",
-      "status": "completed"
-    },
-    {
-      "task_id": "test-task-1767894755",
-      "completed_at": "2026-01-08T17:52:35Z",
-      "status": "completed"
+      "task_id": "link-archiver-drawer",
+      "completed_at": "2026-01-22T22:20:00Z",
+      "status": "completed",
+      "description": "Link Archiver Drawer Integration - All 3 phases"
     }
   ],
   "max_completed_history": 50,

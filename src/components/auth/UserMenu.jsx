@@ -204,7 +204,7 @@ const UserMenu = ({ compact = false, dropdownDirection = 'down' }) => {
                 borderBottom: '1px solid #f3f4f6'
               }}
             >
-              <div style={{ fontWeight: '500', fontSize: '14px', marginBottom: '4px' }}>
+              <div style={{ fontWeight: '500', fontSize: '14px', marginBottom: '4px', color: '#374151' }}>
                 {userProfile?.displayName || 'User'}
               </div>
               <div style={{ fontSize: '12px', color: '#6b7280' }}>{user?.email}</div>

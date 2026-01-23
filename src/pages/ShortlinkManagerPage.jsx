@@ -194,7 +194,7 @@ function ShortlinkManagerPage() {
         <div style={{
           position: 'fixed',
           top: isMobile ? '70px' : '60px',
-          left: isMobile ? '90px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
+          left: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
           right: isMobile ? '12px' : '40px',
           bottom: isMobile ? '20px' : '40px',
           zIndex: 61,

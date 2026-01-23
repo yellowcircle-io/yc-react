@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** January 22, 2026
+**Updated:** January 23, 2026
 **Source of Truth:** [Notion Project Tracking](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
 
 ---
@@ -11,6 +11,8 @@
 |------|--------|-----|-------|
 | Link Archiver Core | ✅ Complete | - | Phases 1-4 complete, Phase 5 partial |
 | UnityNOTES Smooth Scrolling | ✅ Complete | - | All 4 phases complete |
+| Mobile Padding Audit | ✅ Complete | - | 17 pages fixed, deployed Jan 23 |
+| Save ID & Vanity URLs | ✅ Complete | - | iOS Shortcut + API tokens |
 | Configure Ad Platform Tokens | ⚠️ User Action | - | Awaiting credentials |
 | Firebase Deploy | ⏳ Blocked | - | Needs `firebase login --reauth` |
 
@@ -103,23 +105,23 @@
 
 ---
 
-## 📊 RECENT COMMITS (Jan 21, 2026)
+## 📊 RECENT COMMITS (Jan 21-23, 2026)
 
 | Hash | Description |
 |------|-------------|
+| `76fe4db` | Feature: Sprint 4 - Comments, Notifications & Smart Views |
+| `f558798` | UI: Canvas sharing dropdown hierarchy |
+| `6bd8fcc` | Feature: Shared links filtering + scope docs for notifications |
+| `1f924d3` | UI: Add info message for canvas sharing clarification |
+| `e310bb8` | Feature: Link Sharing & Unity Platform Links Integration |
 | `6b0a495` | Update: ACTIVE_SPRINT with Jan 21 commits |
 | `98c7f87` | Update: MSF context files for multi-machine sync |
 | `79a8704` | Config: Add vite security plugin and update firebase config |
-| `ff9aba0` | Feature: Pocket import Cloud Functions |
-| `5bce742` | Docs: Add planning and scope documentation |
-| `16e1264` | Feature: Link management UI improvements |
-| `b163570` | Cleanup: Remove archived unused code (-12,081 lines) |
-| `58a2afa` | Perf: Sprint 4 performance optimizations |
 
 ### Git Status
 - Branch: `main`
-- Last commit: `6b0a495`
-- Status: ✅ Synced with origin/main
+- Last commit: `76fe4db`
+- Status: Changes pending (mobile padding fixes, MSF update)
 
 ---
 
@@ -168,7 +170,7 @@
 ### Development
 ```bash
 npm run dev          # Start dev server
-npm run lint         # Run ESLint (32 errors, 31 warnings)
+npm run lint         # Run ESLint (pre-existing warnings only)
 npm run build        # Build for production
 npm run check:deps   # Run knip dead code detection
 ```
@@ -185,4 +187,4 @@ npm run check:deps   # Run knip dead code detection
 
 ---
 
-*Last synced with Notion: January 21, 2026*
+*Last synced with Notion: January 23, 2026*
