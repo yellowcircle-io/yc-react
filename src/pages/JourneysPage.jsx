@@ -104,15 +104,15 @@ function JourneysPage() {
       {/* Scrollable content area */}
       <div style={{
         position: 'fixed',
-        top: isMobile ? '80px' : '100px',
-        bottom: footerOpen ? '400px' : '40px',
-        left: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
-        right: isMobile ? '16px' : 'max(40px, 4vw)',
+        top: '80px',
+        bottom: footerOpen ? '320px' : '40px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
+        right: 0,
+        padding: isMobile ? '0 20px' : '0 80px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
-        transition: 'left 0.5s ease-out, bottom 0.5s ease-out, right 0.3s ease-out',
-        paddingRight: isMobile ? '0' : '20px'
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
         <div style={{
           ...TYPOGRAPHY.container,

@@ -11,7 +11,15 @@ const STATUS_ORDER = ['live', 'in-progress', 'draft', 'issue'];
 
 function DirectoryPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, isMobile, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Load saved statuses from localStorage, fallback to config defaults
   const [pageStatuses, setPageStatuses] = useState(() => {
@@ -87,15 +95,15 @@ function DirectoryPage() {
     >
       <div style={{
         position: 'fixed',
-        top: '100px',
-        bottom: footerOpen ? '400px' : '40px',
-        left: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
-        right: isMobile ? '16px' : '40px',
+        top: '80px',
+        bottom: footerOpen ? '320px' : '40px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
+        right: 0,
+        padding: isMobile ? '0 20px' : '0 80px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',
-        transition: 'left 0.5s ease-out, bottom 0.5s ease-out',
-        paddingRight: '20px'
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
         <div style={{
           ...TYPOGRAPHY.container,

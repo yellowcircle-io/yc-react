@@ -7,7 +7,15 @@ import { navigationItems } from '../config/navigationItems';
 
 function TermsPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, isMobile, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   React.useEffect(() => {
     const styleId = 'text-stagger-animations';
@@ -57,16 +65,17 @@ function TermsPage() {
       onMenuToggle={handleMenuToggle}
       navigationItems={navigationItems}
       pageLabel="TERMS"
-      allowScroll={true}
     >
       <div style={{
-        position: 'relative',
-        minHeight: '100vh',
-        paddingTop: '100px',
-        paddingBottom: '120px',
-        paddingLeft: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 40px), 12vw)' : 'max(120px, 8vw)'),
-        paddingRight: isMobile ? '16px' : 'max(40px, 8vw)',
-        transition: 'padding-left 0.5s ease-out'
+        position: 'fixed',
+        top: '80px',
+        bottom: footerOpen ? '320px' : '40px',
+        left: isMobile ? 0 : (sidebarOpen ? 'min(35vw, 472px)' : '80px'),
+        right: 0,
+        padding: isMobile ? '0 20px' : '0 80px',
+        overflow: 'auto',
+        zIndex: 61,
+        transition: 'left 0.5s ease-out, bottom 0.5s ease-out'
       }}>
         <div style={{ maxWidth: '720px' }}>
           <h1 style={{
