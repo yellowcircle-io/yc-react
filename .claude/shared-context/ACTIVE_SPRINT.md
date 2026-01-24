@@ -11,8 +11,11 @@
 |------|--------|-----|-------|
 | Link Archiver Core | ✅ Complete | - | Phases 1-4 complete, Phase 5 partial |
 | UnityNOTES Smooth Scrolling | ✅ Complete | - | All 4 phases complete |
+| UnityNOTES Zoom Fix | ✅ Complete | - | Removed CSS transition conflict |
 | Mobile Padding Audit | ✅ Complete | - | 17 pages fixed, deployed Jan 23 |
 | Save ID & Vanity URLs | ✅ Complete | - | iOS Shortcut + API tokens |
+| Link Saver Sticky Buttons | 📋 Pending | - | Top row not sticky on scroll |
+| Additional Mobile Spacing | 📋 Pending | - | 6 pages need fixes |
 | Configure Ad Platform Tokens | ⚠️ User Action | - | Awaiting credentials |
 | Firebase Deploy | ⏳ Blocked | - | Needs `firebase login --reauth` |
 
@@ -109,18 +112,18 @@
 
 | Hash | Description |
 |------|-------------|
+| `17f79f2` | Fix: UnityNOTES zoom stuttering - remove viewport CSS transition |
+| `f7e0cfc` | Update: MSF context files with commit reference |
 | `04d22be` | UI: Mobile padding audit - 17 pages fixed + MSF update |
 | `fe547b9` | Fix: Inject Firebase config secrets in CI builds |
 | `96db367` | Add GitHub Action for iOS Shortcut signing |
 | `067e6d1` | Feature: Save ID System, Vanity URLs & iOS Shortcut |
 | `76fe4db` | Feature: Sprint 4 - Comments, Notifications & Smart Views |
-| `f558798` | UI: Canvas sharing dropdown hierarchy |
-| `6bd8fcc` | Feature: Shared links filtering + scope docs for notifications |
 | `e310bb8` | Feature: Link Sharing & Unity Platform Links Integration |
 
 ### Git Status
 - Branch: `main`
-- Last commit: `04d22be`
+- Last commit: `17f79f2`
 - Status: ✅ Synced with origin/main
 
 ---

@@ -27,6 +27,27 @@
 
 ## Session History
 
+### Session: UnityNOTES Zoom Fix & Optimization Planning
+**Date:** January 23, 2026 (6:45 PM EST)
+**Context:** Fixed zoom stuttering, documented pending optimizations
+
+**Tasks Completed:**
+
+1. **UnityNOTES Zoom Stuttering Fix** ✅
+   - Root cause: CSS `transition-duration: 100ms` on `.react-flow__viewport` conflicted with React Flow zoom
+   - Secondary: `onMove` callback causing 60+/sec re-renders during zoom
+   - Fixed: Removed CSS transition, changed to `onMoveEnd`
+
+2. **Documented Pending Optimizations** ✅
+   - Link Saver: sticky buttons, button spacing
+   - Mobile spacing: 6 pages (Unity Hub, Journeys, Golden Unknown, etc.)
+   - Unity Generator: Email Type button alignment
+   - UnityNOTES: PhotoModal size, New Canvas button, canvas management
+
+**Git:** Committed and pushed `17f79f2`
+
+---
+
 ### Session: Mobile Padding Audit & MSF Update
 **Date:** January 23, 2026 (4:30 PM EST)
 **Context:** Comprehensive mobile viewport padding fix across all pages, MSF documentation update

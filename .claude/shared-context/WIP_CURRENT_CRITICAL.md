@@ -2,13 +2,56 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 23, 2026 at 4:30 PM EST
+**Updated:** January 23, 2026 at 6:45 PM EST
 **Machine:** Mac Mini
-**Status:** ✅ Mobile Padding Audit Complete & Deployed
+**Status:** ✅ UnityNOTES Zoom Fix Complete | 📋 Optimizations Pending
 
 ---
 
-## ✅ SESSION SUMMARY (Jan 23, 2026 ~4:30PM) - Mac Mini
+## 📋 PENDING OPTIMIZATIONS (Jan 23, 2026)
+
+### Link Saver Page
+- [ ] Top row buttons not sticky on scroll (images 20/21)
+- [ ] Improve top row button spacing (image 22)
+
+### Mobile Spacing Updates Needed
+- [ ] Unity Hub
+- [ ] Journeys
+- [ ] Golden Unknown
+- [ ] Cath3dral
+- [ ] Thoughts
+- [ ] Why Your GTM Sucks
+
+### Unity Generator (Outreach)
+- [ ] Improve "Email Type" button alignment (image 23)
+
+### UnityNOTES
+- [ ] PhotoModal should be ~10% smaller to prevent nav overlap (especially mobile)
+- [ ] Add "New Canvas" button (in menu, below background option)
+- [ ] Canvas management in Settings (Unity Tools)
+
+---
+
+## ✅ SESSION SUMMARY (Jan 23, 2026 ~6:45PM) - Mac Mini
+
+### UnityNOTES Zoom Stuttering Fixed:
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Investigate stuttering | ✅ Complete | Found root causes |
+| Remove CSS transition | ✅ Complete | Was conflicting with React Flow zoom |
+| Optimize re-renders | ✅ Complete | Changed onMove to onMoveEnd |
+| Build & Deploy | ✅ Complete | Firebase Hosting deployed |
+
+**Root Causes Fixed:**
+1. Removed `transition-duration: 100ms` on `.react-flow__viewport` (conflicted with React Flow's JS zoom)
+2. Changed `onMove` to `onMoveEnd` for zoom level updates (reduced 60+/sec re-renders)
+
+**Git:** Committed and pushed `17f79f2`
+
+---
+
+## ✅ PREVIOUS SESSION (Jan 23, 2026 ~4:30PM) - Mac Mini
 
 ### Mobile Padding Audit Complete:
 
