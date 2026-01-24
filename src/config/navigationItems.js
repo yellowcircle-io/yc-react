@@ -91,6 +91,21 @@ export const navigationItems = [
       { label: "UNITYNOTES", key: "unity-notes", route: "/unity-notes" }
       // Note: OUTREACH hidden from nav but accessible via /outreach and in sitemap
     ]
+  },
+  // ========================
+  // ACCOUNT - User settings
+  // ========================
+  {
+    isSectionLabel: true,
+    label: "ACCOUNT",
+    itemKey: "section-account"
+  },
+  {
+    lottieAnimation: 'settings-gear',  // Dynamic load via useLottieAnimation
+    label: "SETTINGS",
+    itemKey: "settings",
+    route: "/account/settings",
+    subItems: []
   }
 ];
 

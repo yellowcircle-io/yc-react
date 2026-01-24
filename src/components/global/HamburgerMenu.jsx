@@ -65,7 +65,8 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
       ]
     },
     CLIENTS: { hasSubItems: false, isButton: true },
-    CONTACT: { hasSubItems: false, isButton: true }
+    CONTACT: { hasSubItems: false, isButton: true },
+    SETTINGS: { hasSubItems: false, route: '/account/settings' }
   };
 
   const handleOpenSlideOver = (title, items) => {
@@ -214,7 +215,7 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
             alignItems: 'flex-end',
             gap: '5px'
           }}>
-            {['HOME', 'SERVICES', 'STORIES', 'JOURNEYS', 'CLIENTS', 'CONTACT'].map((item, index) => {
+            {['HOME', 'SERVICES', 'STORIES', 'JOURNEYS', 'CLIENTS', 'CONTACT', 'SETTINGS'].map((item, index) => {
               const config = menuConfig[item];
               const isButton = config?.isButton;
               const hasSubItems = config?.hasSubItems;
@@ -286,15 +287,19 @@ function HamburgerMenu({ onMenuToggle, onHomeClick, onFooterToggle, onContactCli
                         handleHomeClick(e);
                       } else if (hasSubItems) {
                         handleOpenSlideOver(item, config.subItems);
-                      } else if (item === 'JOURNEYS') {
-                        navigate('/journeys');
+                      } else if (config?.route) {
+                        navigate(config.route);
+                        if (onMenuToggle) onMenuToggle();
                       }
                     }}
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       if (item === 'HOME') handleHomeClick(e);
                       else if (hasSubItems) handleOpenSlideOver(item, config.subItems);
-                      else if (item === 'JOURNEYS') navigate('/journeys');
+                      else if (config?.route) {
+                        navigate(config.route);
+                        if (onMenuToggle) onMenuToggle();
+                      }
                     }}
                     className={`menu-item-${index + 1} menu-link`}
                     style={{
