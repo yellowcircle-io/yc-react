@@ -7,7 +7,7 @@ import { navigationItems } from '../config/navigationItems';
 
 function TermsPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, isMobile, handleFooterToggle, handleMenuToggle } = useLayout();
 
   React.useEffect(() => {
     const styleId = 'text-stagger-animations';
@@ -64,8 +64,8 @@ function TermsPage() {
         minHeight: '100vh',
         paddingTop: '100px',
         paddingBottom: '120px',
-        paddingLeft: sidebarOpen ? 'max(calc(min(35vw, 472px) + 40px), 12vw)' : 'max(120px, 8vw)',
-        paddingRight: 'max(40px, 8vw)',
+        paddingLeft: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 40px), 12vw)' : 'max(120px, 8vw)'),
+        paddingRight: isMobile ? '16px' : 'max(40px, 8vw)',
         transition: 'padding-left 0.5s ease-out'
       }}>
         <div style={{ maxWidth: '720px' }}>

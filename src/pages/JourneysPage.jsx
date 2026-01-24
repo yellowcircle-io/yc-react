@@ -106,7 +106,7 @@ function JourneysPage() {
         position: 'fixed',
         top: isMobile ? '80px' : '100px',
         bottom: footerOpen ? '400px' : '40px',
-        left: isMobile ? '85px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
+        left: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
         right: isMobile ? '16px' : 'max(40px, 4vw)',
         zIndex: 61,
         overflowY: 'auto',

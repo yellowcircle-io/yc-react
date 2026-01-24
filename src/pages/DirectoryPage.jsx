@@ -11,7 +11,7 @@ const STATUS_ORDER = ['live', 'in-progress', 'draft', 'issue'];
 
 function DirectoryPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, footerOpen, isMobile, handleFooterToggle, handleMenuToggle } = useLayout();
 
   // Load saved statuses from localStorage, fallback to config defaults
   const [pageStatuses, setPageStatuses] = useState(() => {
@@ -89,8 +89,8 @@ function DirectoryPage() {
         position: 'fixed',
         top: '100px',
         bottom: footerOpen ? '400px' : '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        right: '40px',
+        left: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
+        right: isMobile ? '16px' : '40px',
         zIndex: 61,
         overflowY: 'auto',
         overflowX: 'hidden',

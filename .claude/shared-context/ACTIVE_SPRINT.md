@@ -1,5 +1,5 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** January 23, 2026
+**Updated:** January 24, 2026
 **Source of Truth:** [Notion Project Tracking](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
 
 ---
@@ -13,9 +13,10 @@
 | UnityNOTES Smooth Scrolling | ✅ Complete | - | All 4 phases complete |
 | UnityNOTES Zoom Fix | ✅ Complete | - | Removed CSS transition conflict |
 | Mobile Padding Audit | ✅ Complete | - | 17 pages fixed, deployed Jan 23 |
+| Additional Mobile Spacing | ✅ Complete | - | 6 more pages fixed (Jan 24) |
+| pagesConfig.js Update | ✅ Complete | - | Added 6 missing pages to sitemap/directory |
 | Save ID & Vanity URLs | ✅ Complete | - | iOS Shortcut + API tokens |
 | Link Saver Sticky Buttons | 📋 Pending | - | Top row not sticky on scroll |
-| Additional Mobile Spacing | 📋 Pending | - | 6 pages need fixes |
 | Configure Ad Platform Tokens | ⚠️ User Action | - | Awaiting credentials |
 | Firebase Deploy | ⏳ Blocked | - | Needs `firebase login --reauth` |
 

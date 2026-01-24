@@ -297,6 +297,15 @@ export const PAGES_CONFIG = [
 
   // Thoughts Sub-routes
   {
+    name: 'Blog',
+    path: '/thoughts/blog',
+    category: 'Thoughts',
+    status: 'live',
+    lastUpdated: '2026-01-24',
+    description: 'All blog posts and articles in one place',
+    icon: '📰'
+  },
+  {
     name: 'Why Your GTM Sucks',
     path: '/thoughts/why-your-gtm-sucks',
     category: 'Thoughts',
@@ -326,6 +335,24 @@ export const PAGES_CONFIG = [
     icon: '🧠'
   },
   {
+    name: 'Link Saver',
+    path: '/links',
+    category: 'Tools',
+    status: 'live',
+    lastUpdated: '2026-01-24',
+    description: 'Save and organize links with reader mode and offline support',
+    icon: '🔖'
+  },
+  {
+    name: 'Link Saver Extension',
+    path: '/links/extension',
+    category: 'Tools',
+    status: 'live',
+    lastUpdated: '2026-01-24',
+    description: 'Browser bookmarklet and extension installation guide',
+    icon: '🧩'
+  },
+  {
     name: 'UnityMAP Hub',
     path: '/outreach',
     category: 'Tools',
@@ -351,6 +378,15 @@ export const PAGES_CONFIG = [
     lastUpdated: '2025-12-07',
     description: 'Alternative portfolio view with project showcase',
     icon: '📁'
+  },
+  {
+    name: 'Account Settings',
+    path: '/account/settings',
+    category: 'Tools',
+    status: 'live',
+    lastUpdated: '2026-01-24',
+    description: 'User preferences, API tokens, and account configuration',
+    icon: '⚙️'
   },
   // ARCHIVED: UK-Memories (Travel Time Capsule)
   {
@@ -399,6 +435,15 @@ export const PAGES_CONFIG = [
     lastUpdated: '2025-12-10',
     description: 'Configure automation rules for lead processing',
     icon: '⚡'
+  },
+  {
+    name: 'Storage Cleanup',
+    path: '/admin/storage-cleanup',
+    category: 'Admin',
+    status: 'live',
+    lastUpdated: '2026-01-24',
+    description: 'Manage Firebase storage and cleanup orphaned files',
+    icon: '🧹'
   },
 
   // Utility Pages

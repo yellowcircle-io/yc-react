@@ -2,19 +2,19 @@
 
 **⚠️ SEE ALSO:** `ACTIVE_SPRINT.md` - Concise, accurate status (shorter doc for quick reference)
 
-**Updated:** January 23, 2026 at 6:45 PM EST
+**Updated:** January 24, 2026 at 12:15 AM EST
 **Machine:** Mac Mini
-**Status:** ✅ UnityNOTES Zoom Fix Complete | 📋 Optimizations Pending
+**Status:** ✅ Additional Mobile Spacing + pagesConfig Update Complete | 📋 Optimizations Pending
 
 ---
 
-## 📋 PENDING OPTIMIZATIONS (Jan 23, 2026)
+## 📋 PENDING OPTIMIZATIONS (Jan 24, 2026)
 
 ### Link Saver Page
 - [ ] Top row buttons not sticky on scroll (images 20/21)
 - [ ] Improve top row button spacing (image 22)
 
-### Mobile Spacing Updates Needed
+### Mobile Spacing Updates Still Needed
 - [ ] Unity Hub
 - [ ] Journeys
 - [ ] Golden Unknown
@@ -32,7 +32,44 @@
 
 ---
 
-## ✅ SESSION SUMMARY (Jan 23, 2026 ~6:45PM) - Mac Mini
+## ✅ SESSION SUMMARY (Jan 24, 2026 ~12:15AM) - Mac Mini
+
+### Additional Mobile Spacing Fixes + pagesConfig.js Update:
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Audit Feedback, Sitemap, Directory, 404, Privacy, Terms | ✅ Complete | All 6 pages needed isMobile fix |
+| Add isMobile destructuring | ✅ Complete | Added to useLayout() in all 6 files |
+| Fix left/padding positioning | ✅ Complete | Applied `isMobile ? '16px' : (existing)` pattern |
+| Audit RouterApp.jsx vs pagesConfig.js | ✅ Complete | Found 6 missing pages |
+| Update pagesConfig.js | ✅ Complete | Added Link Saver, Extension, Blog, Account Settings, Storage Cleanup |
+| Build & Verify | ✅ Complete | Lint passes, build succeeds |
+
+**Files Fixed (6 total):**
+- `src/pages/FeedbackPage.jsx` - Lines 11, 116, 191-192
+- `src/pages/NotFoundPage.jsx` - Lines 10, 51-52
+- `src/pages/PrivacyPolicyPage.jsx` - Lines 10, 67-68
+- `src/pages/TermsPage.jsx` - Lines 10, 67-68
+- `src/pages/SitemapPage.jsx` - Lines 11, 49-50
+- `src/pages/DirectoryPage.jsx` - Lines 14, 92-93
+
+**pagesConfig.js Updates (6 pages added):**
+- `/links` - Link Saver (Tools category)
+- `/links/extension` - Link Saver Extension (Tools category)
+- `/account/settings` - Account Settings (Tools category)
+- `/thoughts/blog` - Blog listing page (Thoughts category)
+- `/admin/storage-cleanup` - Storage Cleanup (Admin category)
+
+**Pattern Applied:**
+- Added `isMobile` to destructured `useLayout()` values
+- Changed `left: sidebarOpen ? ... : 'max(100px, 8vw)'` to `left: isMobile ? '16px' : (sidebarOpen ? ... : 'max(100px, 8vw)')`
+- Changed `right: '100px'` to `right: isMobile ? '16px' : '100px'`
+
+**Build:** Verified passing
+
+---
+
+## ✅ PREVIOUS SESSION (Jan 23, 2026 ~6:45PM) - Mac Mini
 
 ### UnityNOTES Zoom Stuttering Fixed:
 

@@ -106,7 +106,7 @@ function QuoteBlock({ children, author }) {
 
 function OwnYourStoryArticle1Page() {
   const navigate = useNavigate();
-  const { sidebarOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, isMobile, handleFooterToggle, handleMenuToggle } = useLayout();
   const contentRef = useRef(null);
   const [readingProgress, setReadingProgress] = useState(0);
   // Reading time is static for this article
@@ -159,8 +159,8 @@ function OwnYourStoryArticle1Page() {
           color: COLORS.white,
           paddingTop: '240px',
           paddingBottom: 'max(120px, env(safe-area-inset-bottom))',
-          paddingLeft: sidebarOpen ? 'calc(min(35vw, 472px) + 40px)' : 'max(100px, 8vw)',
-          paddingRight: 'max(40px, env(safe-area-inset-right))',
+          paddingLeft: isMobile ? '16px' : (sidebarOpen ? 'calc(min(35vw, 472px) + 40px)' : 'max(100px, 8vw)'),
+          paddingRight: isMobile ? '16px' : 'max(40px, env(safe-area-inset-right))',
           transition: 'padding-left 0.5s ease-out'
         }}
       >

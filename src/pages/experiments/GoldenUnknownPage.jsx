@@ -7,7 +7,7 @@ import { navigationItems } from '../../config/navigationItems';
 
 function GoldenUnknownPage() {
   const navigate = useNavigate();
-  const { sidebarOpen, footerOpen, handleFooterToggle, handleMenuToggle } = useLayout();
+  const { sidebarOpen, footerOpen, isMobile, handleFooterToggle, handleMenuToggle } = useLayout();
 
   // Inject stagger animation
   React.useEffect(() => {
@@ -48,8 +48,8 @@ function GoldenUnknownPage() {
       <div style={{
         position: 'fixed',
         bottom: '40px',
-        left: sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)',
-        maxWidth: sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)',
+        left: isMobile ? '16px' : (sidebarOpen ? 'max(calc(min(35vw, 472px) + 20px), 12vw)' : 'max(100px, 8vw)'),
+        maxWidth: isMobile ? 'calc(100vw - 32px)' : (sidebarOpen ? 'min(540px, 40vw)' : 'min(780px, 61vw)'),
         zIndex: 61,
         transform: footerOpen ? 'translateY(-300px)' : 'translateY(0)',
         transition: 'left 0.5s ease-out, max-width 0.5s ease-out, transform 0.5s ease-out'
