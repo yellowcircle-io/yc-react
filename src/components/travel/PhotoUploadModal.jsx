@@ -181,8 +181,8 @@ const PhotoUploadModal = ({
           WebkitBackdropFilter: 'blur(12px)',
           borderRadius: '0',
           width: '100%',
-          maxWidth: '540px',
-          maxHeight: '90vh',
+          maxWidth: '486px',
+          maxHeight: '80vh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
@@ -195,7 +195,7 @@ const PhotoUploadModal = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '24px 32px',
+          padding: '20px 28px',
           borderBottom: '2px solid white'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -277,7 +277,7 @@ const PhotoUploadModal = ({
                 {/* Page 0: Upload Methods */}
                 <div style={{
                   minWidth: '100%',
-                  padding: '32px',
+                  padding: '28px',
                   boxSizing: 'border-box',
                   pointerEvents: currentPage === 0 ? 'auto' : 'none'
                 }}>
@@ -493,7 +493,7 @@ const PhotoUploadModal = ({
                 {(hasCardTypes || currentMode === 'map') && (
                   <div style={{
                     minWidth: '100%',
-                    padding: '32px',
+                    padding: '28px',
                     boxSizing: 'border-box',
                     pointerEvents: currentPage === 1 ? 'auto' : 'none'
                   }}>
@@ -848,7 +848,7 @@ const PhotoUploadModal = ({
                 {currentMode === 'notes' && hasCardTypes && (
                   <div style={{
                     minWidth: '100%',
-                    padding: '32px',
+                    padding: '28px',
                     boxSizing: 'border-box',
                     pointerEvents: currentPage === 2 ? 'auto' : 'none'
                   }}>
@@ -991,7 +991,7 @@ const PhotoUploadModal = ({
 
           {/* Details Form Step */}
           {step === 'details' && (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '32px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '28px' }}>
               {/* File Upload (Local or Cloudinary) */}
               {(uploadMethod === 'file' || uploadMethod === 'cloudinary') && (
                 <div>

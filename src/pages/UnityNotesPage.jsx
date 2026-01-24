@@ -324,6 +324,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [journeyTitle, setJourneyTitle] = useState('Untitled Journey');
   const [journeyStatus, setJourneyStatus] = useState('draft'); // draft, active, paused, completed
   const [showProspectModal, setShowProspectModal] = useState(false);
+  const [showNewCanvasConfirm, setShowNewCanvasConfirm] = useState(false);
   const [_isSendingEmails, setIsSendingEmails] = useState(false);
   const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
   const [studioContext, setStudioContext] = useState(null); // Context passed from AI Chat to Studio
@@ -3135,34 +3136,50 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }
   };
 
-  // Clear all notes and start a new canvas
+  // Clear all notes and start a new canvas - now shows branded modal
   const handleClearAll = () => {
-    if (confirm('⚠️ Start a new canvas?\n\nThis will clear all notes and create a fresh canvas.\nYour previous canvas can still be accessed via its share link.\n\nClick OK to proceed.')) {
-      // Set guard flag FIRST to prevent auto-save from re-saving old nodes
-      isClearingRef.current = true;
-      // Remove localStorage BEFORE clearing state (order matters for race condition)
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem('unity-notes-current-capsule');
-      // Now clear state
-      setNodes([]);
-      setEdges([]);
-      setCurrentJourneyId(null);
-      setCurrentCapsuleId('');
-      capsuleLoadedRef.current = false;
-      // Clear URL parameter
-      window.history.replaceState({}, '', window.location.pathname);
-      // Reset collaboration state
-      setCollaborators([]);
-      setIsPublic(false);
-      setIsBookmarked(false);
-      setCanEditCapsule(false);
-      setShareUrl('');
-      console.log('✅ New canvas started');
-      // Reset guard flag after state updates have propagated
-      setTimeout(() => {
-        isClearingRef.current = false;
-      }, 100);
+    // Show branded confirmation modal instead of native confirm()
+    setShowNewCanvasConfirm(true);
+  };
+
+  // Actually clear the canvas (called from confirmation modal)
+  const executeNewCanvas = async (saveFirst = false) => {
+    // Optionally save before clearing
+    if (saveFirst && nodes.length > 0) {
+      try {
+        await handleSaveAndShare();
+        console.log('✅ Canvas saved before clearing');
+      } catch (error) {
+        console.error('Save failed:', error);
+        // Continue with clearing even if save fails
+      }
     }
+
+    // Set guard flag FIRST to prevent auto-save from re-saving old nodes
+    isClearingRef.current = true;
+    // Remove localStorage BEFORE clearing state (order matters for race condition)
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('unity-notes-current-capsule');
+    // Now clear state
+    setNodes([]);
+    setEdges([]);
+    setCurrentJourneyId(null);
+    setCurrentCapsuleId('');
+    capsuleLoadedRef.current = false;
+    // Clear URL parameter
+    window.history.replaceState({}, '', window.location.pathname);
+    // Reset collaboration state
+    setCollaborators([]);
+    setIsPublic(false);
+    setIsBookmarked(false);
+    setCanEditCapsule(false);
+    setShareUrl('');
+    setShowNewCanvasConfirm(false);
+    console.log('✅ New canvas started');
+    // Reset guard flag after state updates have propagated
+    setTimeout(() => {
+      isClearingRef.current = false;
+    }, 100);
   };
 
   // AI Regeneration Handlers
@@ -5183,6 +5200,7 @@ Example format:
         onThemeChange={setTheme}
         backgroundPattern={backgroundPattern}
         onBackgroundChange={handleBackgroundChange}
+        onNewCanvas={handleClearAll}
       />
 
       {/* Empty State - Centered above CircleNav with chevron */}
@@ -5277,6 +5295,187 @@ Example format:
         onGenerate={handleAICanvasGenerate}
         isGenerating={isGeneratingCanvas}
       />
+
+      {/* New Canvas Confirmation Modal - Branded */}
+      {showNewCanvasConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99999,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            backdropFilter: 'blur(4px)'
+          }}
+          onClick={() => setShowNewCanvasConfirm(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.92)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderRadius: '0',
+              width: '100%',
+              maxWidth: '420px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              border: 'none'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '20px 28px',
+              borderBottom: '2px solid white'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                letterSpacing: '0.2em',
+                color: 'white',
+                margin: 0
+              }}>
+                NEW CANVAS
+              </h3>
+              <button
+                onClick={() => setShowNewCanvasConfirm(false)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '24px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'white',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                  transition: 'color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.color = '#EECF00'}
+                onMouseOut={(e) => e.target.style.color = 'white'}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '28px' }}>
+              <p style={{
+                fontSize: '14px',
+                fontWeight: '500',
+                letterSpacing: '0.02em',
+                color: 'rgba(255, 255, 255, 0.85)',
+                margin: '0 0 8px 0',
+                lineHeight: 1.6
+              }}>
+                Start a fresh canvas?
+              </p>
+              <p style={{
+                fontSize: '13px',
+                fontWeight: '400',
+                letterSpacing: '0.02em',
+                color: 'rgba(255, 255, 255, 0.6)',
+                margin: '0 0 24px 0',
+                lineHeight: 1.5
+              }}>
+                {nodes.length > 0
+                  ? `Your current canvas has ${nodes.length} note${nodes.length === 1 ? '' : 's'}. You can save it first or start fresh.`
+                  : 'This will create a new empty canvas.'}
+              </p>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* Save & New Button - only if there are nodes */}
+                {nodes.length > 0 && hasProAccess() && (
+                  <button
+                    onClick={() => executeNewCanvas(true)}
+                    style={{
+                      width: '100%',
+                      padding: '14px 20px',
+                      border: '1px solid #EECF00',
+                      backgroundColor: 'rgba(238, 207, 0, 0.1)',
+                      borderRadius: '0',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      letterSpacing: '0.1em',
+                      color: 'white',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.2)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 207, 0, 0.1)';
+                    }}
+                  >
+                    ☁️ SAVE & START NEW
+                  </button>
+                )}
+
+                {/* Start New Button */}
+                <button
+                  onClick={() => executeNewCanvas(false)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 20px',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '0',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    letterSpacing: '0.1em',
+                    color: 'white',
+                    transition: 'all 0.3s ease',
+                    textAlign: 'center'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.borderColor = 'white';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                  }}
+                >
+                  {nodes.length > 0 ? '🗑️ DISCARD & START NEW' : '✨ START NEW CANVAS'}
+                </button>
+
+                {/* Cancel Button */}
+                <button
+                  onClick={() => setShowNewCanvasConfirm(false)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 20px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    borderRadius: '0',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    letterSpacing: '0.1em',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    transition: 'color 0.3s ease',
+                    textAlign: 'center'
+                  }}
+                  onMouseOver={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.8)'}
+                  onMouseOut={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.5)'}
+                >
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overview Tray - Right-side panel */}
       <OverviewTray

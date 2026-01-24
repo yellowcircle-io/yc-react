@@ -1193,10 +1193,17 @@ Return ONLY a JSON object with this exact format:
                     border: `2px solid ${sendMode === SEND_MODES.PROSPECT ? COLORS.yellow : '#e5e7eb'}`,
                     color: sendMode === SEND_MODES.PROSPECT ? '#000' : '#6b7280',
                     fontWeight: sendMode === SEND_MODES.PROSPECT ? '600' : '500',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <span style={{ marginRight: '6px' }}>🎯</span>
-                  Prospect
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🎯</span>
+                    <span>Prospect</span>
+                  </span>
                   <span style={{ display: 'block', fontSize: isMobile ? '12px' : '11px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Cold outreach
                   </span>
@@ -1211,10 +1218,17 @@ Return ONLY a JSON object with this exact format:
                     border: `2px solid ${sendMode === SEND_MODES.MARCOM ? COLORS.yellow : '#e5e7eb'}`,
                     color: sendMode === SEND_MODES.MARCOM ? '#000' : '#6b7280',
                     fontWeight: sendMode === SEND_MODES.MARCOM ? '600' : '500',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <span style={{ marginRight: '6px' }}>📣</span>
-                  MarCom
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📣</span>
+                    <span>MarCom</span>
+                  </span>
                   <span style={{ display: 'block', fontSize: isMobile ? '12px' : '11px', fontWeight: '400', marginTop: '2px', opacity: 0.8 }}>
                     Marketing comms
                   </span>

@@ -5034,18 +5034,40 @@ const LinkArchiverPage = () => {
       {/* Mobile-responsive styles */}
       <style>{`
         @media (max-width: 768px) {
+          .links-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+          }
           .links-header-buttons {
+            position: sticky;
+            top: 56px;
+            z-index: 50;
+            display: flex !important;
             flex-wrap: nowrap !important;
             overflow-x: auto;
-            gap: 6px !important;
+            justify-content: center;
+            gap: 8px !important;
+            background-color: #ffffff;
+            padding: 10px 16px;
+            margin: 0 -16px;
+            width: calc(100% + 32px);
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
           }
           .links-header-buttons .btn-label {
             display: none;
           }
           .links-header-buttons button {
-            padding: 8px !important;
-            min-width: auto !important;
+            padding: 10px !important;
+            min-width: 44px !important;
             flex-shrink: 0;
+            border-radius: 8px !important;
+          }
+          .mobile-views-bar {
+            position: sticky !important;
+            top: 110px !important;
+            z-index: 49 !important;
           }
           .links-main-content {
             grid-template-columns: 1fr !important;
@@ -5055,7 +5077,7 @@ const LinkArchiverPage = () => {
             display: none !important; /* Hidden on mobile - using mobile views bar instead */
           }
           .links-container {
-            padding: 70px 12px 12px 16px !important; /* top right bottom left - sidebar hidden on mobile */
+            padding: 70px 16px 16px 16px !important; /* Equal padding all sides */
           }
           .links-list-header {
             padding: 12px !important;
@@ -5063,29 +5085,21 @@ const LinkArchiverPage = () => {
           }
         }
         @media (max-width: 480px) {
-          .links-header {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 10px;
-          }
           .links-header-buttons {
-            position: sticky;
-            top: 56px;
-            z-index: 45;
-            width: 100%;
-            justify-content: space-between !important;
-            background-color: #fafafa;
-            margin: 0 -8px;
-            padding: 8px;
-            width: calc(100% + 16px);
-            border-bottom: 1px solid #e5e7eb;
+            gap: 8px !important;
+            padding: 10px 12px;
+            margin: 0 -12px;
+            width: calc(100% + 24px);
           }
           .links-header-buttons button {
-            padding: 6px !important;
-            font-size: 12px !important;
+            padding: 10px !important;
+            min-width: 42px !important;
+          }
+          .mobile-views-bar {
+            top: 108px !important;
           }
           .links-container {
-            padding: 70px 8px 8px 12px !important; /* top right bottom left - sidebar hidden on mobile */
+            padding: 70px 12px 12px 12px !important; /* Equal padding all sides */
           }
         }
       `}</style>
@@ -5178,9 +5192,6 @@ const LinkArchiverPage = () => {
           <div
             className="mobile-views-bar"
             style={{
-              position: 'sticky',
-              top: '60px',
-              zIndex: 50,
               backgroundColor: COLORS.white,
               borderRadius: '12px',
               border: `1px solid ${COLORS.border}`,

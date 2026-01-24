@@ -11,12 +11,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/global/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserSettings } from '../contexts/UserSettingsContext';
 import { navigationItems } from '../config/navigationItems';
 import AuthModal from '../components/auth/AuthModal';
+import { useFirebaseCapsule } from '../hooks/useFirebaseCapsule';
 import {
   Settings,
   User,
@@ -408,12 +409,109 @@ const ProfileTab = ({ user, settings, updateSettings }) => {
 // ============================================================
 // Tools Tab Component
 // ============================================================
-const ToolsTab = ({ settings, updateSettings }) => {
+const ToolsTab = ({ settings, updateSettings, user }) => {
   // Handle undefined settings gracefully
   const safeSettings = settings || {
     linkArchiverView: 'all',
     notesDefaultNode: 'textNode',
     notesShowGrid: false
+  };
+
+  // Firebase capsule hook
+  const { getUserCapsules, deleteCapsule } = useFirebaseCapsule();
+
+  // Canvas management state
+  const [canvasInfo, setCanvasInfo] = useState({ nodeCount: 0, lastModified: null });
+  const [isClearing, setIsClearing] = useState(false);
+  const [userCapsules, setUserCapsules] = useState([]);
+  const [isLoadingCapsules, setIsLoadingCapsules] = useState(false);
+  const [isDeletingCapsule, setIsDeletingCapsule] = useState(null);
+
+  // Load canvas info on mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem('unity-notes-data');
+      if (savedData) {
+        const { nodes } = JSON.parse(savedData);
+        setCanvasInfo({
+          nodeCount: nodes?.length || 0,
+          lastModified: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error loading canvas info:', error);
+    }
+  }, []);
+
+  // Load user's Firebase capsules
+  const loadUserCapsules = async () => {
+    if (!user?.uid) return;
+
+    setIsLoadingCapsules(true);
+    try {
+      const capsules = await getUserCapsules(user.uid, user.email);
+      setUserCapsules(capsules || []);
+    } catch (error) {
+      console.error('Error loading capsules:', error);
+    } finally {
+      setIsLoadingCapsules(false);
+    }
+  };
+
+  // Load capsules on mount when user is available
+  useEffect(() => {
+    if (user?.uid) {
+      loadUserCapsules();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  // Clear local canvas
+  const handleClearLocalCanvas = () => {
+    if (confirm('Clear local canvas?\n\nThis will remove all nodes from your local storage.\nShared canvases are not affected.')) {
+      setIsClearing(true);
+      try {
+        localStorage.removeItem('unity-notes-data');
+        localStorage.removeItem('unity-notes-current-capsule');
+        setCanvasInfo({ nodeCount: 0, lastModified: null });
+        alert('Local canvas cleared successfully.');
+      } catch (error) {
+        console.error('Error clearing canvas:', error);
+        alert('Failed to clear canvas.');
+      } finally {
+        setIsClearing(false);
+      }
+    }
+  };
+
+  // Delete a Firebase capsule
+  const handleDeleteCapsule = async (capsuleId, title) => {
+    if (confirm(`Delete "${title || 'Untitled Canvas'}"?\n\nThis will permanently remove this canvas from the cloud.\nThis action cannot be undone.`)) {
+      setIsDeletingCapsule(capsuleId);
+      try {
+        await deleteCapsule(capsuleId);
+        setUserCapsules(prev => prev.filter(c => c.id !== capsuleId));
+      } catch (error) {
+        console.error('Error deleting capsule:', error);
+        alert('Failed to delete canvas.');
+      } finally {
+        setIsDeletingCapsule(null);
+      }
+    }
+  };
+
+  // Copy share link to clipboard
+  const handleCopyShareLink = (capsuleId) => {
+    const shareUrl = `${window.location.origin}/unity-notes?capsule=${capsuleId}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert('Share link copied to clipboard!');
+  };
+
+  // Format date for display
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'Unknown';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   return (
@@ -470,6 +568,251 @@ const ToolsTab = ({ settings, updateSettings }) => {
           >
             <div style={{ ...styles.toggleKnob, ...(safeSettings.notesShowGrid ? styles.toggleKnobActive : {}) }} />
           </div>
+        </div>
+
+        {/* Canvas Management Section */}
+        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: `1px solid ${COLORS.border}` }}>
+          <div style={{ fontSize: '14px', fontWeight: '600', color: COLORS.text, marginBottom: '12px' }}>
+            Canvas Management
+          </div>
+
+          {/* Local Canvas Info */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            backgroundColor: COLORS.cardBg,
+            borderRadius: '8px',
+            marginBottom: '16px'
+          }}>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: COLORS.text }}>
+                Local Canvas (Current Session)
+              </div>
+              <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                {canvasInfo.nodeCount > 0
+                  ? `${canvasInfo.nodeCount} node${canvasInfo.nodeCount !== 1 ? 's' : ''} saved locally`
+                  : 'No local canvas data'}
+              </div>
+            </div>
+            {canvasInfo.nodeCount > 0 && (
+              <button
+                onClick={handleClearLocalCanvas}
+                disabled={isClearing}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 12px',
+                  backgroundColor: 'transparent',
+                  color: COLORS.danger,
+                  border: `1px solid ${COLORS.danger}`,
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: isClearing ? 'not-allowed' : 'pointer',
+                  opacity: isClearing ? 0.5 : 1,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Trash2 size={12} />
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Cloud Canvases */}
+          {user && (
+            <div style={{ marginTop: '16px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px'
+              }}>
+                <div style={{ fontSize: '13px', fontWeight: '600', color: COLORS.text }}>
+                  Your Saved Canvases
+                </div>
+                <button
+                  onClick={loadUserCapsules}
+                  disabled={isLoadingCapsules}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    backgroundColor: 'transparent',
+                    color: COLORS.textMuted,
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    cursor: isLoadingCapsules ? 'not-allowed' : 'pointer',
+                    transition: 'color 0.2s'
+                  }}
+                >
+                  <RefreshCw size={12} style={{ animation: isLoadingCapsules ? 'spin 1s linear infinite' : 'none' }} />
+                  Refresh
+                </button>
+              </div>
+
+              {isLoadingCapsules ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '24px',
+                  color: COLORS.textMuted,
+                  fontSize: '13px'
+                }}>
+                  Loading canvases...
+                </div>
+              ) : userCapsules.length === 0 ? (
+                <div style={{
+                  padding: '20px 16px',
+                  backgroundColor: COLORS.cardBg,
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '13px', color: COLORS.textMuted }}>
+                    No saved canvases yet
+                  </div>
+                  <div style={{ fontSize: '11px', color: COLORS.textLight, marginTop: '4px' }}>
+                    Save a canvas from Unity NOTES to see it here
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {userCapsules.slice(0, 10).map((capsule) => (
+                    <div
+                      key={capsule.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        backgroundColor: COLORS.cardBg,
+                        borderRadius: '8px',
+                        border: '1px solid transparent',
+                        transition: 'border-color 0.2s'
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          color: COLORS.text,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {capsule.title || 'Untitled Canvas'}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '11px',
+                          color: COLORS.textMuted,
+                          marginTop: '2px'
+                        }}>
+                          <span>
+                            {formatDate(capsule.updatedAt || capsule.createdAt)}
+                          </span>
+                          {capsule.nodeCount && (
+                            <span>• {capsule.nodeCount} nodes</span>
+                          )}
+                          {capsule.isPublic && (
+                            <span style={{ color: COLORS.success }}>• Public</span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginLeft: '12px', flexShrink: 0 }}>
+                        <button
+                          onClick={() => handleCopyShareLink(capsule.id)}
+                          title="Copy share link"
+                          style={{
+                            padding: '4px 10px',
+                            backgroundColor: COLORS.primary,
+                            color: '#000',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            letterSpacing: '0.02em'
+                          }}
+                        >
+                          COPY
+                        </button>
+                        <a
+                          href={`/unity-notes?capsule=${capsule.id}`}
+                          title="Open canvas"
+                          style={{
+                            padding: '4px 10px',
+                            backgroundColor: COLORS.info,
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            letterSpacing: '0.02em'
+                          }}
+                        >
+                          OPEN
+                        </a>
+                        <button
+                          onClick={() => handleDeleteCapsule(capsule.id, capsule.title)}
+                          disabled={isDeletingCapsule === capsule.id}
+                          title="Delete canvas"
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: 'transparent',
+                            color: COLORS.danger,
+                            border: `1px solid ${COLORS.danger}`,
+                            borderRadius: '4px',
+                            cursor: isDeletingCapsule === capsule.id ? 'not-allowed' : 'pointer',
+                            opacity: isDeletingCapsule === capsule.id ? 0.5 : 1,
+                            fontSize: '11px',
+                            fontWeight: '600'
+                          }}
+                        >
+                          {isDeletingCapsule === capsule.id ? '...' : 'DEL'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {userCapsules.length > 10 && (
+                    <div style={{
+                      fontSize: '11px',
+                      color: COLORS.textMuted,
+                      textAlign: 'center',
+                      padding: '8px'
+                    }}>
+                      Showing 10 of {userCapsules.length} canvases
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!user && (
+            <div style={{
+              padding: '16px',
+              backgroundColor: COLORS.cardBg,
+              borderRadius: '8px',
+              textAlign: 'center',
+              marginTop: '12px'
+            }}>
+              <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                Sign in to manage your cloud-saved canvases
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </>
@@ -1958,7 +2301,7 @@ function AccountSettingsPage() {
       case 'profile':
         return <ProfileTab user={user} settings={settings} updateSettings={updateSettings} />;
       case 'tools':
-        return <ToolsTab settings={settings} updateSettings={updateSettings} />;
+        return <ToolsTab settings={settings} updateSettings={updateSettings} user={user} />;
       case 'appearance':
         return <AppearanceTab settings={settings} updateSettings={updateSettings} />;
       case 'api':

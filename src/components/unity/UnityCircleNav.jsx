@@ -186,6 +186,8 @@ const OptionsMenu = ({
   onThemeChange,
   backgroundPattern = 'dots',
   onBackgroundChange,
+  // Canvas management
+  onNewCanvas,
 }) => {
   if (!isOpen) return null;
 
@@ -258,6 +260,15 @@ const OptionsMenu = ({
       color: '#9ca3af',
       textColor: 'white',
       hoverColor: '#6b7280'
+    },
+    // New Canvas button
+    {
+      label: '+ NEW CANVAS',
+      action: onNewCanvas,
+      color: 'rgb(251, 191, 36)',
+      textColor: 'black',
+      hoverColor: '#e5a500',
+      separator: true
     },
   ];
 
@@ -537,6 +548,8 @@ function UnityCircleNav({
   onThemeChange,
   backgroundPattern = 'dots',
   onBackgroundChange,
+  // Canvas management
+  onNewCanvas,
 }) {
   const { footerOpen } = useLayout();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -790,6 +803,7 @@ function UnityCircleNav({
         onThemeChange={onThemeChange}
         backgroundPattern={backgroundPattern}
         onBackgroundChange={onBackgroundChange}
+        onNewCanvas={onNewCanvas}
       />
 
       {/* AI Menu */}
