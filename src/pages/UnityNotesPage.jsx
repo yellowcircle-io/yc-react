@@ -4654,10 +4654,9 @@ Example format:
                 -webkit-overflow-scrolling: touch;
               }
 
-              /* Reduce animation durations for snappier mobile feel */
-              .react-flow__viewport {
-                transition-duration: 100ms !important;
-              }
+              /* NOTE: Do NOT add transition-duration to .react-flow__viewport
+                 It conflicts with React Flow's programmatic zoom animations
+                 and causes stuttering during pinch-zoom operations */
 
               /* Visual feedback on canvas touch */
               .react-flow__pane:active {
@@ -4723,7 +4722,8 @@ Example format:
             onConnect={onConnect}
             onNodeDrag={handleNodeDrag}
             onNodeDragStop={handleNodeDragStop}
-            onMove={(event, viewport) => {
+            onMoveEnd={(event, viewport) => {
+              // Only update zoom level at end of move to avoid stuttering during zoom
               setZoomLevel(viewport.zoom);
             }}
             nodeTypes={nodeTypes}
