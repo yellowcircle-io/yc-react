@@ -831,7 +831,8 @@ def create_app():
                 # Get improvement backlog status
                 imp_status = ""
                 try:
-                    backlog_index = Path(__file__).parent.parent / '.claude' / 'improvement-backlog' / 'BACKLOG_INDEX.json'
+                    project_root = os.environ.get('CLAUDE_WORKDIR', str(Path(__file__).parent.parent))
+                    backlog_index = Path(project_root) / '.claude' / 'improvement-backlog' / 'BACKLOG_INDEX.json'
                     if backlog_index.exists():
                         with open(backlog_index) as bf:
                             backlog = json.load(bf)
@@ -909,11 +910,12 @@ def create_app():
 
             def run_improve_command():
                 try:
-                    runner_script = Path(__file__).parent / 'improvement-runner.sh'
+                    project_root = os.environ.get('CLAUDE_WORKDIR', str(Path(__file__).parent.parent))
+                    runner_script = Path(project_root) / 'scripts' / 'improvement-runner.sh'
                     if not runner_script.exists():
                         client.chat_postMessage(
                             channel=channel_id,
-                            text="*Improve:* Runner script not found at `scripts/improvement-runner.sh`"
+                            text=f"*Improve:* Runner script not found at `{runner_script}`"
                         )
                         return
 
@@ -937,7 +939,7 @@ def create_app():
                         capture_output=True,
                         text=True,
                         timeout=360,  # 6 min (runner has 5 min CLI timeout)
-                        cwd=str(Path(__file__).parent.parent)
+                        cwd=project_root
                     )
 
                     output = result.stdout.strip() or result.stderr.strip() or 'Command completed (no output)'
@@ -975,13 +977,14 @@ def create_app():
 
             def run_yc_command():
                 try:
-                    script_path = Path(__file__).parent / 'yc-command.sh'
+                    project_root = os.environ.get('CLAUDE_WORKDIR', str(Path(__file__).parent.parent))
+                    script_path = Path(project_root) / 'scripts' / 'yc-command.sh'
                     result = subprocess.run(
                         ['bash', str(script_path)] + yc_args.split(),
                         capture_output=True,
                         text=True,
                         timeout=60,
-                        cwd=str(Path(__file__).parent.parent)
+                        cwd=project_root
                     )
 
                     output = result.stdout.strip() or result.stderr.strip() or 'Command completed'
