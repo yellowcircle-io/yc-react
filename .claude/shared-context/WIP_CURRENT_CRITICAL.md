@@ -49,6 +49,18 @@ Reconnected Chromium and Firefox. Safari (webkit) was already running. Note: Pla
 - UnityNOTES node improvements (6 node components updated)
 - CSS constants + index.css global theme variables (449 lines added)
 
+### Agent Improvements Status
+- **System:** Autonomous UI/UX Improvement Pipeline (installed Jan 27)
+- **Last run:** Not yet executed (pilot pending)
+- **Branches pending review:** 0
+- **Circuit breaker:** Closed (0/3 failures)
+- **Current round:** 1 (Visual Polish)
+- **Round progress:** 0/8 merged
+- **Runner:** `scripts/improvement-runner.sh`
+- **Daemon command:** `/sleepless improve IMP-XXX`
+- **Backlog:** `.claude/improvement-backlog/BACKLOG_INDEX.json`
+- **Competitive analysis:** `dev-context/competitive-analysis/COMPETITIVE_MATRIX.json`
+
 ### Pending Optimizations
 - [ ] Link Saver: Top row buttons not sticky on scroll
 - [ ] Link Saver: Improve top row button spacing

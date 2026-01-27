@@ -1,0 +1,45 @@
+{
+  "id": "IMP-003",
+  "title": "Standardized Shadow/Elevation System",
+  "round": 1,
+  "status": "ready",
+  "priority": 3,
+  "complexity": "simple",
+  "blockedBy": ["IMP-001"],
+  "competitiveRationale": "Miro and Milanote use consistent elevation systems across their widgets. UnityNOTES nodes have ad-hoc shadow values. Standardizing creates visual hierarchy - resting, hover, selected, and dragging states should each have a distinct elevation level.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > 2. Enhanced Card Design",
+
+  "objective": "Standardize the shadow/elevation values across all node components to use a consistent 4-level system: rest (0 2px 8px rgba(0,0,0,0.08)), hover (0 8px 20px rgba(0,0,0,0.15)), selected (0 8px 24px rgba(0,0,0,0.2)), and active/dragging (0 12px 32px rgba(0,0,0,0.25)). Apply to StickyNode.jsx and TextNoteNode.jsx (which were excluded from IMP-001).",
+
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/pages/UnityNotesPage.jsx",
+    "src/components/unity-plus/nodes/index.js"
+  ],
+  "maxLinesChanged": 40,
+
+  "pattern": {
+    "description": "Update the boxShadow values in the root div's style object to match the standardized elevation system",
+    "example": "boxShadow: selected ? '0 8px 24px rgba(0,0,0,0.2)' : isHovered ? '0 8px 20px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.08)'",
+    "notes": "StickyNode uses color-tinted shadows when selected (e.g., colorScheme.border + '40'). Preserve this pattern - only update the non-selected shadows. TextNoteNode is large (71KB) - only modify the boxShadow line(s), nothing else."
+  },
+
+  "acceptanceCriteria": [
+    "StickyNode.jsx default shadow updated from '0 4px 8px rgba(0,0,0,0.1)' to '0 2px 8px rgba(0,0,0,0.08)'",
+    "StickyNode.jsx hover shadow updated from '0 6px 16px rgba(0,0,0,0.15)' to '0 8px 20px rgba(0,0,0,0.15)'",
+    "StickyNode.jsx selected shadow preserved (color-tinted)",
+    "TextNoteNode.jsx shadows standardized to match the same 4-level system",
+    "No other properties changed in either file",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-27",
+  "branch": "sleepless/IMP-003-shadow-elevation"
+}

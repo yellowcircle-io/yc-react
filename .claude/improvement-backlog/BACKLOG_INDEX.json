@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-27",
+  "currentRound": 1,
+  "roundTheme": "Visual Polish",
+  "circuitBreaker": {
+    "consecutiveFailures": 0,
+    "threshold": 3,
+    "status": "closed"
+  },
+  "roundProgress": {
+    "round1": {
+      "theme": "Visual Polish",
+      "total": 8,
+      "merged": 0,
+      "review": 0,
+      "failed": 0,
+      "ready": 8,
+      "gateRequirement": "6/8 merged",
+      "gatePassed": false
+    },
+    "round2": {
+      "theme": "Content Richness",
+      "total": 6,
+      "merged": 0,
+      "review": 0,
+      "failed": 0,
+      "ready": 0,
+      "gateRequirement": "5/6 merged",
+      "gatePassed": false,
+      "blockedBy": "round1"
+    },
+    "round3": {
+      "theme": "Organization & Discovery",
+      "total": 6,
+      "merged": 0,
+      "review": 0,
+      "failed": 0,
+      "ready": 0,
+      "gateRequirement": "3/6 merged",
+      "gatePassed": false,
+      "blockedBy": "round2"
+    },
+    "round4": {
+      "theme": "Collaboration & Advanced",
+      "total": 4,
+      "merged": 0,
+      "review": 0,
+      "failed": 0,
+      "ready": 0,
+      "gateRequirement": "2/4 merged",
+      "gatePassed": false,
+      "blockedBy": "round3"
+    }
+  },
+  "items": [
+    { "id": "IMP-001", "round": 1, "status": "ready", "spec": "items/IMP-001-node-hover-states.json" },
+    { "id": "IMP-002", "round": 1, "status": "ready", "spec": "items/IMP-002-sticky-color-palette.json" },
+    { "id": "IMP-003", "round": 1, "status": "ready", "spec": "items/IMP-003-shadow-elevation-system.json" },
+    { "id": "IMP-004", "round": 1, "status": "ready", "spec": "items/IMP-004-selection-state-refinement.json" },
+    { "id": "IMP-005", "round": 1, "status": "ready", "spec": "items/IMP-005-node-type-header-icons.json" },
+    { "id": "IMP-006", "round": 1, "status": "ready", "spec": "items/IMP-006-content-preview-truncation.json" },
+    { "id": "IMP-007", "round": 1, "status": "ready", "spec": "items/IMP-007-color-picker-grid.json" },
+    { "id": "IMP-008", "round": 1, "status": "ready", "spec": "items/IMP-008-transition-timing.json" }
+  ]
+}

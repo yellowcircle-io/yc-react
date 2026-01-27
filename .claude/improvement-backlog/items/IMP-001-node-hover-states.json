@@ -1,0 +1,55 @@
+{
+  "id": "IMP-001",
+  "title": "Enhanced Node Hover States",
+  "round": 1,
+  "status": "ready",
+  "priority": 2,
+  "complexity": "moderate",
+  "blockedBy": [],
+  "competitiveRationale": "Miro and Milanote have polished hover states with contextual toolbars and subtle elevation changes. UnityNOTES nodes have inconsistent hover behavior - some have hover shadows, others don't. Standardizing creates visual cohesion.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > 5. Microinteractions & Motion",
+
+  "objective": "Add consistent hover states to all 9 node components in src/components/unity-plus/nodes/. Each node should have: (1) a subtle scale transform on hover (scale(1.01)), (2) an elevated box-shadow on hover ('0 8px 20px rgba(0,0,0,0.15)'), and (3) a smooth transition ('all 0.2s ease'). Nodes that already have some hover behavior (like StickyNode) should be updated to match the standardized values. Do NOT add hover states to StickyNode since it already has them.",
+
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/TodoNode.jsx",
+    "src/components/unity-plus/nodes/CommentNode.jsx",
+    "src/components/unity-plus/nodes/CodeBlockNode.jsx",
+    "src/components/unity-plus/nodes/ColorSwatchNode.jsx",
+    "src/components/unity-plus/nodes/GroupNode.jsx",
+    "src/components/unity-plus/nodes/MapNode.jsx",
+    "src/components/unity-plus/nodes/TripPlannerMapNode.jsx",
+    "src/components/unity-plus/nodes/LinkNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx",
+    "src/components/unity-plus/nodes/index.js"
+  ],
+  "maxLinesChanged": 200,
+
+  "pattern": {
+    "description": "Each node already has an isHovered state and onMouseEnter/onMouseLeave handlers on the root div. The root div's style should include hover-dependent boxShadow, transform, and transition. Follow the StickyNode pattern (lines 60-81).",
+    "example": "boxShadow: selected ? '0 8px 24px rgba(0,0,0,0.2)' : isHovered ? '0 8px 20px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.1)', transition: 'all 0.2s ease', transform: isHovered && !isEditing ? 'scale(1.01)' : 'scale(1)'",
+    "notes": "If a node doesn't have isHovered state, add useState(false) and onMouseEnter/onMouseLeave. Keep the scale subtle (1.01 not 1.02) since some nodes are larger. Preserve any existing selected state styling."
+  },
+
+  "acceptanceCriteria": [
+    "All 8 listed node files have hover-dependent boxShadow in their root div style",
+    "All 8 listed node files have transition: 'all 0.2s ease' in their root div style",
+    "All 8 listed node files have hover-dependent transform: scale(1.01) in their root div style",
+    "Default shadow is '0 4px 8px rgba(0,0,0,0.1)'",
+    "Hover shadow is '0 8px 20px rgba(0,0,0,0.15)'",
+    "Selected shadow is '0 8px 24px rgba(0,0,0,0.2)' or uses the node's accent color",
+    "Existing hover functionality is preserved (no regression)",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-27",
+  "branch": "sleepless/IMP-001-node-hover-states"
+}

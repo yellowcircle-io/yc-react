@@ -7,14 +7,16 @@
     "build_failed": 0,
     "deployment_failed": 0,
     "auth_failed": 0,
-    "task_failed": 2
+    "task_failed": 2,
+    "improvement_failed": 0
   },
   "thresholds": {
     "commit_failed": 3,
     "build_failed": 5,
     "deployment_failed": 2,
     "auth_failed": 3,
-    "task_failed": 10
+    "task_failed": 10,
+    "improvement_failed": 3
   },
   "circuit_open": false,
   "circuit_opened_at": null,

@@ -797,6 +797,12 @@ def create_app():
                         "• `/sleepless status` - Check daemon status\n"
                         "• `/sleepless relay [msg]` - Send message to @claude\n"
                         "• `/sleepless circuit [open|close]` - Control review circuit breaker\n\n"
+                        "*Improvement Commands:* `/sleepless improve <cmd>`\n"
+                        "• `/sleepless improve` - Show improvement backlog status\n"
+                        "• `/sleepless improve IMP-XXX` - Execute specific improvement\n"
+                        "• `/sleepless improve next` - Execute next ready improvement\n"
+                        "• `/sleepless improve dry IMP-XXX` - Dry run (preview prompt)\n"
+                        "• `/sleepless improve reset` - Reset circuit breaker\n\n"
                         "*yellowCircle Commands:* `/sleepless yc <command>`\n"
                         "• `/sleepless yc notify \"message\"` - Send notification\n"
                         "• `/sleepless yc status success \"message\"` - Status update\n"
@@ -822,6 +828,27 @@ def create_app():
 
                 circuit_status = "🔴 OPEN" if is_circuit_breaker_open() else "🟢 Closed"
 
+                # Get improvement backlog status
+                imp_status = ""
+                try:
+                    backlog_index = Path(__file__).parent.parent / '.claude' / 'improvement-backlog' / 'BACKLOG_INDEX.json'
+                    if backlog_index.exists():
+                        with open(backlog_index) as bf:
+                            backlog = json.load(bf)
+                        imp_cb = backlog.get('circuitBreaker', {})
+                        imp_round = backlog.get('currentRound', '?')
+                        imp_theme = backlog.get('roundTheme', '?')
+                        imp_cb_status = "OPEN" if imp_cb.get('status') == 'open' else "Closed"
+                        rp = backlog.get('roundProgress', {}).get(f'round{imp_round}', {})
+                        imp_status = (
+                            f"\n*Improvement System:*\n"
+                            f"• Round: {imp_round} ({imp_theme})\n"
+                            f"• Progress: {rp.get('merged', 0)}/{rp.get('total', '?')} merged\n"
+                            f"• Circuit breaker: {imp_cb_status} ({imp_cb.get('consecutiveFailures', 0)}/3)\n"
+                        )
+                except Exception:
+                    pass
+
                 status_msg = (
                     f"*Sleepless Agent Status:*\n"
                     f"• Tier: 1 (Socket Mode - Direct)\n"
@@ -831,7 +858,8 @@ def create_app():
                     f"• Active threads: {active_threads}\n"
                     f"• Daily reviews: {daily_reviews}/{REVIEW_MAX_PER_DAY}\n"
                     f"• Circuit breaker: {circuit_status}\n"
-                    f"• Features: commands, mentions, threads, auto-review"
+                    f"• Features: commands, mentions, threads, auto-review, improvements"
+                    f"{imp_status}"
                 )
             except Exception as e:
                 status_msg = f"*Sleepless Agent Status:* Running (details unavailable: {e})"
@@ -872,6 +900,72 @@ def create_app():
             except Exception as e:
                 log(f'Relay error: {e}', 'ERROR')
                 respond({"response_type": "ephemeral", "text": f"*Relay error:* {str(e)}"})
+            return
+
+        # Handle improve command (autonomous UI/UX improvements)
+        if text.lower().startswith('improve ') or text.lower() == 'improve':
+            imp_args = text[8:].strip() if len(text) > 8 else ''
+            log(f'Improve command: {imp_args}')
+
+            def run_improve_command():
+                try:
+                    runner_script = Path(__file__).parent / 'improvement-runner.sh'
+                    if not runner_script.exists():
+                        client.chat_postMessage(
+                            channel=channel_id,
+                            text="*Improve:* Runner script not found at `scripts/improvement-runner.sh`"
+                        )
+                        return
+
+                    if not imp_args:
+                        # Show status
+                        cmd_args = ['--status']
+                    elif imp_args.lower() == 'next':
+                        cmd_args = ['--next']
+                    elif imp_args.lower() == 'reset':
+                        cmd_args = ['--reset-circuit']
+                    elif imp_args.lower().startswith('dry '):
+                        # dry IMP-002 -> IMP-002 --dry-run
+                        imp_id = imp_args[4:].strip()
+                        cmd_args = [imp_id, '--dry-run']
+                    else:
+                        # Direct IMP-XXX execution
+                        cmd_args = [imp_args.strip()]
+
+                    result = subprocess.run(
+                        ['bash', str(runner_script)] + cmd_args,
+                        capture_output=True,
+                        text=True,
+                        timeout=360,  # 6 min (runner has 5 min CLI timeout)
+                        cwd=str(Path(__file__).parent.parent)
+                    )
+
+                    output = result.stdout.strip() or result.stderr.strip() or 'Command completed (no output)'
+
+                    if len(output) > 2900:
+                        output = output[:2900] + '...(truncated)'
+
+                    status_emoji = '✅' if result.returncode == 0 else '❌'
+                    client.chat_postMessage(
+                        channel=channel_id,
+                        text=f"{status_emoji} *Improve {imp_args or 'status'}:*\n```\n{output}\n```"
+                    )
+                    log(f'Improve command completed: {imp_args} (exit {result.returncode})')
+
+                except subprocess.TimeoutExpired:
+                    client.chat_postMessage(
+                        channel=channel_id,
+                        text=f"*Improve {imp_args}:* Timed out after 6 minutes"
+                    )
+                except Exception as e:
+                    log(f'Improve command error: {e}', 'ERROR')
+                    client.chat_postMessage(
+                        channel=channel_id,
+                        text=f"*Improve {imp_args}:* Error: {str(e)}"
+                    )
+
+            thread = threading.Thread(target=run_improve_command)
+            thread.start()
             return
 
         # Handle yc (yellowCircle) commands
@@ -1127,6 +1221,7 @@ def main():
     log(f'    - @sleepless mentions')
     log(f'    - Thread conversations')
     log(f'    - Multi-LLM auto-review (1hr inactivity)')
+    log(f'    - /sleepless improve (autonomous UI/UX improvements)')
     log(f'  Review Config:')
     log(f'    - Inactivity threshold: {REVIEW_INACTIVITY_THRESHOLD}s')
     log(f'    - Max runtime: {REVIEW_MAX_RUNTIME}s')

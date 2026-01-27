@@ -1,0 +1,52 @@
+{
+  "id": "IMP-005",
+  "title": "Node Type Header Icons",
+  "round": 1,
+  "status": "ready",
+  "priority": 5,
+  "complexity": "moderate",
+  "blockedBy": [],
+  "competitiveRationale": "Milanote shows type-specific icons on card headers for quick visual identification. Our nodes have the icon imported (via lucide-react) but not all display it prominently. Adding a consistent small type icon in the top-left of each node improves scanning speed.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > 2. Enhanced Card Design",
+
+  "objective": "Ensure all node components display their type icon (from lucide-react) in a consistent position - top-left corner, 14px size, with muted opacity (0.5) so it doesn't compete with content. Nodes that already import and display their icon should have their icon styling normalized. Nodes missing a visible type icon should get one added.",
+
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/TodoNode.jsx",
+    "src/components/unity-plus/nodes/CommentNode.jsx",
+    "src/components/unity-plus/nodes/CodeBlockNode.jsx",
+    "src/components/unity-plus/nodes/ColorSwatchNode.jsx",
+    "src/components/unity-plus/nodes/GroupNode.jsx",
+    "src/components/unity-plus/nodes/MapNode.jsx",
+    "src/components/unity-plus/nodes/TripPlannerMapNode.jsx",
+    "src/components/unity-plus/nodes/LinkNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 160,
+
+  "pattern": {
+    "description": "Each node already imports its type icon from lucide-react (e.g., CheckSquare for TodoNode, MessageSquare for CommentNode). Add or normalize a small icon display in the top-left area of the node.",
+    "example": "<div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4 }}><CheckSquare size={14} /></div>",
+    "notes": "Check each node's existing layout - some may already show the icon. If the icon is already visible, normalize the styling (size 14, opacity 0.4). If a node uses the icon only in import but not in JSX, add a subtle display. Use the icon already imported - do NOT add new icon imports. The icon uses: TodoNode=CheckSquare, CommentNode=MessageSquare, CodeBlockNode has no specific icon import for display (skip or use Code from lucide if already imported), ColorSwatchNode=Palette, GroupNode=check import, MapNode=check import, TripPlannerMapNode=check import, LinkNode=check import."
+  },
+
+  "acceptanceCriteria": [
+    "All 8 listed node files have a visible type icon in a consistent position",
+    "Icon size is 14px across all nodes",
+    "Icon opacity is 0.4 (subtle, non-competing with content)",
+    "Icons use already-imported lucide-react components (no new icon imports added)",
+    "Icon does not overlap with delete/star buttons",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-27",
+  "branch": "sleepless/IMP-005-node-type-icons"
+}

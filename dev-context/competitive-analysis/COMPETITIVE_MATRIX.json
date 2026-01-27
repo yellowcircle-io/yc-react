@@ -1,0 +1,237 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-27",
+  "methodology": "8-dimension scoring (1-5 scale). Based on public product analysis, documentation review, and feature comparison. UnityNOTES scored against current production state.",
+  "dimensions": [
+    {
+      "id": "visualDesign",
+      "name": "Visual Design & Card Quality",
+      "description": "Card aesthetics, color systems, typography, shadow/border states, visual hierarchy within nodes"
+    },
+    {
+      "id": "interaction",
+      "name": "Interaction & Microinteractions",
+      "description": "Hover states, transitions, drag feedback, selection animation, contextual actions"
+    },
+    {
+      "id": "organization",
+      "name": "Organization & Discovery",
+      "description": "Tagging, search, filtering, grouping, spatial + non-spatial organization"
+    },
+    {
+      "id": "collaboration",
+      "name": "Collaboration Awareness",
+      "description": "Live cursors, presence indicators, shared editing, comments, activity feed"
+    },
+    {
+      "id": "mobileUx",
+      "name": "Mobile UX",
+      "description": "Touch targets, bottom sheets, gesture support, responsive canvas, mobile-first features"
+    },
+    {
+      "id": "contentTypes",
+      "name": "Content Type Richness",
+      "description": "Node variety, media embedding, link previews, code blocks, file attachments"
+    },
+    {
+      "id": "templates",
+      "name": "Templates & Starter Content",
+      "description": "Pre-built layouts, community templates, quick-start options, template customization"
+    },
+    {
+      "id": "performance",
+      "name": "Performance & Reliability",
+      "description": "Canvas smoothness, large board handling, offline support, sync reliability"
+    }
+  ],
+  "competitors": {
+    "milanote": {
+      "name": "Milanote",
+      "url": "https://milanote.com",
+      "category": "Visual organization / mood board",
+      "scores": {
+        "visualDesign": 4.5,
+        "interaction": 4.0,
+        "organization": 3.5,
+        "collaboration": 3.0,
+        "mobileUx": 3.5,
+        "contentTypes": 4.0,
+        "templates": 4.5,
+        "performance": 4.0
+      },
+      "strengths": [
+        "Beautiful card design with content previews",
+        "Rich media mixing (images, text, links, files)",
+        "Excellent template library for creative workflows",
+        "Flexible grid with free-form placement"
+      ],
+      "weaknesses": [
+        "Limited real-time collaboration features",
+        "No live cursor tracking",
+        "Fewer node types than Miro"
+      ]
+    },
+    "miro": {
+      "name": "Miro",
+      "url": "https://miro.com",
+      "category": "Collaborative whiteboard",
+      "scores": {
+        "visualDesign": 4.0,
+        "interaction": 4.5,
+        "organization": 4.0,
+        "collaboration": 5.0,
+        "mobileUx": 4.0,
+        "contentTypes": 4.5,
+        "templates": 5.0,
+        "performance": 4.0
+      },
+      "strengths": [
+        "16-color sticky note palette",
+        "Live cursor tracking with user labels",
+        "Extensive template marketplace",
+        "Auto-layout and mind map tools",
+        "Tags and labels for categorization"
+      ],
+      "weaknesses": [
+        "Can feel overwhelming for simple use cases",
+        "Performance degrades on very large boards",
+        "Enterprise pricing model"
+      ]
+    },
+    "threaddeck": {
+      "name": "ThreadDeck",
+      "url": "https://threaddeck.app",
+      "category": "Thread-based organization",
+      "scores": {
+        "visualDesign": 3.5,
+        "interaction": 3.5,
+        "organization": 4.5,
+        "collaboration": 3.5,
+        "mobileUx": 3.0,
+        "contentTypes": 3.0,
+        "templates": 2.5,
+        "performance": 4.0
+      },
+      "strengths": [
+        "Thread-based navigation paradigm",
+        "Visual hierarchy indicators",
+        "Nested content with expandable threads",
+        "Good comment timeline UI"
+      ],
+      "weaknesses": [
+        "Limited canvas-based features",
+        "Fewer content types",
+        "Basic template system"
+      ]
+    },
+    "unityNotes": {
+      "name": "UnityNOTES",
+      "url": "https://yellowcircle.io",
+      "category": "Canvas-based note-taking (our product)",
+      "scores": {
+        "visualDesign": 3.0,
+        "interaction": 2.5,
+        "organization": 2.0,
+        "collaboration": 1.5,
+        "mobileUx": 3.0,
+        "contentTypes": 3.5,
+        "templates": 3.5,
+        "performance": 3.5
+      },
+      "strengths": [
+        "10 node types including specialized (Map, TripPlanner, CodeBlock)",
+        "Template system with 6 templates",
+        "Solid mobile touch support",
+        "Firebase cloud sync",
+        "Global theming foundation"
+      ],
+      "weaknesses": [
+        "Only 6 sticky note colors (competitors have 12-16)",
+        "Limited hover/interaction states on nodes",
+        "No tagging or non-spatial organization",
+        "No live collaboration cursors",
+        "Basic search capabilities"
+      ]
+    }
+  },
+  "gapAnalysis": {
+    "round1_visualPolish": {
+      "theme": "Visual Polish",
+      "targetDimensions": ["visualDesign", "interaction"],
+      "currentAvgScore": 2.75,
+      "targetAvgScore": 3.5,
+      "items": [
+        "IMP-001: Enhanced node hover states (all 9 node types)",
+        "IMP-002: 16-color sticky palette",
+        "IMP-003: Improved shadow/elevation system",
+        "IMP-004: Selection state refinement",
+        "IMP-005: Node type header icons",
+        "IMP-006: Content preview truncation",
+        "IMP-007: Color picker grid improvements",
+        "IMP-008: Transition timing standardization"
+      ]
+    },
+    "round2_contentRichness": {
+      "theme": "Content Richness",
+      "targetDimensions": ["contentTypes", "visualDesign"],
+      "currentAvgScore": 3.25,
+      "targetAvgScore": 4.0,
+      "items": [
+        "IMP-009: Link node preview enhancement",
+        "IMP-010: Code block syntax theme options",
+        "IMP-011: Todo node progress visualization",
+        "IMP-012: Comment node thread indicators",
+        "IMP-013: Group node auto-sizing",
+        "IMP-014: Color swatch export options"
+      ]
+    },
+    "round3_organization": {
+      "theme": "Organization & Discovery",
+      "targetDimensions": ["organization"],
+      "currentAvgScore": 2.0,
+      "targetAvgScore": 3.0,
+      "items": [
+        "IMP-015: Node tag system (data model)",
+        "IMP-016: Tag filter UI",
+        "IMP-017: Canvas search overlay",
+        "IMP-018: Node grouping improvements",
+        "IMP-019: Spatial bookmarks",
+        "IMP-020: Auto-organize groups"
+      ]
+    },
+    "round4_collaboration": {
+      "theme": "Collaboration & Advanced",
+      "targetDimensions": ["collaboration", "mobileUx"],
+      "currentAvgScore": 2.25,
+      "targetAvgScore": 3.0,
+      "items": [
+        "IMP-021: Live cursors (Firebase Realtime)",
+        "IMP-022: Presence indicators",
+        "IMP-023: Mobile bottom sheet for node ops",
+        "IMP-024: Keyboard shortcut system"
+      ]
+    }
+  },
+  "roundGates": {
+    "round1": {
+      "entryRequirement": "none",
+      "exitRequirement": "75% items merged (6/8)",
+      "gateMetric": "visualDesign + interaction avg >= 3.5"
+    },
+    "round2": {
+      "entryRequirement": "Round 1 gate passed",
+      "exitRequirement": "75% items merged (5/6)",
+      "gateMetric": "contentTypes avg >= 4.0"
+    },
+    "round3": {
+      "entryRequirement": "Round 2 gate passed",
+      "exitRequirement": "50% items merged (3/6)",
+      "gateMetric": "organization avg >= 3.0"
+    },
+    "round4": {
+      "entryRequirement": "Round 3 gate passed",
+      "exitRequirement": "50% items merged (2/4)",
+      "gateMetric": "collaboration avg >= 3.0"
+    }
+  }
+}

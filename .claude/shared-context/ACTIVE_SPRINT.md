@@ -40,6 +40,23 @@
 | Apple Shortcuts + Slack | 📋 Planned | Research complete, see SCOPE_APPLE_SHORTCUTS_SLACK.md |
 | Link Sharing Phase 4 (Slack App) | ⚠️ Partial | Webhook working, full slash commands not yet |
 
+### P2 - Agent Improvements (Autonomous)
+| ID | Title | Round | Status | Branch |
+|----|-------|-------|--------|--------|
+| IMP-001 | Enhanced Node Hover States | 1 | ready | -- |
+| IMP-002 | 16-Color Sticky Palette | 1 | ready | -- |
+| IMP-003 | Shadow/Elevation System | 1 | ready | -- |
+| IMP-004 | Selection State Refinement | 1 | ready | -- |
+| IMP-005 | Node Type Header Icons | 1 | ready | -- |
+| IMP-006 | Content Preview Truncation | 1 | ready | -- |
+| IMP-007 | Color Picker Grid Improvements | 1 | ready | -- |
+| IMP-008 | Transition Timing Standardization | 1 | ready | -- |
+
+**Round 1 Progress:** 0/8 merged (Visual Polish)
+**Circuit Breaker:** Closed (0/3 failures)
+**Trigger:** `/sleepless improve IMP-XXX` or `/sleepless improve next`
+**Backlog:** `.claude/improvement-backlog/BACKLOG_INDEX.json`
+
 ### P3 - Backlog
 | Task | Status |
 |------|--------|

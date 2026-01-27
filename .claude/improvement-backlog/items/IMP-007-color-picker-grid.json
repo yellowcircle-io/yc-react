@@ -1,0 +1,45 @@
+{
+  "id": "IMP-007",
+  "title": "Color Picker Grid Improvements",
+  "round": 1,
+  "status": "ready",
+  "priority": 7,
+  "complexity": "simple",
+  "blockedBy": ["IMP-002"],
+  "competitiveRationale": "Miro's color picker has smooth hover animations, clear active state indicators, and a well-organized grid layout. Our StickyNode color picker works but the grid is cramped and hover effects are basic.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > 2. Enhanced Card Design",
+
+  "objective": "Improve the color picker dropdown in StickyNode.jsx and ColorSwatchNode.jsx. For StickyNode: increase swatch size from 28px to 32px, increase gap from 6px to 8px, add a subtle ring effect on hover (box-shadow: 0 0 0 2px), and increase padding from 8px to 10px. For ColorSwatchNode: improve the color swatch add panel layout with consistent sizing.",
+
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/nodes/ColorSwatchNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 50,
+
+  "pattern": {
+    "description": "Update the color picker dropdown styles in StickyNode.jsx (around lines 224-267) and similar color selection UI in ColorSwatchNode.jsx",
+    "example": "width: '32px', height: '32px', gap: '8px', padding: '10px'",
+    "notes": "StickyNode color picker is a grid of color swatches that appears on button click. ColorSwatchNode has a similar color selection UI. Keep the same interaction patterns - just improve the sizing and visual polish."
+  },
+
+  "acceptanceCriteria": [
+    "StickyNode color picker swatch size increased from 28px to 32px",
+    "StickyNode color picker gap increased from 6px to 8px",
+    "StickyNode color picker padding increased from 8px to 10px",
+    "Color swatches show a ring effect on hover (box-shadow: 0 0 0 2px [color])",
+    "ColorSwatchNode color selection UI has consistent sizing with StickyNode",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-27",
+  "branch": "sleepless/IMP-007-color-picker-grid"
+}

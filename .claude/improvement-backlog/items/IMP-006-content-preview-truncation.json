@@ -1,0 +1,47 @@
+{
+  "id": "IMP-006",
+  "title": "Content Preview Truncation",
+  "round": 1,
+  "status": "ready",
+  "priority": 6,
+  "complexity": "simple",
+  "blockedBy": [],
+  "competitiveRationale": "Milanote shows clean content previews with ellipsis truncation. Some of our nodes let content overflow or wrap awkwardly. Consistent truncation with ellipsis improves scanning speed and visual cleanliness.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > 2. Enhanced Card Design",
+
+  "objective": "Add CSS text truncation (overflow: hidden, textOverflow: 'ellipsis') to content display areas in TodoNode (item text), CommentNode (comment body preview), and CodeBlockNode (code preview when collapsed). Ensure long content shows '...' instead of overflowing or wrapping excessively.",
+
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/TodoNode.jsx",
+    "src/components/unity-plus/nodes/CommentNode.jsx",
+    "src/components/unity-plus/nodes/CodeBlockNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 60,
+
+  "pattern": {
+    "description": "Add overflow handling to content display elements in each node",
+    "example": "overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'",
+    "notes": "Only apply to single-line elements (titles, item text). Multi-line content areas should use WebkitLineClamp for multi-line truncation: display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden'. Do NOT truncate actively-editing content - only display/preview mode."
+  },
+
+  "acceptanceCriteria": [
+    "TodoNode item text truncates with ellipsis when overflowing",
+    "CommentNode body preview truncates after 3 lines with ellipsis",
+    "CodeBlockNode shows truncated preview when content is long",
+    "Truncation only applies to display mode, not edit mode",
+    "Existing word-break behavior preserved for editing states",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-27",
+  "branch": "sleepless/IMP-006-content-truncation"
+}
