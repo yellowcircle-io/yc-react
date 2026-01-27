@@ -36,6 +36,54 @@
   --accent-bg: rgba(251, 191, 36, 0.1);
   --accent-border: rgba(251, 191, 36, 0.4);
   --accent-text: #92400e;
+
+  /* ============================================
+     Semantic Color Tokens - Light Theme Defaults
+     ============================================ */
+  --semantic-background: #ffffff;
+  --semantic-surface: #f9fafb;
+  --semantic-surface-secondary: #f3f4f6;
+  --semantic-border: #e5e7eb;
+  --semantic-border-strong: #d1d5db;
+  --semantic-text-primary: #1f2937;
+  --semantic-text-secondary: #6b7280;
+  --semantic-text-tertiary: #9ca3af;
+  --semantic-overlay: rgba(0, 0, 0, 0.5);
+  --semantic-shadow: rgba(0, 0, 0, 0.1);
+
+  /* ============================================
+     Status Colors - Consistent across themes
+     ============================================ */
+  --status-success: #22c55e;
+  --status-error: #ef4444;
+  --status-warning: #f59e0b;
+  --status-info: #3b82f6;
+
+  /* Status backgrounds (10% opacity) */
+  --status-success-bg: rgba(34, 197, 94, 0.1);
+  --status-error-bg: rgba(239, 68, 68, 0.1);
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-info-bg: rgba(59, 130, 246, 0.1);
+
+  /* Status borders (40% opacity) */
+  --status-success-border: rgba(34, 197, 94, 0.4);
+  --status-error-border: rgba(239, 68, 68, 0.4);
+  --status-warning-border: rgba(245, 158, 11, 0.4);
+  --status-info-border: rgba(59, 130, 246, 0.4);
+
+  /* ============================================
+     Platform Colors - External brand colors
+     ============================================ */
+  --platform-reddit: #ff4500;
+  --platform-linkedin: #0077b5;
+  --platform-facebook: #1877f2;
+  --platform-twitter: #1da1f2;
+  --platform-github: #24292e;
+  --platform-youtube: #ff0000;
+  --platform-instagram: #e4405f;
+  --platform-email: #ea4335;
+  --platform-slack: #4a154b;
+  --platform-notion: #000000;
 }
 
 a {
@@ -301,4 +349,405 @@ FOUNDATION BACKGROUND LAYER GUIDELINES:
 
 .border-accent {
   border-color: var(--accent-border);
+}
+
+/* ============================================
+   Semantic Token Utilities
+   ============================================ */
+
+/* Surface backgrounds */
+.bg-surface {
+  background-color: var(--semantic-surface);
+}
+
+.bg-surface-secondary {
+  background-color: var(--semantic-surface-secondary);
+}
+
+/* Semantic text colors */
+.text-primary {
+  color: var(--semantic-text-primary);
+}
+
+.text-secondary {
+  color: var(--semantic-text-secondary);
+}
+
+.text-tertiary {
+  color: var(--semantic-text-tertiary);
+}
+
+/* Semantic borders */
+.border-semantic {
+  border-color: var(--semantic-border);
+}
+
+.border-semantic-strong {
+  border-color: var(--semantic-border-strong);
+}
+
+/* ============================================
+   Status Utilities
+   ============================================ */
+
+/* Status text colors */
+.text-success {
+  color: var(--status-success);
+}
+
+.text-error {
+  color: var(--status-error);
+}
+
+.text-warning {
+  color: var(--status-warning);
+}
+
+.text-info {
+  color: var(--status-info);
+}
+
+/* Status backgrounds */
+.bg-success {
+  background-color: var(--status-success-bg);
+}
+
+.bg-error {
+  background-color: var(--status-error-bg);
+}
+
+.bg-warning {
+  background-color: var(--status-warning-bg);
+}
+
+.bg-info {
+  background-color: var(--status-info-bg);
+}
+
+/* Status borders */
+.border-success {
+  border-color: var(--status-success-border);
+}
+
+.border-error {
+  border-color: var(--status-error-border);
+}
+
+.border-warning {
+  border-color: var(--status-warning-border);
+}
+
+.border-info {
+  border-color: var(--status-info-border);
+}
+
+/* Status badges/pills */
+.badge-success {
+  background-color: var(--status-success-bg);
+  color: var(--status-success);
+  border: 1px solid var(--status-success-border);
+  padding: 0.25em 0.5em;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-error {
+  background-color: var(--status-error-bg);
+  color: var(--status-error);
+  border: 1px solid var(--status-error-border);
+  padding: 0.25em 0.5em;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-warning {
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning);
+  border: 1px solid var(--status-warning-border);
+  padding: 0.25em 0.5em;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-info {
+  background-color: var(--status-info-bg);
+  color: var(--status-info);
+  border: 1px solid var(--status-info-border);
+  padding: 0.25em 0.5em;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   Platform Color Utilities
+   ============================================ */
+
+.platform-reddit {
+  color: var(--platform-reddit);
+}
+
+.platform-linkedin {
+  color: var(--platform-linkedin);
+}
+
+.platform-facebook {
+  color: var(--platform-facebook);
+}
+
+.platform-twitter {
+  color: var(--platform-twitter);
+}
+
+.platform-github {
+  color: var(--platform-github);
+}
+
+.platform-youtube {
+  color: var(--platform-youtube);
+}
+
+.platform-instagram {
+  color: var(--platform-instagram);
+}
+
+.platform-email {
+  color: var(--platform-email);
+}
+
+.platform-slack {
+  color: var(--platform-slack);
+}
+
+.platform-notion {
+  color: var(--platform-notion);
+}
+
+/* ============================================
+   UnityNOTES Node Microinteractions
+   Phase 1 Quick Wins - Enhanced UX
+   ============================================ */
+
+/* CSS Custom Properties for Node Animations */
+:root {
+  /* Animation Durations (overridden by prefers-reduced-motion) */
+  --node-hover-duration: 150ms;
+  --node-selection-duration: 200ms;
+  --node-expand-duration: 250ms;
+
+  /* Shadow Presets */
+  --node-shadow-resting: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --node-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --node-shadow-selected: 0 8px 32px rgba(0, 0, 0, 0.16);
+
+  /* Touch Target Sizes */
+  --touch-target-min: 44px;
+  --touch-target-button: 44px;
+  --touch-target-resize: 44px;
+}
+
+/* Respect prefers-reduced-motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --node-hover-duration: 0ms;
+    --node-selection-duration: 0ms;
+    --node-expand-duration: 0ms;
+  }
+
+  .unity-node,
+  .unity-node * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Base Node Card Styles */
+.unity-node {
+  transition:
+    box-shadow var(--node-hover-duration) ease,
+    transform var(--node-hover-duration) ease,
+    border-color var(--node-selection-duration) ease;
+}
+
+/* Node Hover State - Lift effect */
+.unity-node:hover {
+  box-shadow: var(--node-shadow-hover);
+}
+
+/* Node Selected State */
+.unity-node.selected {
+  box-shadow: var(--node-shadow-selected);
+}
+
+/* Node Action Buttons - Mobile-friendly touch targets */
+.unity-node-action-btn {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color var(--node-hover-duration) ease,
+    transform var(--node-hover-duration) ease,
+    opacity var(--node-hover-duration) ease;
+}
+
+/* Delete button specific styles */
+.unity-node-delete-btn {
+  width: var(--touch-target-button);
+  height: var(--touch-target-button);
+  min-width: var(--touch-target-button);
+  min-height: var(--touch-target-button);
+  border-radius: 50%;
+  background-color: #374151;
+  border: 2px solid white;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition:
+    background-color var(--node-hover-duration) ease,
+    transform var(--node-hover-duration) ease;
+}
+
+.unity-node-delete-btn:hover {
+  background-color: #1f2937;
+  transform: scale(1.1);
+}
+
+/* Star button specific styles */
+.unity-node-star-btn {
+  width: var(--touch-target-button);
+  height: var(--touch-target-button);
+  min-width: var(--touch-target-button);
+  min-height: var(--touch-target-button);
+  border-radius: 50%;
+  border: 2px solid white;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition:
+    background-color var(--node-hover-duration) ease,
+    transform var(--node-hover-duration) ease;
+}
+
+.unity-node-star-btn:hover {
+  transform: scale(1.1);
+}
+
+.unity-node-star-btn.starred {
+  background-color: #fbbf24;
+}
+
+.unity-node-star-btn.starred:hover {
+  background-color: #f59e0b;
+}
+
+.unity-node-star-btn:not(.starred) {
+  background-color: #6b7280;
+}
+
+.unity-node-star-btn:not(.starred):hover {
+  background-color: #4b5563;
+}
+
+/* Resize Handles - Mobile-friendly touch targets */
+.unity-node-resize-handle {
+  width: var(--touch-target-resize);
+  height: var(--touch-target-resize);
+  min-width: var(--touch-target-resize);
+  min-height: var(--touch-target-resize);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: nwse-resize;
+  touch-action: none;
+  transition:
+    transform var(--node-hover-duration) ease,
+    background-color var(--node-hover-duration) ease;
+}
+
+.unity-node-resize-handle:hover {
+  transform: scale(1.15);
+}
+
+/* Group Node Expand/Collapse Animation */
+.unity-group-content {
+  transition:
+    max-height var(--node-expand-duration) ease-in-out,
+    opacity var(--node-expand-duration) ease;
+  overflow: hidden;
+}
+
+.unity-group-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.unity-group-content.expanded {
+  opacity: 1;
+}
+
+/* Node Header with Icon */
+.unity-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.unity-node-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.unity-node-header-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Content Preview Truncation */
+.unity-node-content-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+
+/* Mobile-specific touch target enhancements */
+@media (pointer: coarse) {
+  .unity-node-action-btn,
+  .unity-node-delete-btn,
+  .unity-node-star-btn,
+  .unity-node-resize-handle {
+    /* Ensure minimum touch target on touch devices */
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Larger hit area for small interactive elements */
+  .unity-node-color-picker-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }

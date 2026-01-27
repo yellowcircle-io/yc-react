@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '../../contexts/LayoutContext';
 import globalContent from '../../config/globalContent';
 import { CALENDAR_ENABLED, openCalendarBooking } from '../../config/calendarConfig';
+import { COLORS } from '../../styles/constants';
 
 // Social Media Icons
 const SocialIcon = ({ type, size = 16, color = 'currentColor' }) => {
@@ -280,22 +281,22 @@ function Footer({ onFooterToggle }) {
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
                   borderRadius: '6px',
-                  color: 'white',
+                  color: COLORS.white,
                   fontSize: '13px',
                   outline: 'none',
                   transition: 'all 0.2s ease',
                   boxSizing: 'border-box'
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(251, 191, 36)';
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.borderColor = COLORS.yellow;
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
                 }}
                 required
               />
@@ -305,8 +306,8 @@ function Footer({ onFooterToggle }) {
                   type="submit"
                   style={{
                     padding: '12px 16px',
-                    backgroundColor: 'rgb(251, 191, 36)',
-                    color: 'black',
+                    backgroundColor: COLORS.yellow,
+                    color: COLORS.black,
                     border: 'none',
                     borderRadius: '6px',
                     fontSize: '11px',
@@ -317,11 +318,11 @@ function Footer({ onFooterToggle }) {
                     whiteSpace: 'nowrap'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.backgroundColor = COLORS.white;
                     e.currentTarget.style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
+                    e.currentTarget.style.backgroundColor = COLORS.yellow;
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
@@ -333,8 +334,8 @@ function Footer({ onFooterToggle }) {
                   style={{
                     padding: '12px 16px',
                     backgroundColor: 'transparent',
-                    color: 'rgb(251, 191, 36)',
-                    border: '1px solid rgb(251, 191, 36)',
+                    color: COLORS.yellow,
+                    border: `1px solid ${COLORS.yellow}`,
                     borderRadius: '6px',
                     fontSize: '11px',
                     fontWeight: '700',
@@ -344,13 +345,13 @@ function Footer({ onFooterToggle }) {
                     whiteSpace: 'nowrap'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgb(251, 191, 36)';
-                    e.currentTarget.style.color = 'black';
+                    e.currentTarget.style.backgroundColor = COLORS.yellow;
+                    e.currentTarget.style.color = COLORS.black;
                     e.currentTarget.style.transform = 'translateY(-1px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'rgb(251, 191, 36)';
+                    e.currentTarget.style.color = COLORS.yellow;
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >

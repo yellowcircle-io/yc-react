@@ -4,6 +4,16 @@
   "tasks": {},
   "completed_tasks": [
     {
+      "task_id": "",
+      "completed_at": "2026-01-27T07:00:18Z",
+      "status": "failed"
+    },
+    {
+      "task_id": "",
+      "completed_at": "2026-01-26T07:00:30Z",
+      "status": "failed"
+    },
+    {
       "task_id": "mobile-padding-audit",
       "completed_at": "2026-01-23T21:30:00Z",
       "status": "completed",

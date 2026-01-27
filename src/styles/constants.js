@@ -289,6 +289,69 @@ export const EFFECTS = {
   }
 };
 
+// ============================================
+// SEMANTIC COLORS - Theme-aware color tokens
+// ============================================
+// These map to CSS custom properties and adapt to light/dark mode
+export const SEMANTIC_COLORS = {
+  light: {
+    background: '#ffffff',
+    surface: '#f9fafb',
+    surfaceSecondary: '#f3f4f6',
+    border: '#e5e7eb',
+    borderStrong: '#d1d5db',
+    text: {
+      primary: '#1f2937',
+      secondary: '#6b7280',
+      tertiary: '#9ca3af',
+    },
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    shadow: 'rgba(0, 0, 0, 0.1)',
+  },
+  dark: {
+    background: '#1a1a1a',
+    surface: '#262626',
+    surfaceSecondary: '#374151',
+    border: '#4b5563',
+    borderStrong: '#6b7280',
+    text: {
+      primary: '#f3f4f6',
+      secondary: '#9ca3af',
+      tertiary: '#6b7280',
+    },
+    overlay: 'rgba(0, 0, 0, 0.7)',
+    shadow: 'rgba(0, 0, 0, 0.3)',
+  },
+};
+
+// ============================================
+// STATUS COLORS - Consistent feedback colors
+// ============================================
+// Used for alerts, notifications, form validation, etc.
+export const STATUS_COLORS = {
+  success: '#22c55e',    // Green - positive actions, confirmations
+  error: '#ef4444',      // Red - errors, destructive actions
+  warning: '#f59e0b',    // Amber - warnings, cautions
+  info: '#3b82f6',       // Blue - informational messages
+};
+
+// ============================================
+// PLATFORM COLORS - External brand colors
+// ============================================
+// Official brand colors for social/external platform integrations
+export const PLATFORM_COLORS = {
+  reddit: '#ff4500',
+  linkedin: '#0077b5',
+  facebook: '#1877f2',
+  twitter: '#1da1f2',
+  github: '#24292e',
+  youtube: '#ff0000',
+  instagram: '#e4405f',
+  email: '#ea4335',
+  slack: '#4a154b',
+  notion: '#000000',
+};
+
 export default {
   COLORS,
   TYPOGRAPHY,
@@ -296,5 +359,8 @@ export default {
   EFFECTS,
   SPACING,
   BORDERS,
-  UNITY
+  UNITY,
+  SEMANTIC_COLORS,
+  STATUS_COLORS,
+  PLATFORM_COLORS,
 };

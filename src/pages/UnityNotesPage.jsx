@@ -44,6 +44,8 @@ import { useFirebaseJourney } from '../hooks/useFirebaseJourney';
 import { useImageAnalysis } from '../hooks/useImageAnalysis';
 import UnityStudioCanvas from '../components/unity-studio/UnityStudioCanvas';
 import { LoadingSkeleton, StatusBar, useKeyboardShortcuts, ShortcutsHelpModal, MobileNodeNavigator } from '../components/unity';
+import TemplateSelector from '../components/unity-plus/templates/TemplateSelector';
+import { instantiateTemplate } from '../components/unity-plus/templates/canvasTemplates';
 import { useMomentumPan } from '../hooks/useMomentumPan';
 import { useSmoothWheel } from '../hooks/useSmoothWheel';
 
@@ -153,13 +155,11 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     return () => window.removeEventListener('resize', checkTouch);
   }, []);
 
-  // Smooth scrolling hooks (Phase 2-3) - DISABLED: causes canvas jumping
-  // TODO: Re-enable after fixing momentum animation conflicts
+  // Smooth scrolling hooks (Phase 2-4: Momentum panning, smooth wheel, mobile CSS)
   const reactFlowContainerRef = useRef(null);
-  // const { handleMoveStart, handleMove, handleMoveEnd, cancelMomentum: _cancelMomentum } = useMomentumPan(getViewport, setViewport);
-  // useSmoothWheel(reactFlowContainerRef, getViewport, setViewport);
-  const _unusedMomentum = useMomentumPan; // Keep import to avoid lint errors
-  const _unusedSmooth = useSmoothWheel;
+  // Phase 2-3: Momentum panning and smooth wheel scrolling
+  const { handleMoveStart, handleMove, handleMoveEnd: handleMomentumEnd, cancelMomentum: _cancelMomentum } = useMomentumPan(getViewport, setViewport);
+  useSmoothWheel(reactFlowContainerRef, getViewport, setViewport);
 
   // Prevent Safari 3-finger back/forward gesture (Phase 4)
   useEffect(() => {
@@ -325,6 +325,7 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
   const [journeyStatus, setJourneyStatus] = useState('draft'); // draft, active, paused, completed
   const [showProspectModal, setShowProspectModal] = useState(false);
   const [showNewCanvasConfirm, setShowNewCanvasConfirm] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [_isSendingEmails, setIsSendingEmails] = useState(false);
   const [journeyProspects, setJourneyProspects] = useState([]); // Track prospects for visual display
   const [studioContext, setStudioContext] = useState(null); // Context passed from AI Chat to Studio
@@ -3182,6 +3183,48 @@ const UnityNotesFlow = ({ isUploadModalOpen, setIsUploadModalOpen, onFooterToggl
     }, 100);
   };
 
+  // Template System Handlers
+  const handleOpenTemplateModal = useCallback(() => {
+    setShowTemplateModal(true);
+  }, []);
+
+  const handleApplyTemplate = useCallback((templateId) => {
+    const result = instantiateTemplate(templateId);
+    if (!result) {
+      console.error('Failed to instantiate template:', templateId);
+      return;
+    }
+
+    const { nodes: templateNodes, edges: templateEdges } = result;
+
+    // Add callbacks to nodes (same pattern as other node creation)
+    const nodesWithCallbacks = templateNodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        onDelete: (nodeId) => setNodes((nds) => nds.filter((n) => n.id !== nodeId)),
+        onToggleStar: (nodeId) => {
+          setStarredNodeIds(prev => {
+            const updated = new Set(prev);
+            if (updated.has(nodeId)) {
+              updated.delete(nodeId);
+            } else {
+              updated.add(nodeId);
+            }
+            return updated;
+          });
+        },
+      },
+    }));
+
+    // Add template nodes and edges to canvas
+    setNodes((nds) => [...nds, ...nodesWithCallbacks]);
+    setEdges((eds) => [...eds, ...templateEdges]);
+
+    setShowTemplateModal(false);
+    console.log(`✅ Applied template: ${templateId} (${templateNodes.length} nodes, ${templateEdges.length} edges)`);
+  }, [setNodes, setEdges]);
+
   // AI Regeneration Handlers
   const handleRegenerateNote = useCallback(async (nodeId, customPrompt) => {
     try {
@@ -4739,8 +4782,11 @@ Example format:
             onConnect={onConnect}
             onNodeDrag={handleNodeDrag}
             onNodeDragStop={handleNodeDragStop}
+            onMoveStart={handleMoveStart}
+            onMove={handleMove}
             onMoveEnd={(event, viewport) => {
-              // Only update zoom level at end of move to avoid stuttering during zoom
+              // Chain: momentum animation + zoom level tracking
+              handleMomentumEnd(event, viewport);
               setZoomLevel(viewport.zoom);
             }}
             nodeTypes={nodeTypes}
@@ -5201,6 +5247,7 @@ Example format:
         backgroundPattern={backgroundPattern}
         onBackgroundChange={handleBackgroundChange}
         onNewCanvas={handleClearAll}
+        onAddFromTemplate={handleOpenTemplateModal}
       />
 
       {/* Empty State - Centered above CircleNav with chevron */}
@@ -5294,6 +5341,13 @@ Example format:
         }}
         onGenerate={handleAICanvasGenerate}
         isGenerating={isGeneratingCanvas}
+      />
+
+      {/* Template Selector Modal */}
+      <TemplateSelector
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onSelectTemplate={handleApplyTemplate}
       />
 
       {/* New Canvas Confirmation Modal - Branded */}

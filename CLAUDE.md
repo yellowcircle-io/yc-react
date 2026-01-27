@@ -516,9 +516,50 @@ The yellowCircle Multi-Session Framework (yc-MSF) ensures context continuity acr
 
 ### Sleepless Agent
 
-**Purpose:** Automated codebase improvements during off-hours.
+**Purpose:** Slack-integrated codebase assistant + automated review system.
 
-**Protocol:**
+**Architecture:**
+- **Slack App:** Leads (`A0A2J35Q7D3`), Bot User `U0A2J4EK753`
+- **Connection:** Socket Mode (Slack Bolt for Python)
+- **Source of truth:** `scripts/sleepless-daemon.py` (repo)
+- **Production copy:** `~/Library/Application Support/yellowcircle/sleepless/sleepless-daemon.py`
+- **Launcher:** `~/bin/sleepless-launcher.sh` (runs from Application Support, avoids TCC)
+- **launchd plist:** `~/Library/LaunchAgents/com.yellowcircle.sleepless-daemon.plist`
+
+**Features:**
+- `/sleepless [query]` - Claude Code CLI commands via Slack
+- `@sleepless` mentions - Direct channel interaction
+- Thread conversations - Continued context
+- Multi-LLM auto-review (1hr inactivity): Ollama -> Gemini -> Groq
+- `/sleepless yc <cmd>` - yellowCircle unified commands
+- Circuit breaker control (`/sleepless circuit [open|close]`)
+
+**Safeguards (Defense-in-Depth):**
+1. **Launcher pre-flight:** DNS readiness (120s) + Slack API check (30s) before daemon start
+2. **Health watchdog:** `auth_test()` every 60s, `os._exit(2)` after 5 consecutive failures
+3. **Supervisor loop:** Restarts daemon on non-zero exit, DNS check between restarts, backoff
+4. **launchd KeepAlive:** OS-level restart if supervisor crashes (`SuccessfulExit: false`)
+
+**Operations:**
+```bash
+# Restart daemon
+launchctl kickstart gui/$(id -u)/com.yellowcircle.sleepless-daemon
+
+# Stop daemon
+launchctl kill SIGTERM gui/$(id -u)/com.yellowcircle.sleepless-daemon
+
+# Check health
+cat ~/Library/Application\ Support/yellowcircle/sleepless/.heartbeat.json
+
+# View logs
+tail -f /tmp/sleepless-daemon.log          # stdout
+tail -f /tmp/sleepless-daemon.error.log    # stderr
+
+# Sync daemon code (repo -> production)
+cp scripts/sleepless-daemon.py ~/Library/Application\ Support/yellowcircle/sleepless/
+```
+
+**Review Protocol:**
 1. Changes are committed to a feature branch (not main)
 2. All changes require human review
 3. Architecture compliance is mandatory

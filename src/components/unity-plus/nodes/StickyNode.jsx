@@ -1,5 +1,6 @@
 import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { StickyNote, X, Star } from 'lucide-react';
 
 /**
  * StickyNode - Colored sticky note for quick notes
@@ -91,94 +92,45 @@ const StickyNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Delete button - positioned directly on node like WaitNode */}
+      {/* Delete button - enhanced touch target (44px) */}
       {(isHovered || selected) && data.onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onDelete(id);
           }}
+          className="unity-node-delete-btn"
           style={{
             position: 'absolute',
-            top: '-6px',
-            left: '-6px',
-            width: '24px',
-            height: '24px',
-            minWidth: '24px',
-            minHeight: '24px',
+            top: '-12px',
+            left: '-12px',
             padding: 0,
-            borderRadius: '50%',
-            backgroundColor: '#374151',
-            border: '2px solid white',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '400',
-            lineHeight: 1,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             zIndex: 10,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1f2937';
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#374151';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Delete node"
         >
-          ×
+          <X size={18} strokeWidth={2.5} />
         </button>
       )}
 
-      {/* Star button - visible on hover or if starred */}
+      {/* Star button - enhanced touch target (44px) */}
       {(isHovered || selected || data.isStarred) && data.onToggleStar && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onToggleStar(id);
           }}
-          className="nodrag"
+          className={`nodrag unity-node-star-btn ${data.isStarred ? 'starred' : ''}`}
           style={{
             position: 'absolute',
-            top: '-6px',
-            left: data.onDelete ? '22px' : '-6px',
-            width: '24px',
-            height: '24px',
-            minWidth: '24px',
-            minHeight: '24px',
+            top: '-12px',
+            left: data.onDelete ? '36px' : '-12px',
             padding: 0,
-            borderRadius: '50%',
-            backgroundColor: data.isStarred ? '#fbbf24' : '#6b7280',
-            border: '2px solid white',
-            color: 'white',
-            fontSize: '12px',
-            fontWeight: '400',
-            lineHeight: 1,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             zIndex: 10,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = data.isStarred ? '#f59e0b' : '#4b5563';
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = data.isStarred ? '#fbbf24' : '#6b7280';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title={data.isStarred ? 'Unstar node' : 'Star node'}
         >
-          ★
+          <Star size={18} fill={data.isStarred ? 'currentColor' : 'none'} strokeWidth={2} />
         </button>
       )}
 

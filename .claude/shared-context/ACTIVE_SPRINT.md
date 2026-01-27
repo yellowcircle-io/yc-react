@@ -1,164 +1,86 @@
 # ACTIVE SPRINT - yellowCircle Platform
-**Updated:** January 24, 2026
+
+**Updated:** January 27, 2026
 **Source of Truth:** [Notion Project Tracking](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
 
----
-
-## 🔴 CURRENT PRIORITIES (Synced with Notion)
-
-### P1 Tasks - Active
-| Task | Status | Due | Notes |
-|------|--------|-----|-------|
-| Link Archiver Core | ✅ Complete | - | Phases 1-4 complete, Phase 5 partial |
-| UnityNOTES Smooth Scrolling | ✅ Complete | - | All 4 phases complete |
-| UnityNOTES Zoom Fix | ✅ Complete | - | Removed CSS transition conflict |
-| Mobile Padding Audit | ✅ Complete | - | 17 pages fixed, deployed Jan 23 |
-| Additional Mobile Spacing | ✅ Complete | - | 6 more pages fixed (Jan 24) |
-| pagesConfig.js Update | ✅ Complete | - | Added 6 missing pages to sitemap/directory |
-| Save ID & Vanity URLs | ✅ Complete | - | iOS Shortcut + API tokens |
-| Link Saver Sticky Buttons | 📋 Pending | - | Top row not sticky on scroll |
-| Configure Ad Platform Tokens | ⚠️ User Action | - | Awaiting credentials |
-| Firebase Deploy | ⏳ Blocked | - | Needs `firebase login --reauth` |
-
-### P2 Tasks - Planned
-| Task | Status | Due | Est. Hours |
-|------|--------|-----|------------|
-| Offline Reading (PWA) | ✅ Complete | - | All 4 phases done |
-| Link Sharing Use Cases | ⚠️ Partial | - | 16-26 hrs (Phase 3 done) |
-| User Settings/Config Page | ✅ Complete | - | AccountSettingsPage + UserSettingsContext |
-| Global Theme System Enhancement | 📋 Planned | Feb 15 | 8 hrs |
-
-### P3 Tasks - Backlog
-| Task | Status | Est. Hours |
-|------|--------|------------|
-| LinkNode Component | ✅ Complete | - |
-| VideoNode Component | 📋 Planned | 4 hrs |
-| @Mentions + Notifications | ✅ Complete | - |
-| AIChatNode Enhancement | 📋 Planned | 6 hrs |
-| UnityNOTES TravelLog Node | 📋 Planned | 20 hrs |
-| Auto-Organize Groups | 📋 Planned | 6 hrs |
+> **Structure:** This file is organized in parts to control token usage.
+> - **Part A:** Current priorities and active tasks (read first)
+> - **Part B:** Infrastructure and daemon status
+> - **Part C:** Scope status references (links only, read scope docs as needed)
+> - **Part D:** Recent commits and git status
 
 ---
 
-## 📦 SCOPE STATUS OVERVIEW
+## PART A: CURRENT PRIORITIES
 
-### Link Archiver (Pocket Alternative)
-**Scope:** `.claude/plans/link-archiver-pocket-alternative.md`
+### P0 - Immediate
+| Task | Status | Notes |
+|------|--------|-------|
+| Daemon DNS + Health Hardening | ✅ Complete | Launcher, watchdog, supervisor loop (Jan 27) |
+| Firebase Deploy | ⏳ Blocked | Needs `firebase login --reauth` |
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Core MVP (schema, CRUD, bookmarklet) | ✅ Complete |
-| Phase 2 | Organization (tags, folders, search, Pocket import) | ✅ Complete |
-| Phase 3 | Reader Experience (reader mode, progress) | ⚠️ Partial |
-| Phase 4 | Unity Integration (LinkNode, capsules) | ✅ Complete |
-| Phase 5 | AI Enhancement (summaries, smart tags) | ⚠️ Partial |
+### P1 - Active
+| Task | Status | Notes |
+|------|--------|-------|
+| Global Theming Phase 1 | ✅ Complete | Header/Footer/6 nodes migrated to COLORS constants |
+| UnityNOTES Template System | ✅ Complete | 6 templates + TemplateSelector modal |
+| UnityNOTES Branded Modals | ✅ Complete | Canvas management in Settings |
+| Settings Navigation | ✅ Complete | Added to global nav |
+| Mobile Spacing (Round 1) | ✅ Complete | 17 pages fixed (Jan 23) |
+| Mobile Spacing (Round 2) | ✅ Complete | 6 more pages (Jan 24) |
+| Link Saver Sticky Buttons | 📋 Pending | Top row not sticky on scroll |
+| Remaining Mobile Spacing | 📋 Pending | 6 pages: Hub, Journeys, Golden Unknown, Cath3dral, Thoughts, GTM |
+| Configure Ad Platform Tokens | ⚠️ User Action | Awaiting credentials |
 
-**Remaining:** Annotations, archive snapshots, Chrome extension (bookmarklet exists)
+### P2 - Planned
+| Task | Status | Notes |
+|------|--------|-------|
+| Global Theme System (Full) | 📋 Planned | Research complete, see SCOPE_GLOBAL_THEMING.md |
+| UnityNOTES UI/UX Improvements | 📋 Planned | Research complete, see SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md |
+| Apple Shortcuts + Slack | 📋 Planned | Research complete, see SCOPE_APPLE_SHORTCUTS_SLACK.md |
+| Link Sharing Phase 4 (Slack App) | ⚠️ Partial | Webhook working, full slash commands not yet |
 
-### Link Sharing Use Cases
-**Scope:** `dev-context/SCOPE_LINK_SHARING_USECASES.md`
-**Docs:** `dev-context/LINK_SHARING_METHODS_OUTLINE.md`
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Email-to-Save | 🔲 Not Started |
-| Phase 2 | iOS Share Sheet (PWA) | 🔲 Not Started |
-| Phase 3 | Cross-User Sharing | ✅ Complete |
-| Phase 4 | Slack App | ⚠️ Partial |
-
-**Slack Integration Added (Jan 22):**
-- `notifySlackOnShare()` - Posts to Slack when links shared (user or canvas)
-- Uses n8n webhook with Slack fallback
-- Full Slack App (slash commands) not yet implemented
-
-### UnityNOTES Smooth Scrolling
-**Scope:** `dev-context/SCOPE_UNITYNOTES_SMOOTH_SCROLLING.md`
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Quick Wins (remove useIOSPinchZoom) | ✅ Complete |
-| Phase 2 | Momentum Panning | ✅ Complete |
-| Phase 3 | Smooth Scroll Enhancement | ✅ Complete |
-| Phase 4 | Mobile Optimizations | ✅ Complete |
-
-**All phases complete:** useMomentumPan, useSmoothWheel, easing utils, touch-action CSS, Safari 3-finger prevention
-
-### Offline Reading (PWA)
-**Scope:** `dev-context/SCOPE_OFFLINE_READING.md`
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Service Worker + App Shell Caching | ✅ Complete |
-| Phase 2 | IndexedDB Offline Storage | ✅ Complete |
-| Phase 3 | Reader Integration | ✅ Complete |
-| Phase 4 | Sync & Polish | ✅ Complete |
-
-**All phases complete:** sw.js, offlineStorage.js, useOfflineStatus.js, LinkArchiverPage offline UI, LinkReaderPage offline fallback
+### P3 - Backlog
+| Task | Status |
+|------|--------|
+| VideoNode Component | 📋 Planned |
+| AIChatNode Enhancement | 📋 Planned |
+| UnityNOTES TravelLog Node | 📋 Planned |
+| Auto-Organize Groups | 📋 Planned |
+| Link Archiver Phase 5 (AI) | ⚠️ Partial |
 
 ---
 
-## ✅ SLEEPLESS AGENT REVIEW (COMPLETED)
+## PART B: INFRASTRUCTURE
 
-**Commit:** `abb7e7a` | **Status:** ✅ Review Complete (Jan 22, 2026)
+### Daemon (Sleepless Agent)
+| Property | Value |
+|----------|-------|
+| Status | Running (launchd managed) |
+| App | Leads (`A0A2J35Q7D3`) / Bot User `U0A2J4EK753` |
+| Socket Mode | Active (Slack Bolt) |
+| Launcher | `~/bin/sleepless-launcher.sh` (4-phase: DNS, API, env, supervisor) |
+| Daemon | `~/Library/Application Support/yellowcircle/sleepless/sleepless-daemon.py` |
+| Repo copy | `scripts/sleepless-daemon.py` (source of truth) |
+| Health watchdog | `auth_test()` every 60s, exits after 5 consecutive failures |
+| Supervisor | Restarts on crash, 3 max rapid failures before deferring to launchd |
+| launchd plist | `~/Library/LaunchAgents/com.yellowcircle.sleepless-daemon.plist` |
+| Heartbeat | `~/Library/Application Support/yellowcircle/sleepless/.heartbeat.json` |
+| Logs | `/tmp/sleepless-daemon.log` (stdout), `/tmp/sleepless-daemon.error.log` (stderr) |
 
-### Results
-- ✅ Architecture violations fixed (3 Firebase imports → useAuth())
-- ✅ Lint errors: 1135 → 13 (only react-refresh warnings)
-- ✅ Build verified passing
-- ✅ Code quality tools verified (depcheck v1.4.7, knip, @tanstack/react-virtual v3.13.18)
+**Commands:**
+```bash
+# Restart
+launchctl kickstart gui/$(id -u)/com.yellowcircle.sleepless-daemon
+# Stop
+launchctl kill SIGTERM gui/$(id -u)/com.yellowcircle.sleepless-daemon
+# Check status
+cat ~/Library/Application\ Support/yellowcircle/sleepless/.heartbeat.json
+# View logs
+tail -f /tmp/sleepless-daemon.log
+```
 
----
-
-## 📊 RECENT COMMITS (Jan 21-23, 2026)
-
-| Hash | Description |
-|------|-------------|
-| `17f79f2` | Fix: UnityNOTES zoom stuttering - remove viewport CSS transition |
-| `f7e0cfc` | Update: MSF context files with commit reference |
-| `04d22be` | UI: Mobile padding audit - 17 pages fixed + MSF update |
-| `fe547b9` | Fix: Inject Firebase config secrets in CI builds |
-| `96db367` | Add GitHub Action for iOS Shortcut signing |
-| `067e6d1` | Feature: Save ID System, Vanity URLs & iOS Shortcut |
-| `76fe4db` | Feature: Sprint 4 - Comments, Notifications & Smart Views |
-| `e310bb8` | Feature: Link Sharing & Unity Platform Links Integration |
-
-### Git Status
-- Branch: `main`
-- Last commit: `17f79f2`
-- Status: ✅ Synced with origin/main
-
----
-
-## ✅ COMPLETED (Sprint 4 - Jan 2026)
-
-### Sprint 4 Features
-| Feature | Commit |
-|---------|--------|
-| Comments & Notifications System | `76fe4db` |
-| Smart Views filtering | `76fe4db` |
-| Performance optimizations (Lottie lazy load) | `58a2afa` |
-| Archive cleanup (-12,081 lines) | `b163570` |
-| Pocket import Cloud Functions | `ff9aba0` |
-
-### CLAUDE.md Architecture Update
-| Action | Commit |
-|--------|--------|
-| Architecture Patterns section | `07dc671` |
-| Forbidden Patterns section | `07dc671` |
-| Quality Gates & Tools section | `07dc671` |
-| Development Workflows | `07dc671` |
-
-### Infrastructure Milestones (Dec-Jan)
-- ✅ Firebase Auth SSO Migration
-- ✅ Firestore Security Rules Hardening
-- ✅ Brevo ESP Integration
-- ✅ Valentine's Campaign Testing
-- ✅ Demo Mode & Staging
-
----
-
-## 🔧 INFRASTRUCTURE STATUS
-
+### Platform Services
 | Component | Status | URL/Details |
 |-----------|--------|-------------|
 | Firebase Hosting | ✅ Live | yellowcircle.io |
@@ -166,29 +88,53 @@
 | Cloud Functions | ✅ 36+ deployed | All operational |
 | n8n (Railway) | ✅ Live | n8n-production-9ef7.up.railway.app |
 | Staging | ✅ Live | yellowcircle-app--staging-djr44qvi.web.app |
+| Ollama (local) | ✅ Running | localhost:11434 (LLM tier 1) |
 
 ---
 
-## 📋 QUICK REFERENCE
+## PART C: SCOPE REFERENCES
 
-### Development
-```bash
-npm run dev          # Start dev server
-npm run lint         # Run ESLint (pre-existing warnings only)
-npm run build        # Build for production
-npm run check:deps   # Run knip dead code detection
-```
+> Read these docs only when working on the relevant feature.
 
-### Key Scope Documents
-- `dev-context/SCOPE_LINK_ARCHIVER_DRAWER.md`
-- `dev-context/SCOPE_LINK_SHARING_USECASES.md`
-- `dev-context/SCOPE_USER_SETTINGS_PAGE.md`
-- `dev-context/SCOPE_OFFLINE_READING.md`
+| Scope | Doc | Status |
+|-------|-----|--------|
+| Link Archiver | `.claude/plans/link-archiver-pocket-alternative.md` | Phases 1-4 complete, Phase 5 partial |
+| Link Sharing | `dev-context/SCOPE_LINK_SHARING_USECASES.md` | Phase 3 complete, Phase 4 partial |
+| Smooth Scrolling | `dev-context/SCOPE_UNITYNOTES_SMOOTH_SCROLLING.md` | All 4 phases complete |
+| Offline Reading | `dev-context/SCOPE_OFFLINE_READING.md` | All 4 phases complete |
+| Global Theming | `dev-context/SCOPE_GLOBAL_THEMING.md` | Research complete, implementation planned |
+| UnityNOTES UI/UX | `dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md` | Research complete |
+| Apple Shortcuts | `dev-context/SCOPE_APPLE_SHORTCUTS_SLACK.md` | Research complete, ready for MVP |
+| User Settings | `dev-context/SCOPE_USER_SETTINGS_PAGE.md` | Complete |
+| Code Quality | `dev-context/SCOPE_CODE_QUALITY_RULES.md` | Active reference |
 
-### Notion Integration
-- [Project Tracking Database](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
-- Categories: yellowCircle, Unity Notes, Unity MAP, Unity STUDIO, Infrastructure
+---
+
+## PART D: RECENT ACTIVITY
+
+### Commits (Jan 24-27)
+| Hash | Description |
+|------|-------------|
+| `82346f5` | UI: Add Settings to global navigation |
+| `d3146fd` | Feature: UnityNOTES branded modals + Canvas management in Settings |
+| `cb687e7` | Fix: Mobile spacing pattern - local isMobile state for 11 pages |
+| `36ef7a5` | UI: Mobile spacing fixes for 12 pages + pagesConfig update |
+| `ecf45b1` | Update: MSF with zoom fix session & pending optimizations |
+
+### Uncommitted Changes (19 files, +1117/-464)
+- Global theming: Header.jsx, Footer.jsx, constants.js, index.css
+- UnityNOTES: 6 node components, UnityCircleNav.jsx, UnityNotesPage.jsx
+- Templates: canvasTemplates.js, TemplateSelector.jsx (new)
+- Hooks: useThemedStyles.js, useSlackNotification.js (new)
+- Daemon: sleepless-daemon.py, sleepless-launcher.sh (hardening)
+- Scripts: slack-notify.sh, slack-status.sh, yc-command.sh (new)
+
+### Git Status
+- Branch: `main`
+- Last commit: `82346f5`
+- Uncommitted: 19 files modified, 6 untracked
 
 ---
 
 *Last synced with Notion: January 23, 2026*
+*Next Notion sync recommended*

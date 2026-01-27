@@ -1,5 +1,6 @@
 import React from 'react';
 import globalContent from '../../config/globalContent';
+import { COLORS } from '../../styles/constants';
 
 /**
  * Header - yellowCIRCLE navigation bar

@@ -64,6 +64,10 @@ LOG_FILE = None  # Set to path for file logging
 MAX_CONVERSATION_HISTORY = 10  # Max messages to keep per thread
 CONVERSATION_TIMEOUT = 3600  # 1 hour - clear old conversations
 
+# Connection Health Watchdog
+HEALTH_CHECK_INTERVAL = 60  # seconds between Slack API health checks
+HEALTH_MAX_CONSECUTIVE_FAILURES = 5  # exit for restart after this many failures (5 * 60s = 5 min)
+
 # Multi-LLM Review Configuration
 REVIEW_INACTIVITY_THRESHOLD = 3600  # 1 hour before triggering review
 REVIEW_MAX_RUNTIME = 900  # 15 minutes max for review process
@@ -793,6 +797,12 @@ def create_app():
                         "• `/sleepless status` - Check daemon status\n"
                         "• `/sleepless relay [msg]` - Send message to @claude\n"
                         "• `/sleepless circuit [open|close]` - Control review circuit breaker\n\n"
+                        "*yellowCircle Commands:* `/sleepless yc <command>`\n"
+                        "• `/sleepless yc notify \"message\"` - Send notification\n"
+                        "• `/sleepless yc status success \"message\"` - Status update\n"
+                        "• `/sleepless yc history` - Show recent changes\n"
+                        "• `/sleepless yc rollback` - Rollback last change\n"
+                        "• `/sleepless yc help` - Full command list\n\n"
                         "*Thread Support:* Reply to continue conversations!\n"
                         "*Auto-Review:* After 1hr inactivity, LLMs review and suggest refinements."
             })
@@ -862,6 +872,50 @@ def create_app():
             except Exception as e:
                 log(f'Relay error: {e}', 'ERROR')
                 respond({"response_type": "ephemeral", "text": f"*Relay error:* {str(e)}"})
+            return
+
+        # Handle yc (yellowCircle) commands
+        if text.lower().startswith('yc ') or text.lower() == 'yc':
+            yc_args = text[3:].strip() if len(text) > 3 else 'help'
+            log(f'Executing yc command: {yc_args}')
+
+            def run_yc_command():
+                try:
+                    script_path = Path(__file__).parent / 'yc-command.sh'
+                    result = subprocess.run(
+                        ['bash', str(script_path)] + yc_args.split(),
+                        capture_output=True,
+                        text=True,
+                        timeout=60,
+                        cwd=str(Path(__file__).parent.parent)
+                    )
+
+                    output = result.stdout.strip() or result.stderr.strip() or 'Command completed'
+
+                    # Format output for Slack
+                    if len(output) > 2900:
+                        output = output[:2900] + '...(truncated)'
+
+                    client.chat_postMessage(
+                        channel=channel_id,
+                        text=f"*yc {yc_args}:*\n```\n{output}\n```"
+                    )
+                    log(f'yc command completed: {yc_args}')
+
+                except subprocess.TimeoutExpired:
+                    client.chat_postMessage(
+                        channel=channel_id,
+                        text=f"*yc {yc_args}:* ⏱️ Command timed out after 60s"
+                    )
+                except Exception as e:
+                    log(f'yc command error: {e}', 'ERROR')
+                    client.chat_postMessage(
+                        channel=channel_id,
+                        text=f"*yc {yc_args}:* ❌ Error: {str(e)}"
+                    )
+
+            thread = threading.Thread(target=run_yc_command)
+            thread.start()
             return
 
         # Process command in background thread
@@ -985,6 +1039,45 @@ def heartbeat_loop():
         time.sleep(HEARTBEAT_INTERVAL)
 
 
+def health_watchdog():
+    """
+    Background thread that monitors Slack API connectivity.
+    Exits the process with code 2 if connection is persistently broken,
+    allowing the launcher supervisor to restart cleanly.
+    """
+    log('Health watchdog started')
+    consecutive_failures = 0
+
+    # Give the daemon time to fully start before checking
+    time.sleep(HEALTH_CHECK_INTERVAL)
+
+    while True:
+        try:
+            if slack_client:
+                result = slack_client.auth_test()
+                if result.get('ok'):
+                    if consecutive_failures > 0:
+                        log(f'Health watchdog: connection recovered after {consecutive_failures} failures')
+                    consecutive_failures = 0
+                else:
+                    consecutive_failures += 1
+                    log(f'Health watchdog: auth_test not ok ({consecutive_failures}/{HEALTH_MAX_CONSECUTIVE_FAILURES})', 'WARN')
+            else:
+                consecutive_failures += 1
+                log(f'Health watchdog: no slack_client ({consecutive_failures}/{HEALTH_MAX_CONSECUTIVE_FAILURES})', 'WARN')
+        except Exception as e:
+            consecutive_failures += 1
+            log(f'Health watchdog: check failed ({consecutive_failures}/{HEALTH_MAX_CONSECUTIVE_FAILURES}): {e}', 'WARN')
+
+        if consecutive_failures >= HEALTH_MAX_CONSECUTIVE_FAILURES:
+            log(f'Health watchdog: {consecutive_failures} consecutive failures, triggering restart', 'ERROR')
+            write_heartbeat('unhealthy')
+            review_stop_event.set()
+            os._exit(2)  # Non-zero, non-standard exit triggers supervisor restart
+
+        time.sleep(HEALTH_CHECK_INTERVAL)
+
+
 def shutdown_handler(signum, frame):
     """Handle graceful shutdown"""
     log('Shutdown signal received')
@@ -1016,6 +1109,10 @@ def main():
     # Start review loop thread
     review_thread = threading.Thread(target=review_loop, daemon=True)
     review_thread.start()
+
+    # Start health watchdog thread
+    watchdog_thread = threading.Thread(target=health_watchdog, daemon=True)
+    watchdog_thread.start()
 
     write_heartbeat('starting')
 

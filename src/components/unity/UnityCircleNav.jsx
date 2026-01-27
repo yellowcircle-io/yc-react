@@ -188,6 +188,8 @@ const OptionsMenu = ({
   onBackgroundChange,
   // Canvas management
   onNewCanvas,
+  // Template support
+  onAddFromTemplate,
 }) => {
   if (!isOpen) return null;
 
@@ -215,7 +217,8 @@ const OptionsMenu = ({
   // Different menu items based on mode - Brand colors (yellow/gold gradient, black accents)
   const notesMenuItems = [
     { label: '+ ADD NOTE', action: onAddNote, color: 'rgb(251, 191, 36)', textColor: 'black', hoverColor: '#e5a500' },
-    { label: 'EXPORT', action: onExport, color: 'rgb(234, 179, 8)', textColor: 'black', hoverColor: '#d4a000' },
+    { label: '+ FROM TEMPLATE', action: onAddFromTemplate, color: 'rgb(234, 179, 8)', textColor: 'black', hoverColor: '#d4a000' },
+    { label: 'EXPORT', action: onExport, color: 'rgb(217, 167, 0)', textColor: 'black', hoverColor: '#c49500' },
     { label: 'IMPORT', action: onImport, color: 'rgb(217, 167, 0)', textColor: 'black', hoverColor: '#c49500' },
     {
       label: isSaving ? 'SAVING...' : 'SHARE',
@@ -550,6 +553,8 @@ function UnityCircleNav({
   onBackgroundChange,
   // Canvas management
   onNewCanvas,
+  // Template support
+  onAddFromTemplate,
 }) {
   const { footerOpen } = useLayout();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -804,6 +809,7 @@ function UnityCircleNav({
         backgroundPattern={backgroundPattern}
         onBackgroundChange={onBackgroundChange}
         onNewCanvas={onNewCanvas}
+        onAddFromTemplate={onAddFromTemplate}
       />
 
       {/* AI Menu */}

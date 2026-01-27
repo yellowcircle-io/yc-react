@@ -1,5 +1,6 @@
 import React, { memo, useState, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { Layers, X, Star } from 'lucide-react';
 
 /**
  * GroupNode - Container for grouping nodes
@@ -139,180 +140,107 @@ const GroupNode = memo(({ id, data, selected }) => {
         }}
       />
 
-      {/* Custom circular resize handles - positioned INSIDE the node corners */}
+      {/* Custom circular resize handles - enhanced touch targets (44px) */}
       {(selected || isHovered) && (
         <>
           {/* Top-left corner */}
           <div
             onMouseDown={(e) => handleResizeStart(e, 'tl')}
             onTouchStart={(e) => handleResizeStart(e, 'tl')}
-            className="nodrag"
+            className="nodrag unity-node-resize-handle"
             style={{
               position: 'absolute',
-              top: '8px',
-              left: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
+              top: '4px',
+              left: '4px',
               backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
               cursor: 'nwse-resize',
               zIndex: 10,
-              touchAction: 'none',
             }}
           />
           {/* Top-right corner */}
           <div
             onMouseDown={(e) => handleResizeStart(e, 'tr')}
             onTouchStart={(e) => handleResizeStart(e, 'tr')}
-            className="nodrag"
+            className="nodrag unity-node-resize-handle"
             style={{
               position: 'absolute',
-              top: '8px',
-              right: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
+              top: '4px',
+              right: '4px',
               backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
               cursor: 'nesw-resize',
               zIndex: 10,
-              touchAction: 'none',
             }}
           />
           {/* Bottom-left corner */}
           <div
             onMouseDown={(e) => handleResizeStart(e, 'bl')}
             onTouchStart={(e) => handleResizeStart(e, 'bl')}
-            className="nodrag"
+            className="nodrag unity-node-resize-handle"
             style={{
               position: 'absolute',
-              bottom: '8px',
-              left: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
+              bottom: '4px',
+              left: '4px',
               backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
               cursor: 'nesw-resize',
               zIndex: 10,
-              touchAction: 'none',
             }}
           />
           {/* Bottom-right corner */}
           <div
             onMouseDown={(e) => handleResizeStart(e, 'br')}
             onTouchStart={(e) => handleResizeStart(e, 'br')}
-            className="nodrag"
+            className="nodrag unity-node-resize-handle"
             style={{
               position: 'absolute',
-              bottom: '8px',
-              right: '8px',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
+              bottom: '4px',
+              right: '4px',
               backgroundColor: colorScheme.border,
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
               cursor: 'nwse-resize',
               zIndex: 10,
-              touchAction: 'none',
             }}
           />
         </>
       )}
 
-      {/* Delete button - positioned directly on node like WaitNode */}
+      {/* Delete button - enhanced touch target (44px) */}
       {(isHovered || selected) && data.onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onDelete(id);
           }}
+          className="unity-node-delete-btn"
           style={{
             position: 'absolute',
-            top: '-6px',
-            right: '-6px',
-            width: '24px',
-            height: '24px',
-            minWidth: '24px',
-            minHeight: '24px',
+            top: '-12px',
+            right: '-12px',
             padding: 0,
-            borderRadius: '50%',
-            backgroundColor: '#374151',
-            border: '2px solid white',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '400',
-            lineHeight: 1,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             zIndex: 10,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1f2937';
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#374151';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title="Delete group"
         >
-          ×
+          <X size={18} strokeWidth={2.5} />
         </button>
       )}
 
-      {/* Star button - visible on hover or if starred */}
+      {/* Star button - enhanced touch target (44px) */}
       {(isHovered || selected || data.isStarred) && data.onToggleStar && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onToggleStar(id);
           }}
-          className="nodrag"
+          className={`nodrag unity-node-star-btn ${data.isStarred ? 'starred' : ''}`}
           style={{
             position: 'absolute',
-            top: '-6px',
-            right: '22px',
-            width: '24px',
-            height: '24px',
-            minWidth: '24px',
-            minHeight: '24px',
+            top: '-12px',
+            right: '36px',
             padding: 0,
-            borderRadius: '50%',
-            backgroundColor: data.isStarred ? '#fbbf24' : '#6b7280',
-            border: '2px solid white',
-            color: 'white',
-            fontSize: '12px',
-            fontWeight: '400',
-            lineHeight: 1,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             zIndex: 10,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = data.isStarred ? '#f59e0b' : '#4b5563';
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = data.isStarred ? '#fbbf24' : '#6b7280';
-            e.currentTarget.style.transform = 'scale(1)';
           }}
           title={data.isStarred ? 'Unstar group' : 'Star group'}
         >
-          ★
+          <Star size={18} fill={data.isStarred ? 'currentColor' : 'none'} strokeWidth={2} />
         </button>
       )}
 
@@ -511,7 +439,7 @@ const GroupNode = memo(({ id, data, selected }) => {
             {childCount} item{childCount !== 1 ? 's' : ''}
           </span>
         )}
-        <span style={{ fontSize: '16px' }}>📦</span>
+        <Layers size={18} style={{ opacity: 0.8 }} />
       </div>
 
       <Handle
