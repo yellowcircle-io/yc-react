@@ -2,7 +2,7 @@
   "id": "IMP-005",
   "title": "Node Type Header Icons (3 nodes missing icons)",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 5,
   "complexity": "simple",
   "model": "sonnet",
@@ -12,13 +12,13 @@
   "competitiveRationale": "Milanote shows type-specific icons on card headers for quick visual identification. Three of our nodes (CodeBlockNode, GroupNode, LinkNode) lack a header type icon. The other 5 nodes already have icons and must NOT be modified.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 2. Enhanced Card Design",
-  "objective": "Add a header type icon ONLY to the 3 nodes that currently lack one: CodeBlockNode, GroupNode, and LinkNode. Do NOT modify nodes that already have header icons (TodoNode, CommentNode, ColorSwatchNode, MapNode, TripPlannerMapNode). For CodeBlockNode: add a Code icon import from lucide-react and render it in the header area next to the language selector. For GroupNode: the Layers icon already exists but is only shown in the bottom-right corner — add a second Layers icon render in the header/label area. For LinkNode: add a Link2 icon import from lucide-react and render it in the header area near the domain/title display.",
+  "objective": "Add a header type icon ONLY to the 3 nodes that currently lack one: CodeBlockNode, GroupNode, and LinkNode. Do NOT modify nodes that already have header icons (TodoNode, CommentNode, ColorSwatchNode, MapNode, TripPlannerMapNode). For CodeBlockNode: add a Code icon import from lucide-react and render it in the header area next to the language selector. For GroupNode: the Layers icon already exists but is only shown in the bottom-right corner \u2014 add a second Layers icon render in the header/label area. For LinkNode: add a Link2 icon import from lucide-react and render it in the header area near the domain/title display.",
   "existingState": {
-    "TodoNode": "ALREADY HAS CheckSquare icon in header via unity-node-header-icon class — DO NOT TOUCH",
-    "CommentNode": "ALREADY HAS MessageSquare icon in header (line 315) — DO NOT TOUCH",
-    "ColorSwatchNode": "ALREADY HAS Palette icon in header via unity-node-header-icon class — DO NOT TOUCH",
-    "MapNode": "ALREADY HAS 🗺️ emoji icon in header — DO NOT TOUCH",
-    "TripPlannerMapNode": "ALREADY HAS 🗺️ emoji icon in header — DO NOT TOUCH",
+    "TodoNode": "ALREADY HAS CheckSquare icon in header via unity-node-header-icon class \u2014 DO NOT TOUCH",
+    "CommentNode": "ALREADY HAS MessageSquare icon in header (line 315) \u2014 DO NOT TOUCH",
+    "ColorSwatchNode": "ALREADY HAS Palette icon in header via unity-node-header-icon class \u2014 DO NOT TOUCH",
+    "MapNode": "ALREADY HAS \ud83d\uddfa\ufe0f emoji icon in header \u2014 DO NOT TOUCH",
+    "TripPlannerMapNode": "ALREADY HAS \ud83d\uddfa\ufe0f emoji icon in header \u2014 DO NOT TOUCH",
     "CodeBlockNode": "NO header icon. Has window chrome buttons (red/yellow/green dots). Imports X, Star only.",
     "GroupNode": "Layers icon imported but only rendered in bottom-right corner. No header icon.",
     "LinkNode": "NO header icon. Has favicon in content area and SVG globe fallback. No lucide icon imports."
@@ -49,7 +49,7 @@
     "GroupNode has a Layers icon (20px) in its header/label area",
     "LinkNode has a Link2 icon (20px) in its header area",
     "Icons use the unity-node-header-icon className pattern",
-    "ONLY these 3 files are modified — no other node files touched",
+    "ONLY these 3 files are modified \u2014 no other node files touched",
     "Existing functionality (language selector, resize handles, link preview) unchanged",
     "npm run lint passes",
     "npm run build succeeds"
@@ -68,6 +68,6 @@
   ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-005-node-type-header-icons",
   "prUrl": ""
 }

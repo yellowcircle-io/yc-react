@@ -86,7 +86,7 @@
     {
       "id": "IMP-005",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-005-node-type-header-icons.json",
       "blockedBy": [
         "IMP-001"
