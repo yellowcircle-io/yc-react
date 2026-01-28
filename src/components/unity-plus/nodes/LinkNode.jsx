@@ -1,6 +1,5 @@
 import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Link2 } from 'lucide-react';
 
 /**
  * LinkNode - Saved link card for Unity canvas
@@ -107,11 +106,6 @@ const LinkNode = memo(({ id, data, selected }) => {
         outlineOffset: selected ? '2px' : '0',
       }}
     >
-      {/* Type icon - top-left */}
-      <div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4, zIndex: 5 }}>
-        <Link2 size={14} />
-      </div>
-
       {/* Connection handles */}
       <Handle
         type="target"

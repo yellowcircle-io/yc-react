@@ -141,11 +141,6 @@ const TodoNode = memo(({ id, data, selected }) => {
         </button>
       )}
 
-      {/* Type icon - top-left */}
-      <div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4 }}>
-        <CheckSquare size={14} />
-      </div>
-
       {/* Header with Lucide icon */}
       <div className="unity-node-header" style={{
         display: 'flex',
@@ -282,9 +277,6 @@ const TodoNode = memo(({ id, data, selected }) => {
                   color: item.completed ? '#9ca3af' : '#374151',
                   textDecoration: item.completed ? 'line-through' : 'none',
                   cursor: 'text',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
                 }}
               >
                 {item.text}

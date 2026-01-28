@@ -136,11 +136,6 @@ const GroupNode = memo(({ id, data, selected }) => {
         outlineOffset: selected ? '2px' : '0',
       }}
     >
-      {/* Type icon - top-left */}
-      <div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4, zIndex: 5 }}>
-        <Layers size={14} />
-      </div>
-
       {/* Connection handles */}
       <Handle
         type="target"
