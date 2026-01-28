@@ -1253,7 +1253,18 @@ print(data.get('prUrl', ''))
     log_ok "  ${imp_id} APPROVED AND MERGED"
     log_ok "============================================"
 
-    notify_slack "Improvement ${imp_id} approved and merged to main"
+    # Count merged items for round progress
+    local merged_count
+    merged_count="$(python3 -c "
+import json
+with open('${BACKLOG_INDEX}') as f:
+    data = json.load(f)
+count = sum(1 for i in data.get('items', []) if i['status'] == 'merged')
+total = len(data.get('items', []))
+print(f'{count}/{total}')
+" 2>/dev/null || echo "?/?")"
+    notify_slack "🎉 *${imp_id}* merged to main
+*Round progress:* ${merged_count} merged"
 }
 
 # Reject an improvement
@@ -1324,7 +1335,8 @@ print(data.get('prUrl', ''))
     log_ok "  Rejection feedback will be included in next attempt."
     log_ok "============================================"
 
-    notify_slack "Improvement ${imp_id} rejected: ${reason}"
+    notify_slack "↩️ *${imp_id}* rejected — reset to ready for retry
+*Reason:* ${reason}"
 }
 
 # ============================================================
@@ -1555,12 +1567,16 @@ print(len(data.get('attempts', [])))
             reset_circuit_failures
             increment_daily_counter
 
+            # Capture diff stats BEFORE switching back to main
+            local diff_files diff_lines diff_file_list
+            diff_files="$(git diff --name-only HEAD~1 2>/dev/null | grep -v '\.claude/' | wc -l | tr -d ' ')"
+            diff_lines="$(git diff --stat HEAD~1 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | paste -sd', ' -)"
+            diff_file_list="$(git diff --name-only HEAD~1 2>/dev/null | grep -v '\.claude/' | sed 's|src/components/||' | paste -sd', ' -)"
+
             log_ok "============================================"
             log_ok "  ${imp_id} SUCCEEDED - Ready for review"
             log_ok "  Branch: ${branch_name}"
             log_ok "============================================"
-
-            notify_slack "Improvement ${imp_id} (${title}) ready for review on branch ${branch_name}"
 
             # Return to main: discard any uncommitted changes on branch first
             git checkout -- . 2>/dev/null || true
@@ -1576,6 +1592,20 @@ print(len(data.get('attempts', [])))
                 pr_url_value="$(cat /tmp/imp-pr-url.txt)"
                 rm -f /tmp/imp-pr-url.txt
             fi
+
+            # Rich Slack notification with PR link, files, stats, gates
+            local slack_msg="✅ *${imp_id}* — ${title}
+*Branch:* \`${branch_name}\`
+*Model:* ${spec_model} | *Files:* ${diff_files} | *Changes:* ${diff_lines:-minimal}
+*Files:* ${diff_file_list}
+*Gates:* Scope ✓ | Lines ✓ | Lint ✓ | Build ✓"
+            if [ -n "${pr_url_value}" ]; then
+                slack_msg="${slack_msg}
+*PR:* ${pr_url_value}"
+            fi
+            slack_msg="${slack_msg}
+Review: \`/sleepless improve diff ${imp_id}\` or \`/sleepless improve approve ${imp_id}\`"
+            notify_slack "${slack_msg}"
 
             # NOW update spec and index on main (clean working tree)
             json_update_spec "${spec_file}" "{'status': 'review', 'branch': '${branch_name}', 'prUrl': '${pr_url_value}'}"
@@ -1608,7 +1638,15 @@ print(len(data.get('attempts', [])))
     failures="$(increment_circuit_failures)"
     log_warn "Circuit breaker: ${failures}/3 consecutive failures"
 
-    notify_slack "Improvement ${imp_id} (${title}) FAILED: ${attempt_reason}. Circuit breaker: ${failures}/3"
+    local fail_msg="❌ *${imp_id}* — ${title}
+*Reason:* ${attempt_reason}
+*Model:* ${spec_model} | *Attempt:* $((attempt_count + 1))/${max_attempts}
+*Circuit Breaker:* ${failures}/3 consecutive failures"
+    if [ "${failures}" -ge 3 ]; then
+        fail_msg="${fail_msg}
+🚨 *Circuit breaker OPEN* — automatic improvements paused"
+    fi
+    notify_slack "${fail_msg}"
 
     return 1
 }
