@@ -2,7 +2,7 @@
   "id": "IMP-009",
   "title": "Link Node Preview Enhancement",
   "round": 2,
-  "status": "ready",
+  "status": "running",
   "priority": 1,
   "complexity": "simple",
   "model": "sonnet",
@@ -10,7 +10,7 @@
   "competitiveRationale": "Milanote shows rich link previews with type badges (article, video, document). Our LinkNode has good preview infrastructure (favicon, thumbnail, excerpt, tags) but lacks visual type indication and has a plain empty state when no preview image exists.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > Content Type Richness",
-  "objective": "Add two visual enhancements to LinkNode: (1) A small link-type badge in the top-right of the preview image area showing the content type (article, video, image, document, site) based on data.linkType prop. If no linkType is provided, show nothing. Badge should be a small pill (fontSize 10px, padding 2px 6px, borderRadius 8px, semi-transparent background). (2) Improve the empty-state fallback when no preview image exists — replace the plain globe SVG with a colored gradient background using the first 2 characters of the domain name, similar to the avatar pattern in CommentNode.",
+  "objective": "Add two visual enhancements to LinkNode: (1) A small link-type badge in the top-right of the preview image area showing the content type (article, video, image, document, site) based on data.linkType prop. If no linkType is provided, show nothing. Badge should be a small pill (fontSize 10px, padding 2px 6px, borderRadius 8px, semi-transparent background). (2) Improve the empty-state fallback when no preview image exists \u2014 replace the plain globe SVG with a colored gradient background using the first 2 characters of the domain name, similar to the avatar pattern in CommentNode.",
   "existingState": {
     "previewImage": "Lines 158-194: Shows thumbnail image or globe SVG fallback",
     "favicon": "Lines 207-213: 14px favicon display",
@@ -32,7 +32,7 @@
   "pattern": {
     "description": "Add a type badge pill and improved empty-state fallback to the link preview area",
     "example": "{data.linkType && <span style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '10px', padding: '2px 6px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', textTransform: 'uppercase', fontWeight: '600' }}>{data.linkType}</span>}",
-    "notes": "The type badge is conditional — only renders when data.linkType is provided. Valid types: article, video, image, document, site. For the empty-state fallback, use a gradient background div with domain initials (similar to CommentNode avatar pattern at lines 286-299). Keep the existing globe SVG as a secondary fallback if no domain is available."
+    "notes": "The type badge is conditional \u2014 only renders when data.linkType is provided. Valid types: article, video, image, document, site. For the empty-state fallback, use a gradient background div with domain initials (similar to CommentNode avatar pattern at lines 286-299). Keep the existing globe SVG as a secondary fallback if no domain is available."
   },
   "acceptanceCriteria": [
     "Link type badge appears in top-right of preview area when data.linkType is provided",
@@ -47,6 +47,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
-  "branch": "",
+  "branch": "sleepless/IMP-009-link-node-preview",
   "prUrl": ""
 }
