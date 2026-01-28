@@ -132,6 +132,8 @@ const GroupNode = memo(({ id, data, selected }) => {
               ? `0 0 20px ${colorScheme.border}40`
               : '0 4px 8px rgba(0, 0, 0, 0.1)',
         transform: isHovered ? 'scale(1.01)' : 'scale(1)',
+        outline: selected ? '2px solid #3b82f6' : 'none',
+        outlineOffset: selected ? '2px' : '0',
       }}
     >
       {/* Connection handles */}
