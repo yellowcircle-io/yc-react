@@ -1204,6 +1204,13 @@ print(len(data.get('attempts', [])))
     title="$(json_get "${spec_file}" "title")"
     branch_name="$(json_get "${spec_file}" "branch")"
 
+    # Generate branch name from spec filename if not set
+    if [ -z "${branch_name}" ]; then
+        local spec_basename
+        spec_basename="$(basename "${spec_file}" .json)"
+        branch_name="sleepless/${spec_basename}"
+    fi
+
     log_info "Title: ${title}"
     log_info "Branch: ${branch_name}"
 
