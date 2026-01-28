@@ -1,0 +1,58 @@
+{
+  "id": "IMP-010",
+  "title": "Code Block Syntax Theme Options",
+  "round": 2,
+  "status": "ready",
+  "priority": 2,
+  "complexity": "moderate",
+  "model": "sonnet",
+  "blockedBy": [],
+  "competitiveRationale": "Miro and other tools offer multiple code display themes. Our CodeBlockNode has a single dark theme (#1e1e1e) with fixed colors. Adding 2 additional theme presets (Light, High Contrast) with a selector improves customization parity.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > Content Type Richness",
+  "objective": "Add a theme system to CodeBlockNode with 3 presets: Dark (current default), Light, and High Contrast. (1) Define a THEMES constant object with 3 entries, each containing: backgroundColor, textColor, keywordColor, stringColor, commentColor, numberColor, lineNumberColor, headerBg, headerTextColor. (2) Add a theme selector dropdown next to the existing language selector in the header. (3) Store the selected theme via data.theme prop and data.onThemeChange(id, theme) callback. (4) Apply theme colors to all syntax-highlighted elements and the container background.",
+  "existingState": {
+    "languages": "Lines 16-38: 21 languages in LANGUAGES array",
+    "syntaxColors": "Lines 41-162: SYNTAX_PATTERNS with fixed colors — keywords #c084fc, strings #22c55e, comments #6b7280, numbers #f97316",
+    "containerBg": "#1e1e1e dark background",
+    "languageSelector": "Lines 644-733: Dropdown for language selection",
+    "copyButton": "Lines 443-465: Copy to clipboard",
+    "livePreview": "Lines 405-543: HTML/CSS/JS preview",
+    "lineNumbers": "Lines 595-607: Line number display",
+    "editMode": "Lines 556-591: Double-click to edit with tab support"
+  },
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/CodeBlockNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 120,
+  "pattern": {
+    "description": "Add a THEMES constant and theme selector, applying theme colors throughout the component",
+    "example": "const THEMES = { dark: { bg: '#1e1e1e', text: '#d4d4d8', keyword: '#c084fc', ... }, light: { bg: '#ffffff', text: '#1e1e1e', keyword: '#7c3aed', ... }, highContrast: { bg: '#000000', text: '#ffffff', keyword: '#ff79c6', ... } };",
+    "notes": "The theme selector should be a small dropdown styled like the existing language selector. Place it after the language selector in the header bar. Use data.theme (default 'dark') for the selected theme. The SYNTAX_PATTERNS colors must be overridden by the active theme — either modify the highlight function to accept colors, or apply theme colors at the JSX level. Keep the existing SYNTAX_PATTERNS structure intact. Light theme: white bg, dark text, purple keywords, green strings, gray comments. High Contrast: black bg, white text, pink keywords, yellow strings, cyan comments."
+  },
+  "acceptanceCriteria": [
+    "3 theme presets available: Dark (default), Light, High Contrast",
+    "Theme selector dropdown appears next to language selector in header",
+    "All syntax colors update when theme changes: keywords, strings, comments, numbers",
+    "Container background and text color update with theme",
+    "Line numbers color updates with theme",
+    "Header bar background updates with theme",
+    "Language selector still works correctly",
+    "Copy to clipboard still works",
+    "Live preview (HTML/CSS/JS) still works",
+    "Edit mode (double-click) still works with correct theme colors",
+    "Tab key support in edit mode preserved",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-28",
+  "branch": "",
+  "prUrl": ""
+}

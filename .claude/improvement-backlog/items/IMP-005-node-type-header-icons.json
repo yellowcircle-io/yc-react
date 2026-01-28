@@ -1,45 +1,56 @@
 {
   "id": "IMP-005",
-  "title": "Node Type Header Icons",
+  "title": "Node Type Header Icons (3 nodes missing icons)",
   "round": 1,
-  "status": "merged",
+  "status": "ready",
   "priority": 5,
-  "complexity": "moderate",
+  "complexity": "simple",
   "model": "sonnet",
   "blockedBy": [
     "IMP-001"
   ],
-  "competitiveRationale": "Milanote shows type-specific icons on card headers for quick visual identification. Our nodes have the icon imported (via lucide-react) but not all display it prominently. Adding a consistent small type icon in the top-left of each node improves scanning speed.",
+  "competitiveRationale": "Milanote shows type-specific icons on card headers for quick visual identification. Three of our nodes (CodeBlockNode, GroupNode, LinkNode) lack a header type icon. The other 5 nodes already have icons and must NOT be modified.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 2. Enhanced Card Design",
-  "objective": "Ensure all node components display their type icon (from lucide-react) in a consistent position - top-left corner, 14px size, with muted opacity (0.5) so it doesn't compete with content. Nodes that already import and display their icon should have their icon styling normalized. Nodes missing a visible type icon should get one added.",
+  "objective": "Add a header type icon ONLY to the 3 nodes that currently lack one: CodeBlockNode, GroupNode, and LinkNode. Do NOT modify nodes that already have header icons (TodoNode, CommentNode, ColorSwatchNode, MapNode, TripPlannerMapNode). For CodeBlockNode: add a Code icon import from lucide-react and render it in the header area next to the language selector. For GroupNode: the Layers icon already exists but is only shown in the bottom-right corner — add a second Layers icon render in the header/label area. For LinkNode: add a Link2 icon import from lucide-react and render it in the header area near the domain/title display.",
+  "existingState": {
+    "TodoNode": "ALREADY HAS CheckSquare icon in header via unity-node-header-icon class — DO NOT TOUCH",
+    "CommentNode": "ALREADY HAS MessageSquare icon in header (line 315) — DO NOT TOUCH",
+    "ColorSwatchNode": "ALREADY HAS Palette icon in header via unity-node-header-icon class — DO NOT TOUCH",
+    "MapNode": "ALREADY HAS 🗺️ emoji icon in header — DO NOT TOUCH",
+    "TripPlannerMapNode": "ALREADY HAS 🗺️ emoji icon in header — DO NOT TOUCH",
+    "CodeBlockNode": "NO header icon. Has window chrome buttons (red/yellow/green dots). Imports X, Star only.",
+    "GroupNode": "Layers icon imported but only rendered in bottom-right corner. No header icon.",
+    "LinkNode": "NO header icon. Has favicon in content area and SVG globe fallback. No lucide icon imports."
+  },
   "allowedFiles": [
-    "src/components/unity-plus/nodes/TodoNode.jsx",
-    "src/components/unity-plus/nodes/CommentNode.jsx",
     "src/components/unity-plus/nodes/CodeBlockNode.jsx",
-    "src/components/unity-plus/nodes/ColorSwatchNode.jsx",
     "src/components/unity-plus/nodes/GroupNode.jsx",
-    "src/components/unity-plus/nodes/MapNode.jsx",
-    "src/components/unity-plus/nodes/TripPlannerMapNode.jsx",
     "src/components/unity-plus/nodes/LinkNode.jsx"
   ],
   "forbiddenFiles": [
+    "src/components/unity-plus/nodes/TodoNode.jsx",
+    "src/components/unity-plus/nodes/CommentNode.jsx",
+    "src/components/unity-plus/nodes/ColorSwatchNode.jsx",
+    "src/components/unity-plus/nodes/MapNode.jsx",
+    "src/components/unity-plus/nodes/TripPlannerMapNode.jsx",
     "src/components/unity-plus/nodes/StickyNode.jsx",
     "src/components/unity-plus/TextNoteNode.jsx",
     "src/pages/UnityNotesPage.jsx"
   ],
-  "maxLinesChanged": 160,
+  "maxLinesChanged": 60,
   "pattern": {
-    "description": "Each node already imports its type icon from lucide-react (e.g., CheckSquare for TodoNode, MessageSquare for CommentNode). Add or normalize a small icon display in the top-left area of the node.",
-    "example": "<div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4 }}><CheckSquare size={14} /></div>",
-    "notes": "Check each node's existing layout - some may already show the icon. If the icon is already visible, normalize the styling (size 14, opacity 0.4). If a node uses the icon only in import but not in JSX, add a subtle display. Use the icon already imported - do NOT add new icon imports. The icon uses: TodoNode=CheckSquare, CommentNode=MessageSquare, CodeBlockNode has no specific icon import for display (skip or use Code from lucide if already imported), ColorSwatchNode=Palette, GroupNode=check import, MapNode=check import, TripPlannerMapNode=check import, LinkNode=check import."
+    "description": "Add a small type icon to the header area of each node, following the existing unity-node-header-icon pattern used by TodoNode and ColorSwatchNode.",
+    "example": "<div className=\"unity-node-header-icon\" style={{ color: '#nodeColor' }}><IconName size={20} strokeWidth={2} /></div>",
+    "notes": "Match the existing pattern in TodoNode (lines 151-153) and ColorSwatchNode (lines 166-168). Icon should be 20px size, strokeWidth 2, wrapped in a div with className 'unity-node-header-icon'. Place it at the start of the header flex row. CodeBlockNode: import Code from lucide-react, add before language selector. GroupNode: Layers is already imported, add to the label/title area. LinkNode: import Link2 from lucide-react, add to the domain/title display area."
   },
   "acceptanceCriteria": [
-    "All 8 listed node files have a visible type icon in a consistent position",
-    "Icon size is 14px across all nodes",
-    "Icon opacity is 0.4 (subtle, non-competing with content)",
-    "Icons use already-imported lucide-react components (no new icon imports added)",
-    "Icon does not overlap with delete/star buttons",
+    "CodeBlockNode has a Code icon (20px) in its header area",
+    "GroupNode has a Layers icon (20px) in its header/label area",
+    "LinkNode has a Link2 icon (20px) in its header area",
+    "Icons use the unity-node-header-icon className pattern",
+    "ONLY these 3 files are modified — no other node files touched",
+    "Existing functionality (language selector, resize handles, link preview) unchanged",
     "npm run lint passes",
     "npm run build succeeds"
   ],
@@ -48,10 +59,15 @@
       "timestamp": "2026-01-28T21:44:34Z",
       "result": "success",
       "reason": "All 4 gates passed"
+    },
+    {
+      "timestamp": "2026-01-28T22:10:00Z",
+      "result": "rejected",
+      "reason": "Human rejected: Added duplicate icons to nodes that already had header icons (TodoNode, CommentNode, ColorSwatchNode, MapNode, TripPlannerMapNode). Reverted. Spec rewritten to only target 3 nodes that lack icons: CodeBlockNode, GroupNode, LinkNode."
     }
   ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "sleepless/IMP-005-node-type-header-icons",
-  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/6"
+  "branch": "",
+  "prUrl": ""
 }

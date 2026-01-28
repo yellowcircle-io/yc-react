@@ -1,0 +1,53 @@
+{
+  "id": "IMP-011",
+  "title": "Todo Node Progress Visualization",
+  "round": 2,
+  "status": "ready",
+  "priority": 3,
+  "complexity": "moderate",
+  "model": "sonnet",
+  "blockedBy": [],
+  "competitiveRationale": "Miro and Notion show rich progress indicators for task lists — percentage labels, segmented bars, completion badges. Our TodoNode has a minimal 4px green bar with a text counter. Enhancing the visual feedback makes task completion more rewarding and scannable.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > Content Type Richness",
+  "objective": "Enhance the TodoNode progress visualization with 3 additions: (1) Add a percentage label inside the progress bar that appears when progress > 25% (e.g., '60%' in white text, centered in the filled portion). (2) Increase the progress bar height from 4px to 8px to accommodate the label. (3) Add a subtle green checkmark badge that appears when all items are completed (100%) — a small circle with a check icon overlaid on the progress bar area.",
+  "existingState": {
+    "progressBar": "Lines 204-217: 4px height green bar with width percentage transition",
+    "counter": "Lines 194-200: Text showing 'X/Y' count in header",
+    "progressCalc": "Lines 31-32: completedCount and progress percentage",
+    "scrollContainer": "Lines 220-226: maxHeight 200px overflowY auto — DO NOT MODIFY",
+    "itemCheckboxes": "Lines 239-250: Checkbox toggle per item — DO NOT MODIFY",
+    "addItemForm": "Lines 309-340: Form to add new items — DO NOT MODIFY"
+  },
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/TodoNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 80,
+  "pattern": {
+    "description": "Enhance the existing progress bar with percentage label and completion badge",
+    "example": "<div style={{ height: '8px', ... }}><div style={{ ...existingStyles, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{progress > 25 && <span style={{ fontSize: '7px', color: '#fff', fontWeight: '700' }}>{Math.round(progress)}%</span>}</div></div>",
+    "notes": "The percentage label must be very small (7px font) to fit inside an 8px bar. Use white text (#fff) with fontWeight 700 for readability on the green background. The completion badge (100%) should import Check from lucide-react and show a small green circle (16px diameter) with a white check icon (10px), positioned to the right of the progress bar. Only show the badge when progress === 100. Do NOT modify the scroll container, item list, checkboxes, edit inputs, or add-item form."
+  },
+  "acceptanceCriteria": [
+    "Progress bar height increased from 4px to 8px",
+    "Percentage label (e.g., '60%') appears inside bar when progress > 25%",
+    "Percentage label is white, 7px font, bold, centered in filled portion",
+    "Completion badge (green circle + white check) appears at 100%",
+    "Progress bar transition animation preserved (0.3s ease-out)",
+    "Counter text (X/Y) in header still displays correctly",
+    "Scrollable item list still scrolls (maxHeight 200px, overflowY auto)",
+    "Checkbox toggle, item edit, item remove, add item all still work",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-28",
+  "branch": "",
+  "prUrl": ""
+}

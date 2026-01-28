@@ -1,5 +1,6 @@
-# Firebase Hosting: Staging-first deploy pipeline
-# Push to main → build once → deploy staging → deploy production
+# Firebase Hosting: Staging deploy on push to main
+# Production requires manual promotion via firebase-promote-production.yml
+# Flow: push to main → build → deploy staging → QA → manual promote to production
 'on':
   push:
     branches:
@@ -96,28 +97,5 @@ jobs:
           echo "**URL:** ${{ steps.deploy.outputs.details_url }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
 
-  deploy-production:
-    needs: [build, deploy-staging]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Deploy to production
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_YELLOWCIRCLE_APP }}'
-          channelId: live
-          projectId: yellowcircle-app
-
-      - name: Production summary
-        run: |
-          echo "## Production Deploy" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+  # Production deploy removed — use firebase-promote-production.yml (manual dispatch)
+  # Flow: push to main → staging auto-deploy → human QA → manual promote to production

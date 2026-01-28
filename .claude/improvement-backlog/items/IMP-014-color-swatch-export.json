@@ -1,0 +1,57 @@
+{
+  "id": "IMP-014",
+  "title": "Color Swatch Export Options",
+  "round": 2,
+  "status": "ready",
+  "priority": 6,
+  "complexity": "moderate",
+  "model": "sonnet",
+  "blockedBy": [],
+  "competitiveRationale": "Design tools like Coolors and Adobe Color offer multiple export formats for color palettes (CSS variables, JSON, Tailwind config). Our ColorSwatchNode only supports click-to-copy individual hex values. Adding bulk export formats improves utility for developers and designers.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > Content Type Richness",
+  "objective": "Add export functionality to ColorSwatchNode: (1) A 'Copy All' button that copies all palette colors to clipboard. (2) An export format selector with 3 options: Hex List (comma-separated), CSS Variables (:root { --color-1: #hex; }), and JSON Array. (3) Visual feedback on copy (reuse existing '✓' indicator pattern). Place the export controls below the color grid, above the add-color input area.",
+  "existingState": {
+    "clickToCopy": "Lines 24-32: Individual hex copy on color swatch click — DO NOT MODIFY",
+    "copiedFeedback": "Lines 222-223: 1.5s '✓' indicator — REUSE this pattern",
+    "colorGrid": "Lines 187-191: Auto-fill grid display — DO NOT MODIFY",
+    "addColorInput": "Lines 306-330: Hex input and add button — DO NOT MODIFY",
+    "colorPicker": "Lines 386-398: Native HTML5 picker — DO NOT MODIFY",
+    "randomColor": "Lines 34-39: Random color generator — DO NOT MODIFY",
+    "luminanceCalc": "Lines 74-80: Contrast calculation — DO NOT MODIFY"
+  },
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/ColorSwatchNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 100,
+  "pattern": {
+    "description": "Add export controls section between color grid and add-color input",
+    "example": "const formatExport = (colors, format) => { switch(format) { case 'hex': return colors.join(', '); case 'css': return ':root {\\n' + colors.map((c, i) => `  --color-${i + 1}: ${c};`).join('\\n') + '\\n}'; case 'json': return JSON.stringify(colors, null, 2); } };",
+    "notes": "Add a small export section with: (1) A select dropdown for format (Hex/CSS/JSON), default 'hex'. (2) A 'Copy All' button that formats all colors in the selected format and copies to clipboard via navigator.clipboard.writeText(). (3) Reuse the existing copied feedback pattern (state variable + setTimeout). Use useState for exportFormat and exportCopied. Style the export section to match the existing node aesthetic: small text (11px), green accent color (#fbbf24 brand yellow for the button), compact layout. Place between the color grid and the add-color input area."
+  },
+  "acceptanceCriteria": [
+    "Export format dropdown with 3 options: Hex List, CSS Variables, JSON Array",
+    "Copy All button copies all palette colors in selected format",
+    "Hex format: comma-separated hex values (e.g., '#ff0000, #00ff00, #0000ff')",
+    "CSS format: valid CSS custom properties in :root block",
+    "JSON format: valid JSON array of hex strings",
+    "Visual feedback on copy (✓ indicator, similar to existing single-color copy)",
+    "Individual color click-to-copy still works",
+    "Add color input and color picker still work",
+    "Random color button still works",
+    "Remove color (× button) still works",
+    "Color grid layout unchanged",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-28",
+  "branch": "",
+  "prUrl": ""
+}

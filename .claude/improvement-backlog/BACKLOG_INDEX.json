@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
   "lastUpdated": "2026-01-28",
-  "currentRound": 1,
-  "roundTheme": "Visual Polish",
+  "currentRound": 2,
+  "roundTheme": "Content Richness",
   "circuitBreaker": {
     "consecutiveFailures": 0,
     "threshold": 3,
@@ -14,8 +14,8 @@
       "total": 8,
       "merged": 6,
       "review": 0,
-      "failed": 2,
-      "ready": 0,
+      "failed": 0,
+      "ready": 2,
       "gateRequirement": "6/8 merged",
       "gatePassed": true
     },
@@ -25,10 +25,9 @@
       "merged": 0,
       "review": 0,
       "failed": 0,
-      "ready": 0,
+      "ready": 6,
       "gateRequirement": "5/6 merged",
-      "gatePassed": false,
-      "blockedBy": "round1"
+      "gatePassed": false
     },
     "round3": {
       "theme": "Organization & Discovery",
@@ -87,7 +86,7 @@
     {
       "id": "IMP-005",
       "round": 1,
-      "status": "reverted",
+      "status": "ready",
       "spec": "items/IMP-005-node-type-header-icons.json",
       "blockedBy": [
         "IMP-001"
@@ -96,7 +95,7 @@
     {
       "id": "IMP-006",
       "round": 1,
-      "status": "reverted",
+      "status": "ready",
       "spec": "items/IMP-006-content-preview-truncation.json",
       "blockedBy": [
         "IMP-001"
@@ -119,6 +118,42 @@
       "blockedBy": [
         "IMP-001"
       ]
+    },
+    {
+      "id": "IMP-009",
+      "round": 2,
+      "status": "ready",
+      "spec": "items/IMP-009-link-node-preview.json"
+    },
+    {
+      "id": "IMP-010",
+      "round": 2,
+      "status": "ready",
+      "spec": "items/IMP-010-code-block-syntax-themes.json"
+    },
+    {
+      "id": "IMP-011",
+      "round": 2,
+      "status": "ready",
+      "spec": "items/IMP-011-todo-progress-visualization.json"
+    },
+    {
+      "id": "IMP-012",
+      "round": 2,
+      "status": "ready",
+      "spec": "items/IMP-012-comment-thread-indicators.json"
+    },
+    {
+      "id": "IMP-013",
+      "round": 2,
+      "status": "ready",
+      "spec": "items/IMP-013-group-node-auto-size.json"
+    },
+    {
+      "id": "IMP-014",
+      "round": 2,
+      "status": "ready",
+      "spec": "items/IMP-014-color-swatch-export.json"
     }
   ]
 }

@@ -1,0 +1,56 @@
+{
+  "id": "IMP-013",
+  "title": "Group Node Auto-Size Button",
+  "round": 2,
+  "status": "ready",
+  "priority": 5,
+  "complexity": "simple",
+  "model": "sonnet",
+  "blockedBy": [],
+  "competitiveRationale": "Miro groups have a 'fit to content' action that auto-sizes the group boundary to wrap its child nodes. Our GroupNode only supports manual resize via corner handles. Adding an auto-size button trigger improves usability.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > Content Type Richness",
+  "objective": "Add an auto-size button to GroupNode that appears on hover (similar to delete/star buttons). The button should call data.onAutoSize(id) when clicked. The actual sizing logic lives in the parent component (UnityNotesPage) — this spec only adds the button UI and callback trigger. Use the Minimize2 icon from lucide-react. Position the button in the bottom-right corner area, near the existing Layers icon.",
+  "existingState": {
+    "resizeHandles": "Lines 42-92: 4 corner resize handles with touch+mouse support — DO NOT MODIFY",
+    "minSize": "Lines 72-73: Min 150px width, 100px height constraint — DO NOT MODIFY",
+    "onResizeCallback": "Line 75-76: data.onResize(id, newWidth, newHeight) — exists, separate from auto-size",
+    "colorPicker": "Lines 17-24: 6 color themes — DO NOT MODIFY",
+    "labelEdit": "Lines 102-111: Double-click title editing — DO NOT MODIFY",
+    "dropZone": "Lines 38, 121, 131-132: isDropTarget indication — DO NOT MODIFY",
+    "layersIcon": "Line 451: Layers icon in bottom-right corner with child count — DO NOT MODIFY"
+  },
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/GroupNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 40,
+  "pattern": {
+    "description": "Add a hover-visible action button following the existing delete/star button pattern",
+    "example": "{(isHovered || selected) && data.onAutoSize && <button onClick={(e) => { e.stopPropagation(); data.onAutoSize(id); }} className=\"nodrag\" style={{ position: 'absolute', bottom: '-12px', right: '24px', ... }} title=\"Auto-size to content\"><Minimize2 size={14} /></button>}",
+    "notes": "Import Minimize2 from lucide-react (add to existing import statement). Follow the same visibility pattern as delete/star buttons: show on hover or when selected, AND when the callback exists. Use className 'nodrag' to prevent React Flow from interpreting the click as a drag. Position at bottom of group, offset from the existing Layers corner icon. Use a subtle style: 24px circle, white background, gray border, small icon. Do NOT modify any resize handle logic, color picker, label editing, or drop zone behavior."
+  },
+  "acceptanceCriteria": [
+    "Auto-size button appears on hover or when selected",
+    "Button only shows when data.onAutoSize callback is provided",
+    "Clicking button calls data.onAutoSize(id)",
+    "Button uses Minimize2 icon from lucide-react",
+    "Button positioned in bottom area, not overlapping resize handles or Layers icon",
+    "Button has 'nodrag' className to prevent drag interference",
+    "Manual resize handles still work correctly",
+    "Label editing (double-click) still works",
+    "Color picker still works",
+    "Drop zone indication still works",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-28",
+  "branch": "",
+  "prUrl": ""
+}

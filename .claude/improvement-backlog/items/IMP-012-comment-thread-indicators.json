@@ -1,0 +1,54 @@
+{
+  "id": "IMP-012",
+  "title": "Comment Node Thread Indicators",
+  "round": 2,
+  "status": "ready",
+  "priority": 4,
+  "complexity": "simple",
+  "model": "sonnet",
+  "blockedBy": [],
+  "competitiveRationale": "ThreadDeck and Miro show reply counts, thread status, and conversation depth indicators on comment elements. Our CommentNode is a single-comment bubble with no thread awareness. Adding display-only thread indicators (from data props) closes this gap without requiring backend changes.",
+  "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
+  "scopeSection": "Feature Details > Content Type Richness",
+  "objective": "Add two display-only thread indicators to CommentNode: (1) A reply count pill below the comment body that shows 'N replies' when data.replyCount > 0 (small gray pill with MessageSquare icon, e.g., '3 replies'). (2) A thread status dot next to the author name that shows resolved (green) or open (orange) when data.threadStatus is provided. Both are purely visual — they read from data props and display indicators. No new callbacks or data mutations needed.",
+  "existingState": {
+    "authorHeader": "Lines 280-316: Author avatar, name, timestamp, MessageSquare icon",
+    "contentBody": "Lines 451-467: Comment text with whiteSpace pre-wrap — DO NOT MODIFY content rendering",
+    "editTextarea": "Lines 319-358: Edit mode textarea — DO NOT MODIFY",
+    "mentionDropdown": "Lines 362-436: @mention autocomplete — DO NOT MODIFY",
+    "speechBubbleTail": "Lines 471-490: CSS triangle tail — DO NOT MODIFY positioning"
+  },
+  "allowedFiles": [
+    "src/components/unity-plus/nodes/CommentNode.jsx"
+  ],
+  "forbiddenFiles": [
+    "src/components/unity-plus/nodes/StickyNode.jsx",
+    "src/components/unity-plus/TextNoteNode.jsx",
+    "src/pages/UnityNotesPage.jsx"
+  ],
+  "maxLinesChanged": 60,
+  "pattern": {
+    "description": "Add conditional display elements that read from data props and render indicators",
+    "example": "{data.replyCount > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px', fontSize: '11px', color: '#6b7280' }}><MessageSquare size={12} /><span>{data.replyCount} {data.replyCount === 1 ? 'reply' : 'replies'}</span></div>}",
+    "notes": "Reply count pill: Place it after the content body div, before the speech bubble tail. Use MessageSquare (already imported) at 12px. Gray text (#6b7280), fontSize 11px. Thread status dot: Place it next to the author name (inside the author header area). Use a small span (8px width/height, borderRadius 50%, display inline-block). Green (#22c55e) for 'resolved', orange (#f59e0b) for 'open'. Only show when data.threadStatus is provided. Both elements are optional and gracefully absent when data props are not provided."
+  },
+  "acceptanceCriteria": [
+    "Reply count pill shows below comment body when data.replyCount > 0",
+    "Reply count uses correct plural form ('1 reply' vs '3 replies')",
+    "Reply count pill hidden when data.replyCount is 0, undefined, or null",
+    "Thread status dot appears next to author name when data.threadStatus is provided",
+    "Green dot for 'resolved', orange dot for 'open'",
+    "Thread status dot hidden when data.threadStatus is not provided",
+    "Double-click edit mode still works",
+    "@mention autocomplete still works",
+    "Speech bubble tail renders correctly",
+    "Author avatar and timestamp display unchanged",
+    "npm run lint passes",
+    "npm run build succeeds"
+  ],
+  "attempts": [],
+  "maxAttempts": 3,
+  "createdAt": "2026-01-28",
+  "branch": "",
+  "prUrl": ""
+}

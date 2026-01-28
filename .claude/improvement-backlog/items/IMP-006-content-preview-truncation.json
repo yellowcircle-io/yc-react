@@ -1,40 +1,59 @@
 {
   "id": "IMP-006",
-  "title": "Content Preview Truncation",
+  "title": "Content Preview Truncation (display text only)",
   "round": 1,
-  "status": "merged",
+  "status": "ready",
   "priority": 6,
   "complexity": "simple",
   "model": "sonnet",
   "blockedBy": [
     "IMP-001"
   ],
-  "competitiveRationale": "Milanote shows clean content previews with ellipsis truncation. Some of our nodes let content overflow or wrap awkwardly. Consistent truncation with ellipsis improves scanning speed and visual cleanliness.",
+  "competitiveRationale": "Milanote shows clean content previews with ellipsis truncation. Some of our nodes let text content overflow or wrap awkwardly. Adding single-line ellipsis truncation to specific text display spans improves scanning speed.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 2. Enhanced Card Design",
-  "objective": "Add CSS text truncation (overflow: hidden, textOverflow: 'ellipsis') to content display areas in TodoNode (item text), CommentNode (comment body preview), and CodeBlockNode (code preview when collapsed). Ensure long content shows '...' instead of overflowing or wrapping excessively.",
+  "objective": "Add single-line text truncation (overflow: hidden, textOverflow: ellipsis, whiteSpace: nowrap) to ONLY these specific span elements: (1) TodoNode: the item text span in display mode (not editing) at approximately line 272-283, (2) CommentNode: the author name div at approximately line 301-306. Do NOT add multi-line truncation (WebkitLineClamp). Do NOT modify any scrollable containers, expand/collapse areas, or edit mode elements.",
+  "existingState": {
+    "TodoNode": {
+      "scrollContainer": "div with maxHeight 200px and overflowY auto (lines 220-226) — DO NOT MODIFY",
+      "itemTextSpan": "span at lines 272-283 showing item.text — THIS is the truncation target",
+      "editInput": "input at lines 252-269 — DO NOT MODIFY",
+      "addItemForm": "form at lines 309-340 — DO NOT MODIFY"
+    },
+    "CommentNode": {
+      "contentBody": "div at lines 451-467 with whiteSpace pre-wrap and wordBreak break-word — DO NOT MODIFY (this is the main content area that users need to read fully)",
+      "authorName": "div at lines 301-306 showing author name — THIS is the truncation target (long names should truncate)",
+      "editTextarea": "textarea at lines 321-358 — DO NOT MODIFY",
+      "mentionDropdown": "div at lines 362-436 — DO NOT MODIFY"
+    }
+  },
   "allowedFiles": [
     "src/components/unity-plus/nodes/TodoNode.jsx",
-    "src/components/unity-plus/nodes/CommentNode.jsx",
-    "src/components/unity-plus/nodes/CodeBlockNode.jsx"
+    "src/components/unity-plus/nodes/CommentNode.jsx"
   ],
   "forbiddenFiles": [
+    "src/components/unity-plus/nodes/CodeBlockNode.jsx",
     "src/components/unity-plus/nodes/StickyNode.jsx",
     "src/components/unity-plus/TextNoteNode.jsx",
     "src/pages/UnityNotesPage.jsx"
   ],
-  "maxLinesChanged": 60,
+  "maxLinesChanged": 20,
   "pattern": {
-    "description": "Add overflow handling to content display elements in each node",
+    "description": "Add single-line ellipsis truncation to specific text display spans only",
     "example": "overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'",
-    "notes": "Only apply to single-line elements (titles, item text). Multi-line content areas should use WebkitLineClamp for multi-line truncation: display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden'. Do NOT truncate actively-editing content - only display/preview mode."
+    "notes": "ONLY add these 3 CSS properties to the exact span/div elements specified. Do NOT use WebkitLineClamp anywhere. Do NOT modify any container with overflowY or maxHeight. Do NOT modify any edit-mode elements (input, textarea). Do NOT modify the CommentNode content body div. The goal is minimal: just prevent long single-line text from wrapping or overflowing."
   },
   "acceptanceCriteria": [
-    "TodoNode item text truncates with ellipsis when overflowing",
-    "CommentNode body preview truncates after 3 lines with ellipsis",
-    "CodeBlockNode shows truncated preview when content is long",
-    "Truncation only applies to display mode, not edit mode",
-    "Existing word-break behavior preserved for editing states",
+    "TodoNode: item text span truncates with ellipsis when text exceeds available width",
+    "TodoNode: scrollable item list (maxHeight 200px, overflowY auto) still scrolls correctly",
+    "TodoNode: checkbox toggle, item remove, add item form all still work",
+    "TodoNode: double-click edit on items still works",
+    "CommentNode: author name truncates with ellipsis when name is very long",
+    "CommentNode: comment body text is NOT truncated (users need to read full comments)",
+    "CommentNode: double-click edit mode still works",
+    "CommentNode: @mention autocomplete still works",
+    "ONLY TodoNode.jsx and CommentNode.jsx are modified",
+    "CodeBlockNode.jsx is NOT modified (removed from scope — its content needs expand/collapse, not truncation)",
     "npm run lint passes",
     "npm run build succeeds"
   ],
@@ -43,10 +62,15 @@
       "timestamp": "2026-01-28T21:46:24Z",
       "result": "success",
       "reason": "All 4 gates passed"
+    },
+    {
+      "timestamp": "2026-01-28T22:10:00Z",
+      "result": "rejected",
+      "reason": "Human rejected: Broke TodoNode scrolling (truncation on container instead of text spans), CodeBlock expand behavior (wrong truncation target), Comment expansion not persistent. Reverted. Spec rewritten: removed CodeBlockNode from scope, narrowed targets to specific text spans only, added explicit functional preservation criteria."
     }
   ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "sleepless/IMP-006-content-preview-truncation",
-  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/7"
+  "branch": "",
+  "prUrl": ""
 }
