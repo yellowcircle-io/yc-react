@@ -264,6 +264,18 @@ const GroupNode = memo(({ id, data, selected }) => {
           gap: '6px',
         }}
       >
+        {/* Type icon */}
+        <div className="unity-node-header-icon" style={{
+          backgroundColor: '#ffffff',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          border: `2px solid ${colorScheme.border}`,
+          display: 'flex',
+          alignItems: 'center',
+          color: colorScheme.text,
+        }}>
+          <Layers size={20} strokeWidth={2} />
+        </div>
         {/* Label */}
         <div
           onDoubleClick={handleLabelDoubleClick}

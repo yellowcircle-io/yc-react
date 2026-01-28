@@ -1,6 +1,6 @@
 import React, { memo, useState, useMemo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { X, Star } from 'lucide-react';
+import { X, Star, Code } from 'lucide-react';
 
 /**
  * CodeBlockNode - Code snippet with syntax highlighting
@@ -384,6 +384,10 @@ ${code}
         backgroundColor: '#2d2d2d',
         borderBottom: '1px solid #3f3f46',
       }}>
+        {/* Type icon */}
+        <div className="unity-node-header-icon" style={{ color: '#c084fc' }}>
+          <Code size={20} strokeWidth={2} />
+        </div>
         {/* Window buttons */}
         <div style={{ display: 'flex', gap: '6px' }}>
           <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
