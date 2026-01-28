@@ -9,9 +9,7 @@
   "competitiveRationale": "Miro offers 16 sticky note colors. UnityNOTES has 6. This is the simplest competitive gap to close.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 2. Enhanced Card Design",
-
   "objective": "Expand the STICKY_COLORS constant in StickyNode.jsx from 6 colors to 16 colors. Update the color picker grid layout from 3-column to 4-column to accommodate the additional colors. All colors must have sufficient contrast for white or dark text readability.",
-
   "allowedFiles": [
     "src/components/unity-plus/nodes/StickyNode.jsx"
   ],
@@ -20,13 +18,11 @@
     "src/components/unity-plus/TextNoteNode.jsx"
   ],
   "maxLinesChanged": 80,
-
   "pattern": {
     "description": "Follow the existing STICKY_COLORS object pattern at lines 15-22 of StickyNode.jsx",
     "example": "{ bg: '#fef3c7', border: '#fbbf24', text: '#92400e' }",
     "notes": "Each color needs bg (light background), border (saturated accent), text (dark readable color). The bg should be a tinted pastel, border should be the pure hue, text should be a dark shade of the same hue family."
   },
-
   "acceptanceCriteria": [
     "STICKY_COLORS object has exactly 16 entries",
     "All 6 existing colors (yellow, pink, blue, green, orange, purple) are preserved with identical values",
@@ -37,22 +33,60 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-
   "newColors": {
-    "coral":    { "bg": "#fff1f0", "border": "#ff6b6b", "text": "#9b1c1c" },
-    "teal":     { "bg": "#e6fffa", "border": "#14b8a6", "text": "#134e4a" },
-    "indigo":   { "bg": "#e8eaf6", "border": "#5c6bc0", "text": "#1a237e" },
-    "lime":     { "bg": "#f0fdf4", "border": "#84cc16", "text": "#365314" },
-    "rose":     { "bg": "#fff1f2", "border": "#f43f5e", "text": "#881337" },
-    "amber":    { "bg": "#fffbeb", "border": "#f59e0b", "text": "#78350f" },
-    "cyan":     { "bg": "#ecfeff", "border": "#06b6d4", "text": "#164e63" },
-    "slate":    { "bg": "#f1f5f9", "border": "#64748b", "text": "#1e293b" },
-    "mint":     { "bg": "#f0fdfa", "border": "#2dd4bf", "text": "#115e59" },
-    "lavender": { "bg": "#f5f3ff", "border": "#8b5cf6", "text": "#4c1d95" }
+    "coral": {
+      "bg": "#fff1f0",
+      "border": "#ff6b6b",
+      "text": "#9b1c1c"
+    },
+    "teal": {
+      "bg": "#e6fffa",
+      "border": "#14b8a6",
+      "text": "#134e4a"
+    },
+    "indigo": {
+      "bg": "#e8eaf6",
+      "border": "#5c6bc0",
+      "text": "#1a237e"
+    },
+    "lime": {
+      "bg": "#f0fdf4",
+      "border": "#84cc16",
+      "text": "#365314"
+    },
+    "rose": {
+      "bg": "#fff1f2",
+      "border": "#f43f5e",
+      "text": "#881337"
+    },
+    "amber": {
+      "bg": "#fffbeb",
+      "border": "#f59e0b",
+      "text": "#78350f"
+    },
+    "cyan": {
+      "bg": "#ecfeff",
+      "border": "#06b6d4",
+      "text": "#164e63"
+    },
+    "slate": {
+      "bg": "#f1f5f9",
+      "border": "#64748b",
+      "text": "#1e293b"
+    },
+    "mint": {
+      "bg": "#f0fdfa",
+      "border": "#2dd4bf",
+      "text": "#115e59"
+    },
+    "lavender": {
+      "bg": "#f5f3ff",
+      "border": "#8b5cf6",
+      "text": "#4c1d95"
+    }
   },
-
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "sleepless/IMP-002-sticky-palette"
+  "branch": ""
 }

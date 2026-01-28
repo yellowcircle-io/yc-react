@@ -9,9 +9,7 @@
   "competitiveRationale": "Miro uses a distinct blue selection outline (#4262ff) with rounded corners. Our nodes use border changes for selection which can shift layout. Adding a consistent outline-based selection indicator improves visual feedback without affecting layout.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 5. Microinteractions & Motion",
-
   "objective": "Add a consistent selection state visual to all node components in src/components/unity-plus/nodes/ (excluding StickyNode which already has color-tinted selection). When selected, nodes should have: outline: '2px solid #3b82f6' and outlineOffset: '2px'. This replaces using border changes for selection which cause layout shifts.",
-
   "allowedFiles": [
     "src/components/unity-plus/nodes/TodoNode.jsx",
     "src/components/unity-plus/nodes/CommentNode.jsx",
@@ -28,13 +26,11 @@
     "src/pages/UnityNotesPage.jsx"
   ],
   "maxLinesChanged": 120,
-
   "pattern": {
     "description": "Add outline and outlineOffset to the root div style, conditional on the selected prop",
     "example": "outline: selected ? '2px solid #3b82f6' : 'none', outlineOffset: selected ? '2px' : '0'",
     "notes": "Some nodes may already use border for selection state. If so, keep the border as-is and add outline on top. Do not remove existing border-based selection since it may be part of the node's visual identity."
   },
-
   "acceptanceCriteria": [
     "All 8 listed node files have outline: selected ? '2px solid #3b82f6' : 'none' in root div style",
     "All 8 listed node files have outlineOffset: selected ? '2px' : '0' in root div style",
@@ -43,9 +39,8 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "sleepless/IMP-004-selection-state"
+  "branch": ""
 }

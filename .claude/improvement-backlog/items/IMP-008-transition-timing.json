@@ -5,13 +5,13 @@
   "status": "ready",
   "priority": 8,
   "complexity": "simple",
-  "blockedBy": ["IMP-001"],
+  "blockedBy": [
+    "IMP-001"
+  ],
   "competitiveRationale": "Miro uses consistent transition timings across all interactions (150ms for micro, 200ms for state changes, 300ms for layout). Our nodes use mixed timing values (0.1s, 0.15s, 0.2s, 0.3s) inconsistently. Standardizing creates a more cohesive feel.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 5. Microinteractions & Motion",
-
   "objective": "Standardize all CSS transition values across the 9 node components in nodes/ directory to use a consistent timing system: 'all 0.15s ease' for micro-interactions (button hover, icon hover), 'all 0.2s ease' for state changes (node hover, selection), 'all 0.3s ease-out' for layout transitions (expand/collapse). Find and replace inconsistent transition values.",
-
   "allowedFiles": [
     "src/components/unity-plus/nodes/StickyNode.jsx",
     "src/components/unity-plus/nodes/TodoNode.jsx",
@@ -28,13 +28,11 @@
     "src/pages/UnityNotesPage.jsx"
   ],
   "maxLinesChanged": 100,
-
   "pattern": {
     "description": "Find all transition CSS properties in the style objects across all 9 node files. Replace with standardized values based on context.",
     "example": "transition: 'all 0.2s ease' (for node-level hover/selection), transition: 'transform 0.15s ease' (for button hover micro-interactions)",
     "notes": "The current codebase uses various timings: '0.1s ease', '0.15s ease', '0.2s ease', 'transform 0.1s ease'. Normalize: root div transitions -> 0.2s, button/icon transitions -> 0.15s, layout/expand transitions -> 0.3s. Do NOT change transition-property values, only durations and easing functions."
   },
-
   "acceptanceCriteria": [
     "All root div transitions in node components use 'all 0.2s ease'",
     "All button/icon hover transitions use 'transform 0.15s ease'",
@@ -44,9 +42,8 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "sleepless/IMP-008-transition-timing"
+  "branch": ""
 }
