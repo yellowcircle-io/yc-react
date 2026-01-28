@@ -114,7 +114,7 @@
     {
       "id": "IMP-008",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-008-transition-timing.json",
       "blockedBy": [
         "IMP-001"

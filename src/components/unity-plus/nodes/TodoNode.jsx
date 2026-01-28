@@ -217,7 +217,7 @@ const TodoNode = memo(({ id, data, selected }) => {
           height: '100%',
           width: `${progress}%`,
           backgroundColor: '#22c55e',
-          transition: 'width 0.3s ease',
+          transition: 'width 0.3s ease-out',
         }} />
       </div>
 

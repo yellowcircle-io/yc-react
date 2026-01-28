@@ -398,7 +398,7 @@ const CommentNode = memo(({ id, data, selected }) => {
                       border: 'none',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      transition: 'background-color 0.1s',
+                      transition: 'background-color 0.15s ease',
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                     onMouseLeave={(e) => {

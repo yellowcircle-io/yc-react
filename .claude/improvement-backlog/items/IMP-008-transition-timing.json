@@ -2,7 +2,7 @@
   "id": "IMP-008",
   "title": "Transition Timing Standardization",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 8,
   "complexity": "simple",
   "model": "sonnet",
@@ -46,6 +46,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-008-transition-timing",
   "prUrl": ""
 }
