@@ -2,7 +2,7 @@
   "id": "IMP-007",
   "title": "Color Picker Grid Improvements",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 7,
   "complexity": "simple",
   "model": "sonnet",
@@ -39,6 +39,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-007-color-picker-grid",
   "prUrl": ""
 }

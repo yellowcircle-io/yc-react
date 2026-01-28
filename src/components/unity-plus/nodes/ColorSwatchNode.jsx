@@ -308,7 +308,7 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
               padding: '8px',
             }}>
               {/* Hex input row */}
-              <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
                 <input
                   type="text"
                   value={customHex}
@@ -335,8 +335,8 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
                 />
                 {/* Color preview swatch */}
                 <div style={{
-                  width: '28px',
-                  height: '28px',
+                  width: '32px',
+                  height: '32px',
                   backgroundColor: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? customHex : '#f3f4f6',
                   borderRadius: '4px',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -346,8 +346,10 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
                   onClick={() => handleAddCustomColor(customHex)}
                   disabled={!/^#[0-9A-Fa-f]{6}$/.test(customHex)}
                   style={{
-                    padding: '4px 8px',
-                    fontSize: '10px',
+                    width: '32px',
+                    height: '32px',
+                    padding: 0,
+                    fontSize: '12px',
                     fontWeight: '600',
                     backgroundColor: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? '#fbbf24' : '#e5e7eb',
                     color: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? '#000' : '#9ca3af',
@@ -355,6 +357,10 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
                     borderRadius: '4px',
                     cursor: /^#[0-9A-Fa-f]{6}$/.test(customHex) ? 'pointer' : 'not-allowed',
                     whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
                   +
