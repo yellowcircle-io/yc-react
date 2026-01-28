@@ -2,7 +2,7 @@
   "id": "IMP-001",
   "title": "Enhanced Node Hover States",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 2,
   "complexity": "moderate",
   "model": "sonnet",
@@ -47,6 +47,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-001-node-hover-states",
   "prUrl": ""
 }

@@ -57,7 +57,7 @@
     {
       "id": "IMP-001",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-001-node-hover-states.json"
     },
     {
@@ -71,42 +71,54 @@
       "round": 1,
       "status": "ready",
       "spec": "items/IMP-003-shadow-elevation-system.json",
-      "blockedBy": ["IMP-001"]
+      "blockedBy": [
+        "IMP-001"
+      ]
     },
     {
       "id": "IMP-004",
       "round": 1,
       "status": "ready",
       "spec": "items/IMP-004-selection-state-refinement.json",
-      "blockedBy": ["IMP-001"]
+      "blockedBy": [
+        "IMP-001"
+      ]
     },
     {
       "id": "IMP-005",
       "round": 1,
       "status": "ready",
       "spec": "items/IMP-005-node-type-header-icons.json",
-      "blockedBy": ["IMP-001"]
+      "blockedBy": [
+        "IMP-001"
+      ]
     },
     {
       "id": "IMP-006",
       "round": 1,
       "status": "ready",
       "spec": "items/IMP-006-content-preview-truncation.json",
-      "blockedBy": ["IMP-001"]
+      "blockedBy": [
+        "IMP-001"
+      ]
     },
     {
       "id": "IMP-007",
       "round": 1,
       "status": "ready",
       "spec": "items/IMP-007-color-picker-grid.json",
-      "blockedBy": ["IMP-002"]
+      "blockedBy": [
+        "IMP-002"
+      ]
     },
     {
       "id": "IMP-008",
       "round": 1,
       "status": "ready",
       "spec": "items/IMP-008-transition-timing.json",
-      "blockedBy": ["IMP-001"]
+      "blockedBy": [
+        "IMP-001"
+      ]
     }
   ]
 }
