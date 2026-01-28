@@ -2,7 +2,7 @@
   "id": "IMP-009",
   "title": "Link Node Preview Enhancement",
   "round": 2,
-  "status": "running",
+  "status": "ready",
   "priority": 1,
   "complexity": "simple",
   "model": "sonnet",
@@ -28,7 +28,7 @@
     "src/components/unity-plus/TextNoteNode.jsx",
     "src/pages/UnityNotesPage.jsx"
   ],
-  "maxLinesChanged": 60,
+  "maxLinesChanged": 120,
   "pattern": {
     "description": "Add a type badge pill and improved empty-state fallback to the link preview area",
     "example": "{data.linkType && <span style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '10px', padding: '2px 6px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', textTransform: 'uppercase', fontWeight: '600' }}>{data.linkType}</span>}",

@@ -122,7 +122,7 @@
     {
       "id": "IMP-009",
       "round": 2,
-      "status": "running",
+      "status": "ready",
       "spec": "items/IMP-009-link-node-preview.json"
     },
     {
