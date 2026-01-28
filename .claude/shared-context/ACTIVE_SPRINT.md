@@ -1,6 +1,6 @@
 # ACTIVE SPRINT - yellowCircle Platform
 
-**Updated:** January 27, 2026
+**Updated:** January 28, 2026
 **Source of Truth:** [Notion Project Tracking](https://www.notion.so/18aa447307f846c6a646f58e87372a47)
 
 > **Structure:** This file is organized in parts to control token usage.
@@ -8,6 +8,7 @@
 > - **Part B:** Infrastructure and daemon status
 > - **Part C:** Scope status references (links only, read scope docs as needed)
 > - **Part D:** Recent commits and git status
+> - **Part E:** Workstream tiers — Sleepless vs. Claude Code vs. Human ownership
 
 ---
 
@@ -17,6 +18,8 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | Daemon DNS + Health Hardening | ✅ Complete | Launcher, watchdog, supervisor loop (Jan 27) |
+| Improvement Runner Pipeline | ✅ Complete | 9 bugs fixed, 4-gate validation, IMP-002 pilot passed (Jan 28) |
+| CI Workflow Fixes | ✅ Complete | Firebase PR deploys + sign-shortcut YAML syntax (Jan 28) |
 | Firebase Deploy | ⏳ Blocked | Needs `firebase login --reauth` |
 
 ### P1 - Active
@@ -32,19 +35,22 @@
 | Remaining Mobile Spacing | 📋 Pending | 6 pages: Hub, Journeys, Golden Unknown, Cath3dral, Thoughts, GTM |
 | Configure Ad Platform Tokens | ⚠️ User Action | Awaiting credentials |
 
-### P2 - Planned
-| Task | Status | Notes |
-|------|--------|-------|
-| Global Theme System (Full) | 📋 Planned | Research complete, see SCOPE_GLOBAL_THEMING.md |
-| UnityNOTES UI/UX Improvements | 📋 Planned | Research complete, see SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md |
-| Apple Shortcuts + Slack | 📋 Planned | Research complete, see SCOPE_APPLE_SHORTCUTS_SLACK.md |
-| Link Sharing Phase 4 (Slack App) | ⚠️ Partial | Webhook working, full slash commands not yet |
+### P2 - Planned (Claude Code + Human)
+| Task | Status | Owner | Notes |
+|------|--------|-------|-------|
+| Competitive Analysis Phase 1 | 📋 Next | Claude Code | Playwright visits: Milanote, ThreadDeck, Miro → scoring matrix |
+| Global Theme System (Full) | 📋 Planned | Claude Code | See SCOPE_GLOBAL_THEMING.md |
+| UnityNOTES UI/UX (Rounds 3-4) | 📋 Planned | Claude Code | New components, architecture, Firebase schema |
+| UnitySTUDIO Ad Collateral | 📋 Needs Scoping | Claude Code + Human | Template quality, brand rendering, export pipeline |
+| Apple Shortcuts + Slack | 📋 Planned | Claude Code | See SCOPE_APPLE_SHORTCUTS_SLACK.md |
+| Link Sharing Phase 4 (Slack App) | ⚠️ Partial | Claude Code | Webhook working, slash commands pending |
+| Sign-Shortcut iCloud Auth | 📋 Planned | Human | CI runner needs iCloud or self-hosted macOS runner |
 
-### P2 - Agent Improvements (Autonomous)
+### P2 - Agent Improvements (Sleepless Autonomous)
 | ID | Title | Round | Status | Branch |
 |----|-------|-------|--------|--------|
 | IMP-001 | Enhanced Node Hover States | 1 | ready | -- |
-| IMP-002 | 16-Color Sticky Palette | 1 | ready | -- |
+| IMP-002 | 16-Color Sticky Palette | 1 | **review** | [PR #2](https://github.com/yellowcircle-io/yc-react/pull/2) |
 | IMP-003 | Shadow/Elevation System | 1 | ready | -- |
 | IMP-004 | Selection State Refinement | 1 | ready | -- |
 | IMP-005 | Node Type Header Icons | 1 | ready | -- |
@@ -52,19 +58,22 @@
 | IMP-007 | Color Picker Grid Improvements | 1 | ready | -- |
 | IMP-008 | Transition Timing Standardization | 1 | ready | -- |
 
-**Round 1 Progress:** 0/8 merged (Visual Polish)
+**Round 1 Progress:** 0/8 merged, 1/8 in review (Visual Polish)
 **Circuit Breaker:** Closed (0/3 failures)
+**Pilot Status:** IMP-002 passed all 4 gates, PR pending human review
 **Trigger:** `/sleepless improve IMP-XXX` or `/sleepless improve next`
 **Backlog:** `.claude/improvement-backlog/BACKLOG_INDEX.json`
 
 ### P3 - Backlog
-| Task | Status |
-|------|--------|
-| VideoNode Component | 📋 Planned |
-| AIChatNode Enhancement | 📋 Planned |
-| UnityNOTES TravelLog Node | 📋 Planned |
-| Auto-Organize Groups | 📋 Planned |
-| Link Archiver Phase 5 (AI) | ⚠️ Partial |
+| Task | Status | Owner |
+|------|--------|-------|
+| VideoNode Component | 📋 Planned | Claude Code |
+| AIChatNode Enhancement | 📋 Planned | Claude Code |
+| UnityNOTES TravelLog Node | 📋 Planned | Claude Code |
+| Auto-Organize Groups | 📋 Planned | Sleepless (Round 3) |
+| Link Archiver Phase 5 (AI) | ⚠️ Partial | Claude Code |
+| Live Collaborator Cursors | 📋 Planned | Claude Code (Round 4) |
+| Undo/Redo System | 📋 Planned | Claude Code (Round 4) |
 
 ---
 
@@ -129,29 +138,128 @@ tail -f /tmp/sleepless-daemon.log
 
 ## PART D: RECENT ACTIVITY
 
-### Commits (Jan 24-27)
+### Commits (Jan 23-28)
 | Hash | Description |
 |------|-------------|
+| `a4c4a79` | Fix: Post-success spec update on main, not on branch |
+| `7f2deb8` | Fix: Commit runner status changes before Claude CLI execution |
+| `ad8647b` | Fix: Generate branch name from spec filename when empty |
+| `3a9a179` | Chore: Reset stale branch/prUrl fields on all improvement specs |
+| `c696c98` | Fix: sign-shortcut.yml YAML syntax error - extract plist to script |
+| `ae6498a` | Fix: sign-shortcut ghost trigger - match push + skip at job level |
+| `af677dd` | Fix: CI workflow fixes for Firebase preview deploys + shortcut signing |
+| `2bae461` | Fix: 5 bugs found during improvement-runner testing |
+| `7d8cde2` | Fix: 11 blockers in improvement-runner + Slack review workflow |
+| `2a355d6` | Infra: Daemon hardening + global theming + docs overhaul |
 | `82346f5` | UI: Add Settings to global navigation |
 | `d3146fd` | Feature: UnityNOTES branded modals + Canvas management in Settings |
-| `cb687e7` | Fix: Mobile spacing pattern - local isMobile state for 11 pages |
-| `36ef7a5` | UI: Mobile spacing fixes for 12 pages + pagesConfig update |
-| `ecf45b1` | Update: MSF with zoom fix session & pending optimizations |
-
-### Uncommitted Changes (19 files, +1117/-464)
-- Global theming: Header.jsx, Footer.jsx, constants.js, index.css
-- UnityNOTES: 6 node components, UnityCircleNav.jsx, UnityNotesPage.jsx
-- Templates: canvasTemplates.js, TemplateSelector.jsx (new)
-- Hooks: useThemedStyles.js, useSlackNotification.js (new)
-- Daemon: sleepless-daemon.py, sleepless-launcher.sh (hardening)
-- Scripts: slack-notify.sh, slack-status.sh, yc-command.sh (new)
 
 ### Git Status
 - Branch: `main`
-- Last commit: `82346f5`
-- Uncommitted: 19 files modified, 6 untracked
+- Last commit: `a4c4a79` (Jan 28)
+- Working tree: clean
+- Agent branch pending review: `sleepless/IMP-002-sticky-color-palette` ([PR #2](https://github.com/yellowcircle-io/yc-react/pull/2))
+
+---
+
+---
+
+## PART E: WORKSTREAM TIERS
+
+> **Purpose:** Clear ownership boundaries prevent runaway work, duplication, and agent confusion.
+> Three execution modes, each with explicit scope constraints.
+
+### Tier 1: Sleepless Agent (Autonomous)
+
+**Execution:** `/sleepless improve next` — automated pipeline, human reviews PR
+
+**Scope — what Sleepless handles:**
+- CSS/style changes (hover states, shadows, transitions, colors)
+- Component enhancement within existing patterns (add properties, update layouts)
+- Simple additions where the reference pattern is clear (add a button style, expand a config)
+- Standardization across sibling components (apply Pattern A from File X to Files Y, Z)
+
+**Scope — what Sleepless does NOT handle:**
+- New component architecture (building from scratch)
+- Firebase/Firestore schema changes
+- Complex state management (undo/redo, real-time sync)
+- Multi-system integration (connecting subsystems)
+- Creative or subjective decisions without explicit values in the spec
+
+**Workstreams:**
+
+| Track | Spec Range | Focus | Round Gate |
+|-------|-----------|-------|------------|
+| UnityNOTES Visual Polish | IMP-001 to IMP-008 | Hover, shadow, color, transitions | Round 1: 6/8 merge |
+| UnityNOTES Component Enhancement | IMP-009 to IMP-014 | Content preview, toolbar, context menus | Round 2: gate on Round 1 |
+| Unity Platform UI Polish | IMP-201+ | Page-level UI improvements | After Round 1 validated |
+
+**Safeguards:**
+- File scope enforcement (Gate 1) — only allowedFiles modified
+- Line count cap (Gate 2) — prevents rewrites
+- Lint + Build (Gates 3-4) — no regressions
+- Circuit breaker — 3 consecutive failures pauses all agent work
+- Concurrency lock — one improvement at a time
+- Human merge gate — every PR reviewed before merge
+
+### Tier 2: Claude Code (Interactive, Human-Directed)
+
+**Execution:** Standard Claude Code sessions — human initiates, directs, reviews in real-time
+
+**Scope — what Claude Code handles:**
+- Competitive analysis (Playwright visits, scoring matrices, gap reports)
+- New component architecture (VideoNode, TravelLogNode, etc.)
+- Multi-file integration work (wiring new features across pages/services/hooks)
+- Firebase schema design and migration
+- UnitySTUDIO template architecture and rendering pipeline
+- Round 3-4 improvement items that exceed Sleepless constraints
+- P0/P1 bug fixes and urgent features
+
+**Relationship to Sleepless:**
+- Claude Code sessions produce SCOPE docs and competitive analysis
+- Analysis feeds improvement backlog specs (JSON) for Sleepless
+- Claude Code handles items Sleepless can't (complexity, creativity, architecture)
+- Claude Code reviews and merges Sleepless PRs during daily upkeep
+
+**Workstreams:**
+
+| Workstream | Priority | Status | Next Step |
+|-----------|----------|--------|-----------|
+| Competitive Analysis (Milanote, ThreadDeck, Miro) | P2 | Not started | Playwright visits → COMPETITIVE_MATRIX.json |
+| UnityNOTES Rounds 3-4 (new components) | P2-P3 | Blocked by analysis | Specs after gap scoring |
+| UnitySTUDIO Ad Collateral Quality | P2 | Needs scoping | SCOPE doc required |
+| Unity Platform Page Improvements | P2 | Not started | Specs after UnityNOTES Round 1 |
+
+### Tier 3: Human-Only
+
+**Execution:** Manual actions, business decisions, creative direction
+
+**Scope:**
+- Merge approvals for Sleepless PRs (GitHub or `/sleepless improve approve`)
+- Competitive analysis review and gap prioritization
+- Creative direction for templates, ad collateral, visual identity
+- API credentials and platform authentication (Ad Platform tokens, iCloud, Firebase reauth)
+- Business decisions: which competitors to study, which features to prioritize
+- Notion dashboard updates for strategic tracking
+- Self-hosted runner setup (if needed for sign-shortcut iCloud auth)
+
+### Workstream Detail: UnitySTUDIO Ad Collateral
+
+> **Status:** Needs SCOPE document. This workstream spans all three tiers.
+
+| Layer | Owner | What |
+|-------|-------|------|
+| Creative direction | Human | What "professional-quality" means for yC ads, reference examples, brand standards |
+| Template architecture | Claude Code | Template system, brand-aware rendering, platform-specific export profiles |
+| Editor UI polish | Sleepless | Button placement, panel layout, responsive behavior (after architecture exists) |
+| Platform API integration | Claude Code + Human | LinkedIn Marketing API, Meta Ads API (blocked by credentials) |
+| Template iteration | Claude Code | Individual template improvements once system is built |
+
+**Current state:** Editor functional (templates, layers, AI generate, export). Output is placeholder-quality.
+**Target state:** Near-final assets matching platform ad standards (LinkedIn Sponsored, Instagram Story/Feed).
+**Gap:** Template design quality, brand-aware defaults, typography hierarchy, platform formatting rules.
 
 ---
 
 *Last synced with Notion: January 23, 2026*
-*Next Notion sync recommended*
+*Next Notion sync recommended — include workstream tiers and improvement pipeline status*
