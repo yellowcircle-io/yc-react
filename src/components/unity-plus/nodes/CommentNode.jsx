@@ -460,6 +460,10 @@ const CommentNode = memo(({ id, data, selected }) => {
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
             minHeight: '20px',
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
           }}>
             {content ? (
               renderContentWithMentions(content)
