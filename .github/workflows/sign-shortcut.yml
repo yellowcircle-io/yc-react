@@ -1,12 +1,13 @@
 name: Sign iOS Shortcut
 
 on:
-  # Explicit push handler with impossible branch prevents GitHub from
-  # ghost-failing this workflow on every push event. Without this,
-  # GitHub evaluates the workflow file on push and fails pre-job.
+  # Push trigger required: GitHub ghost-evaluates this workflow on every
+  # push and shows a failure if no push handler exists. Adding push with
+  # a matching branch + job-level skip makes it show "skipped" (neutral)
+  # instead of "failed" (red X). The job if-guard prevents actual execution.
   push:
     branches:
-      - 'disabled-push-trigger'
+      - main
   repository_dispatch:
     types: [sign-shortcut]
   workflow_dispatch:
@@ -27,6 +28,7 @@ on:
 
 jobs:
   sign-and-upload:
+    if: github.event_name != 'push'
     runs-on: macos-latest
     steps:
       - name: Checkout repository
