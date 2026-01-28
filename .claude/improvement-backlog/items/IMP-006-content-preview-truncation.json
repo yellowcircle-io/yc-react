@@ -2,7 +2,7 @@
   "id": "IMP-006",
   "title": "Content Preview Truncation",
   "round": 1,
-  "status": "running",
+  "status": "merged",
   "priority": 6,
   "complexity": "simple",
   "model": "sonnet",
@@ -38,9 +38,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T21:46:24Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-006-content-preview-truncation",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/7"
 }

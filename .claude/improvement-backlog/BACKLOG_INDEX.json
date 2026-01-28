@@ -12,12 +12,12 @@
     "round1": {
       "theme": "Visual Polish",
       "total": 8,
-      "merged": 3,
+      "merged": 8,
       "review": 0,
       "failed": 0,
-      "ready": 5,
+      "ready": 0,
       "gateRequirement": "6/8 merged",
-      "gatePassed": false
+      "gatePassed": true
     },
     "round2": {
       "theme": "Content Richness",
@@ -78,7 +78,7 @@
     {
       "id": "IMP-004",
       "round": 1,
-      "status": "running",
+      "status": "merged",
       "spec": "items/IMP-004-selection-state-refinement.json",
       "blockedBy": [
         "IMP-001"
@@ -87,7 +87,7 @@
     {
       "id": "IMP-005",
       "round": 1,
-      "status": "running",
+      "status": "merged",
       "spec": "items/IMP-005-node-type-header-icons.json",
       "blockedBy": [
         "IMP-001"
@@ -96,7 +96,7 @@
     {
       "id": "IMP-006",
       "round": 1,
-      "status": "running",
+      "status": "merged",
       "spec": "items/IMP-006-content-preview-truncation.json",
       "blockedBy": [
         "IMP-001"
@@ -105,7 +105,7 @@
     {
       "id": "IMP-007",
       "round": 1,
-      "status": "running",
+      "status": "merged",
       "spec": "items/IMP-007-color-picker-grid.json",
       "blockedBy": [
         "IMP-002"
@@ -114,7 +114,7 @@
     {
       "id": "IMP-008",
       "round": 1,
-      "status": "running",
+      "status": "merged",
       "spec": "items/IMP-008-transition-timing.json",
       "blockedBy": [
         "IMP-001"

@@ -2,7 +2,7 @@
   "id": "IMP-008",
   "title": "Transition Timing Standardization",
   "round": 1,
-  "status": "running",
+  "status": "merged",
   "priority": 8,
   "complexity": "simple",
   "model": "sonnet",
@@ -43,9 +43,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T21:49:32Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-008-transition-timing",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/9"
 }

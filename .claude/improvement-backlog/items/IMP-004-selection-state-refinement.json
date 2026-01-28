@@ -2,7 +2,7 @@
   "id": "IMP-004",
   "title": "Selection State Visual Refinement",
   "round": 1,
-  "status": "running",
+  "status": "merged",
   "priority": 4,
   "complexity": "simple",
   "model": "sonnet",
@@ -42,9 +42,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T21:42:22Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-004-selection-state-refinement",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/5"
 }

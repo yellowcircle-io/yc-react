@@ -2,7 +2,7 @@
   "id": "IMP-005",
   "title": "Node Type Header Icons",
   "round": 1,
-  "status": "running",
+  "status": "merged",
   "priority": 5,
   "complexity": "moderate",
   "model": "sonnet",
@@ -43,9 +43,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T21:44:34Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-005-node-type-header-icons",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/6"
 }

@@ -2,7 +2,7 @@
   "id": "IMP-007",
   "title": "Color Picker Grid Improvements",
   "round": 1,
-  "status": "running",
+  "status": "merged",
   "priority": 7,
   "complexity": "simple",
   "model": "sonnet",
@@ -36,9 +36,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T21:48:02Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-007-color-picker-grid",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/8"
 }
