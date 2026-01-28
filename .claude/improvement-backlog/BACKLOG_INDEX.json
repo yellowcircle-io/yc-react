@@ -105,7 +105,7 @@
     {
       "id": "IMP-007",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-007-color-picker-grid.json",
       "blockedBy": [
         "IMP-002"
