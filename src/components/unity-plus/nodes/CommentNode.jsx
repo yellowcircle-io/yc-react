@@ -272,6 +272,8 @@ const CommentNode = memo(({ id, data, selected }) => {
               : '0 4px 8px rgba(0, 0, 0, 0.1)',
           transition: 'all 0.2s ease',
           transform: isHovered && !isEditing ? 'scale(1.01)' : 'scale(1)',
+          outline: selected ? '2px solid #3b82f6' : 'none',
+          outlineOffset: selected ? '2px' : '0',
         }}
       >
         {/* Header with avatar and author */}

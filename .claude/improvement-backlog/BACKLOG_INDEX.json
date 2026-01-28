@@ -78,7 +78,7 @@
     {
       "id": "IMP-004",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-004-selection-state-refinement.json",
       "blockedBy": [
         "IMP-001"

@@ -46,9 +46,5 @@
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-003-shadow-elevation-system",
-<<<<<<< Updated upstream
-  "prUrl": ""
-=======
   "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/4"
->>>>>>> Stashed changes
 }
