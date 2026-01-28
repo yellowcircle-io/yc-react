@@ -323,6 +323,26 @@ with open('${file}', 'w') as f:
 " 2>/dev/null
 }
 
+# Sync a status change to the backlog index
+# This must be called whenever a spec file's status changes,
+# so --status, --review, --next all see consistent data.
+sync_index_status() {
+    local imp_id="$1"
+    local new_status="$2"
+    python3 -c "
+import json
+with open('${BACKLOG_INDEX}') as f:
+    data = json.load(f)
+for item in data.get('items', []):
+    if item['id'] == '${imp_id}':
+        item['status'] = '${new_status}'
+        break
+with open('${BACKLOG_INDEX}', 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+" 2>/dev/null
+}
+
 # ============================================================
 # Spec Lookup Helper
 # ============================================================
@@ -791,6 +811,8 @@ $(echo "${criteria}" | sed 's/^/- /')
 6. Ensure npm run lint and npm run build will pass after your changes.
 7. Do NOT create new files. Only edit existing files.
 8. Do NOT run any shell commands. Only use Edit and Read tools.
+9. NEVER modify files in .claude/ directory, package.json, or any config files.
+10. Do NOT modify JSON files in the improvement-backlog directory. Your task is to edit source code only.
 
 $(if [ -n "${prev_attempts}" ]; then
     echo "## PREVIOUS ATTEMPTS (learn from these failures)"
@@ -1039,22 +1061,9 @@ print(data.get('prUrl', ''))
         fi
     fi
 
-    # Update spec status to merged
+    # Update spec and index status to merged
     json_update_spec "${spec_file}" "{'status': 'merged'}"
-
-    # Update backlog index item status
-    python3 -c "
-import json
-with open('${BACKLOG_INDEX}') as f:
-    data = json.load(f)
-for item in data.get('items', []):
-    if item['id'] == '${imp_id}':
-        item['status'] = 'merged'
-        break
-with open('${BACKLOG_INDEX}', 'w') as f:
-    json.dump(data, f, indent=2)
-    f.write('\n')
-" 2>/dev/null
+    sync_index_status "${imp_id}" "merged"
 
     # Reset circuit breaker on successful merge
     reset_circuit_failures
@@ -1112,34 +1121,26 @@ print(data.get('prUrl', ''))
     git branch -D "${branch_name}" 2>/dev/null || true
     git push origin --delete "${branch_name}" 2>/dev/null || true
 
-    # Update spec: status back to failed, record rejection
-    json_update_spec "${spec_file}" "{'status': 'failed'}"
+    # Update spec: status back to ready (allows retry with rejection feedback)
+    # Clear branch and prUrl since they're deleted
+    json_update_spec "${spec_file}" "{'status': 'ready', 'branch': '', 'prUrl': ''}"
     local reject_ts
     reject_ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     json_append_attempt "${spec_file}" "{\"timestamp\": \"${reject_ts}\", \"result\": \"rejected\", \"reason\": \"Human rejected: ${reason}\"}"
 
     # Update backlog index
-    python3 -c "
-import json
-with open('${BACKLOG_INDEX}') as f:
-    data = json.load(f)
-for item in data.get('items', []):
-    if item['id'] == '${imp_id}':
-        item['status'] = 'failed'
-        break
-with open('${BACKLOG_INDEX}', 'w') as f:
-    json.dump(data, f, indent=2)
-    f.write('\n')
-" 2>/dev/null
+    sync_index_status "${imp_id}" "ready"
 
     # Note: Rejections do NOT increment circuit breaker.
     # Rejections mean the agent produced valid but wrong output.
     # Circuit breaker is for execution/validation failures only.
+    # Setting to "ready" (not "failed") allows --next to pick it up again
+    # with the rejection feedback included in the structured prompt.
 
     log_ok "============================================"
     log_ok "  ${imp_id} REJECTED: ${reason}"
-    log_ok "  Branch deleted. Spec reset to 'failed'."
-    log_ok "  Agent can retry if attempts remain."
+    log_ok "  Branch deleted. Spec reset to 'ready' for retry."
+    log_ok "  Rejection feedback will be included in next attempt."
     log_ok "============================================"
 
     notify_slack "Improvement ${imp_id} rejected: ${reason}"
@@ -1232,12 +1233,14 @@ print(len(data.get('attempts', [])))
     # Ensure lock is released on exit (including errors)
     trap 'release_lock' EXIT
 
-    # Update spec status to running
-    json_update_spec "${spec_file}" "{'status': 'running'}"
-
-    # Ensure clean git state and create branch
+    # Ensure clean git state and create branch BEFORE status changes
+    # (status changes modify spec files which would be stashed/conflicted)
     ensure_clean_git
     create_branch "${branch_name}"
+
+    # Update spec status to running (AFTER stash, so it's not stashed)
+    json_update_spec "${spec_file}" "{'status': 'running'}"
+    sync_index_status "${imp_id}" "running"
 
     local attempt_result="failed"
     local attempt_reason=""
@@ -1297,7 +1300,6 @@ print(len(data.get('attempts', [])))
             commit_branch "${branch_name}" "${imp_id}" "${title}" "${spec_file}"
 
             attempt_result="success"
-            json_update_spec "${spec_file}" "{'status': 'review'}"
             reset_circuit_failures
 
             log_ok "============================================"
@@ -1307,11 +1309,16 @@ print(len(data.get('attempts', [])))
 
             notify_slack "Improvement ${imp_id} (${title}) ready for review on branch ${branch_name}"
 
-            # Return to main but keep the branch
+            # Return to main and restore stash BEFORE updating spec/index
+            # (avoids stash conflict with modified spec files)
             git checkout main 2>/dev/null
             if [ "${STASHED:-false}" = "true" ]; then
                 git stash pop 2>/dev/null || true
             fi
+
+            # NOW update spec and index (after stash is restored cleanly)
+            json_update_spec "${spec_file}" "{'status': 'review'}"
+            sync_index_status "${imp_id}" "review"
 
             # Record successful attempt
             json_append_attempt "${spec_file}" "{\"timestamp\": \"${attempt_ts}\", \"result\": \"success\", \"reason\": \"All 4 gates passed\"}"
@@ -1331,8 +1338,9 @@ print(len(data.get('attempts', [])))
     # Rollback
     rollback_branch "${branch_name}"
 
-    # Update spec status
+    # Update spec and index status
     json_update_spec "${spec_file}" "{'status': 'failed'}"
+    sync_index_status "${imp_id}" "failed"
 
     # Increment circuit breaker
     local failures
@@ -1369,6 +1377,20 @@ main() {
     local arg3="${3:-}"
 
     case "${arg1}" in
+        --help|-h)
+            echo "Usage:"
+            echo "  $0 IMP-XXX              Execute improvement spec"
+            echo "  $0 IMP-XXX --dry-run    Parse and print prompt only"
+            echo "  $0 --status             Show backlog status"
+            echo "  $0 --review             List items pending review"
+            echo "  $0 --approve IMP-XXX    Merge approved improvement"
+            echo "  $0 --reject IMP-XXX [reason]  Reject improvement"
+            echo "  $0 --diff IMP-XXX       Show branch diff"
+            echo "  $0 --reset-circuit      Reset circuit breaker"
+            echo "  $0 --next               Execute next ready item"
+            echo "  $0 --preflight          Check all dependencies"
+            exit 0
+            ;;
         --status)
             show_status
             ;;

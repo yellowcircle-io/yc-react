@@ -54,13 +54,53 @@
     }
   },
   "items": [
-    { "id": "IMP-001", "round": 1, "status": "ready", "spec": "items/IMP-001-node-hover-states.json" },
-    { "id": "IMP-002", "round": 1, "status": "ready", "spec": "items/IMP-002-sticky-color-palette.json" },
-    { "id": "IMP-003", "round": 1, "status": "ready", "spec": "items/IMP-003-shadow-elevation-system.json" },
-    { "id": "IMP-004", "round": 1, "status": "ready", "spec": "items/IMP-004-selection-state-refinement.json" },
-    { "id": "IMP-005", "round": 1, "status": "ready", "spec": "items/IMP-005-node-type-header-icons.json" },
-    { "id": "IMP-006", "round": 1, "status": "ready", "spec": "items/IMP-006-content-preview-truncation.json" },
-    { "id": "IMP-007", "round": 1, "status": "ready", "spec": "items/IMP-007-color-picker-grid.json" },
-    { "id": "IMP-008", "round": 1, "status": "ready", "spec": "items/IMP-008-transition-timing.json" }
+    {
+      "id": "IMP-001",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-001-node-hover-states.json"
+    },
+    {
+      "id": "IMP-002",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-002-sticky-color-palette.json"
+    },
+    {
+      "id": "IMP-003",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-003-shadow-elevation-system.json"
+    },
+    {
+      "id": "IMP-004",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-004-selection-state-refinement.json"
+    },
+    {
+      "id": "IMP-005",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-005-node-type-header-icons.json"
+    },
+    {
+      "id": "IMP-006",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-006-content-preview-truncation.json"
+    },
+    {
+      "id": "IMP-007",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-007-color-picker-grid.json"
+    },
+    {
+      "id": "IMP-008",
+      "round": 1,
+      "status": "ready",
+      "spec": "items/IMP-008-transition-timing.json"
+    }
   ]
 }
