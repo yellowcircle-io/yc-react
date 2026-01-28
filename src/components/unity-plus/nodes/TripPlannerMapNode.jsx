@@ -1,5 +1,6 @@
 import React, { memo, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { MapPin } from 'lucide-react';
 import { loadGoogleMapsAPI } from '../../../utils/googleMapsLoader';
 
 /**
@@ -724,6 +725,11 @@ const TripPlannerMapNode = memo(({ id, data, selected }) => {
         outlineOffset: selected ? '2px' : '0',
       }}
     >
+      {/* Type icon - top-left */}
+      <div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4, zIndex: 5 }}>
+        <MapPin size={14} />
+      </div>
+
       {/* Connection handles */}
       <Handle type="target" position={Position.Top} style={{ width: '8px', height: '8px', backgroundColor: '#22c55e', border: '2px solid #fff' }} />
 

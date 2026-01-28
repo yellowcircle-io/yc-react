@@ -156,6 +156,11 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
         </button>
       )}
 
+      {/* Type icon - top-left */}
+      <div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4 }}>
+        <Palette size={14} />
+      </div>
+
       {/* Header with Lucide icon */}
       <div className="unity-node-header" style={{
         display: 'flex',

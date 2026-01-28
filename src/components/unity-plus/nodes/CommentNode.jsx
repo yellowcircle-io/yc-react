@@ -274,8 +274,13 @@ const CommentNode = memo(({ id, data, selected }) => {
           transform: isHovered && !isEditing ? 'scale(1.01)' : 'scale(1)',
           outline: selected ? '2px solid #3b82f6' : 'none',
           outlineOffset: selected ? '2px' : '0',
+          position: 'relative',
         }}
       >
+        {/* Type icon - top-left */}
+        <div style={{ position: 'absolute', top: '8px', left: '8px', opacity: 0.4 }}>
+          <MessageSquare size={14} />
+        </div>
         {/* Header with avatar and author */}
         <div style={{
           display: 'flex',
