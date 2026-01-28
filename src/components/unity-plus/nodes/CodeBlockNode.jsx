@@ -617,6 +617,10 @@ ${code}
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               flex: 1,
+              display: '-webkit-box',
+              WebkitLineClamp: showPreview ? 5 : 15,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}>
               {codeLines.map((line, i) => (
                 <div
