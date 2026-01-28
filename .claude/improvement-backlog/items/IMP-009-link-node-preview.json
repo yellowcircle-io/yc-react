@@ -2,7 +2,7 @@
   "id": "IMP-009",
   "title": "Link Node Preview Enhancement",
   "round": 2,
-  "status": "running",
+  "status": "review",
   "priority": 1,
   "complexity": "simple",
   "model": "sonnet",
@@ -44,9 +44,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T23:23:26Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
   "branch": "sleepless/IMP-009-link-node-preview",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/10"
 }
