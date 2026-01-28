@@ -266,7 +266,7 @@ const StickyNode = memo(({ id, data, selected }) => {
                   border: currentColor === colorKey ? `3px solid ${colors.border}` : '2px solid #e5e7eb',
                   cursor: 'pointer',
                   padding: 0,
-                  transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.15)';

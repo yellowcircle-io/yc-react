@@ -270,7 +270,7 @@ const MapNode = memo(({ id, data, selected }) => {
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             zIndex: 10,
-            transition: 'all 0.15s ease',
+            transition: 'transform 0.15s ease',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#1f2937';

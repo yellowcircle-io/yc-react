@@ -354,7 +354,7 @@ const LinkNode = memo(({ id, data, selected }) => {
                   width: `${readProgress * 100}%`,
                   height: '100%',
                   backgroundColor: readProgress >= 0.9 ? '#22c55e' : colorScheme.accent,
-                  transition: 'width 0.3s ease',
+                  transition: 'width 0.3s ease-out',
                 }}
               />
             </div>

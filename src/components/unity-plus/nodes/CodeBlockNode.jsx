@@ -472,7 +472,7 @@ ${code}
           style={{
             maxHeight: showPreview ? '180px' : '0',
             overflow: 'hidden',
-            transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease',
+            transition: 'max-height 0.3s ease-out, opacity 0.2s ease',
             opacity: showPreview ? 1 : 0,
             borderBottom: showPreview ? '1px solid #3f3f46' : 'none',
           }}
@@ -550,7 +550,7 @@ ${code}
           maxHeight: showPreview ? '120px' : '300px',
           overflowY: 'auto',
           cursor: isEditing ? 'text' : 'grab',
-          transition: 'max-height 0.3s ease-in-out',
+          transition: 'max-height 0.3s ease-out',
         }}
       >
         {isEditing ? (
@@ -714,7 +714,7 @@ ${code}
                   fontWeight: lang.id === currentLanguage ? '600' : '400',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.1s ease',
+                  transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
                   if (lang.id !== currentLanguage) {
