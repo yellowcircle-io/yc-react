@@ -2,7 +2,7 @@
   "id": "IMP-002",
   "title": "16-Color Sticky Note Palette",
   "round": 1,
-  "status": "review",
+  "status": "merged",
   "priority": 1,
   "complexity": "simple",
   "model": "sonnet",
