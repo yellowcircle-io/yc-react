@@ -2,7 +2,7 @@
   "id": "IMP-001",
   "title": "Enhanced Node Hover States",
   "round": 1,
-  "status": "running",
+  "status": "merged",
   "priority": 2,
   "complexity": "moderate",
   "model": "sonnet",
@@ -44,9 +44,19 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T06:09:20Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-001-node-hover-states",
+<<<<<<< Updated upstream
   "prUrl": ""
+=======
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/3"
+>>>>>>> Stashed changes
 }
