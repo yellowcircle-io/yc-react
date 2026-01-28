@@ -802,6 +802,11 @@ def create_app():
                         "• `/sleepless improve IMP-XXX` - Execute specific improvement\n"
                         "• `/sleepless improve next` - Execute next ready improvement\n"
                         "• `/sleepless improve dry IMP-XXX` - Dry run (preview prompt)\n"
+                        "• `/sleepless improve review` - List items pending review\n"
+                        "• `/sleepless improve approve IMP-XXX` - Merge approved improvement\n"
+                        "• `/sleepless improve reject IMP-XXX [reason]` - Reject improvement\n"
+                        "• `/sleepless improve diff IMP-XXX` - Show branch diff\n"
+                        "• `/sleepless improve preflight` - Check dependencies\n"
                         "• `/sleepless improve reset` - Reset circuit breaker\n\n"
                         "*yellowCircle Commands:* `/sleepless yc <command>`\n"
                         "• `/sleepless yc notify \"message\"` - Send notification\n"
@@ -926,6 +931,22 @@ def create_app():
                         cmd_args = ['--next']
                     elif imp_args.lower() == 'reset':
                         cmd_args = ['--reset-circuit']
+                    elif imp_args.lower() == 'review':
+                        cmd_args = ['--review']
+                    elif imp_args.lower() == 'preflight':
+                        cmd_args = ['--preflight']
+                    elif imp_args.lower().startswith('approve '):
+                        imp_id = imp_args[8:].strip()
+                        cmd_args = ['--approve', imp_id]
+                    elif imp_args.lower().startswith('reject '):
+                        # reject IMP-002 reason text -> --reject IMP-002 reason text
+                        parts = imp_args[7:].strip().split(None, 1)
+                        imp_id = parts[0] if parts else ''
+                        reason = parts[1] if len(parts) > 1 else 'No reason provided'
+                        cmd_args = ['--reject', imp_id, reason]
+                    elif imp_args.lower().startswith('diff '):
+                        imp_id = imp_args[5:].strip()
+                        cmd_args = ['--diff', imp_id]
                     elif imp_args.lower().startswith('dry '):
                         # dry IMP-002 -> IMP-002 --dry-run
                         imp_id = imp_args[4:].strip()
