@@ -88,5 +88,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": ""
+  "branch": "",
+  "prUrl": ""
 }

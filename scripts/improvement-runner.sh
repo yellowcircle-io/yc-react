@@ -1246,8 +1246,13 @@ print(len(data.get('attempts', [])))
     create_branch "${branch_name}"
 
     # Update spec status to running (AFTER stash, so it's not stashed)
-    json_update_spec "${spec_file}" "{'status': 'running'}"
+    json_update_spec "${spec_file}" "{'status': 'running', 'branch': '${branch_name}'}"
     sync_index_status "${imp_id}" "running"
+
+    # Commit runner's own status changes so Gate 1 only sees Claude's changes
+    # (git diff --name-only HEAD compares against this commit, not branch creation)
+    git add -A 2>/dev/null
+    git commit -m "chore: mark ${imp_id} as running" --no-verify 2>/dev/null || true
 
     local attempt_result="failed"
     local attempt_reason=""
