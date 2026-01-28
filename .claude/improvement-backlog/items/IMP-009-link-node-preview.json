@@ -2,7 +2,7 @@
   "id": "IMP-009",
   "title": "Link Node Preview Enhancement",
   "round": 2,
-  "status": "ready",
+  "status": "running",
   "priority": 1,
   "complexity": "simple",
   "model": "sonnet",
