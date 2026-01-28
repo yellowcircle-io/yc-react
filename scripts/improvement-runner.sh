@@ -1199,42 +1199,80 @@ print(data.get('prUrl', ''))
     log_info "Approving ${imp_id} (branch: ${branch_name})"
 
     cd "${REPO_ROOT}"
+    local merge_done=false
 
     # Try gh pr merge first (preferred: uses GitHub API, no local git state issues)
     if command -v gh &>/dev/null && [ -n "${pr_url}" ]; then
-        log_info "Merging via GitHub PR..."
         local pr_number
         pr_number="$(echo "${pr_url}" | grep -oE '[0-9]+$')"
+
+        # Mark PR as ready if it's a draft (runner creates draft PRs)
+        log_info "Marking PR #${pr_number} as ready..."
+        gh pr ready "${pr_number}" 2>/dev/null || true
+
+        log_info "Merging via GitHub PR #${pr_number}..."
         if gh pr merge "${pr_number}" --merge --delete-branch 2>&1; then
             log_ok "${imp_id} merged via PR #${pr_number}"
             git checkout main 2>/dev/null
             git pull --rebase 2>/dev/null || true
+            merge_done=true
         else
-            log_error "gh pr merge failed. Attempting local merge..."
-            # Fall through to local merge
-            pr_url=""
+            log_warn "gh pr merge failed. Falling back to local merge..."
         fi
     fi
 
-    # Local git merge fallback
-    if [ -z "${pr_url}" ] || ! command -v gh &>/dev/null; then
+    # Local git merge fallback (with conflict resolution)
+    if [ "${merge_done}" = "false" ]; then
         log_info "Merging via local git..."
         ensure_clean_git
         git checkout main 2>/dev/null
         git pull --rebase 2>/dev/null || true
 
         if git merge "${branch_name}" 2>&1; then
+            # Clean merge
             git push 2>&1 || log_warn "Push failed. Merged locally but not pushed."
             git branch -d "${branch_name}" 2>/dev/null || true
             git push origin --delete "${branch_name}" 2>/dev/null || true
-            log_ok "${imp_id} merged via local git"
+            log_ok "${imp_id} merged via local git (clean)"
         else
-            log_error "Merge failed. Conflicts detected."
-            git merge --abort 2>/dev/null || true
-            if [ "${STASHED:-false}" = "true" ]; then
-                git stash pop 2>/dev/null || true
+            # Merge has conflicts — check if they're only in spec/infra files
+            log_warn "Merge conflicts detected. Checking if auto-resolvable..."
+
+            local conflicted_files
+            conflicted_files="$(git diff --name-only --diff-filter=U 2>/dev/null)"
+
+            # Source conflicts = anything NOT in .claude/ or scripts/
+            local source_conflicts
+            source_conflicts="$(echo "${conflicted_files}" | grep -v '^\.' | grep -v '^scripts/' | grep -v '^$' || true)"
+
+            if [ -n "${source_conflicts}" ]; then
+                # Source file conflicts need human attention
+                log_error "Source file conflicts detected — cannot auto-resolve:"
+                echo "${source_conflicts}" | while IFS= read -r f; do
+                    [ -n "${f}" ] && log_error "  ${f}"
+                done
+                git merge --abort 2>/dev/null || true
+                if [ "${STASHED:-false}" = "true" ]; then
+                    git stash pop 2>/dev/null || true
+                fi
+                exit 1
             fi
-            exit 1
+
+            # Only spec/infra conflicts — safe to auto-resolve with main's version
+            log_info "Conflicts are only in spec/config files. Auto-resolving with main's version..."
+            echo "${conflicted_files}" | while IFS= read -r f; do
+                if [ -n "${f}" ]; then
+                    git checkout --ours "${f}" 2>/dev/null
+                    git add "${f}" 2>/dev/null
+                    log_info "  Resolved: ${f} (kept main's version)"
+                fi
+            done
+
+            git commit --no-verify -m "Merge: ${imp_id} (auto-resolved spec conflicts)" 2>/dev/null
+            git push 2>&1 || log_warn "Push failed. Merged locally but not pushed."
+            git branch -d "${branch_name}" 2>/dev/null || true
+            git push origin --delete "${branch_name}" 2>/dev/null || true
+            log_ok "${imp_id} merged via local git (auto-resolved spec conflicts)"
         fi
 
         if [ "${STASHED:-false}" = "true" ]; then
@@ -1463,19 +1501,23 @@ print(len(data.get('attempts', [])))
     # Install comprehensive cleanup trap (handles lock, spec reset, branch, stash, temp files)
     trap 'cleanup_on_exit' EXIT
 
-    # Ensure clean git state and create branch BEFORE status changes
-    # (status changes modify spec files which would be stashed/conflicted)
+    # Ensure clean git state (stash if needed)
     ensure_clean_git
-    create_branch "${branch_name}"
 
-    # Update spec status to running (AFTER stash, so it's not stashed)
+    # Update spec status to running ON MAIN before creating the branch.
+    # This is critical: by committing spec changes on main (not the branch),
+    # the branch will ONLY contain source code changes. When the branch is
+    # later merged back to main, there are no spec file conflicts because
+    # the branch never diverged on those files.
     json_update_spec "${spec_file}" "{'status': 'running', 'branch': '${branch_name}'}"
     sync_index_status "${imp_id}" "running"
-
-    # Commit runner's own status changes so Gate 1 only sees Claude's changes
-    # (git diff --name-only HEAD compares against this commit, not branch creation)
     git add -A 2>/dev/null
     git commit -m "chore: mark ${imp_id} as running" --no-verify 2>/dev/null || true
+
+    # NOW create branch from updated main — branch starts with "running"
+    # already in its history, so Gate 1 (git diff --name-only HEAD) will
+    # only show the agent's source code changes, not spec status changes.
+    create_branch "${branch_name}"
 
     local attempt_result="failed"
     local attempt_reason=""
