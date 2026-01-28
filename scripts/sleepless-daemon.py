@@ -133,6 +133,10 @@ review_stats = {
 }
 review_stats_lock = threading.Lock()
 
+# Improve command deduplication: prevent concurrent execution commands
+_improve_running = False
+_improve_lock = threading.Lock()
+
 # Review thread control
 review_thread_running = False
 review_stop_event = threading.Event()
@@ -910,10 +914,36 @@ def create_app():
 
         # Handle improve command (autonomous UI/UX improvements)
         if text.lower().startswith('improve ') or text.lower() == 'improve':
+            global _improve_running
             imp_args = text[8:].strip() if len(text) > 8 else ''
             log(f'Improve command: {imp_args}')
 
+            # Determine if this is an execution command (modifies state)
+            # vs a read-only command (status, review, diff, preflight)
+            read_only_commands = {'', 'next', 'reset', 'review', 'preflight'}
+            is_read_only = (
+                imp_args.lower() in read_only_commands
+                or imp_args.lower() in ('status', 'review', 'preflight', 'reset')
+                or imp_args.lower().startswith('diff ')
+                or imp_args.lower().startswith('dry ')
+            )
+            # "opus IMP-XXX" is an execution command (approve + run with Opus model)
+            is_opus_approval = imp_args.lower().startswith('opus ')
+            is_execution = not is_read_only
+
+            # Deduplication guard: prevent concurrent execution commands
+            if is_execution:
+                with _improve_lock:
+                    if _improve_running:
+                        respond({
+                            "response_type": "ephemeral",
+                            "text": "⚠️ An improvement execution is already running. Wait for it to finish or check status with `/sleepless improve`"
+                        })
+                        return
+                    _improve_running = True
+
             def run_improve_command():
+                global _improve_running
                 try:
                     project_root = os.environ.get('CLAUDE_WORKDIR', str(Path(__file__).parent.parent))
                     runner_script = Path(project_root) / 'scripts' / 'improvement-runner.sh'
@@ -951,6 +981,10 @@ def create_app():
                         # dry IMP-002 -> IMP-002 --dry-run
                         imp_id = imp_args[4:].strip()
                         cmd_args = [imp_id, '--dry-run']
+                    elif imp_args.lower().startswith('opus '):
+                        # opus IMP-002 -> IMP-002 --opus (approve Opus model usage)
+                        imp_id = imp_args[5:].strip()
+                        cmd_args = [imp_id, '--opus']
                     else:
                         # Direct IMP-XXX execution
                         cmd_args = [imp_args.strip()]
@@ -968,7 +1002,12 @@ def create_app():
                     if len(output) > 2900:
                         output = output[:2900] + '...(truncated)'
 
-                    status_emoji = '✅' if result.returncode == 0 else '❌'
+                    if result.returncode == 0:
+                        status_emoji = '✅'
+                    elif result.returncode == 2:
+                        status_emoji = '⏳'  # Needs Opus approval
+                    else:
+                        status_emoji = '❌'
                     client.chat_postMessage(
                         channel=channel_id,
                         text=f"{status_emoji} *Improve {imp_args or 'status'}:*\n```\n{output}\n```"
@@ -986,6 +1025,11 @@ def create_app():
                         channel=channel_id,
                         text=f"*Improve {imp_args}:* Error: {str(e)}"
                     )
+                finally:
+                    # Release execution guard
+                    if is_execution:
+                        with _improve_lock:
+                            _improve_running = False
 
             thread = threading.Thread(target=run_improve_command)
             thread.start()

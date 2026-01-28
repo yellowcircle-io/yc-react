@@ -46,6 +46,8 @@ LOG_FILE="/tmp/improvement-runner.log"
 CLI_TIMEOUT=300  # 5 minutes max for Claude CLI
 LOCK_DIR="/tmp/improvement-runner.lock"
 LOCK_STALE_SECONDS=900  # 15 minutes = stale lock
+DAILY_CAP=5  # Max improvement executions per day (0 = unlimited)
+DAILY_COUNTER="/tmp/improvement-runner-daily.json"
 
 # Colors for terminal output
 RED='\033[0;31m'
@@ -81,51 +83,130 @@ log_ok()    { log "${GREEN}OK${NC}" "$@"; }
 # ============================================================
 
 acquire_lock() {
-    # Check for stale lock (older than LOCK_STALE_SECONDS)
-    if [ -d "${LOCK_DIR}" ]; then
-        local lock_pid_file="${LOCK_DIR}/pid"
-        if [ -f "${lock_pid_file}" ]; then
-            local lock_pid
-            lock_pid="$(cat "${lock_pid_file}" 2>/dev/null || echo "")"
-            # Check if the process that holds the lock is still alive
-            if [ -n "${lock_pid}" ] && ! kill -0 "${lock_pid}" 2>/dev/null; then
-                log_warn "Stale lock found (PID ${lock_pid} is dead). Removing."
-                rm -rf "${LOCK_DIR}"
-            else
-                # Process alive - check age
-                local lock_age=0
-                if [ "$(uname)" = "Darwin" ]; then
-                    local lock_mtime
-                    lock_mtime="$(stat -f %m "${lock_pid_file}" 2>/dev/null || echo 0)"
-                    local now
-                    now="$(date +%s)"
-                    lock_age=$(( now - lock_mtime ))
-                else
-                    lock_age="$(( $(date +%s) - $(stat -c %Y "${lock_pid_file}" 2>/dev/null || echo 0) ))"
-                fi
-                if [ "${lock_age}" -ge "${LOCK_STALE_SECONDS}" ]; then
-                    log_warn "Lock older than ${LOCK_STALE_SECONDS}s (age: ${lock_age}s). Forcing removal."
-                    rm -rf "${LOCK_DIR}"
-                fi
-            fi
+    # Atomic lock acquisition with stale detection.
+    # mkdir is atomic on POSIX - if it succeeds, we own the lock.
+    # If it fails, check for stale lock and retry ONCE.
+    local attempts=0
+    local max_lock_attempts=2
+
+    while [ "${attempts}" -lt "${max_lock_attempts}" ]; do
+        attempts=$((attempts + 1))
+
+        # Attempt atomic mkdir - this is the ONLY acquisition mechanism
+        if mkdir "${LOCK_DIR}" 2>/dev/null; then
+            # Success - write PID atomically (write to temp, then rename)
+            echo "$$" > "${LOCK_DIR}/pid.tmp"
+            mv "${LOCK_DIR}/pid.tmp" "${LOCK_DIR}/pid"
+            log_info "Acquired execution lock (PID $$)"
+            return 0
         fi
-    fi
 
-    if ! mkdir "${LOCK_DIR}" 2>/dev/null; then
-        log_error "Another improvement runner is already executing. Lock: ${LOCK_DIR}"
-        log_error "If this is incorrect, remove the lock: rm -rf ${LOCK_DIR}"
-        exit 1
-    fi
+        # mkdir failed - lock exists. Check if it's stale (only on first attempt).
+        if [ "${attempts}" -ge "${max_lock_attempts}" ]; then
+            break
+        fi
 
-    # Write our PID for stale detection
-    echo "$$" > "${LOCK_DIR}/pid"
-    log_info "Acquired execution lock (PID $$)"
+        local lock_pid_file="${LOCK_DIR}/pid"
+        if [ ! -f "${lock_pid_file}" ]; then
+            # No PID file = corrupted lock. Remove and retry.
+            log_warn "Lock exists but no PID file. Removing corrupted lock."
+            rm -rf "${LOCK_DIR}"
+            continue
+        fi
+
+        local lock_pid
+        lock_pid="$(cat "${lock_pid_file}" 2>/dev/null || echo "")"
+
+        if [ -z "${lock_pid}" ]; then
+            log_warn "Lock PID file is empty. Removing corrupted lock."
+            rm -rf "${LOCK_DIR}"
+            continue
+        fi
+
+        # Check if holding process is dead
+        if ! kill -0 "${lock_pid}" 2>/dev/null; then
+            log_warn "Stale lock found (PID ${lock_pid} is dead). Removing."
+            rm -rf "${LOCK_DIR}"
+            continue
+        fi
+
+        # Process alive - check age
+        local lock_age=0
+        if [ "$(uname)" = "Darwin" ]; then
+            local lock_mtime
+            lock_mtime="$(stat -f %m "${lock_pid_file}" 2>/dev/null || echo 0)"
+            local now
+            now="$(date +%s)"
+            lock_age=$(( now - lock_mtime ))
+        else
+            lock_age="$(( $(date +%s) - $(stat -c %Y "${lock_pid_file}" 2>/dev/null || echo 0) ))"
+        fi
+
+        if [ "${lock_age}" -ge "${LOCK_STALE_SECONDS}" ]; then
+            log_warn "Lock older than ${LOCK_STALE_SECONDS}s (age: ${lock_age}s, PID: ${lock_pid}). Forcing removal."
+            rm -rf "${LOCK_DIR}"
+            continue
+        fi
+
+        # Lock is valid and held by a live, recent process
+        break
+    done
+
+    log_error "Another improvement runner is already executing. Lock: ${LOCK_DIR}"
+    log_error "If this is incorrect, remove the lock: rm -rf ${LOCK_DIR}"
+    exit 1
 }
 
 release_lock() {
     if [ -d "${LOCK_DIR}" ]; then
         rm -rf "${LOCK_DIR}"
     fi
+}
+
+# Comprehensive cleanup for EXIT trap during execution.
+# Handles: lock release, spec status reset, branch cleanup, stash restore, temp files.
+# Global variables set by execute_improvement before trap is installed:
+#   _CLEANUP_SPEC_FILE, _CLEANUP_IMP_ID, _CLEANUP_BRANCH_NAME
+_CLEANUP_SPEC_FILE=""
+_CLEANUP_IMP_ID=""
+_CLEANUP_BRANCH_NAME=""
+
+cleanup_on_exit() {
+    local exit_code=$?
+
+    # 1. Release concurrency lock
+    release_lock
+
+    # 2. Clean temp files
+    rm -f /tmp/imp-pr-url.txt /tmp/imp-cli-* 2>/dev/null || true
+
+    # 3. Reset spec status if still "running" (crash/SIGKILL recovery)
+    if [ -n "${_CLEANUP_SPEC_FILE}" ] && [ -f "${_CLEANUP_SPEC_FILE}" ]; then
+        local current_status
+        current_status="$(json_get "${_CLEANUP_SPEC_FILE}" "status" 2>/dev/null || echo "")"
+        if [ "${current_status}" = "running" ]; then
+            log_warn "Cleanup: spec ${_CLEANUP_IMP_ID} still 'running' — resetting to 'ready'"
+            json_update_spec "${_CLEANUP_SPEC_FILE}" "{'status': 'ready'}" 2>/dev/null || true
+            sync_index_status "${_CLEANUP_IMP_ID}" "ready" 2>/dev/null || true
+        fi
+    fi
+
+    # 4. Ensure we're back on main (not stranded on sleepless branch)
+    cd "${REPO_ROOT}" 2>/dev/null || true
+    local current_branch
+    current_branch="$(git branch --show-current 2>/dev/null || echo "")"
+    if [ -n "${current_branch}" ] && [[ "${current_branch}" == sleepless/* ]]; then
+        log_warn "Cleanup: stranded on branch ${current_branch} — switching to main"
+        git checkout -- . 2>/dev/null || true
+        git checkout main 2>/dev/null || true
+    fi
+
+    # 5. Restore stash if we stashed
+    if [ "${STASHED:-false}" = "true" ]; then
+        git stash pop 2>/dev/null || true
+    fi
+
+    exit "${exit_code}"
 }
 
 # ============================================================
@@ -292,7 +373,7 @@ json_update_spec() {
     local file="$1"
     local updates="$2"  # Python dict literal for updates
     python3 -c "
-import json
+import json, os, tempfile
 with open('${file}') as f:
     data = json.load(f)
 updates = ${updates}
@@ -302,9 +383,13 @@ for key, value in updates.items():
     for k in keys[:-1]:
         obj = obj[k]
     obj[keys[-1]] = value
-with open('${file}', 'w') as f:
+# Atomic write: temp file + rename (prevents corruption on crash)
+dir_name = os.path.dirname('${file}')
+fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix='.json.tmp')
+with os.fdopen(fd, 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
+os.rename(tmp_path, '${file}')
 " 2>/dev/null
 }
 
@@ -312,14 +397,18 @@ json_append_attempt() {
     local file="$1"
     local attempt_json="$2"
     python3 -c "
-import json
+import json, os, tempfile
 with open('${file}') as f:
     data = json.load(f)
 attempt = json.loads('${attempt_json}')
 data.setdefault('attempts', []).append(attempt)
-with open('${file}', 'w') as f:
+# Atomic write: temp file + rename
+dir_name = os.path.dirname('${file}')
+fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix='.json.tmp')
+with os.fdopen(fd, 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
+os.rename(tmp_path, '${file}')
 " 2>/dev/null
 }
 
@@ -330,16 +419,20 @@ sync_index_status() {
     local imp_id="$1"
     local new_status="$2"
     python3 -c "
-import json
+import json, os, tempfile
 with open('${BACKLOG_INDEX}') as f:
     data = json.load(f)
 for item in data.get('items', []):
     if item['id'] == '${imp_id}':
         item['status'] = '${new_status}'
         break
-with open('${BACKLOG_INDEX}', 'w') as f:
+# Atomic write: temp file + rename
+dir_name = os.path.dirname('${BACKLOG_INDEX}')
+fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix='.json.tmp')
+with os.fdopen(fd, 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
+os.rename(tmp_path, '${BACKLOG_INDEX}')
 " 2>/dev/null
 }
 
@@ -392,22 +485,94 @@ check_circuit_breaker() {
 
 increment_circuit_failures() {
     python3 -c "
-import json
+import json, os, tempfile
 with open('${BACKLOG_INDEX}') as f:
     data = json.load(f)
 cb = data['circuitBreaker']
 cb['consecutiveFailures'] = cb.get('consecutiveFailures', 0) + 1
 if cb['consecutiveFailures'] >= cb.get('threshold', 3):
     cb['status'] = 'open'
-with open('${BACKLOG_INDEX}', 'w') as f:
+# Atomic write: temp file + rename
+dir_name = os.path.dirname('${BACKLOG_INDEX}')
+fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix='.json.tmp')
+with os.fdopen(fd, 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
+os.rename(tmp_path, '${BACKLOG_INDEX}')
 print(cb['consecutiveFailures'])
 " 2>/dev/null
 }
 
 reset_circuit_failures() {
     json_update_spec "${BACKLOG_INDEX}" "{'circuitBreaker.consecutiveFailures': 0, 'circuitBreaker.status': 'closed'}"
+}
+
+# ============================================================
+# Daily Execution Cap
+# ============================================================
+
+# Check if daily execution cap has been reached.
+# Uses a JSON counter file that resets at midnight (date change).
+# Returns 0 if under cap (or cap disabled), 1 if at cap.
+check_daily_cap() {
+    if [ "${DAILY_CAP}" -eq 0 ]; then
+        return 0  # Cap disabled
+    fi
+
+    local today
+    today="$(date +%Y-%m-%d)"
+
+    local current_count=0
+    if [ -f "${DAILY_COUNTER}" ]; then
+        current_count="$(python3 -c "
+import json
+try:
+    with open('${DAILY_COUNTER}') as f:
+        data = json.load(f)
+    if data.get('date') == '${today}':
+        print(data.get('count', 0))
+    else:
+        print(0)  # New day, reset
+except:
+    print(0)
+" 2>/dev/null || echo "0")"
+    fi
+
+    if [ "${current_count}" -ge "${DAILY_CAP}" ]; then
+        log_warn "Daily execution cap reached (${current_count}/${DAILY_CAP}). Skipping."
+        return 1
+    fi
+
+    log_info "Daily executions: ${current_count}/${DAILY_CAP}"
+    return 0
+}
+
+# Increment the daily execution counter after a successful execution.
+increment_daily_counter() {
+    local today
+    today="$(date +%Y-%m-%d)"
+
+    python3 -c "
+import json, os, tempfile
+counter_file = '${DAILY_COUNTER}'
+try:
+    with open(counter_file) as f:
+        data = json.load(f)
+except:
+    data = {}
+
+if data.get('date') != '${today}':
+    data = {'date': '${today}', 'count': 0}
+
+data['count'] = data.get('count', 0) + 1
+
+dir_name = os.path.dirname(counter_file) or '/tmp'
+fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix='.json.tmp')
+with os.fdopen(fd, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+os.rename(tmp_path, counter_file)
+" 2>/dev/null || true
 }
 
 # ============================================================
@@ -462,6 +627,7 @@ rollback_branch() {
 
     if [ "${STASHED:-false}" = "true" ]; then
         git stash pop 2>/dev/null || true
+        STASHED=false
     fi
 
     log_info "Rolled back branch: ${branch_name}"
@@ -855,8 +1021,31 @@ show_status() {
     local cb_failures
     cb_failures="$(json_get "${BACKLOG_INDEX}" "circuitBreaker.consecutiveFailures")"
 
+    # Daily cap status
+    local daily_count=0
+    local today
+    today="$(date +%Y-%m-%d)"
+    if [ -f "${DAILY_COUNTER}" ]; then
+        daily_count="$(python3 -c "
+import json
+try:
+    with open('${DAILY_COUNTER}') as f:
+        data = json.load(f)
+    if data.get('date') == '${today}':
+        print(data.get('count', 0))
+    else:
+        print(0)
+except:
+    print(0)
+" 2>/dev/null || echo "0")"
+    fi
+    local cap_display="${daily_count}/${DAILY_CAP}"
+    if [ "${DAILY_CAP}" -eq 0 ]; then cap_display="unlimited"; fi
+
     echo "  Current Round: ${round} (${theme})"
     echo "  Circuit Breaker: ${cb_status} (${cb_failures}/3 failures)"
+    echo "  Daily Executions: ${cap_display}"
+    echo "  Model Default: sonnet (opus requires approval)"
     echo ""
 
     python3 -c "
@@ -1191,10 +1380,21 @@ print(len(data.get('attempts', [])))
         exit 1
     fi
 
+    # Check daily execution cap
+    if ! check_daily_cap; then
+        exit 0  # Not a failure, just capped for today
+    fi
+
     # Read spec details
-    local title branch_name
+    local title branch_name spec_model
     title="$(json_get "${spec_file}" "title")"
     branch_name="$(json_get "${spec_file}" "branch")"
+    spec_model="$(json_get "${spec_file}" "model" 2>/dev/null || echo "sonnet")"
+
+    # Default to sonnet if model field is missing or empty
+    if [ -z "${spec_model}" ]; then
+        spec_model="sonnet"
+    fi
 
     # Generate branch name from spec filename if not set
     if [ -z "${branch_name}" ]; then
@@ -1205,6 +1405,19 @@ print(len(data.get('attempts', [])))
 
     log_info "Title: ${title}"
     log_info "Branch: ${branch_name}"
+    log_info "Model: ${spec_model}"
+
+    # Opus approval gate: specs requiring Opus need explicit --opus flag
+    # This prevents expensive Opus usage from being triggered automatically
+    if [ "${spec_model}" = "opus" ] && [ "${OPUS_APPROVED:-false}" != "true" ]; then
+        log_warn "============================================"
+        log_warn "  ${imp_id} requires Opus model"
+        log_warn "  Opus uses a limited weekly allocation."
+        log_warn "  Approve via: /sleepless improve opus ${imp_id}"
+        log_warn "============================================"
+        notify_slack "⚠️ *${imp_id}* (${title}) requires *Opus* model. Approve with: \`/sleepless improve opus ${imp_id}\`"
+        return 2  # Exit code 2 = needs approval (not a failure)
+    fi
 
     # Build the structured prompt
     local prompt
@@ -1214,14 +1427,14 @@ print(len(data.get('attempts', [])))
     if [ "${dry_run}" = "true" ]; then
         echo ""
         echo "=========================================="
-        echo "  DRY RUN: ${imp_id}"
+        echo "  DRY RUN: ${imp_id} (model: ${spec_model})"
         echo "=========================================="
         echo ""
         echo "${prompt}"
         echo ""
         echo "=========================================="
         echo "  CLI invocation would be:"
-        echo "  claude -p <prompt> --dangerously-skip-permissions --tools 'Edit,Read,Glob,Grep'"
+        echo "  claude -p <prompt> --model ${spec_model} --dangerously-skip-permissions --tools 'Edit,Read,Glob,Grep'"
         echo "  (No changes made - dry run complete)"
         echo "=========================================="
         return 0
@@ -1229,8 +1442,14 @@ print(len(data.get('attempts', [])))
 
     # Acquire concurrency lock for execution
     acquire_lock
-    # Ensure lock is released on exit (including errors)
-    trap 'release_lock' EXIT
+
+    # Set cleanup globals BEFORE installing trap (used by cleanup_on_exit)
+    _CLEANUP_SPEC_FILE="${spec_file}"
+    _CLEANUP_IMP_ID="${imp_id}"
+    _CLEANUP_BRANCH_NAME="${branch_name}"
+
+    # Install comprehensive cleanup trap (handles lock, spec reset, branch, stash, temp files)
+    trap 'cleanup_on_exit' EXIT
 
     # Ensure clean git state and create branch BEFORE status changes
     # (status changes modify spec files which would be stashed/conflicted)
@@ -1256,7 +1475,7 @@ print(len(data.get('attempts', [])))
     # - Added --dangerously-skip-permissions for headless execution
     # - Added --tools to restrict agent to safe tools only (no Bash, no Write)
     # - Timeout handled via background process (macOS has no 'timeout' command)
-    log_info "Invoking Claude CLI (agentic mode, timeout: ${CLI_TIMEOUT}s)..."
+    log_info "Invoking Claude CLI (model: ${spec_model}, timeout: ${CLI_TIMEOUT}s)..."
     log_info "Tools: Edit,Read,Glob,Grep (Bash/Write excluded for safety)"
 
     local cli_exit_code=0
@@ -1264,23 +1483,52 @@ print(len(data.get('attempts', [])))
     local cli_tmp
     cli_tmp="$(mktemp /tmp/imp-cli-XXXXXX)"
 
-    # Run Claude CLI in background with timeout watchdog
-    claude -p "${prompt}" \
-        --dangerously-skip-permissions \
-        --tools "Edit,Read,Glob,Grep" \
-        > "${cli_tmp}" 2>&1 &
+    # Run Claude CLI in background with timeout watchdog.
+    # Use setsid (if available) to create a new process group so we can
+    # kill the entire group on timeout (prevents orphaned child processes).
+    local use_setsid=false
+    if command -v setsid &>/dev/null; then
+        use_setsid=true
+    fi
+
+    if [ "${use_setsid}" = "true" ]; then
+        setsid claude -p "${prompt}" \
+            --model "${spec_model}" \
+            --dangerously-skip-permissions \
+            --tools "Edit,Read,Glob,Grep" \
+            > "${cli_tmp}" 2>&1 &
+    else
+        claude -p "${prompt}" \
+            --model "${spec_model}" \
+            --dangerously-skip-permissions \
+            --tools "Edit,Read,Glob,Grep" \
+            > "${cli_tmp}" 2>&1 &
+    fi
     local cli_pid=$!
 
-    # Watchdog: kill CLI if it exceeds timeout
-    ( sleep "${CLI_TIMEOUT}" && kill "${cli_pid}" 2>/dev/null ) &
+    # Watchdog: kill CLI process group if it exceeds timeout
+    (
+        sleep "${CLI_TIMEOUT}"
+        if [ "${use_setsid}" = "true" ]; then
+            # Kill entire process group (negative PID)
+            kill -TERM -"${cli_pid}" 2>/dev/null || kill "${cli_pid}" 2>/dev/null
+        else
+            # macOS fallback: kill parent + known children via pkill
+            kill "${cli_pid}" 2>/dev/null
+            # Also kill any child processes of the CLI
+            pkill -TERM -P "${cli_pid}" 2>/dev/null || true
+        fi
+    ) &
     local watchdog_pid=$!
 
     # Wait for CLI to finish (or be killed by watchdog)
     wait "${cli_pid}" 2>/dev/null || cli_exit_code=$?
 
-    # Clean up watchdog
+    # Clean up watchdog (and any lingering children)
     kill "${watchdog_pid}" 2>/dev/null 2>&1 || true
     wait "${watchdog_pid}" 2>/dev/null 2>&1 || true
+    # Ensure no orphaned CLI children remain
+    pkill -TERM -P "${cli_pid}" 2>/dev/null || true
 
     # Read CLI output
     cli_output="$(cat "${cli_tmp}" 2>/dev/null || echo "(no output)")"
@@ -1305,6 +1553,7 @@ print(len(data.get('attempts', [])))
 
             attempt_result="success"
             reset_circuit_failures
+            increment_daily_counter
 
             log_ok "============================================"
             log_ok "  ${imp_id} SUCCEEDED - Ready for review"
@@ -1318,6 +1567,7 @@ print(len(data.get('attempts', [])))
             git checkout main 2>/dev/null
             if [ "${STASHED:-false}" = "true" ]; then
                 git stash pop 2>/dev/null || true
+                STASHED=false
             fi
 
             # Read PR URL stored by commit_branch
@@ -1372,6 +1622,7 @@ main() {
         echo "Usage:"
         echo "  $0 IMP-XXX              Execute improvement spec"
         echo "  $0 IMP-XXX --dry-run    Parse and print prompt only"
+        echo "  $0 IMP-XXX --opus       Execute with Opus approval (for complex specs)"
         echo "  $0 --status             Show backlog status"
         echo "  $0 --review             List items pending review"
         echo "  $0 --approve IMP-XXX    Merge approved improvement"
@@ -1392,6 +1643,7 @@ main() {
             echo "Usage:"
             echo "  $0 IMP-XXX              Execute improvement spec"
             echo "  $0 IMP-XXX --dry-run    Parse and print prompt only"
+            echo "  $0 IMP-XXX --opus       Execute with Opus approval (for complex specs)"
             echo "  $0 --status             Show backlog status"
             echo "  $0 --review             List items pending review"
             echo "  $0 --approve IMP-XXX    Merge approved improvement"
@@ -1470,9 +1722,13 @@ for item in items:
             ;;
         IMP-*|imp-*)
             local dry_run="false"
-            if [ "${arg2}" = "--dry-run" ]; then
-                dry_run="true"
-            fi
+            # Support --dry-run and --opus flags (in any order after IMP-XXX)
+            for flag in "${arg2}" "${arg3}"; do
+                case "${flag}" in
+                    --dry-run) dry_run="true" ;;
+                    --opus) export OPUS_APPROVED="true" ;;
+                esac
+            done
             execute_improvement "${arg1}" "${dry_run}"
             ;;
         *)

@@ -1,65 +1,72 @@
 # WIP: Current Work in Progress
 
-**Updated:** January 27, 2026 at 3:30 PM EST
+**Updated:** January 28, 2026 at 1:00 AM EST
 **Machine:** Mac Mini
-**Status:** Daemon infrastructure hardened | UI work pending commit
+**Status:** Model selection + capacity controls added | Runner hardened | IMP-002 in review
 
 ---
 
-## CURRENT SESSION (Jan 27, 2026) - Mac Mini
+## CURRENT SESSION (Jan 28, 2026) - Mac Mini
 
-### Daemon Infrastructure Hardened
+### Audit Fixes Applied to Improvement Pipeline
 
-**Problem:** Sleepless daemon had DNS failures at boot (49 errors), WebSocket degradation from sleep/wake cycles (BrokenPipe, SSL errors), and no self-healing.
+Comprehensive security and reliability audit completed, 6 categories of fixes applied:
 
-**Changes made:**
+| # | Severity | Fix | File |
+|---|----------|-----|------|
+| 1 | CRITICAL | TOCTOU race in concurrency lock — atomic mkdir-first acquisition with retry | `improvement-runner.sh` |
+| 2 | HIGH | EXIT trap enhanced — full cleanup (spec reset, checkout main, pop stash, temp files) | `improvement-runner.sh` |
+| 3 | HIGH | Process group kill on timeout — kills CLI children (prevents orphans) | `improvement-runner.sh` |
+| 4 | HIGH | Daemon deduplication guard — prevents concurrent improve execution commands | `sleepless-daemon.py` |
+| 5 | MEDIUM | Atomic JSON writes — write-to-temp-then-rename prevents corruption on crash | `improvement-runner.sh` |
+| 6 | MEDIUM | Spec dependency chains fixed — IMP-003/004/005/006/008 blocked by IMP-001 | All spec JSONs + BACKLOG_INDEX |
 
-| File | Change |
-|------|--------|
-| `~/bin/sleepless-launcher.sh` | 4-phase launcher: DNS wait (120s), API check (30s), env setup, supervisor loop |
-| `scripts/sleepless-launcher.sh` | Repo copy synced with same 5-phase structure (adds Dropbox mount wait) |
-| `scripts/sleepless-daemon.py` | Added `health_watchdog()` thread: checks `auth_test()` every 60s, exits after 5 consecutive failures |
-| Local daemon copy synced | `~/Library/Application Support/yellowcircle/sleepless/sleepless-daemon.py` |
+### Spec Schema Consistency
 
-**Defense-in-depth architecture:**
-1. **Pre-flight:** DNS + Slack API reachability before daemon start
-2. **Health watchdog:** `auth_test()` every 60s, `os._exit(2)` after 5 failures
-3. **Supervisor loop:** Restarts daemon on non-zero exit, DNS check between restarts, 3 max consecutive failures
-4. **launchd KeepAlive:** OS-level restart on launcher crash
+- Added `prUrl: ""` field to IMP-003 through IMP-008 (was missing from 6 of 8 specs)
+- Fixed BACKLOG_INDEX round1 progress: `review: 1, ready: 7` (was `review: 0, ready: 8`)
+- Added `blockedBy` arrays to index entries for IMP-003, IMP-004, IMP-005, IMP-006, IMP-007, IMP-008
 
-**Stale processes killed:** Thursday Vite (PID 6046/6047), keeping Sunday instance.
+### Model Selection + Capacity Controls
 
-**Tests passed:** All 9 (DNS, API, daemon startup, watchdog init, clean shutdown, supervisor restart/maxfail/SIGTERM, full integration).
+Added to prevent runner from consuming the weekly Claude Code Opus allocation:
 
-**Daemon status:** Running via launchd (PID 92174), health check posted to Slack.
+| # | Feature | Detail |
+|---|---------|--------|
+| 1 | **Model per spec** | `"model": "sonnet"` field in all spec JSONs. Runner reads and passes `--model` to Claude CLI |
+| 2 | **Opus approval gate** | Specs with `"model": "opus"` require explicit approval via `--opus` flag or `/sleepless improve opus IMP-XXX` |
+| 3 | **Daily execution cap** | 5 executions/day (configurable via `DAILY_CAP`). Counter resets at midnight. Shown in `--status` |
+| 4 | **Daemon opus command** | `/sleepless improve opus IMP-XXX` triggers runner with `--opus` flag. Return code 2 = needs approval (hourglass emoji in Slack) |
 
-### Playwright MCP
+### Execution Order (Validated)
 
-Reconnected Chromium and Firefox. Safari (webkit) was already running. Note: Playwright MCP servers can only be started via Claude Code `/mcp` command -- no standalone shell command.
+Only IMP-001 eligible for `--next`. After IMP-001 merges → IMP-003, IMP-004, IMP-005, IMP-006, IMP-008 unblock. After IMP-002 merges → IMP-007 unblocks. No file collision possible.
+
+### IMP-002 Pilot (Complete)
+
+IMP-002 (16-Color Sticky Palette) passed all 4 validation gates. PR #2 pending human review: https://github.com/yellowcircle-io/yc-react/pull/2
 
 ---
 
-## PENDING WORK (Uncommitted)
+## Agent Improvements Status
 
-### UI/UX Changes (LOCAL ONLY - not committed)
-- Global Theming: Header.jsx + Footer.jsx migrated to COLORS constants
-- UnityNOTES: Template system (canvasTemplates.js, TemplateSelector.jsx)
-- UnityNOTES: Branded modals + Canvas management in Settings
-- Settings added to global navigation
-- UnityNOTES node improvements (6 node components updated)
-- CSS constants + index.css global theme variables (449 lines added)
-
-### Agent Improvements Status
-- **System:** Autonomous UI/UX Improvement Pipeline (installed Jan 27)
-- **Last run:** Not yet executed (pilot pending)
-- **Branches pending review:** 0
+- **System:** Autonomous UI/UX Improvement Pipeline
+- **Last run:** Jan 28, 2026 — IMP-002 pilot (success)
+- **Branches pending review:** 1 (`sleepless/IMP-002-sticky-color-palette` — PR #2)
 - **Circuit breaker:** Closed (0/3 failures)
 - **Current round:** 1 (Visual Polish)
-- **Round progress:** 0/8 merged
+- **Round progress:** 0/8 merged, 1/8 in review
+- **Next eligible:** IMP-001 (Enhanced Node Hover States)
+- **Default model:** Sonnet (all Round 1 specs)
+- **Opus:** Requires approval (`/sleepless improve opus IMP-XXX`)
+- **Daily cap:** 5 executions/day
 - **Runner:** `scripts/improvement-runner.sh`
 - **Daemon command:** `/sleepless improve IMP-XXX`
 - **Backlog:** `.claude/improvement-backlog/BACKLOG_INDEX.json`
-- **Competitive analysis:** `dev-context/competitive-analysis/COMPETITIVE_MATRIX.json`
+
+---
+
+## PENDING WORK
 
 ### Pending Optimizations
 - [ ] Link Saver: Top row buttons not sticky on scroll
@@ -71,48 +78,39 @@ Reconnected Chromium and Firefox. Safari (webkit) was already running. Note: Pla
 ### Mobile Spacing Still Needed
 - [ ] Unity Hub, Journeys, Golden Unknown, Cath3dral, Thoughts, Why Your GTM Sucks
 
+### Planned (Not Started)
+- Competitive Analysis Phase 1 (Playwright visits: Milanote, ThreadDeck, Miro)
+- UnitySTUDIO Ad Collateral SCOPE doc
+- Global Theme System full implementation
+
 ---
 
-## RECENT COMMITS (Jan 24-27)
+## RECENT COMMITS (Jan 24-28)
 
 | Hash | Description |
 |------|-------------|
-| `82346f5` | UI: Add Settings to global navigation |
-| `d3146fd` | Feature: UnityNOTES branded modals + Canvas management in Settings |
-| `cb687e7` | Fix: Mobile spacing pattern - local isMobile state for 11 pages |
-| `36ef7a5` | UI: Mobile spacing fixes for 12 pages + pagesConfig update |
-| `ecf45b1` | Update: MSF with zoom fix session & pending optimizations |
-
----
-
-## PREVIOUS SESSION (Jan 24, 2026) - Mac Mini
-
-### Phase 1 & 2 Complete
-- Global Theming Phase 1: Header/Footer/6 node components migrated to constants
-- UnityNOTES Templates: 6 templates (Project Planning, Journey Map, Mind Map, Mood Board, Kanban, Brainstorm)
-- Settings navigation: Added to global nav, canvas management in Settings
-- Additional mobile spacing: 6 more pages fixed + pagesConfig.js updated
-
-### Key Files Created
-- `src/components/unity-plus/templates/canvasTemplates.js` (765 lines)
-- `src/components/unity-plus/templates/TemplateSelector.jsx` (489 lines)
-- `src/hooks/useThemedStyles.js`
-- `src/styles/constants.js` (updated)
+| `a4c4a79` | Fix: Post-success spec update on main, not on branch |
+| `7f2deb8` | Fix: Commit runner status changes before Claude CLI execution |
+| `ad8647b` | Fix: Generate branch name from spec filename when empty |
+| `3a9a179` | Chore: Reset stale branch/prUrl fields on all improvement specs |
+| `c696c98` | Fix: sign-shortcut.yml YAML syntax error - extract plist to script |
+| `ae6498a` | Fix: sign-shortcut ghost trigger - match push + skip at job level |
+| `af677dd` | Fix: CI workflow fixes for Firebase preview deploys + shortcut signing |
+| `2bae461` | Fix: 5 bugs found during improvement-runner testing |
+| `7d8cde2` | Fix: 11 blockers in improvement-runner + Slack review workflow |
+| `2a355d6` | Infra: Daemon hardening + global theming + docs overhaul |
 
 ---
 
 ## SESSION ARCHIVE
 
-Older session summaries (Jan 10-23, 2026) have been archived to keep this file under token limits. Key completed work from that period:
+Older session summaries (Jan 10-27) have been archived. Key completed work:
 
-- Link Archiver Sprints 1-4 (core MVP, organization, reader, Unity integration)
-- UnityNOTES Smooth Scrolling (all 4 phases)
-- Offline Reading PWA (all 4 phases)
-- Mobile Padding Audit (17 pages)
-- Save ID System & Vanity URLs
-- Architecture & Lint Cleanup (1135 -> 13 errors)
-- Sleepless Agent Phase 1-2 Optimizations
-- Link Sharing with Slack Notifications
-- Personal API Token System
-
-For full history, see git log: `git log --oneline --since="2026-01-10" --until="2026-01-24"`
+- Link Archiver Sprints 1-4, UnityNOTES Smooth Scrolling (all phases)
+- Offline Reading PWA, Mobile Padding Audit (17 pages)
+- Save ID System, Vanity URLs, Architecture/Lint Cleanup
+- Sleepless Agent Phases 1-2, Link Sharing with Slack
+- Global Theming Phase 1, UnityNOTES Templates, Settings Nav
+- Daemon hardening (DNS, watchdog, supervisor, launchd)
+- Improvement Runner Pipeline (9 bugs fixed, 4-gate validation)
+- Workstream Tiers documented in ACTIVE_SPRINT.md (Part E)

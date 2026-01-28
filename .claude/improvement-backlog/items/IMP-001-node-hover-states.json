@@ -5,6 +5,7 @@
   "status": "ready",
   "priority": 2,
   "complexity": "moderate",
+  "model": "sonnet",
   "blockedBy": [],
   "competitiveRationale": "Miro and Milanote have polished hover states with contextual toolbars and subtle elevation changes. UnityNOTES nodes have inconsistent hover behavior - some have hover shadows, others don't. Standardizing creates visual cohesion.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",

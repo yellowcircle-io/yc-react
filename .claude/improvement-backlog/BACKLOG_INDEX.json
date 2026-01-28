@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-01-27",
+  "lastUpdated": "2026-01-28",
   "currentRound": 1,
   "roundTheme": "Visual Polish",
   "circuitBreaker": {
@@ -13,9 +13,9 @@
       "theme": "Visual Polish",
       "total": 8,
       "merged": 0,
-      "review": 0,
+      "review": 1,
       "failed": 0,
-      "ready": 8,
+      "ready": 7,
       "gateRequirement": "6/8 merged",
       "gatePassed": false
     },
@@ -70,37 +70,43 @@
       "id": "IMP-003",
       "round": 1,
       "status": "ready",
-      "spec": "items/IMP-003-shadow-elevation-system.json"
+      "spec": "items/IMP-003-shadow-elevation-system.json",
+      "blockedBy": ["IMP-001"]
     },
     {
       "id": "IMP-004",
       "round": 1,
       "status": "ready",
-      "spec": "items/IMP-004-selection-state-refinement.json"
+      "spec": "items/IMP-004-selection-state-refinement.json",
+      "blockedBy": ["IMP-001"]
     },
     {
       "id": "IMP-005",
       "round": 1,
       "status": "ready",
-      "spec": "items/IMP-005-node-type-header-icons.json"
+      "spec": "items/IMP-005-node-type-header-icons.json",
+      "blockedBy": ["IMP-001"]
     },
     {
       "id": "IMP-006",
       "round": 1,
       "status": "ready",
-      "spec": "items/IMP-006-content-preview-truncation.json"
+      "spec": "items/IMP-006-content-preview-truncation.json",
+      "blockedBy": ["IMP-001"]
     },
     {
       "id": "IMP-007",
       "round": 1,
       "status": "ready",
-      "spec": "items/IMP-007-color-picker-grid.json"
+      "spec": "items/IMP-007-color-picker-grid.json",
+      "blockedBy": ["IMP-002"]
     },
     {
       "id": "IMP-008",
       "round": 1,
       "status": "ready",
-      "spec": "items/IMP-008-transition-timing.json"
+      "spec": "items/IMP-008-transition-timing.json",
+      "blockedBy": ["IMP-001"]
     }
   ]
 }

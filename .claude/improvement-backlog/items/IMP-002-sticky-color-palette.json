@@ -5,6 +5,7 @@
   "status": "review",
   "priority": 1,
   "complexity": "simple",
+  "model": "sonnet",
   "blockedBy": [],
   "competitiveRationale": "Miro offers 16 sticky note colors. UnityNOTES has 6. This is the simplest competitive gap to close.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",

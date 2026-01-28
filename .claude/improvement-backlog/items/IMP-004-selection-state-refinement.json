@@ -5,7 +5,8 @@
   "status": "ready",
   "priority": 4,
   "complexity": "simple",
-  "blockedBy": [],
+  "model": "sonnet",
+  "blockedBy": ["IMP-001"],
   "competitiveRationale": "Miro uses a distinct blue selection outline (#4262ff) with rounded corners. Our nodes use border changes for selection which can shift layout. Adding a consistent outline-based selection indicator improves visual feedback without affecting layout.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 5. Microinteractions & Motion",
@@ -42,5 +43,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": ""
+  "branch": "",
+  "prUrl": ""
 }
