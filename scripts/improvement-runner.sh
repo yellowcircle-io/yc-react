@@ -544,16 +544,8 @@ PRBODY
 
             if [ -n "${pr_url}" ] && echo "${pr_url}" | grep -q "http"; then
                 log_ok "PR created: ${pr_url}"
-                # Record PR URL in spec for approve/reject commands
-                python3 -c "
-import json
-with open('${spec_file}') as f:
-    data = json.load(f)
-data['prUrl'] = '${pr_url}'
-with open('${spec_file}', 'w') as f:
-    json.dump(data, f, indent=2)
-    f.write('\n')
-" 2>/dev/null
+                # Store PR URL for the caller to write on main (not on branch)
+                echo "${pr_url}" > /tmp/imp-pr-url.txt
             else
                 log_warn "PR creation returned: ${pr_url:-empty}"
             fi
@@ -1321,15 +1313,23 @@ print(len(data.get('attempts', [])))
 
             notify_slack "Improvement ${imp_id} (${title}) ready for review on branch ${branch_name}"
 
-            # Return to main and restore stash BEFORE updating spec/index
-            # (avoids stash conflict with modified spec files)
+            # Return to main: discard any uncommitted changes on branch first
+            # (commit_branch stores PR URL to /tmp, not to spec on branch)
+            git checkout -- . 2>/dev/null || true
             git checkout main 2>/dev/null
             if [ "${STASHED:-false}" = "true" ]; then
                 git stash pop 2>/dev/null || true
             fi
 
-            # NOW update spec and index (after stash is restored cleanly)
-            json_update_spec "${spec_file}" "{'status': 'review'}"
+            # Read PR URL stored by commit_branch
+            local pr_url_value=""
+            if [ -f /tmp/imp-pr-url.txt ]; then
+                pr_url_value="$(cat /tmp/imp-pr-url.txt)"
+                rm -f /tmp/imp-pr-url.txt
+            fi
+
+            # NOW update spec and index on main (clean working tree)
+            json_update_spec "${spec_file}" "{'status': 'review', 'branch': '${branch_name}', 'prUrl': '${pr_url_value}'}"
             sync_index_status "${imp_id}" "review"
 
             # Record successful attempt

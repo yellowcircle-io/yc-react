@@ -63,7 +63,7 @@
     {
       "id": "IMP-002",
       "round": 1,
-      "status": "running",
+      "status": "review",
       "spec": "items/IMP-002-sticky-color-palette.json"
     },
     {
