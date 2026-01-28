@@ -1,5 +1,5 @@
 # Firebase Hosting: Staging-first deploy pipeline
-# Push to main → deploy to staging → verify → promote to production
+# Push to main → build once → deploy staging → deploy production
 'on':
   push:
     branches:
@@ -8,8 +8,6 @@
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      build-success: ${{ steps.build.outcome }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,7 +32,6 @@ jobs:
           SKIP_RIPGREP_DOWNLOAD: true
 
       - name: Build project
-        id: build
         run: |
           echo "Starting build..."
           npm run build 2>&1 || {
@@ -73,8 +70,6 @@ jobs:
   deploy-staging:
     needs: build
     runs-on: ubuntu-latest
-    outputs:
-      staging-url: ${{ steps.deploy.outputs.details_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -95,19 +90,15 @@ jobs:
           channelId: staging
           expires: 7d
 
-      - name: Output staging URL
+      - name: Staging summary
         run: |
-          echo "## Staging Deploy Complete" >> $GITHUB_STEP_SUMMARY
-          echo "**Staging URL:** ${{ steps.deploy.outputs.details_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo ""
-          echo "Staging deployed: ${{ steps.deploy.outputs.details_url }}"
+          echo "## Staging Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deploy.outputs.details_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
     needs: [build, deploy-staging]
     runs-on: ubuntu-latest
-    # Only auto-promote if NOT a sleepless agent commit
-    if: ${{ !contains(github.event.head_commit.message, 'Agent:') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -126,21 +117,7 @@ jobs:
           channelId: live
           projectId: yellowcircle-app
 
-      - name: Output production URL
+      - name: Production summary
         run: |
-          echo "## Production Deploy Complete" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-
-  # Agent commits require manual promotion via workflow dispatch
-  notify-staging-only:
-    needs: [build, deploy-staging]
-    runs-on: ubuntu-latest
-    if: ${{ contains(github.event.head_commit.message, 'Agent:') }}
-    steps:
-      - name: Staging-only notification
-        run: |
-          echo "## Agent Commit - Staging Only" >> $GITHUB_STEP_SUMMARY
-          echo "This commit contains agent changes and was deployed to **staging only**." >> $GITHUB_STEP_SUMMARY
-          echo "**Staging URL:** ${{ needs.deploy-staging.outputs.staging-url }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To promote to production, run the **Promote to Production** workflow." >> $GITHUB_STEP_SUMMARY
+          echo "## Production Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
