@@ -302,6 +302,9 @@ const CommentNode = memo(({ id, data, selected }) => {
               fontSize: '13px',
               fontWeight: '600',
               color: '#111827',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}>
               {author}
             </div>
