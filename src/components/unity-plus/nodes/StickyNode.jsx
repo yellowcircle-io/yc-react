@@ -6,7 +6,7 @@ import { StickyNote, X, Star } from 'lucide-react';
  * StickyNode - Colored sticky note for quick notes
  *
  * Features:
- * - Multiple color options (yellow, pink, blue, green, orange, purple)
+ * - 16 color options including pastels and saturated tones
  * - Editable text content
  * - Draggable and resizable
  * - Delete button on hover
@@ -19,6 +19,16 @@ const STICKY_COLORS = {
   green: { bg: '#dcfce7', border: '#22c55e', text: '#14532d' },
   orange: { bg: '#ffedd5', border: '#f97316', text: '#9a3412' },
   purple: { bg: '#f3e8ff', border: '#a855f7', text: '#581c87' },
+  coral: { bg: '#ffe4e6', border: '#f43f5e', text: '#881337' },
+  teal: { bg: '#ccfbf1', border: '#14b8a6', text: '#134e4a' },
+  indigo: { bg: '#e0e7ff', border: '#6366f1', text: '#312e81' },
+  lime: { bg: '#ecfccb', border: '#84cc16', text: '#365314' },
+  rose: { bg: '#fce4ec', border: '#e91e63', text: '#880e4f' },
+  amber: { bg: '#fef9c3', border: '#f59e0b', text: '#78350f' },
+  cyan: { bg: '#cffafe', border: '#06b6d4', text: '#164e63' },
+  slate: { bg: '#e2e8f0', border: '#64748b', text: '#1e293b' },
+  mint: { bg: '#d1fae5', border: '#34d399', text: '#064e3b' },
+  lavender: { bg: '#ede9fe', border: '#8b5cf6', text: '#4c1d95' },
 };
 
 const StickyNode = memo(({ id, data, selected }) => {
@@ -234,7 +244,7 @@ const StickyNode = memo(({ id, data, selected }) => {
               padding: '8px',
               boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '6px',
               zIndex: 100,
             }}
