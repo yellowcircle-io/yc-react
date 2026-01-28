@@ -241,11 +241,11 @@ const StickyNode = memo(({ id, data, selected }) => {
               right: '-4px',
               backgroundColor: '#fff',
               borderRadius: '8px',
-              padding: '8px',
+              padding: '10px',
               boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '6px',
+              gap: '8px',
               zIndex: 100,
             }}
           >
@@ -259,17 +259,23 @@ const StickyNode = memo(({ id, data, selected }) => {
                 }}
                 className="nodrag nopan"
                 style={{
-                  width: '28px',
-                  height: '28px',
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '6px',
                   backgroundColor: colors.bg,
                   border: currentColor === colorKey ? `3px solid ${colors.border}` : '2px solid #e5e7eb',
                   cursor: 'pointer',
                   padding: 0,
-                  transition: 'transform 0.1s ease',
+                  transition: 'transform 0.1s ease, box-shadow 0.1s ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.15)';
+                  e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.border}`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
                 title={colorKey.charAt(0).toUpperCase() + colorKey.slice(1)}
               />
             ))}
