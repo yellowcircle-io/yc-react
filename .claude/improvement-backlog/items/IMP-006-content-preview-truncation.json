@@ -2,11 +2,13 @@
   "id": "IMP-006",
   "title": "Content Preview Truncation",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 6,
   "complexity": "simple",
   "model": "sonnet",
-  "blockedBy": ["IMP-001"],
+  "blockedBy": [
+    "IMP-001"
+  ],
   "competitiveRationale": "Milanote shows clean content previews with ellipsis truncation. Some of our nodes let content overflow or wrap awkwardly. Consistent truncation with ellipsis improves scanning speed and visual cleanliness.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 2. Enhanced Card Design",
@@ -39,6 +41,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-006-content-preview-truncation",
   "prUrl": ""
 }
