@@ -69,7 +69,7 @@
     {
       "id": "IMP-003",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-003-shadow-elevation-system.json",
       "blockedBy": [
         "IMP-001"
