@@ -2,11 +2,13 @@
   "id": "IMP-005",
   "title": "Node Type Header Icons",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 5,
   "complexity": "moderate",
   "model": "sonnet",
-  "blockedBy": ["IMP-001"],
+  "blockedBy": [
+    "IMP-001"
+  ],
   "competitiveRationale": "Milanote shows type-specific icons on card headers for quick visual identification. Our nodes have the icon imported (via lucide-react) but not all display it prominently. Adding a consistent small type icon in the top-left of each node improves scanning speed.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > 2. Enhanced Card Design",
@@ -44,6 +46,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-005-node-type-header-icons",
   "prUrl": ""
 }
