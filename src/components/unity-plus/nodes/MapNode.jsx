@@ -215,9 +215,10 @@ const MapNode = memo(({ id, data, selected }) => {
         boxShadow: selected
           ? '0 8px 24px rgba(34, 197, 94, 0.25)'
           : isHovered
-            ? '0 6px 16px rgba(0, 0, 0, 0.12)'
-            : '0 4px 8px rgba(0, 0, 0, 0.08)',
+            ? '0 8px 20px rgba(0, 0, 0, 0.15)'
+            : '0 4px 8px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.2s ease',
+        transform: isHovered && !isEditing ? 'scale(1.01)' : 'scale(1)',
       }}
     >
       {/* Connection handles */}

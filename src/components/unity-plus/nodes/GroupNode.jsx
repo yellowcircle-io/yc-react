@@ -124,7 +124,14 @@ const GroupNode = memo(({ id, data, selected }) => {
         position: 'relative',
         cursor: 'grab',
         transition: 'all 0.2s ease',
-        boxShadow: isDropTarget ? `0 0 20px ${colorScheme.border}40` : 'none',
+        boxShadow: isDropTarget
+          ? `0 0 20px ${colorScheme.border}40`
+          : selected
+            ? '0 8px 24px rgba(0, 0, 0, 0.2)'
+            : isHovered
+              ? '0 8px 20px rgba(0, 0, 0, 0.15)'
+              : '0 4px 8px rgba(0, 0, 0, 0.1)',
+        transform: isHovered ? 'scale(1.01)' : 'scale(1)',
       }}
     >
       {/* Connection handles */}
