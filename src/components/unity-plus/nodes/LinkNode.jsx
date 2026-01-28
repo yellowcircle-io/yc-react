@@ -39,11 +39,17 @@ const LinkNode = memo(({ id, data, selected }) => {
     starred = false,
     readProgress = 0,
     aiSummary = null,
+    linkType = null,
     onOpen,
     onStar,
     onArchive,
     onDelete,
   } = data;
+
+  // Generate domain initials for empty state
+  const domainInitials = domain && domain !== 'unknown'
+    ? domain.slice(0, 2).toUpperCase()
+    : null;
 
   // Determine color scheme
   const colorScheme = starred
@@ -164,8 +170,64 @@ const LinkNode = memo(({ id, data, selected }) => {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             borderBottom: `1px solid ${colorScheme.border}`,
+            position: 'relative',
           }}
-        />
+        >
+          {linkType && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                fontSize: '10px',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                color: '#fff',
+                textTransform: 'uppercase',
+                fontWeight: '600',
+              }}
+            >
+              {linkType}
+            </span>
+          )}
+        </div>
+      ) : domainInitials ? (
+        <div
+          style={{
+            width: '100%',
+            height: '60px',
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderBottom: `1px solid ${colorScheme.border}`,
+            color: '#fff',
+            fontSize: '20px',
+            fontWeight: '700',
+            position: 'relative',
+          }}
+        >
+          {domainInitials}
+          {linkType && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                fontSize: '10px',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                color: '#fff',
+                textTransform: 'uppercase',
+                fontWeight: '600',
+              }}
+            >
+              {linkType}
+            </span>
+          )}
+        </div>
       ) : (
         <div
           style={{
@@ -176,6 +238,7 @@ const LinkNode = memo(({ id, data, selected }) => {
             alignItems: 'center',
             justifyContent: 'center',
             borderBottom: `1px solid ${colorScheme.border}`,
+            position: 'relative',
           }}
         >
           <svg
@@ -190,6 +253,24 @@ const LinkNode = memo(({ id, data, selected }) => {
             <line x1="2" y1="12" x2="22" y2="12" />
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
+          {linkType && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                fontSize: '10px',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                color: '#fff',
+                textTransform: 'uppercase',
+                fontWeight: '600',
+              }}
+            >
+              {linkType}
+            </span>
+          )}
         </div>
       )}
 
