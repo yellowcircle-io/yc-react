@@ -658,8 +658,10 @@ If you see MAP journey nodes in the context, you can help optimize the email seq
         border: `2px solid ${baseStyles.borderColor}`,
         backgroundColor: baseStyles.backgroundColor,
         boxShadow: selected
-          ? `0 0 0 2px ${accentColor}40, 0 8px 24px rgba(0,0,0,0.15)`
-          : '0 4px 12px rgba(0,0,0,0.1)',
+          ? `0 0 0 2px ${accentColor}40, 0 8px 24px rgba(0,0,0,0.2)`
+          : isHovered
+            ? '0 8px 20px rgba(0,0,0,0.15)'
+            : '0 2px 8px rgba(0,0,0,0.08)',
         overflow: 'visible',
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
       }}
