@@ -2,7 +2,7 @@
   "id": "IMP-006",
   "title": "Content Preview Truncation (display text only)",
   "round": 1,
-  "status": "running",
+  "status": "review",
   "priority": 6,
   "complexity": "simple",
   "model": "sonnet",
@@ -67,10 +67,15 @@
       "timestamp": "2026-01-28T22:10:00Z",
       "result": "rejected",
       "reason": "Human rejected: Broke TodoNode scrolling (truncation on container instead of text spans), CodeBlock expand behavior (wrong truncation target), Comment expansion not persistent. Reverted. Spec rewritten: removed CodeBlockNode from scope, narrowed targets to specific text spans only, added explicit functional preservation criteria."
+    },
+    {
+      "timestamp": "2026-01-28T23:37:36Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
     }
   ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-006-content-preview-truncation",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/12"
 }

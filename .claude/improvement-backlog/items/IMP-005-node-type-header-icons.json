@@ -2,7 +2,7 @@
   "id": "IMP-005",
   "title": "Node Type Header Icons (3 nodes missing icons)",
   "round": 1,
-  "status": "running",
+  "status": "review",
   "priority": 5,
   "complexity": "simple",
   "model": "sonnet",
@@ -64,10 +64,15 @@
       "timestamp": "2026-01-28T22:10:00Z",
       "result": "rejected",
       "reason": "Human rejected: Added duplicate icons to nodes that already had header icons (TodoNode, CommentNode, ColorSwatchNode, MapNode, TripPlannerMapNode). Reverted. Spec rewritten to only target 3 nodes that lack icons: CodeBlockNode, GroupNode, LinkNode."
+    },
+    {
+      "timestamp": "2026-01-28T23:36:06Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
     }
   ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
   "branch": "sleepless/IMP-005-node-type-header-icons",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/11"
 }

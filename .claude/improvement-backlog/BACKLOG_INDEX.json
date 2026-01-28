@@ -86,7 +86,7 @@
     {
       "id": "IMP-005",
       "round": 1,
-      "status": "running",
+      "status": "review",
       "spec": "items/IMP-005-node-type-header-icons.json",
       "blockedBy": [
         "IMP-001"
@@ -95,7 +95,7 @@
     {
       "id": "IMP-006",
       "round": 1,
-      "status": "running",
+      "status": "review",
       "spec": "items/IMP-006-content-preview-truncation.json",
       "blockedBy": [
         "IMP-001"
