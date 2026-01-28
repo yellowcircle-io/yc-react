@@ -2,7 +2,7 @@
   "id": "IMP-006",
   "title": "Content Preview Truncation (display text only)",
   "round": 1,
-  "status": "ready",
+  "status": "running",
   "priority": 6,
   "complexity": "simple",
   "model": "sonnet",
@@ -15,16 +15,16 @@
   "objective": "Add single-line text truncation (overflow: hidden, textOverflow: ellipsis, whiteSpace: nowrap) to ONLY these specific span elements: (1) TodoNode: the item text span in display mode (not editing) at approximately line 272-283, (2) CommentNode: the author name div at approximately line 301-306. Do NOT add multi-line truncation (WebkitLineClamp). Do NOT modify any scrollable containers, expand/collapse areas, or edit mode elements.",
   "existingState": {
     "TodoNode": {
-      "scrollContainer": "div with maxHeight 200px and overflowY auto (lines 220-226) — DO NOT MODIFY",
-      "itemTextSpan": "span at lines 272-283 showing item.text — THIS is the truncation target",
-      "editInput": "input at lines 252-269 — DO NOT MODIFY",
-      "addItemForm": "form at lines 309-340 — DO NOT MODIFY"
+      "scrollContainer": "div with maxHeight 200px and overflowY auto (lines 220-226) \u2014 DO NOT MODIFY",
+      "itemTextSpan": "span at lines 272-283 showing item.text \u2014 THIS is the truncation target",
+      "editInput": "input at lines 252-269 \u2014 DO NOT MODIFY",
+      "addItemForm": "form at lines 309-340 \u2014 DO NOT MODIFY"
     },
     "CommentNode": {
-      "contentBody": "div at lines 451-467 with whiteSpace pre-wrap and wordBreak break-word — DO NOT MODIFY (this is the main content area that users need to read fully)",
-      "authorName": "div at lines 301-306 showing author name — THIS is the truncation target (long names should truncate)",
-      "editTextarea": "textarea at lines 321-358 — DO NOT MODIFY",
-      "mentionDropdown": "div at lines 362-436 — DO NOT MODIFY"
+      "contentBody": "div at lines 451-467 with whiteSpace pre-wrap and wordBreak break-word \u2014 DO NOT MODIFY (this is the main content area that users need to read fully)",
+      "authorName": "div at lines 301-306 showing author name \u2014 THIS is the truncation target (long names should truncate)",
+      "editTextarea": "textarea at lines 321-358 \u2014 DO NOT MODIFY",
+      "mentionDropdown": "div at lines 362-436 \u2014 DO NOT MODIFY"
     }
   },
   "allowedFiles": [
@@ -53,7 +53,7 @@
     "CommentNode: double-click edit mode still works",
     "CommentNode: @mention autocomplete still works",
     "ONLY TodoNode.jsx and CommentNode.jsx are modified",
-    "CodeBlockNode.jsx is NOT modified (removed from scope — its content needs expand/collapse, not truncation)",
+    "CodeBlockNode.jsx is NOT modified (removed from scope \u2014 its content needs expand/collapse, not truncation)",
     "npm run lint passes",
     "npm run build succeeds"
   ],
@@ -71,6 +71,6 @@
   ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
+  "branch": "sleepless/IMP-006-content-preview-truncation",
   "prUrl": ""
 }

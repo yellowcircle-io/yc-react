@@ -95,7 +95,7 @@
     {
       "id": "IMP-006",
       "round": 1,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-006-content-preview-truncation.json",
       "blockedBy": [
         "IMP-001"
