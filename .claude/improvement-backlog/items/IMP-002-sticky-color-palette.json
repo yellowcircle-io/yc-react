@@ -2,7 +2,7 @@
   "id": "IMP-002",
   "title": "16-Color Sticky Note Palette",
   "round": 1,
-  "status": "ready",
+  "status": "review",
   "priority": 1,
   "complexity": "simple",
   "blockedBy": [],
@@ -85,9 +85,15 @@
       "text": "#4c1d95"
     }
   },
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-28T07:28:26Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-27",
-  "branch": "",
-  "prUrl": ""
+  "branch": "sleepless/IMP-002-sticky-color-palette",
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/2"
 }
