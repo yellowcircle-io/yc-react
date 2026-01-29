@@ -17,6 +17,8 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
   const [copiedIndex, setCopiedIndex] = useState(-1);
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [customHex, setCustomHex] = useState('#');
+  const [exportFormat, setExportFormat] = useState('hex');
+  const [exportCopied, setExportCopied] = useState(false);
 
   const title = data.title || 'Color Palette';
   const colors = data.colors || ['#fbbf24', '#3b82f6', '#22c55e', '#ef4444', '#8b5cf6'];
@@ -68,6 +70,30 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
     if (data.onUpdateColors && colors.length > 1) {
       const newColors = colors.filter((_, i) => i !== index);
       data.onUpdateColors(id, newColors);
+    }
+  };
+
+  const formatExport = (colorsArray, format) => {
+    switch (format) {
+      case 'hex':
+        return colorsArray.map(c => c.toUpperCase()).join(', ');
+      case 'css':
+        return ':root {\n' + colorsArray.map((c, i) => `  --color-${i + 1}: ${c};`).join('\n') + '\n}';
+      case 'json':
+        return JSON.stringify(colorsArray, null, 2);
+      default:
+        return colorsArray.join(', ');
+    }
+  };
+
+  const handleCopyAll = async () => {
+    try {
+      const formatted = formatExport(colors, exportFormat);
+      await navigator.clipboard.writeText(formatted);
+      setExportCopied(true);
+      setTimeout(() => setExportCopied(false), 1500);
+    } catch (err) {
+      console.warn('Failed to copy colors:', err);
     }
   };
 
@@ -264,6 +290,59 @@ const ColorSwatchNode = memo(({ id, data, selected }) => {
             </div>
           );
         })}
+      </div>
+
+      {/* Export section */}
+      <div className="nodrag" style={{
+        marginBottom: '12px',
+        padding: '8px',
+        backgroundColor: '#f9fafb',
+        border: '1px solid #e5e7eb',
+        borderRadius: '6px',
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: '6px',
+          alignItems: 'center',
+        }}>
+          <select
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '4px 6px',
+              fontSize: '11px',
+              fontWeight: '600',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              backgroundColor: '#fff',
+              color: '#374151',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            <option value="hex">Hex List</option>
+            <option value="css">CSS Variables</option>
+            <option value="json">JSON Array</option>
+          </select>
+          <button
+            onClick={handleCopyAll}
+            style={{
+              padding: '4px 12px',
+              fontSize: '11px',
+              fontWeight: '600',
+              backgroundColor: exportCopied ? '#22c55e' : '#fbbf24',
+              color: '#000',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {exportCopied ? '✓ Copied' : 'Copy All'}
+          </button>
+        </div>
       </div>
 
       {/* Add color section */}
