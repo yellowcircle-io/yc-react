@@ -140,7 +140,7 @@
     {
       "id": "IMP-012",
       "round": 2,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-012-comment-thread-indicators.json"
     },
     {

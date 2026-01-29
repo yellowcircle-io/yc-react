@@ -2,7 +2,7 @@
   "id": "IMP-012",
   "title": "Comment Node Thread Indicators",
   "round": 2,
-  "status": "ready",
+  "status": "running",
   "priority": 4,
   "complexity": "simple",
   "model": "sonnet",
@@ -10,13 +10,13 @@
   "competitiveRationale": "ThreadDeck and Miro show reply counts, thread status, and conversation depth indicators on comment elements. Our CommentNode is a single-comment bubble with no thread awareness. Adding display-only thread indicators (from data props) closes this gap without requiring backend changes.",
   "relatedScope": "dev-context/SCOPE_UNITYNOTES_UIUX_IMPROVEMENTS.md",
   "scopeSection": "Feature Details > Content Type Richness",
-  "objective": "Add two display-only thread indicators to CommentNode: (1) A reply count pill below the comment body that shows 'N replies' when data.replyCount > 0 (small gray pill with MessageSquare icon, e.g., '3 replies'). (2) A thread status dot next to the author name that shows resolved (green) or open (orange) when data.threadStatus is provided. Both are purely visual — they read from data props and display indicators. No new callbacks or data mutations needed.",
+  "objective": "Add two display-only thread indicators to CommentNode: (1) A reply count pill below the comment body that shows 'N replies' when data.replyCount > 0 (small gray pill with MessageSquare icon, e.g., '3 replies'). (2) A thread status dot next to the author name that shows resolved (green) or open (orange) when data.threadStatus is provided. Both are purely visual \u2014 they read from data props and display indicators. No new callbacks or data mutations needed.",
   "existingState": {
     "authorHeader": "Lines 280-316: Author avatar, name, timestamp, MessageSquare icon",
-    "contentBody": "Lines 451-467: Comment text with whiteSpace pre-wrap — DO NOT MODIFY content rendering",
-    "editTextarea": "Lines 319-358: Edit mode textarea — DO NOT MODIFY",
-    "mentionDropdown": "Lines 362-436: @mention autocomplete — DO NOT MODIFY",
-    "speechBubbleTail": "Lines 471-490: CSS triangle tail — DO NOT MODIFY positioning"
+    "contentBody": "Lines 451-467: Comment text with whiteSpace pre-wrap \u2014 DO NOT MODIFY content rendering",
+    "editTextarea": "Lines 319-358: Edit mode textarea \u2014 DO NOT MODIFY",
+    "mentionDropdown": "Lines 362-436: @mention autocomplete \u2014 DO NOT MODIFY",
+    "speechBubbleTail": "Lines 471-490: CSS triangle tail \u2014 DO NOT MODIFY positioning"
   },
   "allowedFiles": [
     "src/components/unity-plus/nodes/CommentNode.jsx"
@@ -49,6 +49,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
-  "branch": "",
+  "branch": "sleepless/IMP-012-comment-thread-indicators",
   "prUrl": ""
 }
