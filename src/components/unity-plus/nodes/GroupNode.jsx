@@ -1,6 +1,6 @@
 import React, { memo, useState, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Layers, X, Star } from 'lucide-react';
+import { Layers, X, Star, Minimize2 } from 'lucide-react';
 
 /**
  * GroupNode - Container for grouping nodes
@@ -441,6 +441,46 @@ const GroupNode = memo(({ id, data, selected }) => {
             Drop to add to group
           </span>
         </div>
+      )}
+
+      {/* Auto-size button */}
+      {(isHovered || selected) && data.onAutoSize && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onAutoSize(id);
+          }}
+          className="nodrag"
+          style={{
+            position: 'absolute',
+            bottom: '-12px',
+            right: '50px',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            backgroundColor: '#ffffff',
+            border: '1px solid #d1d5db',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.15s ease',
+            zIndex: 10,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#f3f4f6';
+            e.currentTarget.style.borderColor = '#9ca3af';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#ffffff';
+            e.currentTarget.style.borderColor = '#d1d5db';
+          }}
+          title="Auto-size to content"
+        >
+          <Minimize2 size={14} style={{ color: '#6b7280' }} />
+        </button>
       )}
 
       {/* Corner indicator with child count */}
