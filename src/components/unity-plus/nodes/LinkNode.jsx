@@ -1,5 +1,6 @@
 import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { Link2 } from 'lucide-react';
 
 /**
  * LinkNode - Saved link card for Unity canvas
@@ -285,6 +286,9 @@ const LinkNode = memo(({ id, data, selected }) => {
             marginBottom: '6px',
           }}
         >
+          <div className="unity-node-header-icon" style={{ color: colorScheme.accent }}>
+            <Link2 size={20} strokeWidth={2} />
+          </div>
           {favicon && (
             <img
               src={favicon}
