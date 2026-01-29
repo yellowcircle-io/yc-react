@@ -128,7 +128,7 @@
     {
       "id": "IMP-010",
       "round": 2,
-      "status": "running",
+      "status": "failed",
       "spec": "items/IMP-010-code-block-syntax-themes.json"
     },
     {

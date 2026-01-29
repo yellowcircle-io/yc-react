@@ -2,7 +2,7 @@
   "id": "IMP-010",
   "title": "Code Block Syntax Theme Options",
   "round": 2,
-  "status": "running",
+  "status": "ready",
   "priority": 2,
   "complexity": "moderate",
   "model": "sonnet",
@@ -29,7 +29,7 @@
     "src/components/unity-plus/TextNoteNode.jsx",
     "src/pages/UnityNotesPage.jsx"
   ],
-  "maxLinesChanged": 120,
+  "maxLinesChanged": 200,
   "pattern": {
     "description": "Add a THEMES constant and theme selector, applying theme colors throughout the component",
     "example": "const THEMES = { dark: { bg: '#1e1e1e', text: '#d4d4d8', keyword: '#c084fc', ... }, light: { bg: '#ffffff', text: '#1e1e1e', keyword: '#7c3aed', ... }, highContrast: { bg: '#000000', text: '#ffffff', keyword: '#ff79c6', ... } };",
