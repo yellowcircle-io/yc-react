@@ -2,7 +2,7 @@
   "id": "IMP-013",
   "title": "Group Node Auto-Size Button",
   "round": 2,
-  "status": "running",
+  "status": "review",
   "priority": 5,
   "complexity": "simple",
   "model": "sonnet",
@@ -48,9 +48,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-29T03:43:48Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
   "branch": "sleepless/IMP-013-group-node-auto-size",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/16"
 }

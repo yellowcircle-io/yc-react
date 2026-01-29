@@ -146,7 +146,7 @@
     {
       "id": "IMP-013",
       "round": 2,
-      "status": "running",
+      "status": "review",
       "spec": "items/IMP-013-group-node-auto-size.json"
     },
     {
