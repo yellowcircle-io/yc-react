@@ -2,7 +2,7 @@
   "id": "IMP-013",
   "title": "Group Node Auto-Size Button",
   "round": 2,
-  "status": "ready",
+  "status": "running",
   "priority": 5,
   "complexity": "simple",
   "model": "sonnet",
