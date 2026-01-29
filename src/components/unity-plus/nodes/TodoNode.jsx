@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { CheckSquare, X, Star } from 'lucide-react';
+import { CheckSquare, X, Star, Check } from 'lucide-react';
 
 /**
  * TodoNode - Checklist/task list node
@@ -202,9 +202,10 @@ const TodoNode = memo(({ id, data, selected }) => {
 
       {/* Progress bar */}
       <div style={{
-        height: '4px',
+        position: 'relative',
+        height: '8px',
         backgroundColor: '#e5e7eb',
-        borderRadius: '2px',
+        borderRadius: '4px',
         marginBottom: '12px',
         overflow: 'hidden',
       }}>
@@ -213,7 +214,40 @@ const TodoNode = memo(({ id, data, selected }) => {
           width: `${progress}%`,
           backgroundColor: '#22c55e',
           transition: 'width 0.3s ease-out',
-        }} />
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {progress > 25 && (
+            <span style={{
+              fontSize: '7px',
+              color: '#fff',
+              fontWeight: '700',
+              lineHeight: 1,
+            }}>
+              {Math.round(progress)}%
+            </span>
+          )}
+        </div>
+        {progress === 100 && (
+          <div style={{
+            position: 'absolute',
+            right: '-8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '16px',
+            height: '16px',
+            backgroundColor: '#22c55e',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px solid #fff',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          }}>
+            <Check size={10} color="#fff" strokeWidth={3} />
+          </div>
+        )}
       </div>
 
       {/* Todo items */}
