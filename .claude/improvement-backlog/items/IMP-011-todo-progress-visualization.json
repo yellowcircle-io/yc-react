@@ -2,7 +2,7 @@
   "id": "IMP-011",
   "title": "Todo Node Progress Visualization",
   "round": 2,
-  "status": "running",
+  "status": "review",
   "priority": 3,
   "complexity": "moderate",
   "model": "sonnet",
@@ -45,9 +45,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-29T03:38:57Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
   "branch": "sleepless/IMP-011-todo-progress-visualization",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/13"
 }

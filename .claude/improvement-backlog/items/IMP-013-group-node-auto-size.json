@@ -2,7 +2,7 @@
   "id": "IMP-013",
   "title": "Group Node Auto-Size Button",
   "round": 2,
-  "status": "running",
+  "status": "ready",
   "priority": 5,
   "complexity": "simple",
   "model": "sonnet",
@@ -28,7 +28,7 @@
     "src/components/unity-plus/TextNoteNode.jsx",
     "src/pages/UnityNotesPage.jsx"
   ],
-  "maxLinesChanged": 40,
+  "maxLinesChanged": 60,
   "pattern": {
     "description": "Add a hover-visible action button following the existing delete/star button pattern",
     "example": "{(isHovered || selected) && data.onAutoSize && <button onClick={(e) => { e.stopPropagation(); data.onAutoSize(id); }} className=\"nodrag\" style={{ position: 'absolute', bottom: '-12px', right: '24px', ... }} title=\"Auto-size to content\"><Minimize2 size={14} /></button>}",
