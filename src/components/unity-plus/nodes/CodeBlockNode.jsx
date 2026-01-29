@@ -7,11 +7,47 @@ import { X, Star, Code } from 'lucide-react';
  *
  * Features:
  * - Language selector
+ * - Theme selector (Dark, Light, High Contrast)
  * - Copy to clipboard
  * - Basic syntax highlighting (keywords, strings, comments)
  * - Line numbers
- * - Dark theme
  */
+
+const THEMES = {
+  dark: {
+    backgroundColor: '#1e1e1e',
+    textColor: '#e5e7eb',
+    keywordColor: '#c084fc',
+    stringColor: '#22c55e',
+    commentColor: '#6b7280',
+    numberColor: '#f97316',
+    lineNumberColor: '#6b7280',
+    headerBg: '#2d2d2d',
+    headerTextColor: '#9ca3af',
+  },
+  light: {
+    backgroundColor: '#ffffff',
+    textColor: '#1e1e1e',
+    keywordColor: '#7c3aed',
+    stringColor: '#16a34a',
+    commentColor: '#6b7280',
+    numberColor: '#ea580c',
+    lineNumberColor: '#9ca3af',
+    headerBg: '#f3f4f6',
+    headerTextColor: '#6b7280',
+  },
+  highContrast: {
+    backgroundColor: '#000000',
+    textColor: '#ffffff',
+    keywordColor: '#ff79c6',
+    stringColor: '#f1fa8c',
+    commentColor: '#6272a4',
+    numberColor: '#bd93f9',
+    lineNumberColor: '#8be9fd',
+    headerBg: '#1a1a1a',
+    headerTextColor: '#8be9fd',
+  },
+};
 
 const LANGUAGES = [
   { id: 'javascript', label: 'JavaScript', ext: 'js' },
@@ -169,8 +205,11 @@ const CodeBlockNode = memo(({ id, data, selected }) => {
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(data.language || 'javascript');
   const [showPreview, setShowPreview] = useState(false);
+  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState(data.theme || 'dark');
 
   const language = currentLanguage;
+  const theme = THEMES[currentTheme];
 
   // Check if language supports preview
   const supportsPreview = ['html', 'css', 'javascript'].includes(language);
@@ -182,6 +221,14 @@ const CodeBlockNode = memo(({ id, data, selected }) => {
     setShowLangDropdown(false);
     if (data.onLanguageChange) {
       data.onLanguageChange(id, langId);
+    }
+  };
+
+  const handleThemeChange = (themeId) => {
+    setCurrentTheme(themeId);
+    setShowThemeDropdown(false);
+    if (data.onThemeChange) {
+      data.onThemeChange(id, themeId);
     }
   };
 
@@ -274,7 +321,7 @@ ${code}
     }
   };
 
-  // Very basic syntax highlighting
+  // Very basic syntax highlighting with theme support
   const highlightCode = (text) => {
     const patterns = SYNTAX_PATTERNS[language];
     if (!patterns) return text;
@@ -285,12 +332,12 @@ ${code}
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    // Apply highlighting (order matters)
+    // Apply highlighting (order matters) with current theme colors
     highlighted = highlighted
-      .replace(patterns.comments || /(?!)/g, '<span style="color: #6b7280;">$&</span>')
-      .replace(patterns.strings || /(?!)/g, '<span style="color: #22c55e;">$&</span>')
-      .replace(patterns.keywords || /(?!)/g, '<span style="color: #c084fc;">$&</span>')
-      .replace(patterns.numbers || /(?!)/g, '<span style="color: #f97316;">$&</span>');
+      .replace(patterns.comments || /(?!)/g, `<span style="color: ${theme.commentColor};">$&</span>`)
+      .replace(patterns.strings || /(?!)/g, `<span style="color: ${theme.stringColor};">$&</span>`)
+      .replace(patterns.keywords || /(?!)/g, `<span style="color: ${theme.keywordColor};">$&</span>`)
+      .replace(patterns.numbers || /(?!)/g, `<span style="color: ${theme.numberColor};">$&</span>`);
 
     return highlighted;
   };
@@ -303,7 +350,7 @@ ${code}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         width: '320px',
-        backgroundColor: '#1e1e1e',
+        backgroundColor: theme.backgroundColor,
         border: `2px solid ${selected ? '#fbbf24' : '#3f3f46'}`,
         borderRadius: '8px',
         overflow: 'hidden',
@@ -381,7 +428,7 @@ ${code}
         alignItems: 'center',
         gap: '8px',
         padding: '8px 12px',
-        backgroundColor: '#2d2d2d',
+        backgroundColor: theme.headerBg,
         borderBottom: '1px solid #3f3f46',
       }}>
         {/* Type icon */}
@@ -399,7 +446,7 @@ ${code}
         <span style={{
           flex: 1,
           fontSize: '11px',
-          color: '#9ca3af',
+          color: theme.headerTextColor,
           textAlign: 'center',
         }}>
           {filename || `snippet.${langInfo.ext}`}
@@ -589,7 +636,7 @@ ${code}
               fontFamily: "'Fira Code', 'Consolas', monospace",
               fontSize: '12px',
               lineHeight: '1.6',
-              color: '#e5e7eb',
+              color: theme.textColor,
               tabSize: 2,
             }}
           />
@@ -603,7 +650,7 @@ ${code}
               fontFamily: "'Fira Code', 'Consolas', monospace",
               fontSize: '12px',
               lineHeight: '1.6',
-              color: '#6b7280',
+              color: theme.lineNumberColor,
               userSelect: 'none',
             }}>
               {codeLines.map((_, i) => (
@@ -617,7 +664,7 @@ ${code}
               fontFamily: "'Fira Code', 'Consolas', monospace",
               fontSize: '12px',
               lineHeight: '1.6',
-              color: '#e5e7eb',
+              color: theme.textColor,
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               flex: 1,
@@ -633,16 +680,19 @@ ${code}
         )}
       </div>
 
-      {/* Language selector */}
+      {/* Language & Theme selectors */}
       <div
         className="nodrag"
         style={{
           padding: '4px 12px',
-          backgroundColor: '#2d2d2d',
+          backgroundColor: theme.headerBg,
           borderTop: '1px solid #3f3f46',
           fontSize: '10px',
-          color: '#6b7280',
+          color: theme.headerTextColor,
           position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
         }}
       >
         <button
@@ -653,7 +703,7 @@ ${code}
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#9ca3af',
+            color: theme.headerTextColor,
             fontSize: '10px',
             fontWeight: '600',
             cursor: 'pointer',
@@ -670,10 +720,43 @@ ${code}
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#9ca3af';
+            e.currentTarget.style.color = theme.headerTextColor;
           }}
         >
           {langInfo.label}
+          <span style={{ fontSize: '8px' }}>▼</span>
+        </button>
+
+        {/* Theme selector button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowThemeDropdown(!showThemeDropdown);
+          }}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: theme.headerTextColor,
+            fontSize: '10px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#3f3f46';
+            e.currentTarget.style.color = '#fbbf24';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = theme.headerTextColor;
+          }}
+        >
+          {currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1).replace(/([A-Z])/g, ' $1')}
           <span style={{ fontSize: '8px' }}>▼</span>
         </button>
 
@@ -730,6 +813,62 @@ ${code}
                 }}
               >
                 {lang.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Theme dropdown */}
+        {showThemeDropdown && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '100px',
+              backgroundColor: '#1e1e1e',
+              border: '1px solid #3f3f46',
+              borderRadius: '6px',
+              padding: '4px',
+              zIndex: 50,
+              boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.3)',
+              minWidth: '140px',
+            }}
+          >
+            {Object.keys(THEMES).map((themeId) => (
+              <button
+                key={themeId}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleThemeChange(themeId);
+                }}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '6px 10px',
+                  backgroundColor: themeId === currentTheme ? '#3f3f46' : 'transparent',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: themeId === currentTheme ? '#fbbf24' : '#9ca3af',
+                  fontSize: '11px',
+                  fontWeight: themeId === currentTheme ? '600' : '400',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (themeId !== currentTheme) {
+                    e.currentTarget.style.backgroundColor = '#2d2d2d';
+                    e.currentTarget.style.color = '#e5e7eb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (themeId !== currentTheme) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#9ca3af';
+                  }
+                }}
+              >
+                {themeId.charAt(0).toUpperCase() + themeId.slice(1).replace(/([A-Z])/g, ' $1')}
               </button>
             ))}
           </div>

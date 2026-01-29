@@ -128,31 +128,31 @@
     {
       "id": "IMP-010",
       "round": 2,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-010-code-block-syntax-themes.json"
     },
     {
       "id": "IMP-011",
       "round": 2,
-      "status": "ready",
+      "status": "review",
       "spec": "items/IMP-011-todo-progress-visualization.json"
     },
     {
       "id": "IMP-012",
       "round": 2,
-      "status": "ready",
+      "status": "review",
       "spec": "items/IMP-012-comment-thread-indicators.json"
     },
     {
       "id": "IMP-013",
       "round": 2,
-      "status": "ready",
+      "status": "review",
       "spec": "items/IMP-013-group-node-auto-size.json"
     },
     {
       "id": "IMP-014",
       "round": 2,
-      "status": "ready",
+      "status": "review",
       "spec": "items/IMP-014-color-swatch-export.json"
     }
   ]
