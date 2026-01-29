@@ -2,7 +2,7 @@
   "id": "IMP-014",
   "title": "Color Swatch Export Options",
   "round": 2,
-  "status": "running",
+  "status": "review",
   "priority": 6,
   "complexity": "moderate",
   "model": "sonnet",
@@ -49,9 +49,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-29T03:42:29Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
   "branch": "sleepless/IMP-014-color-swatch-export",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/15"
 }
