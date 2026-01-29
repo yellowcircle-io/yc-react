@@ -13,7 +13,7 @@
   "objective": "Add a theme system to CodeBlockNode with 3 presets: Dark (current default), Light, and High Contrast. (1) Define a THEMES constant object with 3 entries, each containing: backgroundColor, textColor, keywordColor, stringColor, commentColor, numberColor, lineNumberColor, headerBg, headerTextColor. (2) Add a theme selector dropdown next to the existing language selector in the header. (3) Store the selected theme via data.theme prop and data.onThemeChange(id, theme) callback. (4) Apply theme colors to all syntax-highlighted elements and the container background.",
   "existingState": {
     "languages": "Lines 16-38: 21 languages in LANGUAGES array",
-    "syntaxColors": "Lines 41-162: SYNTAX_PATTERNS with fixed colors — keywords #c084fc, strings #22c55e, comments #6b7280, numbers #f97316",
+    "syntaxColors": "Lines 41-162: SYNTAX_PATTERNS with fixed colors \u2014 keywords #c084fc, strings #22c55e, comments #6b7280, numbers #f97316",
     "containerBg": "#1e1e1e dark background",
     "languageSelector": "Lines 644-733: Dropdown for language selection",
     "copyButton": "Lines 443-465: Copy to clipboard",
@@ -29,11 +29,11 @@
     "src/components/unity-plus/TextNoteNode.jsx",
     "src/pages/UnityNotesPage.jsx"
   ],
-  "maxLinesChanged": 120,
+  "maxLinesChanged": 200,
   "pattern": {
     "description": "Add a THEMES constant and theme selector, applying theme colors throughout the component",
     "example": "const THEMES = { dark: { bg: '#1e1e1e', text: '#d4d4d8', keyword: '#c084fc', ... }, light: { bg: '#ffffff', text: '#1e1e1e', keyword: '#7c3aed', ... }, highContrast: { bg: '#000000', text: '#ffffff', keyword: '#ff79c6', ... } };",
-    "notes": "The theme selector should be a small dropdown styled like the existing language selector. Place it after the language selector in the header bar. Use data.theme (default 'dark') for the selected theme. The SYNTAX_PATTERNS colors must be overridden by the active theme — either modify the highlight function to accept colors, or apply theme colors at the JSX level. Keep the existing SYNTAX_PATTERNS structure intact. Light theme: white bg, dark text, purple keywords, green strings, gray comments. High Contrast: black bg, white text, pink keywords, yellow strings, cyan comments."
+    "notes": "The theme selector should be a small dropdown styled like the existing language selector. Place it after the language selector in the header bar. Use data.theme (default 'dark') for the selected theme. The SYNTAX_PATTERNS colors must be overridden by the active theme \u2014 either modify the highlight function to accept colors, or apply theme colors at the JSX level. Keep the existing SYNTAX_PATTERNS structure intact. Light theme: white bg, dark text, purple keywords, green strings, gray comments. High Contrast: black bg, white text, pink keywords, yellow strings, cyan comments."
   },
   "acceptanceCriteria": [
     "3 theme presets available: Dark (default), Light, High Contrast",
@@ -53,6 +53,6 @@
   "attempts": [],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
-  "branch": "",
+  "branch": "sleepless/IMP-010-code-block-syntax-themes",
   "prUrl": ""
 }
