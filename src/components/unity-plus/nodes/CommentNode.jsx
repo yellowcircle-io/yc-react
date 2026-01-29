@@ -305,8 +305,23 @@ const CommentNode = memo(({ id, data, selected }) => {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}>
               {author}
+              {data.threadStatus && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: data.threadStatus === 'resolved' ? '#22c55e' : '#f59e0b',
+                  }}
+                  title={data.threadStatus === 'resolved' ? 'Resolved' : 'Open'}
+                />
+              )}
             </div>
             <div style={{
               fontSize: '10px',
@@ -466,6 +481,21 @@ const CommentNode = memo(({ id, data, selected }) => {
                 Double-click to add comment...
               </span>
             )}
+          </div>
+        )}
+
+        {/* Reply count indicator */}
+        {!isEditing && data.replyCount > 0 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            marginTop: '8px',
+            fontSize: '11px',
+            color: '#6b7280',
+          }}>
+            <MessageSquare size={12} />
+            <span>{data.replyCount} {data.replyCount === 1 ? 'reply' : 'replies'}</span>
           </div>
         )}
       </div>
