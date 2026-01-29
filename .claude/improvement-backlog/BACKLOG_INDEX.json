@@ -128,19 +128,19 @@
     {
       "id": "IMP-010",
       "round": 2,
-      "status": "ready",
+      "status": "failed",
       "spec": "items/IMP-010-code-block-syntax-themes.json"
     },
     {
       "id": "IMP-011",
       "round": 2,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-011-todo-progress-visualization.json"
     },
     {
       "id": "IMP-012",
       "round": 2,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-012-comment-thread-indicators.json"
     },
     {
