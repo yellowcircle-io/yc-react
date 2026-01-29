@@ -2,7 +2,7 @@
   "id": "IMP-010",
   "title": "Code Block Syntax Theme Options",
   "round": 2,
-  "status": "running",
+  "status": "review",
   "priority": 2,
   "complexity": "moderate",
   "model": "sonnet",
@@ -50,9 +50,15 @@
     "npm run lint passes",
     "npm run build succeeds"
   ],
-  "attempts": [],
+  "attempts": [
+    {
+      "timestamp": "2026-01-29T03:44:57Z",
+      "result": "success",
+      "reason": "All 4 gates passed"
+    }
+  ],
   "maxAttempts": 3,
   "createdAt": "2026-01-28",
   "branch": "sleepless/IMP-010-code-block-syntax-themes",
-  "prUrl": ""
+  "prUrl": "https://github.com/yellowcircle-io/yc-react/pull/17"
 }
