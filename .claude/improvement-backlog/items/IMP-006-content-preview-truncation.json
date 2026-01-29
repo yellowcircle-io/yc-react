@@ -2,7 +2,7 @@
   "id": "IMP-006",
   "title": "Content Preview Truncation (display text only)",
   "round": 1,
-  "status": "review",
+  "status": "merged",
   "priority": 6,
   "complexity": "simple",
   "model": "sonnet",

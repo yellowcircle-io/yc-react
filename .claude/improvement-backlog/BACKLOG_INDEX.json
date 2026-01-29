@@ -12,20 +12,20 @@
     "round1": {
       "theme": "Visual Polish",
       "total": 8,
-      "merged": 6,
+      "merged": 8,
       "review": 0,
       "failed": 0,
-      "ready": 2,
+      "ready": 0,
       "gateRequirement": "6/8 merged",
       "gatePassed": true
     },
     "round2": {
       "theme": "Content Richness",
       "total": 6,
-      "merged": 0,
+      "merged": 1,
       "review": 0,
       "failed": 0,
-      "ready": 6,
+      "ready": 5,
       "gateRequirement": "5/6 merged",
       "gatePassed": false
     },
@@ -86,7 +86,7 @@
     {
       "id": "IMP-005",
       "round": 1,
-      "status": "review",
+      "status": "merged",
       "spec": "items/IMP-005-node-type-header-icons.json",
       "blockedBy": [
         "IMP-001"
@@ -95,7 +95,7 @@
     {
       "id": "IMP-006",
       "round": 1,
-      "status": "review",
+      "status": "merged",
       "spec": "items/IMP-006-content-preview-truncation.json",
       "blockedBy": [
         "IMP-001"
@@ -122,7 +122,7 @@
     {
       "id": "IMP-009",
       "round": 2,
-      "status": "review",
+      "status": "merged",
       "spec": "items/IMP-009-link-node-preview.json"
     },
     {

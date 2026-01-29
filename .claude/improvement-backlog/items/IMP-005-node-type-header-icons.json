@@ -2,7 +2,7 @@
   "id": "IMP-005",
   "title": "Node Type Header Icons (3 nodes missing icons)",
   "round": 1,
-  "status": "review",
+  "status": "merged",
   "priority": 5,
   "complexity": "simple",
   "model": "sonnet",
