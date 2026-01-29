@@ -152,7 +152,7 @@
     {
       "id": "IMP-014",
       "round": 2,
-      "status": "ready",
+      "status": "running",
       "spec": "items/IMP-014-color-swatch-export.json"
     }
   ]
